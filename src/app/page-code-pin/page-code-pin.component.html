@@ -1,0 +1,27 @@
+<div class="flex flex-col space-y-5 justify-center items-center ">
+    <img src="assets/Cleanic_logo.png" alt="Logo" class="w-40 h-40" />
+    <mat-icon class="text-gray-500 text-2xl">lock</mat-icon>
+    <h1>Entrez votre code secret</h1>
+    <div class="max-w-md mx-auto mt-10 p-6 bg-gray-200 rounded-lg shadow-md">
+
+        <!-- 🧮 Number Input Field -->
+        <form [formGroup]="form" >
+          <mat-form-field appearance="fill" class="w-full">
+            
+            <input matInput formControlName="number" type="text" inputmode="numeric" pattern="[0-9]*">
+            <mat-error *ngIf="form.controls['number'].hasError('required')">
+              Entrez votre code secret
+            </mat-error>
+            <mat-error *ngIf="form.controls['number'].hasError('pattern')">
+              Les nombres seulement sont permis
+            </mat-error>
+          </mat-form-field>
+        </form>
+        <!-- 🔘 Buttons -->
+        <div class="flex justify-center items-center gap-3 mb-4">
+            <button mat-stroked-button class="bg-white" >Précédent</button>
+            <button mat-raised-button color="primary" >Submit</button>
+          </div>
+      </div>
+      
+</div>
