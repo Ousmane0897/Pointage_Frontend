@@ -1,1 +1,17 @@
-<p>dashboard works!</p>
+<div class="p-6 space-y-4">
+      <h1 class="text-2xl font-bold">Tableau de bord - Pointage</h1>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-2xl shadow">
+          <h2 class="text-lg">👥 Employés enregistrés</h2>
+          <p class="text-2xl font-bold">{{ stats?.total }}</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-2xl shadow">
+          <h2 class="text-lg">✅ Présents aujourd'hui</h2>
+          <p class="text-2xl font-bold">{{ stats?.present }}</p>
+        </div>
+        <div class="bg-red-100 p-4 rounded-2xl shadow">
+          <h2 class="text-lg">❌ Absents aujourd'hui</h2>
+          <p class="text-2xl font-bold">{{ stats?.absent }}</p>
+        </div>
+      </div>
+    </div>

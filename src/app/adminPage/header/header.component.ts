@@ -15,7 +15,7 @@ import { RouterModule } from '@angular/router';
 export class HeaderComponent implements OnInit{
 
   sentences: string[] = [
-    'Cleanic Sénégal',
+    'Cleanic SARL',
     'Le reflet de votre image de marque',
     "Plus de 10 ans d'expérience"
     

@@ -1,6 +1,7 @@
 import { CommonModule, NgClass, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { HeaderComponent } from '../header/header.component';
 
 @Component({
   selector: 'app-sidebar',
@@ -9,7 +10,8 @@ import { Router, RouterModule } from '@angular/router';
     RouterModule,
     NgClass,
     CommonModule,
-    NgIf
+    NgIf,
+    HeaderComponent
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
@@ -26,6 +28,11 @@ export class SidebarComponent {
 
   isActive(path: string): boolean { //isActive() prend un chemin en argument et ajoute des styles à ce chemin dans le template. Ex: isActive('/about') ajoute des styles au lien associé à '/about'
     return this.router.url === path;
+  }
+
+  logout() {
+    localStorage.removeItem('token');
+    this.router.navigateByUrl('/');
   }
 
 }

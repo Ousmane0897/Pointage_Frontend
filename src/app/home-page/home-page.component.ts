@@ -4,6 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
+import { LoginService } from '../services/login.service';
+import { ToastrService } from 'ngx-toastr';
+
 
 @Component({
   selector: 'app-home-page',
@@ -14,6 +17,7 @@ import { Router } from '@angular/router';
     MatIconModule,
     ReactiveFormsModule
 
+
   ],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
@@ -22,10 +26,14 @@ export class HomePageComponent {
 
   logoMoved = false;
   showForm = false;
+  toastMessage: string | null = null;
+  toastTimeout: any;
+
 
   contactForm: FormGroup;
 
-  constructor(private router: Router, private fb: FormBuilder) {
+  constructor(private router: Router, private fb: FormBuilder, private loginService: LoginService
+    , private toastr: ToastrService) {
     this.contactForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
@@ -40,15 +48,40 @@ export class HomePageComponent {
     this.showForm = false;
   }
 
-  
-  submitForm() {
-    if (this.contactForm.valid) {
-      console.log('Form Submitted:', this.contactForm.value);
-      this.contactForm.reset();
-      this.closeForm();
-    }
+
+
+
+  login() {
+    this.loginService.login(this.contactForm.get('email')?.value, this.contactForm.get('password')?.value).subscribe({
+      next: (res) => {
+        this.loginService.setToken(res.token);
+        this.closeForm();
+        this.toastr.success('Connexion réussie !', 'Bienvenue');
+        setTimeout(() => {
+          this.router.navigateByUrl('/admin/dashboard');
+        }, 2000);
+      },
+      error: (err) => {
+        const errorMessage = err.error?.error || 'Email ou mot de passe incorrect';
+        this.toastr.error(errorMessage, 'Erreur de connexion');
+      }
+    });
   }
 
+
+  SuperAdminLogin() {
+    this.router.navigateByUrl('/super-admin-login');
+  }
+
+  showToast(message: string) {
+    this.toastMessage = message;
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
+    this.toastTimeout = setTimeout(() => {
+      this.toastMessage = null;
+    }, 3000);
+  }
 
 
 

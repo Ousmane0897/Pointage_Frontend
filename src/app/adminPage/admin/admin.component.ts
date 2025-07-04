@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { SidebarComponent } from "../sidebar/sidebar.component";
 import { HeaderComponent } from '../header/header.component';
-import { RouterModule } from '@angular/router';
+import { RouterModule, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-admin',
@@ -10,7 +10,7 @@ import { RouterModule } from '@angular/router';
     
     HeaderComponent,
     SidebarComponent,
-    RouterModule
+    RouterOutlet
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'

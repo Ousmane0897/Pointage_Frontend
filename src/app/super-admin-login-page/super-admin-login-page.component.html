@@ -1,0 +1,33 @@
+<div class="min-h-screen flex items-center justify-center space-x-40 ">
+    <img src="assets/Cleanic_logo.png" alt="Logo" class="w-70 h-70" />
+    <div class="bg-slate-300 p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Super Admin</h2>
+
+        <form (ngSubmit)="login()" #loginForm="ngForm">
+            <div class="mb-4">
+                <label class="block mb-1 text-gray-600 font-medium">Email</label>
+                <input type="email" name="email" [(ngModel)]="email" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="exemple@domaine.com" />
+            </div>
+
+            <div class="mb-4 relative">
+                <label class="block mb-1 text-gray-600 font-medium">Mot de passe</label>
+                <input [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="********" />
+                <button type="button" (click)="togglePasswordVisibility()"
+                    class="absolute right-3 top-9 text-gray-500 hover:text-gray-800">
+                    {{ showPassword ? '🙈' : '👁️' }}
+                </button>
+            </div>
+
+            <button type="submit" [disabled]="!loginForm.form.valid"
+                class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-lg font-semibold transition duration-300">
+                Se connecter
+            </button>
+        </form>
+
+    
+    </div>
+</div>

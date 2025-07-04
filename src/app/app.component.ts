@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component,  } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { NgxSpinnerComponent, NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 
 
 @Component({
@@ -8,11 +9,13 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule
+    RouterModule,
+    NgxSpinnerComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title: any;
+
+  constructor() { }
 }
