@@ -4,5 +4,8 @@ export interface Admin {
     prenom: string;  
     email: string; 
     password: string; 
+    poste: string;
+    role: string;
+    motifDesactivation: string;
     active: boolean; 
 }

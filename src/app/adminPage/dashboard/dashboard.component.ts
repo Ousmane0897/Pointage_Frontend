@@ -3,6 +3,7 @@ import { RouterModule, RouterOutlet } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
+import { LoginService } from '../../services/login.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,11 +19,15 @@ import { CommonModule } from '@angular/common';
 })
 export class DashboardComponent implements OnInit {
 
+  prenomNom: string | null = null;
+  role: string | null = null;
+  poste: string | null = null;
+
   stats: { total: number; present: number; absent: number } | null = null;
 
   constructor(private dashboardService: DashboardService,
-    private toastr: ToastrService,
-  ) { }
+    private toastr: ToastrService, private loginService: LoginService
+  ) {}
 
   ngOnInit(): void {
     this.dashboardService.getDashboardData().subscribe(data => {
@@ -31,6 +36,11 @@ export class DashboardComponent implements OnInit {
       this.toastr.error('Failed to load dashboard data', 'Error');
       console.error('Error fetching dashboard stats:', error);
     });
+
+    this.prenomNom = this.loginService.getFirstNameLastName();
+    this.role = this.loginService.getUserRole();
+    this.poste = this.loginService.getUserPoste();
+  
   }
 
 }

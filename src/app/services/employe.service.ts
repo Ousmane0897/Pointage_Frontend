@@ -18,8 +18,16 @@ export class EmployeService {
     return this.http.get<Employe[]>(`${this.baseUrl}/api/employe`);
   }
 
-  getEmployeById(codeSecret: string): Observable<Employe> {
+  getEmployesChefsEquipe(): Observable<Employe[]> {
+    return this.http.get<Employe[]>(`${this.baseUrl}/api/employe/Cheffes`);
+  } 
+
+  getEmployeByCodeEmploye(codeSecret: string): Observable<Employe> {
     return this.http.get<Employe>(`${this.baseUrl}/api/employe/${codeSecret}`); 
+  }
+
+  updateEmployeEnDeplacement(codeSecret: string, employe: Employe): Observable<Employe> {
+    return this.http.put<Employe>(`${this.baseUrl}/api/employe/deplacement/${codeSecret}`, employe);
   }
 
   addEmploye(employe: Employe): Observable<Employe> {

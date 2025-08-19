@@ -19,7 +19,7 @@
         <button (click)="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
     </div>
 
-    <table class="min-w-full table-auto border-collapse border border-gray-300">
+    <table class="min-w-full table-auto border-collapse border border-gray-300 overflow-x-scroll">
         <thead>
             <tr class="bg-gray-200">
                 <th class="p-2">code employé</th>
@@ -27,7 +27,9 @@
                 <th class="p-2">Nom</th>
                 <th class="p-2">Numéro</th>
                 <th class="p-2">Intervention</th>
-                <th class="p-2">Site</th>
+                <th class="p-2">Statut</th>
+                <th class="p-2">Site(s)</th>
+                <th class="p-2">Heure de début et Fin</th>
                 <th class="p-2">Actions</th>
             </tr>
         </thead>
@@ -38,7 +40,23 @@
                 <td class="p-2">{{ employe.nom }}</td>
                 <td class="p-2">{{ employe.numero }}</td>
                 <td class="p-2">{{ employe.intervention }}</td>
-                <td class="p-2">{{ employe.site }}</td>
+                <td class="p-2">{{ employe.statut }}</td>
+                <td class="p-2">
+                    <div *ngFor="let site of employe.site"
+                        class="flex flex-col bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs items-center justify-center">
+                        {{ site }}
+                    </div>
+                </td>
+                <td class="p-2">
+                    <div
+                        class="flex flex-col bg-orange-100 text-orange-800 py-1 rounded-full text-sm items-center justify-center">
+                        {{ employe.heureDebut }} - {{ employe.heureFin }}
+                        <span *ngIf="employe.heureDebut2 && employe.heureFin2">
+                            {{ employe.heureDebut2 }} - {{ employe.heureFin2 }}
+                        </span>
+                    </div>
+                </td>
+
                 <td class="p-2 flex gap-1">
                     <button (click)="openEditModal(employe)"
                         class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
@@ -71,7 +89,7 @@
 
 <!-- Modal d'ajout/modification -->
 <div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
-    <div class="bg-white p-6 rounded-lg w-full max-w-md">
+    <div class="max-h-[90vh] overflow-y-auto bg-white p-6 rounded-lg w-full max-w-md ">
         <h2 class="text-xl font-semibold mb-4">
             {{ isEditMode ? 'Modifier' : 'Ajouter' }} un employé
         </h2>
@@ -105,9 +123,9 @@
             <div class="mb-2">
                 <input class="w-full p-2 border rounded" [class.border-red-500]="numero.invalid && numero.touched"
                     name="numero" #numero="ngModel" [(ngModel)]="modalData.numero" placeholder="Numéro" required
-                    pattern="^[0-9]+$" />
+                    pattern="^\d{9}$" maxlength="9" minlength="9" />
                 <div *ngIf="numero.invalid && numero.touched" class="text-red-500 text-sm">
-                    Le numéro est requis. (chiffres uniquement)
+                    Le numéro doit contenir exactement 9 chiffres. (chiffres uniquement)
                 </div>
             </div>
 
@@ -120,11 +138,147 @@
                 </div>
             </div>
 
-            <div class="mb-4">
-                <input class="w-full p-2 border rounded" [class.border-red-500]="site.invalid && site.touched"
-                    name="site" #site="ngModel" [(ngModel)]="modalData.site" placeholder="Site" required />
-                <div *ngIf="site.invalid && site.touched" class="text-red-500 text-sm">
-                    Le site est requis.
+            <div class="mb-2">
+                <label for="statut" class="block mb-2 font-semibold text-gray-600">Statut</label>
+                <select id="statut" [(ngModel)]="modalData.statut" name="statut" class="p-2 border rounded-md w-full"
+                    required>
+                    <option [ngValue]="''">Sélectionner un statut</option>
+                    <option *ngFor="let statut of statuts" [ngValue]="statut">
+                        {{ statut }}
+                    </option>
+                </select>
+
+                <!-- ✅ Message affiché si rien n'est sélectionné -->
+                <p *ngIf="form.submitted && !form.controls['statut']?.valid" class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner un statut.
+                </p>
+            </div>
+
+
+            <input type="hidden" name="employeCreePar" [(ngModel)]="modalData.employeCreePar" />
+
+
+
+            <div class="mb-2 relative">
+                <label class="block mb-2 font-semibold text-gray-600">Site(s)</label>
+
+                <!-- Dropdown button -->
+                <button type="button" (click)="dropdownOpen = !dropdownOpen"
+                    class="w-full border border-gray-300 rounded p-2 flex justify-between items-center focus:outline-none focus:ring">
+                    <span>
+                        {{ modalData.site.length > 0 ? modalData.site.join(' - ') : 'Sélectionner un ou plusieurs sites'
+                        }}
+                    </span>
+                    <svg class="w-4 h-4 ml-2 transform" [class.rotate-180]="dropdownOpen" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <!-- Dropdown panel -->
+                <div *ngIf="dropdownOpen"
+                    class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow max-h-60 overflow-y-auto">
+                    <div *ngFor="let site of availableSites" class="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                        <input type="checkbox" [value]="site" (change)="onCheckboxChange($event) "
+                            [checked]="modalData.site.includes(site)" class="form-checkbox h-4 w-4 text-blue-600" />
+                        <span>{{ site }}</span>
+                    </div>
+                </div>
+
+                <!-- Validation error -->
+                <div *ngIf="siteTouched && modalData.site.length === 0" class="text-red-500 text-sm mt-1">
+                    Au moins un site est requis.
+                </div>
+            </div>
+
+            <!--<div class="mb-2">
+                <label for="JoursDeTravail" class="block mb-2 font-semibold text-gray-600">Jours de travail</label>
+                <select id="JoursDeTravail" [(ngModel)]="modalData.JoursDeTravail" name="JoursDeTravail" class="p-2 border rounded-md w-full"
+                    required>
+                    <option [ngValue]="''">Sélectionner les jours de travail</option>
+                    <option *ngFor="let jour of JoursDeTravail" [ngValue]="jour">
+                        {{ jour }}
+                    </option>
+                </select>
+                
+               
+                <p *ngIf="form.submitted && !form.controls['JoursDeTravail']?.valid" class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner les jours d'ouverture.
+                </p>
+            </div> -->
+
+            <div class="mb-2">
+                <label class="block mb-2 font-semibold text-gray-600">Jours de travail dans site 1</label>
+                <input class="w-full p-2 border rounded"
+                    [class.border-red-500]="JoursDeTravail.invalid && JoursDeTravail.touched" readonly name="JoursDeTravail"
+                    #JoursDeTravail="ngModel" [(ngModel)]="modalData.joursDeTravail" 
+                     placeholder="Jours de Travail" required />
+            </div>
+
+            <div *ngIf="modalData.site.length === 2" class="mb-2">
+                <label class="block mb-2 font-semibold text-gray-600">Jours de travail dans site 2</label>
+                 <input class="w-full p-2 border rounded"
+                    [class.border-red-500]="JoursDeTravail2.invalid && JoursDeTravail2.touched" name="JoursDeTravail2"
+                    #JoursDeTravail2="ngModel" [(ngModel)]="modalData.joursDeTravail2" readonly  (ngModelChange)="onFieldChange2($event)" 
+                     placeholder="Jours de Travail du site 2" required />
+            </div>
+
+            <div class="flex flex-col mb-2">
+                <p class="block mb-2 font-semibold text-gray-600">Horaires de travail</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Heure de début -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de début</mat-label>
+                        <input matInput [ngxMatTimepicker]="startPicker" [format]="24"
+                            [(ngModel)]="modalData.heureDebut" readonly placeholder="Sélectionner l'heure"
+                            name="heureDebut" #heureDebut="ngModel" />
+                        <ngx-mat-timepicker #startPicker></ngx-mat-timepicker>
+
+
+                    </mat-form-field>
+
+                    <!-- Heure de fin -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de fin</mat-label>
+                        <input matInput [ngxMatTimepicker]="endPicker" [format]="24" [(ngModel)]="modalData.heureFin"
+                            readonly placeholder="Sélectionner l'heure" name="heureFin" #heureFin="ngModel" />
+                        <ngx-mat-timepicker #endPicker></ngx-mat-timepicker>
+
+                    </mat-form-field>
+
+                    <div *ngIf=" (heureDebut.touched && heureDebut.invalid) || (heureFin.touched && heureFin.invalid)"
+                        class="text-sm text-red-500">
+                        Les heures de début et de fin sont requises.
+                    </div>
+                </div>
+
+            </div>
+
+            <div *ngIf="modalData.site.length === 2" class="mb-2">
+                <p class="text-sm text-gray-600">Horaires du second site</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Heure de début supplémentaire -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de début</mat-label>
+                        <input matInput [ngxMatTimepicker]="startPicker2" [format]="24"
+                            [(ngModel)]="modalData.heureDebut2" readonly placeholder="Sélectionner l'heure"
+                            name="heureDebut2" #heureDebut2="ngModel" />
+                        <ngx-mat-timepicker #startPicker2></ngx-mat-timepicker>
+                    </mat-form-field>
+
+                    <!-- Heure de fin supplémentaire -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de fin</mat-label>
+                        <input matInput [ngxMatTimepicker]="endPicker2" [format]="24" [(ngModel)]="modalData.heureFin2"
+                            readonly placeholder="Sélectionner l'heure" name="heureFin2" #heureFin2="ngModel" />
+                        <ngx-mat-timepicker #endPicker2></ngx-mat-timepicker>
+                    </mat-form-field>
+                    <div *ngIf=" (heureDebut2.touched && heureDebut2.invalid) || (heureFin2.touched && heureFin2.invalid)"
+                        class="text-sm text-red-500">
+                        Les heures de début et de fin sont requises.
+                    </div>
                 </div>
             </div>
 

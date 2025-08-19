@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { JwtPayload } from '../models/JwtPayload.model';
 
 
 @Injectable({
@@ -19,12 +20,33 @@ export class LoginService {
     });
   }
 
-  isLoggedIn(): boolean {
-  const token = this.getToken();
-  if (!token) return false;
 
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+setToken(token: string): void {
+    localStorage.setItem('token', token); 
+  }
+
+getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+
+   private decodeToken(): JwtPayload | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const payload = atob(token.split('.')[1]);
+      return JSON.parse(payload) as JwtPayload;
+    } catch (e) {
+      this.logout(); // token is malformed
+      return null;
+    }
+  }
+
+  isLoggedIn(): boolean {
+    const payload = this.decodeToken();
+    if (!payload) return false;
+
     const expiry = payload.exp;
     const now = Math.floor(Date.now() / 1000);
 
@@ -34,21 +56,32 @@ export class LoginService {
     }
 
     return true;
-  } catch (e) {
-    this.logout(); // malformed token
-    return false;
   }
+
+  getUserRole(): string  {
+    const payload = this.decodeToken();
+    if (!payload || !payload.role) return 'No role found';
+    return payload.role.trim();
+  }
+
+  getUserPoste(): string {
+    const payload = this.decodeToken();
+    if (!payload || !payload.poste) return 'No poste found';
+    return payload.poste.trim();  
+  }
+
+
+  getFirstNameLastName(): string | null {
+    const payload = this.decodeToken();
+    if (!payload) return null;
+
+    const prenom = payload.prenom || '';
+    const nom = payload.nom || '';
+
+    if (!prenom && !nom) return null; // aucun prénom ni nom → retourne null
+
+    return `${prenom} ${nom}`.trim();
 }
-
-
-setToken(token: string): void {
-    localStorage.setItem('token', token);
-  }
-  
-getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
 
   logout() {
     localStorage.removeItem('token');

@@ -1,7 +1,8 @@
 import { CommonModule, NgClass, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
+import { LoginService } from '../../services/login.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -16,11 +17,21 @@ import { HeaderComponent } from '../header/header.component';
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
 
+  role: string  = '';
   isOpen = true;
 
-  constructor(public router: Router) {}
+    ngOnInit(): void {
+      
+      this.role = this.loginService.getUserRole();
+      console.log('ROLE =>', this.role);
+  }
+
+  constructor(private router: Router,
+    private loginService: LoginService
+
+  ) {}
 
   toggleSidebar() {
     this.isOpen = !this.isOpen;

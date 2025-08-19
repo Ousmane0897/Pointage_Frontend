@@ -40,7 +40,7 @@ throw new Error('Method not implemented.');
          // Redirection vers la page admin après la connexion
         this.toastr.success('Connexion réussie !', 'Bienvenue');
         setTimeout(() => {
-          this.router.navigateByUrl('super-admin');
+          this.router.navigateByUrl('/admin/dashboard');
         }, 2000); // Délai de 2 seconde avant la redirection
        },
       error: () => {

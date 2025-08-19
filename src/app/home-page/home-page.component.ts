@@ -23,6 +23,13 @@ import { ToastrService } from 'ngx-toastr';
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
+showPassword: boolean = false;
+
+
+togglePasswordVisibility() {
+
+    this.showPassword = !this.showPassword;
+}
 
   logoMoved = false;
   showForm = false;

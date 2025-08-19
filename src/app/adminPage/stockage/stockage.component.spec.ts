@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SuperAdminComponent } from './super-admin.component';
+import { StockageComponent } from './stockage.component';
 
-describe('SuperAdminComponent', () => {
-  let component: SuperAdminComponent;
-  let fixture: ComponentFixture<SuperAdminComponent>;
+describe('StockageComponent', () => {
+  let component: StockageComponent;
+  let fixture: ComponentFixture<StockageComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SuperAdminComponent]
+      imports: [StockageComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(SuperAdminComponent);
+    fixture = TestBed.createComponent(StockageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

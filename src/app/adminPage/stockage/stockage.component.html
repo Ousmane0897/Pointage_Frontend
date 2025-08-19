@@ -1,0 +1,19 @@
+<div class="p-6">
+      <h1 class="text-2xl font-bold mb-4">Mes Fichiers Dropbox</h1>
+      <div class="mb-4">
+        <input type="file" (change)="onFileSelected($event)" class="mb-2" />
+      </div>
+      <div class="grid gap-4">
+        <div *ngFor="let file of files" class="border rounded-xl p-4 shadow flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span *ngIf="file.isFolder">📁</span>
+            <span *ngIf="!file.isFolder">📄</span>
+            <span class="text-gray-700">{{ file.name }}</span>
+          </div>
+          <div class="flex gap-2">
+            <a *ngIf="!file.isFolder" [href]="file.downloadUrl" target="_blank" class="text-blue-500 hover:underline">📥 Télécharger</a>
+            <button (click)="deleteFile(file.path)" class="text-red-500 hover:underline">🗑️ Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </div>
