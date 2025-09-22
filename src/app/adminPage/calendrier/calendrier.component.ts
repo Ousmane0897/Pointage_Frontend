@@ -20,6 +20,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { PlanificationService } from '../../services/planification.service';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
+import { concatMap, finalize } from 'rxjs';
+import { co, dE } from '@fullcalendar/core/internal-common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-calendar-employes',
@@ -40,7 +43,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 })
 export class CalendrierComponent implements OnInit {
 
-  
+
   @ViewChild(MatMenuTrigger) menuTrigger!: MatMenuTrigger;
 
   events: EventInput[] = [];
@@ -54,18 +57,26 @@ export class CalendrierComponent implements OnInit {
   modalVisible = false;
   getPlanification!: Planification;
   getEmployeByCodeSecret!: Employe;
+  employesDeplaces: Employe[] = [];
+  employeesDansUnSite: Employe[] = [];
+  isMobile = false;
+  showDetails = false;
   modalData: Planification = {
-    prenomNom:'',
+    prenomNom: '',
     codeSecret: '',
     nomSite: '',
-    siteDestination: '',
-    dateDebut: '',
-    dateFin: '',
+    siteDestination: [] as string[],
+    personneRemplacee: '',
+    matin: false,
+    apresMidi: false,
+    dateDebut: null,
+    dateFin: null,
     heureDebut: '',
     heureFin: '',
-    statut: '',
+    statut: 'EN_ATTENTE',
     commentaires: '',
-    dateCreation: ''
+    motifAnnulation: null,
+    dateCreation: null
   };
 
   calendarOptions: any = {
@@ -81,7 +92,7 @@ export class CalendrierComponent implements OnInit {
     allDaySlot: false,
     editable: true,
     eventResizableFromStart: true,
-    hiddenDays: [0], // dimanche
+    //hiddenDays: [0], // dimanche
     events: [],
     eventClick: this.handleEventClick.bind(this),
     eventDrop: this.handleEventChange.bind(this),
@@ -89,15 +100,18 @@ export class CalendrierComponent implements OnInit {
   };
 
   constructor(private employesService: EmployeService, private agence: AgencesService,
-    private planification: PlanificationService, private toastr: ToastrService
+    private planification: PlanificationService, private toastr: ToastrService,
+    private http: HttpClient
   ) { }
 
   ngOnInit() {
     this.employesService.getEmployes().subscribe((data: Employe[]) => {
-      const events = this.generateWeeklyEvents(data);
+      const events = this.generateYearlyEvents(data);
       this.events = events;
       this.applyFilter();
       this.getAvailableSites();
+      this.getEmployesDeplaces();
+
     });
   }
 
@@ -109,40 +123,97 @@ export class CalendrierComponent implements OnInit {
     return this.getPlanification;
   }
 
+  getEmployesDeplaces() {
+    this.employesService.getEmployeEnDeplacement().subscribe(data => {
+      this.employesDeplaces = data;
+      console.log('Employés en déplacement:', this.employesDeplaces);
+    });
+  }
+
+  EmployeesDansUnSite() {
+
+    const site = this.modalData.siteDestination[0]
+
+    this.employesService.getEmployeesDansUnSite(site).subscribe(data => {
+      this.employeesDansUnSite = data;
+      console.log('Employés dans le site sélectionné:', this.employeesDansUnSite);
+    });
+  }
+
+
+  onSiteChange(selectedSite: string) {
+    // Vérifie que l'utilisateur a choisi une valeur
+    if (selectedSite) {
+      this.EmployeesDansUnSite(); // Appel au backend
+    } else {
+      this.employeesDansUnSite = []; // vide la liste si aucune valeur
+    }
+  }
+
+
+  changeMobileState(emp: Employe) {
+    if (emp.deplacement) {
+      this.isMobile = true;
+    }
+  }
+
+  close() {
+    this.showDetails = false
+  }
+
+
   getAvailableSites() {
     this.agence.getAllSites().subscribe(sites => {
       this.availableSites = sites;
     });
   }
 
-   saveModal(form: NgForm) {
-      if (form.invalid) {
-        // Marquer tous les champs comme touchés pour afficher les erreurs
-        Object.values(form.controls).forEach(control => {
-          control.markAsTouched();
-        });
-  
-        this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
-        return;
-      }
-      if (this.isEditMode && this.selectedId) {
-        this.planification.updatePlanification(this.selectedId, this.modalData).subscribe(() => {
-          this.closeModal();
-          this.toastr.success('Agence mis à jour avec succès !', 'Succès');
-        });
-      } else {
-  
-        this.planification.addPlanification(this.modalData).subscribe(() => {
-          this.employesService.getEmployeByCodeEmploye(this.modalData.codeSecret).subscribe(employe => {
-            this.getEmployeByCodeSecret = employe;
-          });
-          this.employesService.updateEmployeEnDeplacement(this.modalData.codeSecret,this.getEmployeByCodeSecret); // Seulemement en guise de test mais la méthode 'updateEmployeEnDeplacement' doit etre exécutée le jour de départ de l'employé pour etre logique.
-          this.closeModal();
-          this.toastr.success('Planification ajoutée avec succès !', 'Succès');
-  
-        });
-      }
+  saveModal(form: NgForm) {
+    if (form.invalid) {
+      // Marquer tous les champs comme touchés pour afficher les erreurs
+      Object.values(form.controls).forEach(control => {
+        control.markAsTouched();
+      });
+
+      this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
+      return;
     }
+    if (this.isEditMode && this.selectedId) {
+      this.planification.updatePlanification(this.selectedId, this.modalData).subscribe(() => {
+        this.closeModal();
+        this.toastr.success('Agence mis à jour avec succès !', 'Succès');
+      });
+    } else {
+      if (this.modalData.heureDebut) this.modalData.matin = true;
+      // Forcer siteDestination à être un tableau
+      if (!Array.isArray(this.modalData.siteDestination)) {
+        this.modalData.siteDestination = [this.modalData.siteDestination];
+      }
+
+      // Maintenant, payload est correct
+      console.log('siteDestination avant post :', this.modalData.siteDestination);
+      const payload = {
+        ...this.modalData,
+        dateDebut: this.modalData.dateDebut ? this.modalData.dateDebut.toISOString() as any : null,
+        dateFin: this.modalData.dateFin ? this.modalData.dateFin.toISOString() as any : null,
+        dateCreation: this.modalData.dateCreation ? this.modalData.dateCreation.toISOString() as any : null,
+      };
+      console.log('Payload envoyé :', payload);
+      this.planification.addPlanification(payload).pipe(
+        finalize(() => this.closeModal()) //   finalize est appelé une seule fois, à la fin de l’Observable, qu’il y ait eu succès ou erreur
+        //Idéal pour faire des actions « propres » comme: fermer un modal, arrêter un loader/spinner, réinitialiser un formulaire
+      ).subscribe({
+        next: () => {
+          this.toastr.success('Planification ajoutée avec succès !', 'Succès');
+          this.ngOnInit(); // Rafraîchir les données du calendrier
+        },
+        error: () => this.toastr.error('Erreur lors de la planification', 'Erreur'),
+      });
+
+
+
+    }
+  }
 
   getFilteredEvents() {
     if (!this.selectedSite) return this.events;
@@ -158,7 +229,7 @@ export class CalendrierComponent implements OnInit {
 
   openAddModal() {
     this.isEditMode = false;
-    this.modalData = { prenomNom: this.selectedEmploye.name, codeSecret: '', nomSite: this.selectedEmploye.departement, siteDestination: '', dateDebut: '', dateFin: '', heureDebut: '', heureFin: '', statut: '', commentaires: null, dateCreation: '' };
+    this.modalData = { prenomNom: this.selectedEmploye.name, codeSecret: '', nomSite: this.selectedEmploye.departement, siteDestination: [] as string[], personneRemplacee: '', dateDebut: null, dateFin: null, heureDebut: '', heureFin: '', statut: 'EN_ATTENTE', matin: false, apresMidi: false, commentaires: null, motifAnnulation: null, dateCreation: null };
     this.selectedId = null;
     this.showModal = true;
     setTimeout(() => {
@@ -213,11 +284,13 @@ export class CalendrierComponent implements OnInit {
       statut: event.extendedProps.statut,
       departement: event.extendedProps.site,
       start: event.start,
-      end: event.end
+      end: event.end,
+      deplacement: event.extendedProps.deplacement,
     };
 
     this.menuTrigger.openMenu();
   }
+
 
   handleEventChange(changeInfo: any) {
     const updatedEvent = changeInfo.event;
@@ -232,23 +305,29 @@ export class CalendrierComponent implements OnInit {
     }
   }
 
-  generateWeeklyEvents(employes: Employe[]): EventInput[] {
-    const events: EventInput[] = [];
-    const today = new Date();
-    const currentWeekMonday = this.getMonday(today);
+ generateYearlyEvents(employes: Employe[]): EventInput[] {
+  const events: EventInput[] = [];
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  // Boucle sur tous les mois de l'année (0=Janvier, 11=Décembre)
+  for (let month = 0; month < 12; month++) {
+    const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
 
     employes.forEach(emp => {
       const joursTravailles = emp.joursDeTravail === 'Lundi-Vendredi' ? 5 : 6;
       const joursTravailles2 = emp.joursDeTravail2 === 'Lundi-Vendredi' ? 5 : 6;
 
+      for (let day = 1; day <= daysInMonth; day++) {
+        const currentDay = new Date(currentYear, month, day);
+        const dayOfWeek = currentDay.getDay(); // 0=Dimanche, 1=Lundi, ...
 
-      for (let dayOffset = 0; dayOffset < joursTravailles; dayOffset++) {
-        const currentDay = new Date(currentWeekMonday);
-        currentDay.setDate(currentDay.getDate() + dayOffset);
+        // Vérifier si c'est un jour travaillé pour la première plage
+        if (joursTravailles === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
+        if (joursTravailles === 6 && dayOfWeek === 0) continue;
 
-        // Première plage horaire
         events.push({
-          id: `${emp.codeSecret}-${dayOffset}-1`,
+          id: `${emp.codeSecret}-${month + 1}-${day}-1`,
           title: `${emp.prenom} ${emp.nom}`,
           start: this.combineDateAndTime(currentDay, emp.heureDebut),
           end: this.combineDateAndTime(currentDay, emp.heureFin),
@@ -259,21 +338,23 @@ export class CalendrierComponent implements OnInit {
             site: emp.site[0],
             employeCreePar: emp.employeCreePar,
             heureDebut: emp.heureDebut,
-            heureFin: emp.heureFin
+            heureFin: emp.heureFin,
+            deplacement: emp.deplacement
           },
-           color: emp.deplacement ? '#F1F500' : '#0086FF'
+          color: emp.deplacement
+            ? '#D10000'
+            : (emp.heureDebut === '06:00' && emp.heureFin === '19:00')
+              ? '#7E00DE'
+              : '#545252'
         });
-      }
 
-      for (let dayOffset = 0; dayOffset < joursTravailles2; dayOffset++) {
-        const currentDay = new Date(currentWeekMonday);
-        currentDay.setDate(currentDay.getDate() + dayOffset);
-
-
-        // Deuxième plage horaire si existe
+        // Deuxième plage horaire si elle existe
         if (emp.heureDebut2 && emp.heureFin2) {
+          if (joursTravailles2 === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
+          if (joursTravailles2 === 6 && dayOfWeek === 0) continue;
+
           events.push({
-            id: `${emp.codeSecret}-${dayOffset}-2`,
+            id: `${emp.codeSecret}-${month + 1}-${day}-2`,
             title: `${emp.prenom} ${emp.nom}`,
             start: this.combineDateAndTime(currentDay, emp.heureDebut2),
             end: this.combineDateAndTime(currentDay, emp.heureFin2),
@@ -284,16 +365,22 @@ export class CalendrierComponent implements OnInit {
               site: emp.site[1],
               employeCreePar: emp.employeCreePar,
               heureDebut2: emp.heureDebut2,
-              heureFin2: emp.heureFin2
+              heureFin2: emp.heureFin2,
+              deplacement: emp.deplacement
             },
-             color: emp.deplacement ? '#F1F500' : '#F87C63'
+            color: emp.deplacement ? '#D10000' : '#FF9696'
           });
         }
       }
-    });
 
-    return events;
+      this.changeMobileState(emp);
+    });
   }
+
+  return events;
+}
+
+
 
   /* generateWeeklyEvents(employes: Employe[]): EventInput[] {
      const events: EventInput[] = [];

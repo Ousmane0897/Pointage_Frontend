@@ -1,0 +1,11 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+    <mat-dialog-content>
+  
+      <mat-form-field appearance="fill" class="w-full">
+        <textarea matInput [(ngModel)]="motif" placeholder="Veuillez indiquer le motif de l'annulation"></textarea>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onCancelClick()">{{ data.cancelText }}</button>
+      <button mat-raised-button color="warn" [disabled]="!motif" (click)="onConfirmClick()">{{ data.confirmText }}</button>
+    </mat-dialog-actions>

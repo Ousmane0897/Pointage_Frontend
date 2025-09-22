@@ -1,0 +1,72 @@
+<!--
+<div class="p-4">
+  <h2>Demandes d'annulation en attente</h2>
+
+  <div *ngIf="pendingRequests.length === 0">Aucune demande en attente</div>
+  <ul>
+    <li *ngFor="let r of pendingRequests">
+      <strong>{{ r.prenomNom }}</strong> — {{ r.motif }} <button (click)="openValidationModal(r)">Voir</button>
+    </li>
+  </ul>
+</div> -->
+
+//<!-- Modal Validation -->
+<!--<div *ngIf="showValidationModal" class="modal-backdrop">
+  <div class="modal">
+    <h3>Valider la demande d'annulation</h3>
+    <p><strong>Planification:</strong> {{ currentRequest.prenomNom }}</p>
+    <p><strong>Motif:</strong> {{ currentRequest.motif }}</p>
+    <p><strong>Demandeur:</strong> {{ currentRequest.requestedBy }}</p>
+
+    <div class="actions">
+      <button (click)="validate(true)">Valider</button>
+      <button (click)="validate(false)">Refuser</button>
+      <button (click)="closeValidationModal()">Fermer</button>
+    </div>
+  </div>
+</div> -->
+
+
+<!-- Cloche avec badge -->
+<div class="relative inline-block">
+  <button (click)="openModal()" class="relative">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002
+               6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67
+               6.165 6 8.388 6 11v3.159c0 .538-.214
+               1.055-.595 1.436L4 17h5m6 0v1a3 3
+               0 11-6 0v-1m6 0H9" />
+    </svg>
+    <span *ngIf="pendingCount > 0"
+          class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1">
+      {{ pendingCount }}
+    </span>
+  </button>
+</div> 
+
+<!-- Modal -->
+<div *ngIf="showValidationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg p-6 w-96 shadow-lg">
+    <h2 class="text-lg font-semibold mb-4">Demandes d'annulation</h2>
+
+    <div *ngIf="pendingRequests.length === 0" class="text-gray-500">Aucune demande en attente.</div>
+
+    <ul *ngIf="pendingRequests.length > 0" class="space-y-3">
+      <li *ngFor="let req of pendingRequests" class="border p-2 rounded">
+        <p><strong>Demandeur :</strong> {{ req.requestedBy }}</p>
+        <p><strong>Motif :</strong> {{ req.motif }}</p>
+        <p><strong>Date :</strong> {{ req.date | date:'short' }}</p>
+
+        <div class="mt-2 flex space-x-2">
+          <button class="bg-green-600 text-white px-3 py-1 rounded">✅Valider</button>
+          <button class="bg-red-600 text-white px-3 py-1 rounded">❌Refuser</button>
+        </div>
+      </li>
+    </ul>
+
+    <div class="mt-4 text-right">
+      <button (click)="closeValidationModal()" class="bg-gray-400 px-3 py-1 rounded">Fermer</button>
+    </div>
+  </div>
+</div>

@@ -30,16 +30,20 @@ export class AgencesComponent implements OnInit {
     adresse: '',
     joursOuverture: '',
     heuresTravail: '',
-    nombreAgentsMaximum: 0
-
+    nombreAgentsMaximum: 0,
+    receptionEmploye: false,
+    deplacementEmploye: false,
+    deplacementInterne: false
   };
   selectedId: string | null = null;
   SelectedDepartment: string | null = null;
   showModal2 = false;
   employesByAgence: Employe[] = [];
+  employeeDeplacee!: Employe;
+  employeeRemplacee!: Employe;
   joursOuverture: string[] = ['Lundi-Vendredi', 'Lundi-Samedi'];
   heuresTravail: string[] = ['06:00-10:00','06:00-15:00','06:00-19:00','06:00-20:00'];
-  nombreAgentsMaximum: number[] = [2,3,4,5,6,7,8,9,10]
+  nombreAgentsMaximum: number[] = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
 
 
@@ -49,6 +53,8 @@ export class AgencesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    this.getEmployeeDeplacee(this.modalData);
+    this.getEmployeeRemplacee(this.modalData);
   }
 
   loadData() {
@@ -60,7 +66,7 @@ export class AgencesComponent implements OnInit {
 
   openAddModal() {
     this.isEditMode = false;
-    this.modalData = { nom: '', adresse: '' , joursOuverture: '', heuresTravail: '', nombreAgentsMaximum: 0};
+    this.modalData = { nom: '', adresse: '' , joursOuverture: '', heuresTravail: '', nombreAgentsMaximum: 0, receptionEmploye: false, deplacementEmploye: false, deplacementInterne: false };
     this.selectedId = null;
     this.showModal = true;
   }
@@ -79,9 +85,19 @@ export class AgencesComponent implements OnInit {
   closeModal2() {
     this.showModal2 = false;
   }
+  
 
+  getEmployeeDeplacee(modalData: Agence) {
+    this.agencesService.getEmployeeDeplacee(modalData.nom).subscribe(data => {
+      this.employeeDeplacee = data;
+    });
+  }
 
-
+  getEmployeeRemplacee(modalData: Agence) {
+    this.agencesService.getEmployeeRemplacee(modalData.nom).subscribe(data => {
+      this.employeeRemplacee = data;
+    });
+  }
 
   saveModal(form: NgForm) {
     if (form.invalid) {
@@ -151,6 +167,8 @@ export class AgencesComponent implements OnInit {
       this.toastr.error('Erreur lors de la récupération des employés', 'Erreur');
     });
   }
+
+  
 
 
 }

@@ -12,6 +12,7 @@ import { NgxMatTimepickerModule } from 'ngx-mat-timepicker';
 
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
         useFactory: adapterFactory,
       })
     ),
+    { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' },  // ✅ format dd/MM/yyyy partout
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     provideHttpClient(withInterceptorsFromDi()),
     {

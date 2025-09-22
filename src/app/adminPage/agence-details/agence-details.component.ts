@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-agence-details',
@@ -8,5 +8,6 @@ import { Component } from '@angular/core';
   styleUrl: './agence-details.component.scss'
 })
 export class AgenceDetailsComponent {
+  
 
 }

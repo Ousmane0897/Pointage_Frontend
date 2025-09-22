@@ -65,9 +65,12 @@ export class EmployesComponent implements OnInit {
     statut: '',
     employeCreePar: '',
     deplacement: false,
+    remplacement: false,
     site: [] as string[], // Assuming site is an array of strings
     joursDeTravail: '',
     joursDeTravail2: '',
+    matin: false,
+    apresMidi: false,
     heureDebut: '',
     heureFin: '',
     heureDebut2: '',
@@ -135,7 +138,7 @@ export class EmployesComponent implements OnInit {
   openAddModal() {
     console.log('Employé connecté (CreePar):', this.employeCreePar2);
     this.isEditMode = false;
-    this.modalData = { codeSecret: '', nom: '', prenom: '', numero: '', intervention: '', statut: '', employeCreePar: this.employeCreePar2, deplacement: false, site: [], joursDeTravail: '', joursDeTravail2: '', heureDebut: '', heureFin: '', heureDebut2: '', heureFin2: '', dateEtHeureCreation: '' };
+    this.modalData = { codeSecret: '', nom: '', prenom: '', numero: '', intervention: '', statut: '', employeCreePar: this.employeCreePar2, deplacement: false, remplacement: false, site: [], joursDeTravail: '', joursDeTravail2: '', matin: false, apresMidi: false, heureDebut: '', heureFin: '', heureDebut2: '', heureFin2: '', dateEtHeureCreation: '' };
     this.selectedId = null;
     this.showModal = true;
   }
@@ -158,7 +161,7 @@ export class EmployesComponent implements OnInit {
       return;
     }
 
-    // --- Récupération des horaires et validation ---
+    // --- Cas 2 agences ---
     if (this.modalData.site.length === 2) {
       forkJoin([
         this.agenceService.getAgenceByNom(this.modalData.site[0]),
@@ -167,37 +170,41 @@ export class EmployesComponent implements OnInit {
         this.agence = agence1;
         this.agence2 = agence2;
 
-        const h1 = agence1.heuresTravail.split('-')[0];
-        const h2 = agence1.heuresTravail.split('-')[1];
-        const h3 = agence2.heuresTravail.split('-')[0];
-        const h4 = agence2.heuresTravail.split('-')[1];
+        const h1 = agence1.heuresTravail.split('-')[0].trim();
+        const h2 = agence1.heuresTravail.split('-')[1].trim();
+        const h3 = agence2.heuresTravail.split('-')[0].trim();
+        const h4 = agence2.heuresTravail.split('-')[1].trim();
 
+        // Vérification : l'agent doit être inclus dans les horaires des deux agences
         if (
-          this.compareHeures(h1, this.modalData.heureDebut) <= 0 ||
-          this.compareHeures(h2, this.modalData.heureFin) >= 0 ||
-          this.compareHeures(h3, this.modalData.heureDebut2 ?? '') <= 0 ||
-          this.compareHeures(h4, this.modalData.heureFin2 ?? '') >= 0
+          this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
+          this.compareHeures(this.modalData.heureFin, h2) <= 0 &&
+          this.compareHeures(h3, this.modalData.heureDebut2 ?? '') <= 0 &&
+          this.compareHeures(this.modalData.heureFin2 ?? '', h4) <= 0
         ) {
           this.isEditMode ? this.updateEmploye() : this.addEmploye();
-
         } else {
-          this.toastr.error('Les horaires de l\'agent doivent être compris entre les horaires de l\'agence !', 'Erreur');
+          this.toastr.error('Les horaires de l\'agent doivent être compris entre les horaires des agences !', 'Erreur');
         }
       });
 
+      // --- Cas 1 agence ---
     } else if (this.modalData.site.length === 1) {
       this.agenceService.getAgenceByNom(this.modalData.site[0]).subscribe(agence1 => {
         this.agence = agence1;
 
-        const h1 = agence1.heuresTravail.split('-')[0];
-        const h2 = agence1.heuresTravail.split('-')[1];
+        const h1 = agence1.heuresTravail.split('-')[0].trim();
+        const h2 = agence1.heuresTravail.split('-')[1].trim();
 
+        console.log('Heures de travail de l\'agence:', h1, '-', h2);
+        console.log('Heures de travail de l\'agent:', this.modalData.heureDebut, '-', this.modalData.heureFin);
+
+        // Vérification : l'agent doit être inclus dans les horaires de l'agence
         if (
-          this.compareHeures(h1, this.modalData.heureDebut) <= 0 ||
-          this.compareHeures(h2, this.modalData.heureFin) >= 0
+          this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
+          this.compareHeures(this.modalData.heureFin, h2) <= 0
         ) {
           this.isEditMode ? this.updateEmploye() : this.addEmploye();
-
         } else {
           this.toastr.error('Les horaires de l\'agent doivent être compris entre les horaires de l\'agence !', 'Erreur');
         }
@@ -205,143 +212,161 @@ export class EmployesComponent implements OnInit {
     }
   }
 
+
   // --- Méthodes pour éviter la duplication ---
+
   private addEmploye() {
     if (this.modalData.site.length === 1) {
-      this.agenceService.getNumberofEmployeesInOneAgence(this.modalData.site[0]).subscribe(count => {
-        this.getNumberofEmployeesInOneAgence = count;
-      });
-      this.agenceService.MaxNumberOfEmployeesInOneAgence(this.modalData.site[0]).subscribe(maxCount => {
-        this.MaxNumberOfEmployeesInOneAgence = maxCount;
-        if (this.getNumberofEmployeesInOneAgence < this.MaxNumberOfEmployeesInOneAgence) {
-          console.log('Nombre d\'employés dans l\'agence:', this.getNumberofEmployeesInOneAgence);
-          console.log('Nombre maximum d\'employés dans l\'agence:', this.MaxNumberOfEmployeesInOneAgence);
+      // === CAS 1 : Un seul site ===
+      forkJoin({
+        count: this.agenceService.getNumberofEmployeesInOneAgence(this.modalData.site[0]),
+        max: this.agenceService.MaxNumberOfEmployeesInOneAgence(this.modalData.site[0])
+      }).subscribe(({ count, max }) => {
+        if (count < max) {
+          this.modalData.heureDebutAvantDeplacement = this.modalData.heureDebut;
+          this.modalData.heureFinAvantDeplacement = this.modalData.heureFin;
           this.employeService.addEmploye(this.modalData).subscribe(() => {
             this.loadData();
             this.closeModal();
             this.toastr.success('Employé ajouté avec succès !', 'Succès');
           });
         } else {
-          this.toastr.error(`Le nombre maximum d'employés dans l'agence ${this.modalData.site[0]} a été atteint !`, 'Erreur');
+          this.toastr.error(
+            `Le nombre maximum d'employés dans l'agence ${this.modalData.site[0]} a été atteint !`,
+            'Erreur'
+          );
         }
       });
-    } else if (this.modalData.site.length === 2) {
-      this.agenceService.getNumberofEmployeesInOneAgence(this.modalData.site[0]).subscribe(count1 => {
-        this.getNumberofEmployeesInOneAgence = count1;
-      });
-      this.agenceService.MaxNumberOfEmployeesInOneAgence(this.modalData.site[0]).subscribe(maxCount1 => {
-        this.MaxNumberOfEmployeesInOneAgence = maxCount1;
-      });
-      this.agenceService.getNumberofEmployeesInOneAgence(this.modalData.site[1]).subscribe(count2 => {
-        this.getNumberofEmployeesInOneAgence2 = count2;
-      });
-      this.agenceService.MaxNumberOfEmployeesInOneAgence(this.modalData.site[1]).subscribe(maxCount1 => {
-        this.MaxNumberOfEmployeesInOneAgence2 = maxCount1;
-      });
-      if (this.getNumberofEmployeesInOneAgence == this.MaxNumberOfEmployeesInOneAgence) {
 
-        this.toastr.error(`Le nombre maximum d'employés dans l'agence ${this.modalData.site[0]} a été atteint !`, 'Erreur');
-        return;
-      } else if (this.getNumberofEmployeesInOneAgence2 == this.MaxNumberOfEmployeesInOneAgence2) {
-        this.toastr.error(`Le nombre maximum d'employés dans l'agence ${this.modalData.site[1]} a été atteint !`, 'Erreur');
-        return;
-      } else {
+    } else if (this.modalData.site.length === 2) {
+      // === CAS 2 : Deux sites ===
+      forkJoin({
+        count1: this.agenceService.getNumberofEmployeesInOneAgence(this.modalData.site[0]),
+        max1: this.agenceService.MaxNumberOfEmployeesInOneAgence(this.modalData.site[0]),
+        count2: this.agenceService.getNumberofEmployeesInOneAgence(this.modalData.site[1]),
+        max2: this.agenceService.MaxNumberOfEmployeesInOneAgence(this.modalData.site[1])
+      }).subscribe(({ count1, max1, count2, max2 }) => {
+        if (count1 >= max1) {
+          this.toastr.error(
+            `Le nombre maximum d'employés dans l'agence ${this.modalData.site[0]} a été atteint !`,
+            'Erreur'
+          );
+          return;
+        }
+
+        if (count2 >= max2) {
+          this.toastr.error(
+            `Le nombre maximum d'employés dans l'agence ${this.modalData.site[1]} a été atteint !`,
+            'Erreur'
+          );
+          return;
+        }
+
+        // si horaires fournis → flags matin/après-midi
+        if (this.modalData.heureDebut) this.modalData.matin = true;
+        if (this.modalData.heureDebut2) this.modalData.apresMidi = true;  
+        this.modalData.heureDebutAvantDeplacement = this.modalData.heureDebut;
+        this.modalData.heureFinAvantDeplacement = this.modalData.heureFin;
+        this.modalData.heureDebutAvantDeplacement2 = this.modalData.heureDebut2;
+        this.modalData.heureFinAvantDeplacement2 = this.modalData.heureFin2;
         this.employeService.addEmploye(this.modalData).subscribe(() => {
-          this.loadData();
+          this.loadData(); 
           this.closeModal();
           this.toastr.success('Employé ajouté avec succès !', 'Succès');
         });
-      }
+      });
     }
-
   }
 
+
   private updateEmploye() {
-  this.employeService.updateEmploye(this.selectedId!, this.modalData).subscribe(() => {
-    this.loadData();
-    this.closeModal();
-    this.toastr.success('Employé mis à jour avec succès !', 'Succès');
-  });
-}
+    this.employeService.updateEmploye(this.selectedId!, this.modalData).subscribe(() => {
+      this.loadData();
+      this.closeModal();
+      this.toastr.success('Employé mis à jour avec succès !', 'Succès');
+    });
+  }
 
-compareHeures(h1: string, h2: string): number {
-  const [h1Hours, h1Minutes] = h1.split(':').map(Number);
-  const [h2Hours, h2Minutes] = h2.split(':').map(Number);
+  compareHeures(h1: string, h2: string): number {
+    const [h1Hours, h1Minutes] = h1.split(':').map(Number);
+    const [h2Hours, h2Minutes] = h2.split(':').map(Number);
 
-  const totalMinutes1 = h1Hours * 60 + h1Minutes;
-  const totalMinutes2 = h2Hours * 60 + h2Minutes;
+    const totalMinutes1 = h1Hours * 60 + h1Minutes;
+    const totalMinutes2 = h2Hours * 60 + h2Minutes;
 
-  return totalMinutes1 - totalMinutes2;
-}
+    return totalMinutes1 - totalMinutes2;
+  }
 
 
   get filteredEmployes() {
-  const term = this.searchText.toLowerCase();
-  return this.employes.filter(employe =>
-    `${employe.codeSecret} ${employe.prenom} ${employe.nom} ${employe.numero} ${employe.intervention} ${employe.statut} ${employe.employeCreePar} ${employe.site}`
-      .toLowerCase()
-      .includes(term)
-  );
-}
-
-deleteRow(codeSecret: string) {
-  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-    width: '350px',
-    data: { message: "Êtes-vous sûr de vouloir supprimer cet employé ?" },
-  });
-
-  dialogRef.afterClosed().subscribe(result => {
-    if (result) {
-      this.employeService.deleteEmploye(codeSecret).subscribe({
-        next: () => {
-          this.loadData();
-          this.toastr.success('Employé supprimé avec succès !', 'Succès');
-        },
-        error: (err) => {
-          console.error('Erreur de suppression :', err);
-          this.toastr.error('Erreur lors de la suppression de l\'employé', 'Erreur');
-        }
-      });
-    }
-  });
-}
-
-onCheckboxChange(event: any) {
-  const value = event.target.value;
-  const isChecked = event.target.checked;
-  this.siteTouched = true;
-
-  if (isChecked) {
-    if (!this.modalData.site.includes(value)) {
-      this.modalData.site.push(value);
-      this.onFieldChange();
-    }
-  } else {
-    this.modalData.site = this.modalData.site.filter(s => s !== value);
+    const term = this.searchText.toLowerCase();
+    return this.employes.filter(employe =>
+      `${employe.codeSecret} ${employe.prenom} ${employe.nom} ${employe.numero} ${employe.intervention} ${employe.statut} ${employe.employeCreePar} ${employe.site}`
+        .toLowerCase()
+        .includes(term)
+    );
   }
-}
 
-
-
-exportExcel() {
-  this.employes$.subscribe(data => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Employes');
-    XLSX.writeFile(wb, 'employes.xlsx');
-  });
-}
-
-exportPdf() {
-  this.employes$.subscribe(data => {
-    const doc = new jsPDF();
-    autoTable(doc, {
-      head: [['codeSecret', 'Nom', 'Prénom', 'Numéro', 'Intervention', 'Site']],
-      body: data.map(e => [e.codeSecret, e.nom, e.prenom, e.numero, e.intervention, e.site])
+  deleteRow(codeSecret: string) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '350px',
+      data: { message: "Êtes-vous sûr de vouloir supprimer cet employé ?" },
     });
-    doc.save('employes.pdf');
-  });
-}
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.employeService.deleteEmploye(codeSecret).subscribe({
+          next: () => {
+            this.loadData();
+            this.toastr.success('Employé supprimé avec succès !', 'Succès');
+          },
+          error: (err) => {
+            console.error('Erreur de suppression :', err);
+            this.toastr.error('Erreur lors de la suppression de l\'employé', 'Erreur');
+          }
+        });
+      }
+    });
+  }
+
+  onCheckboxChange(event: any) {
+    const value = event.target.value;
+    const isChecked = event.target.checked;
+    this.siteTouched = true;
+
+    if (isChecked) {
+      if (!this.modalData.site.includes(value)) {
+        this.modalData.site.push(value);
+        this.onFieldChange();
+      }
+    } else {
+      this.modalData.site = this.modalData.site.filter(s => s !== value);
+    }
+  }
+
+
+
+  exportExcel() {
+    this.employes$.subscribe(data => {
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Employes');
+      XLSX.writeFile(wb, 'employes.xlsx');
+    });
+  }
+
+  exportPdf() {
+    this.employes$.subscribe(data => {
+      const doc = new jsPDF();
+      autoTable(doc, {
+        head: [['codeSecret', 'Nom', 'Prénom', 'Numéro', 'Intervention', 'Site']],
+        body: data.map(e => [e.codeSecret, e.nom, e.prenom, e.numero, e.intervention, e.site])
+      });
+      doc.save('employes.pdf');
+    });
+  }
+
+
 
 
 

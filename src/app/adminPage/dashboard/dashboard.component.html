@@ -1,5 +1,6 @@
 <div class="p-1 space-y-1">
   <div class="flex justify-between px-4 py-2">
+    
     <h3 class="text-lg font-semibold">Bienvenue, {{ prenomNom && poste ? prenomNom +' | '+ poste : 'Diarra Niang | Directrice générale' }}</h3>
     <div class="flex items-center space-x-2">
       <div [ngClass]="role === 'SUPERADMIN' ? 'bg-yellow-500' : 'bg-gray-400'"
@@ -15,6 +16,7 @@
       <span class="text-sm text-gray-700 font-medium">
         {{ role === 'SUPERADMIN' ? 'Super Admin' : role === 'admin' || 'Admin' ? 'Admin' : 'Utilisateur' }}
       </span>
+      <app-super-admin *ngIf="role === 'SUPERADMIN'"></app-super-admin>
     </div>
 
   </div>
