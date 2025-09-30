@@ -68,7 +68,7 @@
                 </div>
 
                 <span
-                    *ngIf="planification.statut != 'EXECUTEE' && planification.statut != 'ANNULEE' && planification.joursRestants! >= 0"
+                    *ngIf="planification.statut != 'EXECUTEE' && planification.statut != 'ANNULEE' && planification.statut != 'ANNULATION_ACCEPTEE' && planification.joursRestants! >= 0"
                     class="font-semibold">j-{{ planification.joursRestants }}</span>
 
             </div>

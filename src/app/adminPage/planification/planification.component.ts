@@ -16,6 +16,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { AgencesService } from '../../services/agences.service';
 import { interval, Subscription, switchMap } from 'rxjs';
 import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
+import { LoginService } from '../../services/login.service';
 
 @Component({
   selector: 'app-planification',
@@ -54,6 +55,9 @@ export class PlanificationComponent implements OnInit {
   isEditMode = false;
   selectedId: string | null = null;
   private refreshSub?: Subscription;
+  requestedBy: string | null = null;
+  role: string | null = null;
+  poste: string | null = null;
   modalData: Planification = {
     prenomNom: '',
     codeSecret: '',
@@ -83,7 +87,8 @@ export class PlanificationComponent implements OnInit {
     private planfication: PlanificationService,
     private agence: AgencesService,
     private confirmDialogService: ConfirmDialogService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private loginService: LoginService
   ) { }
 
   ngOnInit(): void {
@@ -95,6 +100,10 @@ export class PlanificationComponent implements OnInit {
     this.refreshSub = interval(10000)
       .pipe(switchMap(() => this.planfication.getPlanifications()))
       .subscribe(data => this.planifications = data);
+
+    this.requestedBy = this.loginService.getFirstNameLastName();
+    this.role = this.loginService.getUserRole();
+    this.poste = this.loginService.getUserPoste();
   }
 
   //ngOnDestroy() dans ton composant sert à empêcher les appels automatiques et 
@@ -128,32 +137,72 @@ export class PlanificationComponent implements OnInit {
     this.planfication.cancelPlanification(id).subscribe(() => this.loadData());
   }*/
 
-  cancelTask(id: string) {
+  cancelTask(planificationId: string) {
     this.confirmDialogService.confirm({
       title: 'Confirmation',
       message: 'Veuillez indiquer le motif de l\'annulation :',
-      confirmText: 'Oui, annuler',
+      confirmText: this.role === 'SUPERADMIN' ? 'Oui, annuler' : 'Demander l\'annulation à la directrice',
       cancelText: 'Non'
-    }).subscribe(motif => { // motif est la valeur renvoyée par la méthode confirm de ConfirmDialogService et cette valeur peut être une chaîne de caractères (motif) ou null
-      if (motif && motif.trim() !== '') { // si l’utilisateur a bien mis un texte. motif.trim() !== '' permet d’éviter les motifs vides ou composés uniquement d’espaces.
-        this.planification.cancelPlanification(id, motif).subscribe({
-          next: (updatedPlanif) => {
-            this.modalData = { ...this.modalData, motifAnnulation: updatedPlanif.motifAnnulation };
-            this.cdr.detectChanges();
-            console.log("ModalData MAJ :", this.modalData);
-            console.log('Planning annulé avec le motif :', this.modalData.motifAnnulation);
-            this.toastr.success('Planning annulé avec succès !', 'Succès');
-            this.loadData();
-          },
-          error: (err) => {
-            console.error('Erreur d\'annulation :', err);
-            this.toastr.error('Erreur lors de l\'annulation du planning', 'Erreur');
-          }
-        });
-
+    }).subscribe(motif => {
+      if (!motif || motif.trim() === '') {
+        this.toastr.error('Le motif d\'annulation est obligatoire.', 'Erreur');
+        return; // Si le motif est vide ou nul, la fonction cancelTask s’arrête ici. Aucune autre ligne après ce return ne sera exécutée. Cela permet d’éviter d’envoyer une annulation ou une demande sans motif.
       }
+
+      const todayISO: string = new Date().toISOString();
+
+      // Récupérer la planification via le service
+      this.planification.getPlanificationById(planificationId).subscribe({
+        next: (planif) => {
+          const dateDebut = new Date(planif.dateDebut!); // transforme la string ISO en Date
+          if (this.diffInHours(todayISO, dateDebut.toISOString()) < 24 && this.role !== 'SUPERADMIN') {
+            this.toastr.error(
+              'Une annulation doit être faite au moins 24 heures avant la date de début.',
+              'Erreur'
+            );
+            return;
+          }
+
+          if (this.role === 'SUPERADMIN') {
+            // Annulation directe
+            this.planification.cancelPlanification(planificationId, motif, this.requestedBy!).subscribe({
+              next: (updatedPlanif) => {
+                this.modalData = { ...this.modalData, motifAnnulation: updatedPlanif.motifAnnulation };
+                this.cdr.detectChanges();
+                console.log('ModalData MAJ :', this.modalData);
+                this.toastr.success('Planning annulé avec succès !', 'Succès');
+                this.loadData();
+              },
+              error: (err) => {
+                console.error('Erreur d\'annulation :', err);
+                this.toastr.error('Erreur lors de l\'annulation du planning', 'Erreur');
+              }
+            });
+          } else if (this.role!.toUpperCase() === 'ADMIN') {
+            // Demande d'annulation pour les admins
+            this.planification.demanderAnnulation(planificationId, motif, this.requestedBy!).subscribe({
+              next: (updatedPlanif) => {
+                this.modalData = { ...this.modalData, motifAnnulation: updatedPlanif.motif };
+                this.cdr.detectChanges();
+                console.log('ModalData MAJ :', this.modalData);
+                this.toastr.success('Demande d\'annulation envoyée avec succès !', 'Succès');
+                this.loadData();
+              },
+              error: (err) => {
+                console.error('Erreur lors de la demande d\'annulation :', err);
+                this.toastr.error('Erreur lors de l\'envoi de la demande d\'annulation', 'Erreur');
+              }
+            });
+          }
+        },
+        error: (err) => {
+          console.error('Erreur récupération planification :', err);
+          this.toastr.error('Impossible de récupérer la planification', 'Erreur');
+        }
+      });
     });
   }
+
 
 
 
@@ -178,6 +227,8 @@ export class PlanificationComponent implements OnInit {
       dateCreation: planification.dateCreation ? new Date(planification.dateCreation) as any : null,
     }; // Clone the planification data to modalData
 
+    console.log('Planification reçue pour édition:', planification);
+    console.log('codeSecret:', planification.codeSecret);
 
     this.selectedId = planification.codeSecret;
     this.showModal = true;
@@ -270,7 +321,6 @@ export class PlanificationComponent implements OnInit {
       }
     } else {
 
-
       this.toastr.error('Erreur survenue pendant la mise à jour', 'Erreur')
     }
   }
@@ -307,40 +357,14 @@ export class PlanificationComponent implements OnInit {
     }
   }
 
-  GetplanificationAVenir(codeSecret: string) {
+  diffInHours(date1: string, date2: string): number {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
 
-    this.planification.getPlanificationsAVenir(codeSecret).subscribe(data => {
-      this.planificationAVenir = data;
-      console.log('DateDebut:', this.planificationAVenir.map(p => p.dateDebut));
-      console.log('DateFin:', this.planificationAVenir.map(p => p.dateFin));
-      this.showModal2 = true;
-      console.log('Planifications à venir:', this.planificationAVenir);
-    }, error => {
-      this.toastr.error('Failed to load upcoming planifications', 'Error');
-      console.error('Error fetching upcoming planifications:', error);
-    });
-  }
+    const diffMs = d2.getTime() - d1.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
-  GetplanificationEnCours(codeSecret: string) {
-    this.planification.getPlanificationsEnCours(codeSecret).subscribe(data => {
-      this.planificationEnCours = data;
-      this.showModal3 = true;
-      console.log('Planifications en cours:', this.planificationEnCours);
-    }, error => {
-      this.toastr.error('Failed to load ongoing planifications', 'Error');
-      console.error('Error fetching ongoing planifications:', error);
-    });
-  }
-
-  GetplanificationTerminee(codeSecret: string) {
-    this.planification.getPlanificationsTerminees(codeSecret).subscribe(data => {
-      this.planificationTerminee = data;
-      this.showModal4 = true;
-      console.log('Planifications terminées:', this.planificationTerminee);
-    }, error => {
-      this.toastr.error('Failed to load completed planifications', 'Error');
-      console.error('Error fetching completed planifications:', error);
-    });
+    return diffHours;
   }
 
   formatDateToDDMMYYYY(dateString: string): string {

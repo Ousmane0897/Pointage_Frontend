@@ -28,6 +28,9 @@ export const routes: Routes = [
             { path: 'employes', loadComponent: () => import('./adminPage/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page employes
             { path: 'planification', loadComponent: () => import('./adminPage/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
             { path: 'calendrier', loadComponent: () => import('./adminPage/calendrier/calendrier.component').then(m => m.CalendrierComponent) },
+            { path: 'stock/entrees', loadComponent: () => import('./adminPage/stock/entrees/entrees.component').then(m => m.EntreesComponent) }, // lazy loading de la page entrees
+            { path: 'stock/sorties', loadComponent: () => import('./adminPage/stock/sorties/sorties.component').then(m => m.SortiesComponent) }, // lazy loading de la page sorties
+            { path: 'stock/stocktheorique', loadComponent: () => import('./adminPage/stock/stocktheorique/stocktheorique.component').then(m => m.StocktheoriqueComponent) }, // lazy loading de la page theorique
             { path: 'stockage', loadComponent: () => import('./adminPage/stockage/stockage.component').then(m => m.StockageComponent) }, // lazy loading de la page stockage
             { path: 'feries', loadComponent: () => import('./adminPage/ferie/ferie.component').then(m => m.FerieComponent) }, // lazy loading de la page feries
             {

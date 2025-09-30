@@ -8,12 +8,9 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-super-admin',
   standalone: true,
-  imports: [
-    CommonModule,
-    
-  ],
+  imports: [CommonModule],
   templateUrl: './super-admin.component.html',
-  styleUrl: './super-admin.component.scss'
+  styleUrls: ['./super-admin.component.scss'] // ⚠ correction ici: styleUrls au pluriel
 })
 export class SuperAdminComponent implements OnInit, OnDestroy {
 
@@ -22,29 +19,38 @@ export class SuperAdminComponent implements OnInit, OnDestroy {
   public currentRequest: any | null = null;
   public showValidationModal = false;
 
+  // 🔔 Ajout de l'audio
+  private audio = new Audio('assets/notification.wav');
+
   constructor(
     private ws: WebsocketService,
     private toastr: ToastrService,
     private planifService: PlanificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
+    // 1️⃣ Charger les demandes en attente depuis le backend
+    this.planifService.getPendingRequests().subscribe(requests => {
+      this.pendingRequests = requests;
+    });
+
+    // 2️⃣ Écouter les notifications en temps réel via WebSocket
     this.subs.push(
       this.ws.onAnnulationRequests().subscribe(req => {
         console.log('Nouvelle demande d\'annulation', req);
-        this.pendingRequests.unshift(req);
+        this.pendingRequests.unshift(req); // ajouter en tête
         this.toastr.info(`${req.prenomNom} — ${req.motif}`, 'Nouvelle demande d\'annulation');
-        // auto open modal (optionnel)
-        this.openValidationModal(req);
+        this.playNotificationSound();
+        //this.openValidationModal(req); // optionnel
       })
     );
+  }
 
-    this.subs.push(
-      this.ws.onAnnulationDecisions().subscribe(dec => {
-        console.log('Decision broadcast', dec);
-        // mettre à jour UI si besoin
-      })
-    );
+
+  // 🔔 Méthode pour jouer le son
+  private playNotificationSound() {
+    this.audio.currentTime = 0;
+    this.audio.play().catch(err => console.error('Erreur lecture audio:', err));
   }
 
   openValidationModal(req: any) {
@@ -65,14 +71,17 @@ export class SuperAdminComponent implements OnInit, OnDestroy {
     this.showValidationModal = true;
   }
 
-  validate(accept: boolean) {
-    if (!this.currentRequest) return;
-    this.planifService.validerAnnulation(this.currentRequest.planificationId, accept).subscribe({
-      next: (res) => {
-        this.toastr.success(accept ? 'Annulation validée' : 'Annulation refusée', 'Decision envoyée');
-        // retirer de pending
-        this.pendingRequests = this.pendingRequests.filter(r => r.planificationId !== this.currentRequest.planificationId);
-        this.closeValidationModal();
+  validate(accept: boolean, requestId: string) {
+    this.planifService.validerAnnulation(requestId, accept).subscribe({
+      next: () => {
+        this.toastr.success(
+          accept ? 'Annulation validée' : 'Annulation refusée',
+          'Décision envoyée'
+        );
+        this.pendingRequests = this.pendingRequests.filter(r => r.planificationId !== requestId);
+        if (this.currentRequest?.planificationId === requestId) { // Fermer le modal automatiquement si la demande courante a été validée/refusée
+          this.closeValidationModal();
+        }
       },
       error: (err) => {
         console.error(err);
@@ -80,6 +89,7 @@ export class SuperAdminComponent implements OnInit, OnDestroy {
       }
     });
   }
+
 
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());

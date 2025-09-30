@@ -1,9 +1,6 @@
-// src/app/services/websocket.service.ts
 import { Injectable } from '@angular/core';
 import SockJS from 'sockjs-client';
-import { Client, Message } from '@stomp/stompjs';
-import { IMessage } from '@stomp/stompjs';
-
+import { Client, IMessage } from '@stomp/stompjs';
 import { Subject, Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -15,13 +12,16 @@ export class WebsocketService {
 
   constructor() {
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'), // Permet à Angular (ou tout autre client) de se connecter au broker.
+      // Utilise SockJS pour le navigateur
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       reconnectDelay: 5000,
-      debug: (str) => console.log('STOMP: ', str)
+      debug: (str: string) => console.log('STOMP: ', str)
     });
 
     this.client.onConnect = (frame) => {
-      console.log('STOMP connected', frame);
+      console.log('STOMP connecté', frame);
+
+      // Souscriptions aux topics
       this.client.subscribe('/topic/annulationRequests', (msg: IMessage) => {
         this.annulationRequests$.next(JSON.parse(msg.body));
       });
@@ -36,13 +36,15 @@ export class WebsocketService {
     };
 
     this.client.onStompError = (frame) => {
-      console.error('Broker reported error: ' + frame.headers['message']);
-      console.error('Additional details: ' + frame.body);
+      console.error('Erreur du broker STOMP:', frame.headers['message']);
+      console.error('Détails supplémentaires:', frame.body);
     };
 
+    // Activation du client
     this.client.activate();
   }
 
+  // Observables exposés pour les composants
   onAnnulationRequests(): Observable<any> {
     return this.annulationRequests$.asObservable();
   }

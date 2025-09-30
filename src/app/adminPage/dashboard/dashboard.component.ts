@@ -4,6 +4,7 @@ import { DashboardService } from '../../services/dashboard.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { LoginService } from '../../services/login.service';
+import { SuperAdminComponent } from '../super-admin/super-admin.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,7 +13,7 @@ import { LoginService } from '../../services/login.service';
     RouterModule,
     RouterOutlet,
     CommonModule,
-
+    SuperAdminComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'

@@ -21,6 +21,7 @@ export class SidebarComponent implements OnInit {
 
   role: string  = '';
   isOpen = true;
+  openDropdown: string | null = null;
 
     ngOnInit(): void {
       
@@ -45,5 +46,9 @@ export class SidebarComponent implements OnInit {
     localStorage.removeItem('token');
     this.router.navigateByUrl('/');
   }
+
+  toggleDropdown(menu: string) {
+  this.openDropdown = this.openDropdown === menu ? null : menu;
+}
 
 }

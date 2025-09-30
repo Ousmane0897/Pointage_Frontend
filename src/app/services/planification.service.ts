@@ -1,9 +1,21 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import e from 'express';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { Planification } from '../models/planification.model';
+
+export interface CancelRequest {
+  planificationId: string;
+  motif: string;
+  requestedBy: string;
+}
+
+export interface AnnulationRequestMessage {
+  planificationId: string;
+  motif: string;
+  requestedBy: string;
+  dateRequest: string; // ISO string
+}
 
 @Injectable({
   providedIn: 'root'
@@ -52,8 +64,8 @@ export class PlanificationService {
 
   }
 
-  cancelPlanification(id: string, motif: string): Observable<Planification> {
-    return this.http.post<Planification>('/api/planification/cancel', { id, motif });
+  cancelPlanification(planificationId: string, motif: string, requestedBy?: string): Observable<Planification> {
+    return this.http.post<Planification>('/api/planification/cancel', { planificationId, motif, requestedBy });
   }
 
 
@@ -62,13 +74,19 @@ export class PlanificationService {
     return this.http.delete<void>(`${this.baseUrl}/api/planification/${codeSecret}`);
   }
 
-  demanderAnnulation(id: string, motif: string, requestedBy?: string): Observable<any> {
-    const body = { id, motif, requestedBy };
-    return this.http.post<any>(`${this.baseUrl}/api/planification/demander`, body);
+  demanderAnnulation(planificationId: string, motif: string, requestedBy?: string): Observable<CancelRequest> {
+    const body = { planificationId, motif, requestedBy };
+    return this.http.post<CancelRequest>(`${this.baseUrl}/api/planification/demander`, body,   { headers: this.headers });
+  }
+  
+  // Méthode pour valider ou refuser une demande d'annulation
+  validerAnnulation(id: string, accepted: boolean, validatedBy?: string): Observable<Planification> {
+    const body = { id, accepted, validatedBy };
+    return this.http.post<Planification>(`${this.baseUrl}/api/planification/valider`, body,   { headers: this.headers });
   }
 
-  validerAnnulation(id: string, accepted: boolean, validatedBy?: string): Observable<any> {
-    const body = { id, accepted, validatedBy };
-    return this.http.post<any>(`${this.baseUrl}/api/planification/valider`, body);
+   // Récupère toutes les demandes en attente
+  getPendingRequests(): Observable<AnnulationRequestMessage[]> {
+    return this.http.get<AnnulationRequestMessage[]>('/api/planification/pending');
   }
 }
