@@ -1,0 +1,49 @@
+name: CI Frontend - Angular
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Installer Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # 3️⃣ Installer les dépendances
+      - name: Install dependencies
+        run: npm install
+
+      # 4️⃣ Lancer les tests (optionnel)
+      - name: Run tests
+        run: npm run test -- --watch=false --browsers=ChromeHeadless
+
+      # 5️⃣ Build Angular pour production
+      - name: Build Angular
+        run: npm run build -- --configuration production
+
+
+      # Les étapes du workflow en attendant de publier dans docker hub et de déployer dans un serveur (ex:VPS)
+      # 1- Checkout du code
+      # 2- Installer Node.js
+      # 3- Installer les dépendances (npm install)
+      # 4- Lancer les tests Angular (optionnel si tu n’en as pas encore)
+      # 5- Build Angular pour production (ng build --configuration production)
+
+
+      # 🔹 Notes
+      # Tu ne construis pas d’image Docker et ne la pousses pas.
+      # Tu ne déploies pas sur un serveur.
+      # Le workflow va juste vérifier que ton code compile correctement et que les tests passent.
+      # Plus tard, tu pourras ajouter Docker et déploiement quand tu seras prêt.
