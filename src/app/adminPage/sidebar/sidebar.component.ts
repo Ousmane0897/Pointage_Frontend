@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 import { LoginService } from '../../services/login.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-sidebar',
@@ -12,7 +13,8 @@ import { LoginService } from '../../services/login.service';
     NgClass,
     CommonModule,
     NgIf,
-    HeaderComponent
+    HeaderComponent,
+    LucideAngularModule
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
@@ -50,5 +52,11 @@ export class SidebarComponent implements OnInit {
   toggleDropdown(menu: string) {
   this.openDropdown = this.openDropdown === menu ? null : menu;
 }
+
+// Permet également d'appliquer des styles aux liens parents lorsque l'un de leurs sous-liens est actif.
+isActivePrefix(prefix: string): boolean {
+  return this.router.url.startsWith(prefix);
+}
+
 
 }

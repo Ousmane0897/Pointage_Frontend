@@ -1,0 +1,379 @@
+<div class="p-4">
+  <!-- 🔍 Barre de recherche -->
+  <!--
+  [value]="searchQuery"	Affiche la valeur du composant dans l’input
+  #searchInput	Crée une référence locale pour accéder à l’élément
+  (input)="onSearchChange(searchInput.value)"	Détecte la saisie utilisateur et envoie la valeur au composant-->
+  <div class="flex flex-col mt-5">
+    <div class="flex gap-2 mt-5">
+      <div class="relative w-1/2 mb-4 max-w-md">
+        <input type="text" [value]="searchQuery" #searchInput (input)="onSearchChange(searchInput.value)"
+          placeholder="Rechercher un produit..."
+          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <!-- Search Icon -->
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+          xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <div class="p-4 flex items-center mb-2">
+        <label for="department-select" class="font-semibold">Filtrer : </label>
+        <select id="department-select" [(ngModel)]="selectedCategory"
+          (ngModelChange)="onCategoryChange(selectedCategory)" class="border rounded p-1">
+          <!---(ngModelChange) déclenche ta méthode avec la nouvelle valeur directement-->
+          <option value="">Toutes les catégories</option>
+          <option *ngFor="let category of availableCategories" [value]="category">{{ category }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="p-4 flex items-center mt-2">
+      <label for="department-select" class="font-semibold">Filtrer : </label>
+      <select id="department-select" [(ngModel)]="selectedDestination"
+        (ngModelChange)="onDestinationChange(selectedDestination)" class="border rounded p-1">
+        <!---(ngModelChange) déclenche ta méthode avec la nouvelle valeur directement-->
+        <option value="">Tous les destinations</option>
+        <option *ngFor="let destination of availableDestinations" [value]="destination">{{ destination }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ➕ Bouton d'ajout -->
+  <button (click)="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Ajouter un produit</button>
+
+  <!-- 🌀 Loader -->
+  <div *ngIf="loading" class="text-blue-600 text-sm mb-2">
+    Chargement des produits...
+  </div>
+
+  <!-- 📋 Liste -->
+  <div *ngIf="!loading && produits.length > 0">
+    <!-- 📦 Grilles des produits -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
+      <div *ngFor="let produit of produits"
+        class="p-6 mt-10 border rounded-lg shadow-sm hover:shadow-md transition cursor-pointer">
+
+        <img [src]="baseUrl + '/api/produits/image/' + produit.codeProduit" alt="{{ produit.nomProduit }}"
+          class="w-full h-50 object-cover mb-4 rounded" />
+
+        <div>
+          <h3 class="font-semibold text-lg">{{ produit.nomProduit }}</h3>
+
+          <div class="p-2 flex gap-1">
+            <!-- 🛠️ Bouton Éditer -->
+            <button (click)="openEditModal(produit)" class="text-blue-500 hover:text-blue-600" title="Modifier">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </button>
+
+            <!-- 🗑️ Bouton Supprimer -->
+            <button (click)="deleteRow(produit.id!)" class="text-red-500 hover:text-red-600" title="Supprimer">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21
+                 c.342.052.682.107 1.022.166m-1.022-.165L18.16
+                 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25
+                 2.25 0 0 1-2.244-2.077L4.772
+                 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12
+                 .562c.34-.059.68-.114 1.022-.165m0 0a48.11
+                 48.11 0 0 1 3.478-.397m7.5
+                 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964
+                 51.964 0 0 0-3.32 0c-1.18.037-2.09
+                 1.022-2.09 2.201v.916m7.5 0a48.667
+                 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+
+            <button (click)="ouvrirDetails(produit)" class="text-green-500 hover:text-green-600" title="Modifier">
+              <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px"
+                fill="#75FB4C">
+                <path
+                  d="M440-220q125 0 212.5-87.5T740-520q0-125-87.5-212.5T440-820q-125 0-212.5 87.5T140-520q0 125 87.5 212.5T440-220Zm0-300Zm0 160q-83 0-147.5-44.5T200-520q28-70 92.5-115T440-680q82 0 146.5 45T680-520q-29 71-93.5 115.5T440-360Zm0-60q55 0 101-26.5t72-73.5q-26-46-72-73t-101-27q-56 0-102 27t-72 73q26 47 72 73.5T440-420Zm0-50q20 0 35-14.5t15-35.5q0-20-15-35t-35-15q-21 0-35.5 15T390-520q0 21 14.5 35.5T440-470Zm0 310q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T80-520q0-74 28.5-139.5t77-114.5q48.5-49 114-77.5T440-880q74 0 139.5 28.5T694-774q49 49 77.5 114.5T800-520q0 67-22.5 126T715-287l164 165-42 42-165-165q-48 40-107 62.5T440-160Z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- 🔸 Pagination -->
+  <div class="flex justify-between items-center mt-4 text-sm text-gray-700">
+    <button class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50" (click)="prevPage()"
+      [disabled]="page === 0">
+      ◀ Précédent
+    </button>
+
+    <div>
+      Page <strong>{{ page + 1 }}</strong> / {{ totalPages || 1 }}
+    </div>
+
+    <button class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50" (click)="nextPage()"
+      [disabled]="page + 1 >= totalPages">
+      Suivant ▶
+    </button>
+  </div>
+
+  <!-- Aucun résultat -->
+  <div *ngIf="!loading && produits.length === 0"
+    class="text-gray-500 text-3xl mt-10 justify-center items-center text-center">
+    Aucun produit trouvé.
+  </div>
+
+
+
+
+  <!-- Modal d'ajout/modification -->
+  <div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
+    <div class="max-h-[90vh] overflow-y-auto bg-white p-6 rounded-lg w-full max-w-md ">
+      <h2 class="text-xl font-semibold mb-4">
+        {{ isEditMode ? 'Modifier' : 'Ajouter' }} un produit
+      </h2>
+
+      <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate>
+        <div class="mb-2">
+          <label for="codeProduit" class="block mb-2 font-semibold text-gray-600">Code produit</label>
+          <input id="codeProduit" class="w-full p-2 border rounded" name="codeProduit" #codeProduit="ngModel"
+            [(ngModel)]="modalData.codeProduit" placeholder="Code produit" required />
+          <div *ngIf="codeProduit.invalid && codeProduit.touched" class="text-red-500 text-sm">
+            Le code produit est requis.
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label for="nomProduit" class="block mb-2 font-semibold text-gray-600">Nom du produit</label>
+          <input id="nomProduit" class="w-full p-2 border rounded" name="nomProduit" #nomProduit="ngModel"
+            [(ngModel)]="modalData.nomProduit" placeholder="Entrez le nom du produit" required />
+          <div *ngIf="nomProduit.invalid && nomProduit.touched" class="text-red-500 text-sm">
+            Le nom du produit est requis.
+          </div>
+        </div>
+
+
+        <div class="mb-4">
+          <label for="image" class="block mb-2 font-semibold text-gray-600">Image du produit</label>
+          <input id="image" type="file" (change)="onFileSelected($event)" class="border rounded-md w-full p-2" />
+        </div>
+
+
+        <!-- Prévisualisation -->
+        <div *ngIf="previewUrl" class="mt-2">
+          <p class="text-sm text-gray-500 mb-1">Prévisualisation :</p>
+          <img [src]="previewUrl" alt="Photo de profil" class="w-32 h-32 object-cover border rounded" />
+        </div>
+
+
+        <div class="mb-2">
+          <label for="description" class="block mb-2 font-semibold text-gray-600">Description du produit</label>
+          <input class="w-full p-2 border rounded" name="description" #description="ngModel"
+            [(ngModel)]="modalData.description" placeholder="détails utiles, composition du produit, etc." required />
+          <div *ngIf="description.invalid && description.touched" class="text-red-500 text-sm">
+            La description est requise.
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label for="categorie" class="block mb-2 font-semibold text-gray-600">Catégorie</label>
+          <select id="categorie" [(ngModel)]="modalData.categorie" name="categorie" class="p-2 border rounded-md w-full"
+            required>
+            <option value="">Sélectionner une catégorie</option>
+            <option *ngFor="let cat of availableCategories" [value]="cat">
+              {{ cat }}
+            </option>
+          </select>
+
+          <!-- ✅ Message affiché si rien n'est sélectionné -->
+          <p *ngIf="form.submitted && !form.controls['categorie']?.valid" class="text-red-600 text-sm mt-2">
+            Veuillez sélectionner une catégorie.
+          </p>
+
+        </div>
+
+        <div class="mb-2">
+          <label for="destination" class="block mb-2 font-semibold text-gray-600">Destination</label>
+          <select id="destination" [(ngModel)]="modalData.destination" name="destination"
+            class="p-2 border rounded-md w-full" required>
+            <option value="">Sélectionner une destination</option>
+            <option *ngFor="let dest of availableDestinations" [value]="dest">
+              {{ dest }}
+            </option>
+          </select>
+
+          <!-- ✅ Message affiché si rien n'est sélectionné -->
+          <p *ngIf="form.submitted && !form.controls['destination']?.valid" class="text-red-600 text-sm mt-2">
+            Veuillez sélectionner une destination.
+          </p>
+        </div>
+
+
+        <div *ngIf="modalData.destination === 'VENTE'" class="mb-4">
+          <label for="prixDeVente" class="block mb-2 font-semibold text-gray-600">Prix de vente</label>
+          <input class="w-full p-2 border rounded" name="prixDeVente" #prixDeVente="ngModel"
+            [(ngModel)]="modalData.prixDeVente" placeholder="Prix de vente" type="number" min="0" required />
+          <div *ngIf="prixDeVente.invalid && prixDeVente.touched" class="text-red-500 text-sm">
+            Le prix de vente est requis et doit être un nombre positif.
+          </div>
+
+        </div>
+
+        <div *ngIf="modalData.destination === 'VENTE'" class="mb-4">
+          <label for="uniteDeMesure" class="block mb-2 font-semibold text-gray-600">Unité de mesure</label>
+          <input class="w-full p-2 border rounded" name="uniteDeMesure" #uniteDeMesure="ngModel"
+            [(ngModel)]="modalData.uniteDeMesure" placeholder="ex: pièce, kg, litre" required />
+          <div *ngIf="uniteDeMesure.invalid && uniteDeMesure.touched" class="text-red-500 text-sm">
+            L'unité de mesure est requise.
+          </div>
+
+        </div>
+
+        <div class="mb-4">
+          <label for="conditionnement" class="block mb-2 font-semibold text-gray-600">Conditionnement</label>
+          <input class="w-full p-2 border rounded" name="conditionnement" #conditionnement="ngModel"
+            [(ngModel)]="modalData.conditionnement" placeholder="ex : carton de 12 pièces, pack de 6 bouteilles"
+            required />
+          <div *ngIf="conditionnement.invalid && conditionnement.touched" class="text-red-500 text-sm">
+            Le conditionnement est requis.
+          </div>
+
+        </div>
+
+
+        <div class="mb-4">
+          <label for="quantite" class="block mb-2 font-semibold text-gray-600">Quantité en stock</label>
+          <input class="w-full p-2 border rounded" name="quantite" #quantite="ngModel" [(ngModel)]="modalData.quantiteSnapshot"
+            placeholder="Quantité en stock" type="number" [readonly]="selectedId" min="0" required />
+          <div *ngIf="quantite.invalid && quantite.touched" class="text-red-500 text-sm">
+            La quantité en stock est requise et doit être un nombre positif.
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="seuilMinimum" class="block mb-2 font-semibold text-gray-600">Seuil minimum</label>
+          <input class="w-full p-2 border rounded" name="seuilMinimum" #seuilMinimum="ngModel"
+            [(ngModel)]="modalData.seuilMinimum" placeholder="Seuil minimum" type="number" min="0" required />
+          <div *ngIf="seuilMinimum.invalid && seuilMinimum.touched" class="text-red-500 text-sm">
+            Le seuil minimum est requis et doit être un nombre positif.
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="emplacement" class="block mb-2 font-semibold text-gray-600">Emplacement</label>
+          <input class="w-full p-2 border rounded" name="emplacement" #emplacement="ngModel"
+            [(ngModel)]="modalData.emplacement" placeholder="Emplacement" required />
+          <div *ngIf="emplacement.invalid && emplacement.touched" class="text-red-500 text-sm">
+            L'emplacement est requis.
+          </div>
+
+        </div>
+
+        <div class="mb-2">
+          <label for="statut" class="block mb-2 font-semibold text-gray-600">Statut</label>
+          <select id="statut" [(ngModel)]="modalData.statut" name="statut" class="p-2 border rounded-md w-full"
+            required>
+            <option value="''">Sélectionner un statut</option>
+            <option *ngFor="let status of StatusProduit" [value]="status">
+              {{ status }}
+            </option>
+          </select>
+
+          <!-- ✅ Message affiché si rien n'est sélectionné -->
+          <p *ngIf="form.submitted && !form.controls['statut']?.valid" class="text-red-600 text-sm mt-2">
+            Veuillez sélectionner un statut.
+          </p>
+
+        </div>
+
+        <!--<div class="mb-4">
+          <label for="quantite" class="block mb-2 font-semibold text-gray-600">Quantité en stock</label>
+          <input class="w-full p-2 border rounded" name="quantite" #quantite="ngModel"
+            [(ngModel)]="modalData.quantiteSnapshot" placeholder="Quantité" required />
+          <div *ngIf="quantite.invalid && quantite.touched" class="text-red-500 text-sm">
+            La quantité est requise.
+          </div>
+
+        </div>-->
+
+
+        <div class="flex justify-end">
+          <button type="button" class="mr-2 px-4 py-2 bg-gray-400 text-white rounded"
+            (click)="closeModal()">Annuler</button>
+
+          <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-blue-600 text-white rounded">
+            {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
+          </button>
+        </div>
+      </form>
+
+
+    </div>
+  </div>
+
+
+  <!-- ✅ Modal affichant les détails -->
+  <div *ngIf="produitSelectionne" class="fixed inset-0  bg-black bg-opacity-50 flex items-center justify-center z-50"
+    (click)="fermerModal()"> <!-- Fond sombre cliquable pour fermer le modal -->
+    <div class="bg-white rounded-lg max-h-[90vh] overflow-y-scroll p-6 w-full max-w-md relative shadow-lg"
+      (click)="$event.stopPropagation()">
+      <!-- Empêche la fermeture du modal en cliquant à l'intérieur -->
+
+      <!-- Bouton de fermeture -->
+      <button class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl" (click)="fermerModal()">
+        &times;
+      </button>
+
+      <!-- Image -->
+      <img [src]="baseUrl + '/api/produits/image/' + produitSelectionne.codeProduit"
+        alt="{{ produitSelectionne.nomProduit }}" class="w-full h-50 object-cover mb-4 rounded" />
+
+      <!-- Détails -->
+      <h2 class="text-xl font-semibold mb-2">
+        {{ produitSelectionne.nomProduit }}
+      </h2>
+      <p *ngIf="produitSelectionne.codeProduit" class="text-gray-600 mb-2">
+        Code produit : {{ produitSelectionne.codeProduit }}
+      </p>
+      <p *ngIf="produitSelectionne.categorie != null" class="text-gray-600 mb-2">
+        Catégorie : {{ produitSelectionne.categorie }}
+      </p>
+
+      <p *ngIf="produitSelectionne.destination != null" class="text-gray-600 mb-2">
+        Destination : {{ produitSelectionne.destination }}
+      </p>
+
+      <p *ngIf="produitSelectionne.uniteDeMesure != null && produitSelectionne.uniteDeMesure !== ''"
+        class="text-gray-600 mb-2">
+        Unité de mesure : {{ produitSelectionne.uniteDeMesure }}
+      </p>
+      <p *ngIf="produitSelectionne.conditionnement" class="text-gray-600 mb-2">
+        Conditionnement : {{ produitSelectionne.conditionnement }}
+      </p>
+      <p *ngIf="produitSelectionne.quantiteSnapshot" class="text-gray-600 mb-2">
+        Quantité : {{ produitSelectionne.quantiteSnapshot }} 
+      </p>
+      <p *ngIf="produitSelectionne.prixDeVente" class="text-gray-600 mb-2">
+        Prix de vente : {{ produitSelectionne.prixDeVente }} FCFA
+      </p>
+      <p *ngIf="produitSelectionne.statut" class="text-gray-600 mb-2">
+        Statut : {{ produitSelectionne.statut }}
+      </p>
+      <p *ngIf="produitSelectionne.emplacement" class="text-gray-600 mb-2">
+        Emplacement : {{ produitSelectionne.emplacement }}
+      </p>
+      <p *ngIf="produitSelectionne.seuilMinimum != null" class="text-gray-600 mb-2">
+        Seuil minimum : {{ produitSelectionne.seuilMinimum }}
+      </p>
+      <p *ngIf="produitSelectionne.prixDeVente" class="text-gray-600 mb-2">
+        Prix de vente : {{ produitSelectionne.prixDeVente }} FCFA
+      </p>
+      <p class="text-gray-500 mb-4">
+        Description : {{ produitSelectionne.description || 'Aucune description' }}
+      </p>
+
+      <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded w-full" (click)="fermerModal()">
+        Fermer
+      </button>
+    </div>
+  </div>

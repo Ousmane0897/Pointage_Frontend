@@ -36,6 +36,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",
+    "lucide-angular": "^0.545.0",
     "ng": "^0.0.0",
     "ngx-mat-timepicker": "^17.1.0",
     "ngx-spinner": "^17.0.0",

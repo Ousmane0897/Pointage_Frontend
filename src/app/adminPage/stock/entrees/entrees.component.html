@@ -1,1 +1,187 @@
-<p>entrees works!</p>
+<div class="p-6">
+  <div class="flex space-x-3 mb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#000000">
+      <path
+        d="M450-154v-309L180-619v309l270 156Zm60 0 270-156v-310L510-463v309Zm-60 69L150-258q-14-8-22-22t-8-30v-340q0-16 8-30t22-22l300-173q14-8 30-8t30 8l300 173q14 8 22 22t8 30v340q0 16-8 30t-22 22L510-85q-14 8-30 8t-30-8Zm194-525 102-59-266-154-102 59 266 154Zm-164 96 104-61-267-154-104 60 267 155Z" />
+    </svg>
+    <h1 class="text-2xl font-semibold mb-4"> Entrées en Stock</h1>
+  </div>
+
+  <!-- Formulaire d’ajout -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <h2 class="text-lg font-bold mb-3">Nouvelle entrée</h2>
+
+    <div class="grid grid-cols-2 gap-4">
+      <input type="text" placeholder="Code Produit" [(ngModel)]="nouvelleEntree.codeProduit" readonly
+        class="border rounded p-2" />
+      <select [(ngModel)]="nouvelleEntree.nomProduit" (ngModelChange)="onProduitChange($event)"
+        class="border rounded p-2"> <!-- $event représente le nom du produit sélectionné -->
+        <option value="">-- Sélectionner un produit --</option>
+        <option *ngFor="let produit of produits" [value]="produit.nomProduit">
+          {{ produit.nomProduit }}
+        </option>
+      </select>
+
+
+      <select [(ngModel)]="nouvelleEntree.type" class="border rounded p-2">
+        <option value="ENTREE">Entrée</option>
+        <option value="AJUSTEMENT">Ajustement</option>
+      </select>
+      <input type="number" placeholder="Quantité" [(ngModel)]="nouvelleEntree.quantite" class="border rounded p-2" />
+      <input type="text" placeholder="Responsable" [(ngModel)]="nouvelleEntree.responsable"
+        class="border rounded p-2" />
+      <select [(ngModel)]="nouvelleEntree.motifMouvement" class="border rounded p-2">
+        <option value="">-- Sélectionner un motif --</option>
+        <option *ngFor="let motif of motifs" [value]="motif">
+          {{ motif }}
+        </option>
+      </select>
+      <input
+        *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK' && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'"
+        type="text" placeholder="Fournisseur" [(ngModel)]="nouvelleEntree.fournisseur" class="border rounded p-2" />
+      <input
+        *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK' && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'"
+        type="text" placeholder="Numéro de Facture" [(ngModel)]="nouvelleEntree.numeroFacture"
+        class="border rounded p-2" />
+
+    </div>
+
+    <div>
+      <mat-form-field
+        *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK' && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'"
+        appearance="fill" class="border rounded p-2 w-full">
+        <mat-label>Date de peremption</mat-label>
+        <input matInput [matDatepicker]="pickerPeremption" name="dateDebut"
+          [(ngModel)]="nouvelleEntree.dateDePeremption" required>
+        <mat-datepicker-toggle matSuffix [for]="pickerPeremption"></mat-datepicker-toggle>
+        <mat-datepicker #pickerPeremption></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+        <mat-label>Date d'entrée en stock</mat-label>
+        <input matInput [matDatepicker]="pickerEntree" name="dateDebut" [(ngModel)]="nouvelleEntree.dateMouvement"
+          required>
+        <mat-datepicker-toggle matSuffix [for]="pickerEntree"></mat-datepicker-toggle>
+        <mat-datepicker #pickerEntree></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <button (click)="ajouterEntree()"
+    [disabled]="!nouvelleEntree.codeProduit || !nouvelleEntree.nomProduit || !nouvelleEntree.type || !nouvelleEntree.quantite || !nouvelleEntree.responsable || !nouvelleEntree.motifMouvement || !nouvelleEntree.dateDePeremption || !nouvelleEntree.dateMouvement"
+    class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+    ➕ Enregistrer l’entrée
+  </button>
+
+</div>
+
+
+<!-- Tableau historique -->
+<h2 class="text-lg font-semibold mb-3 text-center">Historique des entrées</h2>
+<table class="min-w-full bg-white rounded-lg shadow">
+  <thead class="bg-gray-100">
+    <tr>
+      <th class="p-3 text-left"> Code Produit</th>
+      <th class="p-3 text-left"> Nom produit</th>
+      <th class="p-3 text-left">Quantité</th>
+      <th class="p-3 text-left">Fournisseur</th>
+      <th class="p-3 text-left">Date d'entrée en stock</th>
+      <th class="p-3 text-left">Date de Péremption</th>
+      <th class="p-3 text-left">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let e of entrees" class="border-b hover:bg-gray-50">
+      <td class="p-3">{{ e.codeProduit }}</td>
+      <td class="p-3">{{ e.nomProduit }}</td>
+      <td class="p-3">{{ e.quantite }}</td>
+      <td class="p-3">{{ e.fournisseur }}</td>
+      <td class="p-3">{{ e.dateMouvement ? (e.dateMouvement | date: 'dd/MM/yyyy') : '-' }}</td>
+      <td class="p-3">{{ e.dateDePeremption ? (e.dateDePeremption | date: 'dd/MM/yyyy') : '-' }}</td>
+      <td class="p-3">
+        <button (click)="openModal(e)"
+          class="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">Détails</button>
+    </tr>
+  </tbody>
+</table>
+
+
+
+<!-- Modal Détails Entrée -->
+<!-- Modal -->
+<div *ngIf="selectedProduit" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div
+    class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative transform transition-all duration-300 scale-100 animate-fadeIn max-h-[90vh] overflow-y-auto">
+    <!-- Bouton de fermeture -->
+    <button (click)="closeModal()" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 transition">
+      ✕
+    </button>
+
+    <!-- Titre -->
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">
+      Détails de l'entrée en stock
+    </h2>
+
+    <!-- Contenu -->
+    <div class="space-y-3 text-gray-700">
+      <div>
+        <span class="font-semibold">Code Produit :</span>
+        <span>{{ selectedProduit.codeProduit }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Nom :</span>
+        <span>{{ selectedProduit.nomProduit }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Quantité :</span>
+        <span>{{ selectedProduit.quantite }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Fournisseur :</span>
+        <span>{{ selectedProduit.fournisseur }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Motif du Mouvement :</span>
+        <span>{{ selectedProduit.motifMouvement }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Responsable :</span>
+        <span>{{ selectedProduit.responsable }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Type de Mouvement :</span>
+        <span>{{ selectedProduit.type }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Numéro de Facture :</span>
+        <span>{{ selectedProduit.numeroFacture }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Date d'entrée en stock :</span>
+        <span>{{ selectedProduit.dateMouvement | date: 'dd/MM/yyyy' }}</span>
+      </div>
+
+      <div>
+        <span class="font-semibold">Date de Péremption :</span>
+        <span>{{ selectedProduit.dateDePeremption | date: 'dd/MM/yyyy' }}</span>
+      </div>
+    </div>
+
+    <!-- Bouton de fermeture -->
+    <div class="mt-6 text-right">
+      <button (click)="closeModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

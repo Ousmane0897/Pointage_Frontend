@@ -93,9 +93,10 @@
           <button (click)="toggleDropdown('stock')"
             class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
             [ngClass]="{
-      'bg-gray-700 font-bold': isActive('/admin/stock'),
+      'bg-gray-700 font-bold': isActivePrefix('/admin/stock'),
       'text-center': !isOpen
     }">
+
             <div class="flex items-center space-x-2">
               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                 fill="#FFFFFF">
@@ -114,23 +115,57 @@
 
           <!-- Sous-menu -->
           <ul *ngIf="openDropdown === 'stock'" class="ml-8 mt-1 space-y-1 text-sm">
+
+            <!-- Articles & Produits -->
+
             <li>
-              <a routerLink="/admin/stock/entrees" class="block px-4 py-2 rounded hover:bg-gray-700">
-                Entrées
+              <a routerLink="/admin/stock/produits" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <!--hover:bg-blue-50 hover:text-blue-700 transition-->
+                <lucide-icon name="Package" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Articles & Produits</span>
+              </a>
+            </li>
+
+            <!-- Réceptions (Entrées) -->
+
+            <li>
+              <a routerLink="/admin/stock/entrees" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="ArrowUp" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Réceptions / Entrées</span>
+              </a>
+            </li>
+
+            <!-- Sorties / Livraisons -->
+
+            <li>
+              <a routerLink="/admin/stock/sorties" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="ArrowDown" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Sorties / Livraisons</span>
               </a>
             </li>
             <li>
-              <a routerLink="/admin/stock/sorties" class="block px-4 py-2 rounded hover:bg-gray-700">
-                Sorties
+              <a routerLink="/admin/stock/stocktheorique" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="Activity" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Suivi du Stock</span>
               </a>
             </li>
+
+            <!-- Rapports & statistiques -->
+
             <li>
-              <a routerLink="/admin/stock/stocktheorique" class="block px-4 py-2 rounded hover:bg-gray-700">
-                Stock théorique
+              <a routerLink="/admin/stock/stocktheorique" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="ChartBar" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Rapports & Statistiques</span>
               </a>
             </li>
           </ul>
         </li>
+
 
         <a routerLink="/admin/feries" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/feries'),
