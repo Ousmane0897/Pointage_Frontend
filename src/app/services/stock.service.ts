@@ -61,7 +61,24 @@ export class StockService {
     return this.http.get<MouvementSortieStock[]>(`${this.baseUrl}/sorties`);
   }
 
+  // --------------------------
+  // SUIVI DE STOCK
+  // --------------------------
+  getSuiviStock(): Observable<Map<string, Object>[]> {
+    return this.http.get<Map<string, Object>[]>(`${this.baseUrl}/api/stock/suivi`);
+  }
 
+  // ===================== RAPPORTS ET STATISTIQUES =====================
+  getStockEvolution(produitId: string): Observable<{ labels: string[], data: number[] }> {
+    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/evolution/${produitId}`);
+  }
+
+  getSortiesParDestination(): Observable<{ labels: string[], data: number[] }> {
+    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/sorties-par-destination`);
+  }
+  getTopProduitsSortis(mois: number, annee: number): Observable<{ labels: string[], data: number[] }> {
+    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/top-produits?mois=${mois}&annee=${annee}`);
+  }
 
 
 }

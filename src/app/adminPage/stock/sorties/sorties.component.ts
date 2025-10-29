@@ -26,6 +26,7 @@ import { AgencesService } from '../../../services/agences.service';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './sorties.component.html',
   styleUrls: ['./sorties.component.scss'],
+
 })
 export class SortiesComponent implements OnInit {
   // 🔹 Données du composant
@@ -37,15 +38,13 @@ export class SortiesComponent implements OnInit {
 
   // 🔹 Constantes métiers
   TypeMouvement: TypeMouvement = 'SORTIE';
-  motifs: MotifMouvementSortieStock[] = [
-    'VENTE',
-    'DESTINATION_AGENCE',
-    'DESTRUCTION',
-    'DON',
-    'CASSE',
-    'CHANTIER',
-    'AUTRE',
-  ];
+  motifs = ['VENTE', 'INTERNE'];
+  sousMotifs = ['AGENCE', 'DON', 'CASSE', 'CHANTIER', 'PEREMPTION', 'DEFECTUEUX'];
+  alertesStock: { nomProduit: string; stock: number; seuil: number }[] = [];
+  displayedMotifs: string[] = [];
+  isInSubLevel = false; // Pour revenir au niveau principal
+  animationClass = ''; // 🔹 transition Tailwind appliquée dynamiquement
+
 
   constructor(
     private fb: FormBuilder,
@@ -56,7 +55,7 @@ export class SortiesComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    
+
     // Initialisation du formulaire reactif 
     this.sortieForm = this.fb.group({
       produitsFormArray: this.fb.array([]),
@@ -64,18 +63,35 @@ export class SortiesComponent implements OnInit {
       responsable: ['', Validators.required],
       motifSortieStock: ['', Validators.required],
       typeMouvement: ['SORTIE', Validators.required],
-      dateSortie: [new Date(), Validators.required],
+      //dateSortie: [new Date(), Validators.required],
 
     });
+
+    // 🔹 Filtrage dynamique des produits selon le motif de sortie de stock. Pour les sorties en stock
+    const ctrl = this.sortieForm.get('motifSortieStock'); // Récupère le contrôle du formulaire pour le motif de sortie de stock.
+    if (ctrl) {
+      ctrl.valueChanges.subscribe(motif => { // À chaque changement de motif de sortie de stock. valueChanges pour écouter les changements de valeur
+        this.produitService.getAllProduits().subscribe(allProduits => {
+          if (motif === 'VENTE') {
+            this.produits = allProduits.filter(p => p.destination === 'VENTE');
+          } else if (motif === 'DESTINATION_AGENCE') {
+            this.produits = allProduits.filter(p => p.destination === 'DESTINATION_AGENCE');
+          } else {
+            this.produits = allProduits;
+          }
+        });
+      });
+    }
+
     // 🔹 Gestion dynamique du champ destination selon le motif
     // 👉 Donc, tu dis à Angular : “Chaque fois que la valeur de motifSortieStock change, exécute ce code.”
     // Quand l’utilisateur choisit une autre valeur dans le <select formControlName="motifSortieStock">, Angular met à jour le contrôle et déclenche l’observable valueChanges.
     // En clair :
-          // ngOnInit() prépare la règle. On crée le form et on installe le listener.
-          // valueChanges applique la règle chaque fois que l’utilisateur change la valeur.
+    // ngOnInit() prépare la règle. On crée le form et on installe le listener.
+    // valueChanges applique la règle chaque fois que l’utilisateur change la valeur.
     this.sortieForm.get('motifSortieStock')?.valueChanges.subscribe(value => { // A chaque changement de valeur du motif de sortie de stock valueChanges émet la nouvelle valeur sélectionnée par l’utilisateur et subdscribe exécute la fonction avec cette valeur.
       const destinationControl = this.sortieForm.get('destination');
-      if (value === 'DESTINATION_AGENCE') {
+      if (value === 'AGENCE') {
         destinationControl?.enable();
       } else {
         destinationControl?.disable();
@@ -85,6 +101,8 @@ export class SortiesComponent implements OnInit {
     this.loadProduits();
     this.getAvailableAgences();
     this.ajouterProduit(); // commence avec 1 ligne
+
+    this.displayedMotifs = [...this.motifs]; // Initialement, affiche les motifs principaux
   }
 
   // ===========================================
@@ -103,6 +121,38 @@ export class SortiesComponent implements OnInit {
       error: () => this.toastr.error('Erreur lors du chargement des produits', 'Erreur'),
     });
   }
+
+  // ===========================================
+  // 🧩 Gestion du sélecteur de motif avec sous-niveaux
+  // ===========================================
+  // Affiche les sous-motifs ou revient au niveau principal
+  onMotifChange(event: Event) {
+    const selected = (event.target as HTMLSelectElement).value;
+
+    if (selected === 'INTERNE' && !this.isInSubLevel) {
+      this.animationClass = '-translate-x-full opacity-0'; // 🔹 slide out
+      setTimeout(() => {
+        this.displayedMotifs = [...this.sousMotifs, '⬅️ Retour'];
+        this.animationClass = 'translate-x-0 opacity-100'; // 🔹 slide in
+        this.isInSubLevel = true;
+        this.sortieForm.patchValue({ motifSortieStock: '' });
+      }, 300);
+      return;
+    }
+
+    if (selected === '⬅️ Retour') {
+      this.animationClass = 'translate-x-full opacity-0 scale-95'; // 🔹 slide out
+      setTimeout(() => {
+        this.displayedMotifs = [...this.motifs];
+        this.animationClass = 'translate-x-0 opacity-100 scale-100'; // 🔹 slide in
+        this.isInSubLevel = false;
+        this.sortieForm.patchValue({ motifSortieStock: '' });
+      }, 300);
+      return;
+    }
+
+  }
+
 
   getAvailableAgences() {
     this.agencesService.getAllSites().subscribe({
@@ -129,8 +179,18 @@ export class SortiesComponent implements OnInit {
 
         // Charger le stock disponible
         this.stockService.getStockProduit(produit.codeProduit).subscribe({
-          next: (stock) => (this.stockDisponible[produit.codeProduit] = stock),
-          error: () => this.toastr.error('Erreur lors de la récupération du stock'),
+          next: (stock) => {
+            this.stockDisponible[produit.codeProduit] = stock;
+
+            // 🧭 Vérifier le seuil minimum
+            if (produit.seuilMinimum !== null && stock <= produit.seuilMinimum) {
+              this.ajouterAlerteStock(produit.nomProduit, stock, produit.seuilMinimum);
+            } else {
+              this.retirerAlerteStock(produit.nomProduit);
+            }
+          },
+          error: () =>
+            this.toastr.error('Erreur lors de la récupération du stock'),
         });
       }
     });
@@ -143,7 +203,7 @@ export class SortiesComponent implements OnInit {
       if (codeProduit && this.stockDisponible[codeProduit] !== undefined) {
         if (quantite > this.stockDisponible[codeProduit]) {
           fg.get('quantite')?.setErrors({ exceedStock: true });
-          this.toastr.warning('Quantité demandée dépasse le stock disponible !');
+          this.toastr.error('Quantité demandée dépasse le stock disponible !');
         } else {
           fg.get('quantite')?.setErrors(null);
         }
@@ -165,6 +225,19 @@ export class SortiesComponent implements OnInit {
     });
 
     this.produitsFormArray.push(fg);
+  }
+
+  // ✅ Ajoute une alerte persistante
+  ajouterAlerteStock(nomProduit: string, stock: number, seuil: number) {
+    const existe = this.alertesStock.find((a) => a.nomProduit === nomProduit);
+    if (!existe) {
+      this.alertesStock.push({ nomProduit, stock, seuil });
+    }
+  }
+
+  // ✅ Retire une alerte quand le stock redevient normal
+  retirerAlerteStock(nomProduit: string) {
+    this.alertesStock = this.alertesStock.filter((a) => a.nomProduit !== nomProduit);
   }
 
 
@@ -207,39 +280,39 @@ export class SortiesComponent implements OnInit {
       return;
     }
 
-    const mouvements: MouvementSortieStock[] = this.apercuProduits.map((a) => ({
+    // ✅ Seuls les champs de MouvementStock --> dto coté backend
+    const mouvements = this.apercuProduits.map((a) => ({
       codeProduit: a.codeProduit,
       nomProduit: a.nomProduit,
       quantite: a.quantite,
-      typeMouvement: 'SORTIE',
-      destination: a.destination,
-      motifSortieStock: a.motif,
-      responsable: a.responsable,
-      dateSortie: new Date(),
     }));
 
     // 🔸 Appel au backend
     if (mouvements.length === 1) {
-      this.stockService.creerSortieSimple(mouvements[0]).subscribe({
+      this.stockService.creerSortieSimple({
+        ...mouvements[0],
+        typeMouvement: 'SORTIE',
+        destination: this.sortieForm.value.destination,
+        responsable: this.sortieForm.value.responsable,
+        motifSortieStock: this.sortieForm.value.motifSortieStock,
+      }).subscribe({
         next: () => this.onSuccess(),
         error: (err) => this.toastr.error(err.error.message),
       });
     } else {
-      this.stockService
-        .creerSortieBatch({
-          mouvements,
-          destination: this.sortieForm.value.destination,
-          responsable: this.sortieForm.value.responsable,
-          motifSortieStock: this.sortieForm.value.motifSortieStock,
-          typeMouvement: 'SORTIE',
-          //dateSortie: new Date(),
-        })
-        .subscribe({
-          next: () => this.onSuccess(),
-          error: (err) => this.toastr.error(err.error.message),
-        });
+      this.stockService.creerSortieBatch({
+        mouvements, // tableau des produits à sortir du stock
+        destination: this.sortieForm.value.destination,
+        responsable: this.sortieForm.value.responsable,
+        motifSortieStock: this.sortieForm.value.motifSortieStock,
+        typeMouvement: 'SORTIE',
+      }).subscribe({
+        next: () => this.onSuccess(),
+        error: (err) => this.toastr.error(err.error.message),
+      });
     }
   }
+
 
   // ===========================================
   // 🧩 Reset après succès
@@ -250,6 +323,6 @@ export class SortiesComponent implements OnInit {
     this.produitsFormArray.clear();
     this.apercuProduits = [];
     this.stockDisponible = {};
-    this.ajouterProduit();
+    //this.ajouterProduit();
   }
 }

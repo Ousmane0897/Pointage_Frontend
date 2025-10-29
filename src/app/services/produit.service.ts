@@ -65,6 +65,11 @@ getProduitByCode(codeProduit: string): Observable<Produit> {
   return this.http.get<Produit>(`${this.baseUrl}/api/produits/code`, { params });
 }
 
+getProduitByName(nomProduit: string): Observable<Produit> {
+  let params = new HttpParams().set('nomProduit', nomProduit);
+  return this.http.get<Produit>(`${this.baseUrl}/api/produits/nom`, { params });
+}
+
 /**
  * Met à jour partiellement un produit existant.
  * En TypeScript, le mot-clé Partial<T> est un type utilitaire intégré qui rend toutes les propriétés d’un type optionnelles.

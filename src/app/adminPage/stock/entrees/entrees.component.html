@@ -52,7 +52,7 @@
         appearance="fill" class="border rounded p-2 w-full">
         <mat-label>Date de peremption</mat-label>
         <input matInput [matDatepicker]="pickerPeremption" name="dateDebut"
-          [(ngModel)]="nouvelleEntree.dateDePeremption" required>
+          [(ngModel)]="nouvelleEntree.dateDePeremption" required [min]="dateAujourdhui" readonly>
         <mat-datepicker-toggle matSuffix [for]="pickerPeremption"></mat-datepicker-toggle>
         <mat-datepicker #pickerPeremption></mat-datepicker>
       </mat-form-field>
@@ -62,7 +62,7 @@
       <mat-form-field appearance="fill" class="border rounded p-2 w-full">
         <mat-label>Date d'entrée en stock</mat-label>
         <input matInput [matDatepicker]="pickerEntree" name="dateDebut" [(ngModel)]="nouvelleEntree.dateMouvement"
-          required>
+          required [min]="dateAujourdhui" readonly>
         <mat-datepicker-toggle matSuffix [for]="pickerEntree"></mat-datepicker-toggle>
         <mat-datepicker #pickerEntree></mat-datepicker>
       </mat-form-field>

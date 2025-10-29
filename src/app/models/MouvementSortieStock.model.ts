@@ -1,5 +1,5 @@
 export type TypeMouvement = 'ENTREE' | 'SORTIE' | 'AJUSTEMENT';
-export type MotifMouvementSortieStock = 'VENTE' | 'DESTINATION_AGENCE' | 'DESTRUCTION' | 'DON' | 'CASSE' | 'CHANTIER' | 'AUTRE';
+export type MotifMouvementSortieStock = 'VENTE' | 'DESTINATION_AGENCE' | 'DESTRUCTION' | 'DON' | 'CASSE' | 'CHANTIER' | 'INTERNE';
 
 
 

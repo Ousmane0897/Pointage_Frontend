@@ -31,6 +31,7 @@ export class EntreesComponent implements OnInit {
   motifs: string[] = ['RECEPTION_FOURNISSEUR', 'RETOUR_EN_STOCK', 'PRODUCTION_INTERNE', 'AJUSTEMENT_INVENTAIRE'];
   type: string[] = ['ENTREE', 'SORTIE', 'AJUSTEMENT'];
   selectedProduit: any = null;
+  dateAujourdhui: Date = new Date();
   nouvelleEntree: MouvementEntreeStock = {
     codeProduit: '',
     nomProduit: '',

@@ -31,8 +31,8 @@ export const routes: Routes = [
             { path: 'stock/entrees', loadComponent: () => import('./adminPage/stock/entrees/entrees.component').then(m => m.EntreesComponent) }, // lazy loading de la page entrees
             { path: 'stock/sorties', loadComponent: () => import('./adminPage/stock/sorties/sorties.component').then(m => m.SortiesComponent) }, // lazy loading de la page sorties
             { path: 'stock/produits', loadComponent: () => import('./adminPage/stock/produit-list/produit-list.component').then(m => m.ProduitListComponent) }, // lazy loading de la page produits
-            { path: 'stock/stocktheorique', loadComponent: () => import('./adminPage/stock/stocktheorique/stocktheorique.component').then(m => m.StocktheoriqueComponent) }, // lazy loading de la page theorique
-            { path: 'stock/statistiques', loadComponent: () => import('./adminPage/stock/statistiques/statistiques.component').then(m => m.StatistiquesComponent) }, // lazy loading de la page rapports
+            { path: 'stock/suivi', loadComponent: () => import('./adminPage/stock/suivi-stock/suivi-stock.component').then(m => m.SuiviStockComponent) }, // lazy loading de la page suivi
+            { path: 'stock/rapports-statistiques', loadComponent: () => import('./adminPage/stock/rapports-et-statistiques/rapports-et-statistiques.component').then(m => m.RapportsEtStatistiquesComponent) }, // lazy loading de la page rapports
             { path: 'stockage', loadComponent: () => import('./adminPage/stockage/stockage.component').then(m => m.StockageComponent) }, // lazy loading de la page stockage
             { path: 'feries', loadComponent: () => import('./adminPage/ferie/ferie.component').then(m => m.FerieComponent) }, // lazy loading de la page feries
             {

@@ -1,0 +1,77 @@
+<div class="p-8 bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg">
+  <h2 class="text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
+    📊 Tableau de bord - Rapports & Statistiques
+  </h2>
+
+  <!-- Sélecteur Mois / Année -->
+  <div class="flex flex-col md:flex-row gap-4 mb-8 items-center justify-between">
+    <div class="flex gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Mois</label>
+        <select
+          [(ngModel)]="moisSelectionne"
+          (change)="chargerTopProduits()"
+          class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        >
+          <option *ngFor="let m of moisDisponibles; let i = index" [value]="i + 1">
+            {{ m }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Année</label>
+        <input
+          type="number"
+          [(ngModel)]="anneeSelectionnee"
+          (change)="chargerTopProduits()"
+          class="border border-gray-300 rounded-lg px-3 py-2 w-28 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          min="2020"
+          max="2100"
+        />
+      </div>
+    </div>
+
+    <button
+      (click)="chargerTousLesGraphes()"
+      class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all"
+    >
+      🔄 Actualiser
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center text-gray-500 text-lg mt-10 animate-pulse">
+    Chargement des données...
+  </div>
+
+  <div *ngIf="!loading" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- 📈 Évolution du stock -->
+    <div class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all">
+      <canvas
+        baseChart
+        [data]="evolutionChart"
+        [options]="evolutionOptions"
+        [type]="'line'">
+      </canvas>
+    </div>
+
+    <!-- 🏢 Sorties par destination -->
+    <div class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all">
+      <canvas
+        baseChart
+        [data]="sortieChart"
+        [options]="sortieOptions"
+        [type]="'pie'">
+      </canvas>
+    </div>
+  </div>
+
+  <!-- 🏆 Top produits -->
+  <div class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all">
+    <canvas
+      baseChart
+      [data]="topChart"
+      [options]="topOptions"
+      [type]="'bar'">
+    </canvas>
+  </div>
+</div>

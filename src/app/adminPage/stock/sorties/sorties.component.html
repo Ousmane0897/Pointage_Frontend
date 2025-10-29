@@ -1,3 +1,25 @@
+<!-- 🔥 Alerte persistante stock bas -->
+<div
+  *ngIf="alertesStock.length > 0"
+  class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 border border-red-300 text-red-800 rounded-xl shadow-lg p-4 w-11/12 md:w-2/3"
+>
+  <div class="flex items-center justify-between mb-2">
+    <h3 class="font-semibold text-lg">
+      ⚠️ Stock critique : {{ alertesStock.length }} produit{{ alertesStock.length > 1 ? 's' : '' }} concerné{{ alertesStock.length > 1 ? 's' : '' }}
+    </h3>
+  </div>
+
+  <ul class="space-y-1">
+    <li *ngFor="let a of alertesStock" class="text-sm font-medium">
+      🧴 <strong>{{ a.nomProduit }}</strong> → Stock actuel :
+      <span class="text-red-700">{{ a.stock }}</span> / Seuil :
+      <span class="text-gray-700">{{ a.seuil }}</span>
+    </li>
+  </ul>
+</div>
+
+
+
 <div class="p-6 bg-white rounded-xl shadow-md">
   <div class="flex space-x-3 mb-6">
     <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#000000">
@@ -8,11 +30,10 @@
 
     <form [formGroup]="sortieForm" class="space-y-4">
       <h3 class="text-lg font-medium mb-2">Données annexes</h3>
-      <!-- Champs globaux -->   
+      <!-- Champs globaux -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-3 rounded-lg">
         <div>
-          <select formControlName="destination"
-            class="w-full border rounded-lg p-2">
+          <select formControlName="destination" class="w-full border rounded-lg p-2">
             <option value="">-- Choisir une agence --</option>
             <option *ngFor="let agence of agences" [value]="agence">{{ agence }}</option>
           </select>
@@ -24,10 +45,20 @@
         </div>
 
         <div>
-          <select formControlName="motifSortieStock" class="w-full border rounded-lg p-2">
-            <option value="">-- Choisir un motif --</option>
-            <option *ngFor="let motif of motifs" [value]="motif">{{ motif }}</option>
-          </select>
+
+          <!-- conteneur animé -->
+         
+
+          <div [ngClass]="animationClass" class="transition-transform duration-300 ease-in-out w-full">
+            <select id="motifSortieStock" formControlName="motifSortieStock"
+              class="w-full border rounded-lg p-2 shadow-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+              (change)="onMotifChange($event)">
+              <option value="">-- Choisir un motif --</option>
+              <option *ngFor="let option of displayedMotifs" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -66,8 +97,8 @@
             </div>
           </div>
         </div>
-    
-      
+
+
 
         <button type="button" (click)="ajouterProduit()"
           class="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">

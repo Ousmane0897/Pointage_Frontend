@@ -371,32 +371,47 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     }
 
     // --- 🧩 MODE CRÉATION AVEC switchMap ---
-    this.produitService
-      .getProduitByCode(this.modalData.codeProduit)
-      .pipe(
-        switchMap(existingProduit => {
-          if (existingProduit) {
-            this.toastr.error('Un produit avec ce code existe déjà. Veuillez utiliser un code unique.', 'Erreur');
-            // On retourne un observable vide pour stopper la chaîne
-            return of(null);
-          }
-          // Aucun produit trouvé → on crée
-          return this.produitService.createProduit(formData); // Ici, tu retournes l’Observable à switchMap. Cela permet à RxJS de s’abonner correctement à l’appel de création et de continuer la chaîne.
-          // Le résultat de createProduit sera reçu dans le subscribe final. Sans return, switchMap ne reçoit rien → le subscribe ne sera jamais exécuté.Avec return, switchMap continue la chaîne normalement → workflow complet.
-        }),
-        catchError(err => {
-          if (err.status === 404) {
-            // Produit inexistant → on crée
-            return this.produitService.createProduit(formData);
-          }
-          console.error('Erreur lors de la vérification du code produit :', err);
-          this.toastr.error('Erreur de vérification du code produit.', 'Erreur');
+
+    this.produitService.getProduitByCode(this.modalData.codeProduit).pipe(
+      switchMap(existingByCode => {
+        if (existingByCode) {
+          this.toastr.error(
+            'Un produit avec ce code existe déjà. Veuillez utiliser un code unique.',
+            'Erreur'
+          );
+          // On retourne un observable vide pour stopper la chaîne
+          return of(null); // stoppe la chaîne
+        }
+
+        // ✅ Vérifier maintenant le nom
+        return this.produitService.getProduitByName(this.modalData.nomProduit); // retourne un Observable<Produit>. switchMap continue la chaîne avec ce nouvel Observable.
+      }),
+      switchMap(existingByName => { // reçoit le résultat de getProduitByName. 
+        if (existingByName) {
+          this.toastr.error(
+            'Un produit avec ce nom existe déjà. Veuillez utiliser un nom unique.',
+            'Erreur'
+          );
           return of(null);
-        })
-      )
+        }
+
+        // ✅ Si ni le code ni le nom n’existent → créer le produit
+        return this.produitService.createProduit(formData); // / Ici, tu retournes l’Observable à switchMap. Cela permet à RxJS de s’abonner correctement à l’appel de création et de continuer la chaîne.
+          // Le résultat de createProduit sera reçu dans le subscribe final. Sans return, switchMap ne reçoit rien → le subscribe ne sera jamais exécuté.Avec return, switchMap continue la chaîne normalement → workflow complet.
+      }),
+      catchError(err => {
+        if (err.status === 404) {
+          // Produit inexistant → création autorisée
+          return this.produitService.createProduit(formData);
+        }
+        console.error('Erreur lors de la vérification du produit :', err);
+        this.toastr.error('Erreur lors de la vérification du produit.', 'Erreur');
+        return of(null);
+      })
+    )
       .subscribe({
         next: (result) => {
-          if (!result) return; // Arrêt si déjà existant ou erreur
+          if (!result) return; // stop si déjà existant ou erreur
           this.loadProduits();
           this.closeModal();
           this.toastr.success('Produit ajouté avec succès !', 'Succès');
@@ -410,6 +425,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
           this.toastr.error('Erreur lors de la création du produit.', 'Erreur');
         }
       });
+
   }
 
 
