@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
-import { HttpClientModule } from '@angular/common/http';
+import {} from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ToastrService } from 'ngx-toastr';
@@ -18,7 +18,11 @@ import { Absent } from '../../models/absent.model';
   imports: [
     FormsModule,
     CommonModule,
-    HttpClientModule
+    
+// TODO: `HttpClientModule` should not be imported into a component directly.
+// Please refactor the code to add `provideHttpClient()` call to the provider list in the
+// application bootstrap logic and remove the `HttpClientModule` import from this component.
+HttpClientModule
   ],
   templateUrl: './absences.component.html',
   styleUrl: './absences.component.scss'

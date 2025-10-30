@@ -15,15 +15,16 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
             "allowedCommonJsDependencies": [
               "core-js",
               "canvg"
             ],
-            "outputPath": "dist/pointage-agents",
+            "outputPath": {
+              "base": "dist/pointage-agents"
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
@@ -42,7 +43,8 @@
               "node_modules/angular-calendar/css/angular-calendar.css"
 
             ],
-            "scripts": []
+            "scripts": [],
+            "browser": "src/main.ts"
           },
           "configurations": {
             "production": {

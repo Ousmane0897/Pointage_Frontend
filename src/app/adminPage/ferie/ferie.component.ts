@@ -6,7 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { CommonModule, NgClass } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import {} from '@angular/common/http';
 
 @Component({
   selector: 'app-ferie',
@@ -14,7 +14,11 @@ import { HttpClientModule } from '@angular/common/http';
   imports: [
     FormsModule,
     CommonModule,
-    HttpClientModule
+    
+// TODO: `HttpClientModule` should not be imported into a component directly.
+// Please refactor the code to add `provideHttpClient()` call to the provider list in the
+// application bootstrap logic and remove the `HttpClientModule` import from this component.
+HttpClientModule
   ],
   templateUrl: './ferie.component.html',
   styleUrl: './ferie.component.scss'

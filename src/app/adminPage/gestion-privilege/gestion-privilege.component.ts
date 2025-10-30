@@ -8,7 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { LoginService } from '../../services/login.service';
 import { Router, RouterOutlet } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import {} from '@angular/common/http';
 
 @Component({
   selector: 'app-gestion-privilege',
@@ -16,7 +16,11 @@ import { HttpClientModule } from '@angular/common/http';
   imports: [
     FormsModule,
     CommonModule,
-    HttpClientModule,
+    
+// TODO: `HttpClientModule` should not be imported into a component directly.
+// Please refactor the code to add `provideHttpClient()` call to the provider list in the
+// application bootstrap logic and remove the `HttpClientModule` import from this component.
+HttpClientModule,
     RouterOutlet
 ],
   templateUrl: './gestion-privilege.component.html',
