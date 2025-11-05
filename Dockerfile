@@ -12,7 +12,7 @@ RUN npm run build -- --configuration production
 FROM nginx:alpine
 
 # Copy built Angular app from builder image
-COPY --from=builder /app/dist/pointage-agents /usr/share/nginx/html
+COPY --from=builder /app/dist/pointage-agents/browser /usr/share/nginx/html
 
 # Replace default Nginx config if needed
 COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -4,16 +4,14 @@ import { HeaderComponent } from '../header/header.component';
 import { RouterModule, RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-admin',
-  standalone: true,
-  imports: [
-    
-    HeaderComponent,
-    SidebarComponent,
-    RouterOutlet
-  ],
-  templateUrl: './admin.component.html',
-  styleUrl: './admin.component.scss'
+    selector: 'app-admin',
+    imports: [
+        HeaderComponent,
+        SidebarComponent,
+        RouterOutlet
+    ],
+    templateUrl: './admin.component.html',
+    styleUrl: './admin.component.scss'
 })
 export class AdminComponent {
 

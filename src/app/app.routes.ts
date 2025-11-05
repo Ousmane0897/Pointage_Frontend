@@ -25,12 +25,15 @@ export const routes: Routes = [
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // redirection vers la page dashboard par défaut
             { path: 'dashboard', loadComponent: () => import('./adminPage/dashboard/dashboard.component').then(m => m.DashboardComponent) }, // lazy loading de la page dashboard
             { path: 'dashboard-par-agence', loadComponent: () => import('./adminPage/dashboard-par-agence/tableau-de-bord-par-agence.component').then(m => m.TableauDeBordParAgenceComponent) }, // lazy loading de la page tableau de bord par agence
-            { path: 'employes', loadComponent: () => import('./adminPage/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page employes
             { path: 'planification', loadComponent: () => import('./adminPage/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
             { path: 'calendrier', loadComponent: () => import('./adminPage/calendrier/calendrier.component').then(m => m.CalendrierComponent) },
+            { path: 'employes', loadComponent: () => import('./adminPage/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page employes
             { path: 'stock/entrees', loadComponent: () => import('./adminPage/stock/entrees/entrees.component').then(m => m.EntreesComponent) }, // lazy loading de la page entrees
             { path: 'stock/sorties', loadComponent: () => import('./adminPage/stock/sorties/sorties.component').then(m => m.SortiesComponent) }, // lazy loading de la page sorties
             { path: 'stock/produits', loadComponent: () => import('./adminPage/stock/produit-list/produit-list.component').then(m => m.ProduitListComponent) }, // lazy loading de la page produits
+            { path: 'stock/historiques-entrees', loadComponent: () => import('./adminPage/stock/historiques-entrees/historiques-entrees.component').then(m => m.HistoriquesEntreesComponent) }, // lazy loading de la page historiques entrées
+            { path: 'stock/historiques-sorties', loadComponent: () => import('./adminPage/stock/historiques-sorties/historiques-sorties.component').then(m => m.HistoriquesSortiesComponent) }, // lazy loading de la page historiques sorties
+            //{ path: 'stock/rapports-mensuels', loadComponent: () => import('./adminPage/stock/rapport-mensuel/rapport-mensuel.component').then(m => m.RapportMensuelComponent) }, // lazy loading de la page rapports mensuels
             { path: 'stock/suivi', loadComponent: () => import('./adminPage/stock/suivi-stock/suivi-stock.component').then(m => m.SuiviStockComponent) }, // lazy loading de la page suivi
             { path: 'stock/rapports-statistiques', loadComponent: () => import('./adminPage/stock/rapports-et-statistiques/rapports-et-statistiques.component').then(m => m.RapportsEtStatistiquesComponent) }, // lazy loading de la page rapports
             { path: 'stockage', loadComponent: () => import('./adminPage/stockage/stockage.component').then(m => m.StockageComponent) }, // lazy loading de la page stockage
@@ -46,7 +49,10 @@ export const routes: Routes = [
             { path: 'pointages', loadComponent: () => import('./adminPage/pointages/pointages.component').then(m => m.PointagesComponent) }, // lazy loading de la page pointages
             { path: 'agences', loadComponent: () => import('./adminPage/agences/agences.component').then(m => m.AgencesComponent) }, // lazy loading de la page agences
             { path: 'parametres', loadComponent: () => import('./adminPage/parametres/parametres.component').then(m => m.ParametresComponent) }, // lazy loading de la page parametres
-            { path: 'absences', loadComponent: () => import('./adminPage/absences/absences.component').then(m => m.AbsencesComponent) }, // lazy loading de la page absences
+            { path: 'absences/tempsreel', loadComponent: () => import('./adminPage/absences-temps-reel/absences-temps-reel.component').then(m => m.AbsencesTempsReelComponent) }, // lazy loading de la page absences
+            { path: 'absences/historique', loadComponent: () => import('./adminPage/absences-historique/absences-historique.component').then(m => m.AbsencesHistoriqueComponent) }, // lazy loading de la page absences
+            //{ path: 'absences', loadComponent: () => import('./adminPage/absences/absences.component').then(m => m.AbsencesComponent) }, // lazy loading de la page absences
+            
 
         ]
     }

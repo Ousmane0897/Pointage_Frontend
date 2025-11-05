@@ -5,11 +5,10 @@ import { Pointage } from '../models/pointage.model';
 
 
 @Component({
-  selector: 'app-final-page1',
-  standalone: true,
-  imports: [],
-  templateUrl: './final-page1.component.html',
-  styleUrl: './final-page1.component.scss'
+    selector: 'app-final-page1',
+    imports: [],
+    templateUrl: './final-page1.component.html',
+    styleUrl: './final-page1.component.scss'
 })
 export class FinalPage1Component implements OnInit {
 

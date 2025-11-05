@@ -9,15 +9,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-pointages',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-
-  ],
-  templateUrl: './pointages.component.html',
-  styleUrl: './pointages.component.scss'
+    selector: 'app-pointages',
+    imports: [
+        CommonModule,
+        FormsModule,
+    ],
+    templateUrl: './pointages.component.html',
+    styleUrl: './pointages.component.scss'
 })
 export class PointagesComponent implements OnInit {
 

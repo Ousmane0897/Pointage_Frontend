@@ -6,24 +6,23 @@ import { LoginService } from '../../services/login.service';
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
-  selector: 'app-sidebar',
-  standalone: true,
-  imports: [
-    RouterModule,
-    NgClass,
-    CommonModule,
-    NgIf,
-    HeaderComponent,
-    LucideAngularModule
-  ],
-  templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss'
+    selector: 'app-sidebar',
+    imports: [
+        RouterModule,
+        NgClass,
+        CommonModule,
+        NgIf,
+        LucideAngularModule
+    ],
+    templateUrl: './sidebar.component.html',
+    styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent implements OnInit {
 
   role: string  = '';
   isOpen = true;
   openDropdown: string | null = null;
+  openDropdownAbsent: string | null = null;
 
     ngOnInit(): void {
       
@@ -51,6 +50,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdown(menu: string) {
   this.openDropdown = this.openDropdown === menu ? null : menu;
+}
+
+toggleDropdownAbsent(menu: string) {
+  this.openDropdownAbsent = this.openDropdownAbsent === menu ? null : menu;
 }
 
 // Permet également d'appliquer des styles aux liens parents lorsque l'un de leurs sous-liens est actif.

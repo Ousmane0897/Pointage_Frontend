@@ -24,13 +24,18 @@ export class StockService {
     return this.http.post<any>(`${this.baseUrl}/api/stock/mouvement`, entree);
   }
 
+  // Récupérer la liste des produits
+  getProduits(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/produits/all`);
+  }
+
   // Récupérer le stock actuel d'un produit
   getStockProduit(produitId: string): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/api/stock/produit/quantite/${produitId}`);
   }
 
 
-   sortieStock(mouvements: MouvementSortieStock[]): Observable<MouvementSortieStock[]> {
+  sortieStock(mouvements: MouvementSortieStock[]): Observable<MouvementSortieStock[]> {
     return this.http.post<MouvementSortieStock[]>(`${this.baseUrl}/api/stock/sortie`, mouvements);
   }
 
@@ -58,7 +63,7 @@ export class StockService {
    * Historique des sorties
    */
   getSorties(): Observable<MouvementSortieStock[]> {
-    return this.http.get<MouvementSortieStock[]>(`${this.baseUrl}/sorties`);
+    return this.http.get<MouvementSortieStock[]>(`${this.baseUrl}/api/stock/sorties`);
   }
 
   // --------------------------
@@ -73,12 +78,33 @@ export class StockService {
     return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/evolution/${produitId}`);
   }
 
-  getSortiesParDestination(): Observable<{ labels: string[], data: number[] }> {
-    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/sorties-par-destination`);
-  }
   getTopProduitsSortis(mois: number, annee: number): Observable<{ labels: string[], data: number[] }> {
-    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/top-produits?mois=${mois}&annee=${annee}`);
+    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/top-produits-sortis?mois=${mois}&annee=${annee}`);
   }
+
+  getSnapshotByMonth(mois: number, annee: number) {
+    return this.http.get<any>(`${this.baseUrl}/api/stock/rapports/snapshot?mois=${mois}&annee=${annee}`);
+  }
+  
+
+  getEvolutionParProduits() {
+  return this.http.get<any>(`${this.baseUrl}/api/stock/rapports/evolution-par-produits`);
+}
+
+getRapportMensuel(mois: number, annee: number) {
+  return this.http.get<any>(`${this.baseUrl}/api/stock/rapports/rapport-mensuel?mois=${mois}&annee=${annee}`);
+}
+
+
+
+getSortiesParDestination(mois: number, annee: number): Observable<{ labels: string[], data: number[] }> {
+  return this.http.get<{ labels: string[], data: number[] }>(
+    `${this.baseUrl}/api/stock/rapports/sorties-par-destination`,
+    { params: { mois: mois.toString(), annee: annee.toString() } }
+  );
+}
+
+
 
 
 }

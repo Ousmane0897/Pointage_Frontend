@@ -7,16 +7,14 @@ import { LoginService } from '../../services/login.service';
 import { SuperAdminComponent } from '../super-admin/super-admin.component';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [
-    RouterModule,
-    RouterOutlet,
-    CommonModule,
-    SuperAdminComponent
-  ],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+    selector: 'app-dashboard',
+    imports: [
+        RouterModule,
+        CommonModule,
+        SuperAdminComponent
+    ],
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
 

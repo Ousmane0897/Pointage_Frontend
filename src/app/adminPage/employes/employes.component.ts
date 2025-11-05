@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
 import { EmployeService } from '../../services/employe.service';
 import { Employe } from '../../models/employe.model';
 import { Observable } from 'rxjs';
-import {} from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { ToastrService } from 'ngx-toastr';
@@ -21,22 +20,16 @@ import { forkJoin } from 'rxjs';
 
 
 @Component({
-  selector: 'app-employes',
-  standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule,
-    
-// TODO: `HttpClientModule` should not be imported into a component directly.
-// Please refactor the code to add `provideHttpClient()` call to the provider list in the
-// application bootstrap logic and remove the `HttpClientModule` import from this component.
-HttpClientModule,
-    NgxMatTimepickerModule,
-    MatInputModule,
-    MatFormFieldModule
-  ],
-  templateUrl: './employes.component.html',
-  styleUrl: './employes.component.scss'
+    selector: 'app-employes',
+    imports: [
+        FormsModule,
+        CommonModule,
+        NgxMatTimepickerModule,
+        MatInputModule,
+        MatFormFieldModule
+    ],
+    templateUrl: './employes.component.html',
+    styleUrl: './employes.component.scss'
 })
 export class EmployesComponent implements OnInit {
 

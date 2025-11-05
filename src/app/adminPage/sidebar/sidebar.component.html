@@ -154,13 +154,40 @@
               </a>
             </li>
 
-            <!-- Rapports & statistiques -->
+            <!-- Dashboard & statistiques -->
 
             <li>
               <a routerLink="/admin/stock/rapports-statistiques" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="ChartBar" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Rapports & Statistiques</span>
+                <span>Dashboard & Statistiques</span>
+              </a>
+            </li>
+
+            <!-- Rapports mensuels -->
+            <!--<li>
+              <a routerLink="/admin/stock/rapports-mensuels" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="FileText" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Rapports Mensuels</span>
+              </a>
+            </li> -->
+
+            <!-- Historiques des entrées -->
+            <li>
+              <a routerLink="/admin/stock/historiques-entrees" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="FolderArchive" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Historiques des entrées</span>
+              </a>
+            </li>
+
+            <!-- Historiques des sorties -->
+            <li>
+              <a routerLink="/admin/stock/historiques-sorties" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="FolderArchive" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Historiques des sorties</span>
               </a>
             </li>
           </ul>
@@ -177,7 +204,7 @@
               d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z"
               clip-rule="evenodd" />
           </svg>
-          <span *ngIf="isOpen">Les jours fériés</span>
+          <span *ngIf="isOpen">Jours fériés</span>
         </a>
 
         <a routerLink="/admin/employes" [ngClass]="{
@@ -192,7 +219,7 @@
               d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
           </svg>
 
-          <span *ngIf="isOpen">Les employés</span>
+          <span *ngIf="isOpen">Employés</span>
         </a>
 
         <a routerLink="/admin/agences" [ngClass]="{
@@ -208,20 +235,58 @@
             <path d="M12 7.875a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" />
           </svg>
 
-          <span *ngIf="isOpen">Les agences</span>
+          <span *ngIf="isOpen">Agences</span>
         </a>
 
-        <a routerLink="/admin/absences" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/absences'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-            <path fill-rule="evenodd"
-              d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z"
-              clip-rule="evenodd" />
-          </svg>
-          <span *ngIf="isOpen">Les absences</span>
-        </a>
+
+        <li>
+          <!-- Bouton parent -->
+          <button (click)="toggleDropdownAbsent('absences')"
+            class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
+            [ngClass]="{
+      'bg-gray-700 font-bold': isActivePrefix('/admin/absences'),
+      'text-center': !isOpen
+    }">
+
+            <div class="flex items-center space-x-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                <path fill-rule="evenodd"
+                  d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span *ngIf="isOpen">Absences</span>
+            </div>
+
+            <!-- Flèche -->
+            <svg [ngClass]="{'rotate-180': openDropdownAbsent === 'absences'}"
+              class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Sous-menu -->
+          <ul *ngIf="openDropdownAbsent === 'absences'" class="ml-8 mt-1 space-y-1 text-sm">
+
+            <li>
+              <a routerLink="/admin/absences/tempsreel" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <!--hover:bg-blue-50 hover:text-blue-700 transition-->
+                <lucide-icon name="UserX" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Absences en temps réel</span>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/absences/historique" routerLinkActive="bg-gray-700 font-semibold"
+                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                <lucide-icon name="ArchiveX" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                <span>Historique des absences</span>
+              </a>
+            </li>
+
+
+          </ul>
+        </li>
+
 
         <a routerLink="/admin/pointages" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/pointages'),
@@ -236,19 +301,6 @@
 
           <span *ngIf="isOpen">Pointages</span>
         </a>
-
-        <li *ngIf="role === 'SUPERADMIN'">
-          <a routerLink="/admin/stockage" [ngClass]="{
-      'bg-gray-700 font-bold': isActive('/admin/stockage'),
-      'text-center': !isOpen
-    }" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 px-2 transition-all duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
-              <path
-                d="M120-160v-160h720v160H120Zm80-40h80v-80h-80v80Zm-80-440v-160h720v160H120Zm80-40h80v-80h-80v80Zm-80 280v-160h720v160H120Zm80-40h80v-80h-80v80Z" />
-            </svg>
-            <span *ngIf="isOpen">Stockage des données</span>
-          </a>
-        </li>
 
         <div class="ml-1">
           <button class="bg-red-600 flex w-15 items-center space-x-2 mt-5  text-white px-2  py-2

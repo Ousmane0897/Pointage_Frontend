@@ -5,13 +5,12 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-  selector: 'app-stockage',
-  standalone: true,
-  imports: [
-    CommonModule
-  ],
-  templateUrl: './stockage.component.html',
-  styleUrl: './stockage.component.scss'
+    selector: 'app-stockage',
+    imports: [
+        CommonModule
+    ],
+    templateUrl: './stockage.component.html',
+    styleUrl: './stockage.component.scss'
 })
 export class StockageComponent {
 

@@ -4,24 +4,20 @@ import { FerieService } from '../../services/ferie.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
-import { CommonModule, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import {} from '@angular/common/http';
 
 @Component({
-  selector: 'app-ferie',
-  standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule,
-    
-// TODO: `HttpClientModule` should not be imported into a component directly.
-// Please refactor the code to add `provideHttpClient()` call to the provider list in the
-// application bootstrap logic and remove the `HttpClientModule` import from this component.
-HttpClientModule
-  ],
-  templateUrl: './ferie.component.html',
-  styleUrl: './ferie.component.scss'
+    selector: 'app-ferie',
+    imports: [
+        FormsModule,
+        CommonModule,
+        
+      
+    ],
+    templateUrl: './ferie.component.html',
+    styleUrl: './ferie.component.scss'
 })
 export class FerieComponent implements OnInit {
 

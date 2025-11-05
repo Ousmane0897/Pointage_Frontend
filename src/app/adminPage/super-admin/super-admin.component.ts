@@ -6,11 +6,10 @@ import { PlanificationService } from '../../services/planification.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-super-admin',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './super-admin.component.html',
-  styleUrls: ['./super-admin.component.scss'] // ⚠ correction ici: styleUrls au pluriel
+    selector: 'app-super-admin',
+    imports: [CommonModule],
+    templateUrl: './super-admin.component.html',
+    styleUrls: ['./super-admin.component.scss'] // ⚠ correction ici: styleUrls au pluriel
 })
 export class SuperAdminComponent implements OnInit, OnDestroy {
 

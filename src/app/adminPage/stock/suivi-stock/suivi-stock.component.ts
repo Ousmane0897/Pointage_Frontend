@@ -3,11 +3,10 @@ import { StockService } from '../../../services/stock.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-suivi-stock',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './suivi-stock.component.html',
-  styleUrls: ['./suivi-stock.component.scss']
+    selector: 'app-suivi-stock',
+    imports: [CommonModule],
+    templateUrl: './suivi-stock.component.html',
+    styleUrls: ['./suivi-stock.component.scss']
 })
 export class SuiviStockComponent {
 

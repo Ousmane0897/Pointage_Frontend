@@ -3,11 +3,10 @@ import { Subscription } from 'rxjs';
 import { WebsocketService } from '../../services/websocket.service';
 
 @Component({
-  selector: 'app-notification',
-  standalone: true,
-  imports: [],
-  templateUrl: './notification.component.html',
-  styleUrl: './notification.component.scss'
+    selector: 'app-notification',
+    imports: [],
+    templateUrl: './notification.component.html',
+    styleUrl: './notification.component.scss'
 })
 
 export class NotificationComponent implements OnInit, OnDestroy {

@@ -9,14 +9,13 @@ import { CommonModule } from '@angular/common';
 import { Employe } from '../../models/employe.model';
 
 @Component({
-  selector: 'app-agences', 
-  standalone: true,      
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
-  templateUrl: './agences.component.html',
-  styleUrl: './agences.component.scss'
+    selector: 'app-agences',
+    imports: [
+        CommonModule,
+        FormsModule
+    ],
+    templateUrl: './agences.component.html',
+    styleUrl: './agences.component.scss'
 })
 export class AgencesComponent implements OnInit {
 

@@ -6,14 +6,13 @@ import { FormsModule } from '@angular/forms';
 import { LoginService } from '../../services/login.service';
 
 @Component({
-  selector: 'app-chefs-equipe',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
-  templateUrl: './chefs-equipe.component.html',
-  styleUrl: './chefs-equipe.component.scss'
+    selector: 'app-chefs-equipe',
+    imports: [
+        CommonModule,
+        FormsModule
+    ],
+    templateUrl: './chefs-equipe.component.html',
+    styleUrl: './chefs-equipe.component.scss'
 })
 export class ChefsEquipeComponent {
 

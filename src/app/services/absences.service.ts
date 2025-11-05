@@ -12,13 +12,17 @@ export class AbsencesService {
   constructor(private http: HttpClient) { }
   
   private baseUrl =  environment.apiUrlEmploye;
- 
-  getAbsences(): Observable<Absent[]> {
-    return this.http.get<Absent[]>(`${this.baseUrl}/api/absences`);
+
+  updateAbsent(codeSecret: string, absent: Absent): Observable<Absent> {
+    return this.http.put<Absent>(`${this.baseUrl}/api/absences/${codeSecret}`, absent);
   }
 
-  updateAbsent(id: string, absent: Absent): Observable<Absent> {
-    return this.http.put<Absent>(`${this.baseUrl}/api/absences/${id}`, absent);
+  AbsenceTempsReel(): Observable<Absent[]> {
+    return this.http.get<Absent[]>(`${this.baseUrl}/api/absences/temps-reel`);
+  }
+
+  AbsenceHistorique(): Observable<Absent[]> {
+    return this.http.get<Absent[]>(`${this.baseUrl}/api/absences`);
   }
 
 

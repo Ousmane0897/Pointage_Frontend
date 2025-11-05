@@ -16,19 +16,18 @@ import { ToastrService } from 'ngx-toastr';
 
 
 @Component({
-  selector: 'app-page-code-pin',
-  standalone: true,
-  imports: [
-    MatIconModule,
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    NgxSpinnerModule
-  ],
-  templateUrl: './page-code-pin.component.html',
-  styleUrl: './page-code-pin.component.scss'
+    selector: 'app-page-code-pin',
+    imports: [
+        MatIconModule,
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        NgxSpinnerModule
+    ],
+    templateUrl: './page-code-pin.component.html',
+    styleUrl: './page-code-pin.component.scss'
 })
 export class PageCodePinComponent implements OnInit {
 

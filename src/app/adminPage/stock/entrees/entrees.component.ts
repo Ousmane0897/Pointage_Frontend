@@ -12,17 +12,16 @@ import { ProduitService } from '../../../services/produit.service';
 import { MouvementEntreeStock } from '../../../models/MouvementEntreeStock.model';
 
 @Component({
-  selector: 'app-entrees',
-  standalone: true,
-  imports: [CommonModule,
-    FormsModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
-    MatNativeDateModule
-  ],
-  templateUrl: './entrees.component.html',
-  styleUrl: './entrees.component.scss'
+    selector: 'app-entrees',
+    imports: [CommonModule,
+        FormsModule,
+        MatInputModule,
+        MatFormFieldModule,
+        MatDatepickerModule,
+        MatNativeDateModule
+    ],
+    templateUrl: './entrees.component.html',
+    styleUrl: './entrees.component.scss'
 })
 export class EntreesComponent implements OnInit {
 
@@ -53,25 +52,7 @@ export class EntreesComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.loadEntrees();
     this.getProduits();
-  }
-
-  loadEntrees() {
-
-    this.stockService.getEntrees().subscribe({
-      next: (data) => {
-        this.entrees = data.map(entree => ({
-          ...entree,
-          dateMouvement: entree.dateMouvement ? new Date(entree.dateMouvement) : null,
-          dateDePeremption: entree.dateDePeremption ? new Date(entree.dateDePeremption) : null
-        }));
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des entrées de stock', error);
-        this.toastr.error('Erreur lors du chargement des entrées de stock', 'Erreur');
-      }
-    });
   }
 
   closeModal() {
@@ -125,7 +106,6 @@ export class EntreesComponent implements OnInit {
           dateDePeremption: new Date(),
           dateMouvement: new Date()
         };
-        this.loadEntrees(); // Recharger la liste des entrées après l'ajout
         console.log(data);
       },
       error: (error) => {

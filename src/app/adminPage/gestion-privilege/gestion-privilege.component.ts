@@ -6,25 +6,24 @@ import { CommonModule } from '@angular/common';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
+import { HttpClientModule } from '@angular/common/http';
 import { LoginService } from '../../services/login.service';
 import { Router, RouterOutlet } from '@angular/router';
 import {} from '@angular/common/http';
 
 @Component({
-  selector: 'app-gestion-privilege',
-  standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule,
-    
-// TODO: `HttpClientModule` should not be imported into a component directly.
-// Please refactor the code to add `provideHttpClient()` call to the provider list in the
-// application bootstrap logic and remove the `HttpClientModule` import from this component.
-HttpClientModule,
-    RouterOutlet
-],
-  templateUrl: './gestion-privilege.component.html',
-  styleUrl: './gestion-privilege.component.scss'
+    selector: 'app-gestion-privilege',
+    imports: [
+        FormsModule,
+        CommonModule,
+        // TODO: `HttpClientModule` should not be imported into a component directly.
+        // Please refactor the code to add `provideHttpClient()` call to the provider list in the
+        // application bootstrap logic and remove the `HttpClientModule` import from this component.
+        HttpClientModule,
+        RouterOutlet
+    ],
+    templateUrl: './gestion-privilege.component.html',
+    styleUrl: './gestion-privilege.component.scss'
 })
 export class GestionPrivilegeComponent implements OnInit {
 

@@ -9,7 +9,11 @@ import {
   switchMap,
   catchError,
   of,
+  filter,
+  finalize,
   tap,
+  EMPTY,
+  throwError,
 } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -71,11 +75,9 @@ import { Activity, ArrowDownCircle, ArrowUpCircle, BarChart3, Package } from 'lu
 
 @Component({
   selector: 'app-produit-list',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule
-
   ],
   templateUrl: './produit-list.component.html',
   styleUrls: ['./produit-list.component.scss']
@@ -112,6 +114,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
 
   }
   baseUrl: string = environment.apiUrlEmploye;
+  isLoading = false;
 
 
   // 🟢 Observables utilitaires
@@ -337,17 +340,8 @@ export class ProduitListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Préparer les données du formulaire
+    this.isLoading = true;
 
-    /*
-        FormData est une classe JavaScript qui te permet de construire facilement un corps de requête multipart/form-data, 
-        c’est-à-dire le format que le backend attend pour recevoir des fichiers et du texte dans la même requête.
-        Utile pour envoyer des fichiers (images, documents) avec d’autres données (texte, JSON) dans une seule requête HTTP.
-        Ici, on crée un FormData pour envoyer à la fois les données du produit (sous forme JSON) et le fichier image (si sélectionné).
-        Le backend doit être configuré pour recevoir et traiter ce format multipart/form-data.
-        Donc FormData contient les données du formulaire + fichier
-      */
-    console.log('Modal Data avant envoi :', this.modalData);
     const formData = new FormData();
     formData.append('produit', new Blob([JSON.stringify(this.modalData)], { type: 'application/json' }));
     if (this.selectedFile) {
@@ -356,7 +350,9 @@ export class ProduitListComponent implements OnInit, OnDestroy {
 
     // --- 🧩 MODE ÉDITION ---
     if (this.isEditMode && this.selectedId) {
-      this.produitService.updateProduit(this.selectedId, formData).subscribe({
+      this.produitService.updateProduit(this.selectedId, formData).pipe(
+        finalize(() => this.isLoading = false)
+      ).subscribe({
         next: () => {
           this.loadProduits();
           this.closeModal();
@@ -367,67 +363,54 @@ export class ProduitListComponent implements OnInit, OnDestroy {
           this.toastr.error('Erreur lors de la mise à jour du produit.', 'Erreur');
         }
       });
-      return; // On sort de la méthode après la mise à jour. Le reste du code gère uniquement la création.
+      return;
     }
 
-    // --- 🧩 MODE CRÉATION AVEC switchMap ---
-
+    // --- 🧩 MODE CRÉATION ---
     this.produitService.getProduitByCode(this.modalData.codeProduit).pipe(
+      // Si erreur 404 → on renvoie null au lieu d'une erreur bloquante
+      catchError(err => err.status === 404 ? of(null) : throwError(() => err)),
+
       switchMap(existingByCode => {
         if (existingByCode) {
-          this.toastr.error(
-            'Un produit avec ce code existe déjà. Veuillez utiliser un code unique.',
-            'Erreur'
-          );
-          // On retourne un observable vide pour stopper la chaîne
-          return of(null); // stoppe la chaîne
+          this.toastr.error('Un produit avec ce code existe déjà.', 'Erreur');
+          return EMPTY; // EMPTY stoppe proprement la chaîne quand une condition de doublon est détectée.
         }
 
-        // ✅ Vérifier maintenant le nom
-        return this.produitService.getProduitByName(this.modalData.nomProduit); // retourne un Observable<Produit>. switchMap continue la chaîne avec ce nouvel Observable.
+        return this.produitService.getProduitByName(this.modalData.nomProduit).pipe(
+          catchError(err => err.status === 404 ? of(null) : throwError(() => err)) // throwError(() => err) permet de relancer une erreur dans la chaîne RxJS. Ici, on l’utilise pour propager les erreurs autres que 404, afin qu’elles soient traitées par le error du subscribe().
+        );
       }),
-      switchMap(existingByName => { // reçoit le résultat de getProduitByName. 
+
+      switchMap(existingByName => {
         if (existingByName) {
-          this.toastr.error(
-            'Un produit avec ce nom existe déjà. Veuillez utiliser un nom unique.',
-            'Erreur'
-          );
-          return of(null);
+          this.toastr.error('Un produit avec ce nom existe déjà.', 'Erreur');
+          return EMPTY; // On stoppe la chaîne si doublon détecté
         }
 
-        // ✅ Si ni le code ni le nom n’existent → créer le produit
-        return this.produitService.createProduit(formData); // / Ici, tu retournes l’Observable à switchMap. Cela permet à RxJS de s’abonner correctement à l’appel de création et de continuer la chaîne.
-          // Le résultat de createProduit sera reçu dans le subscribe final. Sans return, switchMap ne reçoit rien → le subscribe ne sera jamais exécuté.Avec return, switchMap continue la chaîne normalement → workflow complet.
+        // ✅ Aucun doublon → on crée le produit
+        return this.produitService.createProduit(formData);
       }),
-      catchError(err => {
-        if (err.status === 404) {
-          // Produit inexistant → création autorisée
-          return this.produitService.createProduit(formData);
-        }
-        console.error('Erreur lors de la vérification du produit :', err);
-        this.toastr.error('Erreur lors de la vérification du produit.', 'Erreur');
-        return of(null);
-      })
-    )
-      .subscribe({
-        next: (result) => {
-          if (!result) return; // stop si déjà existant ou erreur
-          this.loadProduits();
-          this.closeModal();
-          this.toastr.success('Produit ajouté avec succès !', 'Succès');
-          form.resetForm();
-          this.previewUrl = null;
-          this.selectedFile = null;
-          console.log('FormData envoyé :', this.modalData);
-        },
-        error: (err) => {
-          console.error('Erreur lors de la création du produit :', err);
-          this.toastr.error('Erreur lors de la création du produit.', 'Erreur');
-        }
-      });
+
+      finalize(() => this.isLoading = false)
+    ).subscribe({
+      next: (result) => {
+        if (!result) return;
+        this.loadProduits();
+        this.closeModal();
+        this.toastr.success('Produit ajouté avec succès !', 'Succès');
+        form.resetForm();
+        this.previewUrl = null;
+        this.selectedFile = null;
+      },
+      error: (err) => {
+        console.error('Erreur lors de la création du produit :', err);
+        this.toastr.error('Erreur lors de la création du produit.', 'Erreur');
+      }
+    });
+
 
   }
-
 
 
 

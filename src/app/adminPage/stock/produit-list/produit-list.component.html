@@ -244,7 +244,7 @@
         <div class="mb-4">
           <label for="quantite" class="block mb-2 font-semibold text-gray-600">Quantité en stock</label>
           <input class="w-full p-2 border rounded" name="quantite" #quantite="ngModel" [(ngModel)]="modalData.quantiteSnapshot"
-            placeholder="Quantité en stock" type="number" [readonly]="selectedId" min="0" required />
+            placeholder="Quantité en stock" type="number" readonly min="0" required />
           <div *ngIf="quantite.invalid && quantite.touched" class="text-red-500 text-sm">
             La quantité en stock est requise et doit être un nombre positif.
           </div>

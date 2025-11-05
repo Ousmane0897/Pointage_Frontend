@@ -19,22 +19,21 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
 import { LoginService } from '../../services/login.service';
 
 @Component({
-  selector: 'app-planification',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    NgxMatTimepickerModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
-    MatNativeDateModule
-  ],
-  providers: [
-    { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' } // si tu veux en français
-  ],
-  templateUrl: './planification.component.html',
-  styleUrls: ['./planification.component.scss']
+    selector: 'app-planification',
+    imports: [
+        CommonModule,
+        FormsModule,
+        NgxMatTimepickerModule,
+        MatInputModule,
+        MatFormFieldModule,
+        MatDatepickerModule,
+        MatNativeDateModule
+    ],
+    providers: [
+        { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' } // si tu veux en français
+    ],
+    templateUrl: './planification.component.html',
+    styleUrls: ['./planification.component.scss']
 })
 export class PlanificationComponent implements OnInit {
 

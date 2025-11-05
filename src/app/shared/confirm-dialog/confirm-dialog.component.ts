@@ -14,18 +14,17 @@ export interface ConfirmDialogData {
 }
 
 @Component({
-  selector: 'app-confirm-dialog',
-  templateUrl: './confirm-dialog.component.html',
-  standalone: true,
-  imports: [
-    // autres imports...
-    MatDialogModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    FormsModule,   // nécessaire pour [(ngModel)]
-    CommonModule
-  ],
+    selector: 'app-confirm-dialog',
+    templateUrl: './confirm-dialog.component.html',
+    imports: [
+        // autres imports...
+        MatDialogModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatInputModule,
+        FormsModule, // nécessaire pour [(ngModel)]
+        CommonModule
+    ]
 })
 export class ConfirmDialogComponent {
 

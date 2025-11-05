@@ -21,12 +21,10 @@ import { ProduitService } from '../../../services/produit.service';
 import { AgencesService } from '../../../services/agences.service';
 
 @Component({
-  selector: 'app-sorties',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './sorties.component.html',
-  styleUrls: ['./sorties.component.scss'],
-
+    selector: 'app-sorties',
+    imports: [CommonModule, ReactiveFormsModule],
+    templateUrl: './sorties.component.html',
+    styleUrls: ['./sorties.component.scss']
 })
 export class SortiesComponent implements OnInit {
   // 🔹 Données du composant
@@ -63,7 +61,7 @@ export class SortiesComponent implements OnInit {
       responsable: ['', Validators.required],
       motifSortieStock: ['', Validators.required],
       typeMouvement: ['SORTIE', Validators.required],
-      //dateSortie: [new Date(), Validators.required],
+      dateMouvement: [new Date(), Validators.required],
 
     });
 
@@ -295,6 +293,7 @@ export class SortiesComponent implements OnInit {
         destination: this.sortieForm.value.destination,
         responsable: this.sortieForm.value.responsable,
         motifSortieStock: this.sortieForm.value.motifSortieStock,
+        dateMouvement: this.sortieForm.value.dateMouvement
       }).subscribe({
         next: () => this.onSuccess(),
         error: (err) => this.toastr.error(err.error.message),
@@ -306,6 +305,8 @@ export class SortiesComponent implements OnInit {
         responsable: this.sortieForm.value.responsable,
         motifSortieStock: this.sortieForm.value.motifSortieStock,
         typeMouvement: 'SORTIE',
+        dateMouvement: this.sortieForm.value.dateMouvement
+        
       }).subscribe({
         next: () => this.onSuccess(),
         error: (err) => this.toastr.error(err.error.message),

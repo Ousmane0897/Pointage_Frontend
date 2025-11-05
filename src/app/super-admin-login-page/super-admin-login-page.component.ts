@@ -6,14 +6,13 @@ import { LoginService } from '../services/login.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
-  selector: 'app-super-admin-login-page',
-  standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule
-  ],
-  templateUrl: './super-admin-login-page.component.html',
-  styleUrl: './super-admin-login-page.component.scss'
+    selector: 'app-super-admin-login-page',
+    imports: [
+        FormsModule,
+        CommonModule
+    ],
+    templateUrl: './super-admin-login-page.component.html',
+    styleUrl: './super-admin-login-page.component.scss'
 })
 export class SuperAdminLoginPageComponent {
 onSubmit() {

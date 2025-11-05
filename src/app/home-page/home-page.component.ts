@@ -9,18 +9,15 @@ import { ToastrService } from 'ngx-toastr';
 
 
 @Component({
-  selector: 'app-home-page',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    ReactiveFormsModule
-
-
-  ],
-  templateUrl: './home-page.component.html',
-  styleUrl: './home-page.component.scss'
+    selector: 'app-home-page',
+    imports: [
+        CommonModule,
+        MatButtonModule,
+        MatIconModule,
+        ReactiveFormsModule
+    ],
+    templateUrl: './home-page.component.html',
+    styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
 showPassword: boolean = false;

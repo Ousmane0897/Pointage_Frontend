@@ -14,7 +14,7 @@ export interface MouvementSortieStock {
     motifSortieStock: MotifMouvementSortieStock;
     responsable: string;
     mois?: string; // A renseigner coté backend pour les rapports mensuels
-    //dateDeSortie?: Date;
+    dateMouvement: Date | null;
 
 }
 
@@ -30,6 +30,6 @@ export interface SortieStockBatch {
     motifSortieStock: MotifMouvementSortieStock;
     responsable: string;
     mois?: string; // A renseigner coté backend pour les rapports mensuels
-    //dateSortie: Date;
+    dateMouvement: Date | null;
 
 }

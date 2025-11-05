@@ -4,13 +4,12 @@ import { DashboardParAgenceService } from '../../services/dashboard-par-agence.s
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-tableau-de-bord-par-agence',
-  standalone: true,
-  imports: [
-    CommonModule
-  ],
-  templateUrl: './tableau-de-bord-par-agence.component.html',
-  styleUrl: './tableau-de-bord-par-agence.component.scss'
+    selector: 'app-tableau-de-bord-par-agence',
+    imports: [
+        CommonModule
+    ],
+    templateUrl: './tableau-de-bord-par-agence.component.html',
+    styleUrl: './tableau-de-bord-par-agence.component.scss'
 })
 export class TableauDeBordParAgenceComponent implements OnInit {
 

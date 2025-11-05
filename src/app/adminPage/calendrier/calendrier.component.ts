@@ -25,21 +25,20 @@ import { co, dE } from '@fullcalendar/core/internal-common';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-  selector: 'app-calendar-employes',
-  standalone: true,
-  imports: [CommonModule,
-    FullCalendarModule,
-    MatMenuModule,
-    MatButtonModule,
-    FormsModule,
-    NgxMatTimepickerModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
-    MatNativeDateModule
-  ],
-  templateUrl: './calendrier.component.html',
-  styleUrls: ['./calendrier.component.scss']
+    selector: 'app-calendar-employes',
+    imports: [CommonModule,
+        FullCalendarModule,
+        MatMenuModule,
+        MatButtonModule,
+        FormsModule,
+        NgxMatTimepickerModule,
+        MatInputModule,
+        MatFormFieldModule,
+        MatDatepickerModule,
+        MatNativeDateModule
+    ],
+    templateUrl: './calendrier.component.html',
+    styleUrls: ['./calendrier.component.scss']
 })
 export class CalendrierComponent implements OnInit {
 
