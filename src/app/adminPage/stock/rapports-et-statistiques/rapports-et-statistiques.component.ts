@@ -5,6 +5,10 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { StockService } from '../../../services/stock.service';
 import { Router } from '@angular/router';
+import { AgencesService } from '../../../services/agences.service';
+import { ToastrService } from 'ngx-toastr';
+import { get } from 'http';
+import { Produit } from '../../../models/produit.model';
 
 @Component({
   selector: 'app-rapports-et-statistiques',
@@ -16,41 +20,62 @@ import { Router } from '@angular/router';
 export class RapportsEtStatistiquesComponent {
   @ViewChildren(BaseChartDirective) charts!: QueryList<BaseChartDirective>;
 
+  // === Gestion des requêtes en cours ===
+  pendingRequests = 0;
+
   // === États ===
   loading = true;
 
+  // Méthode pour indiquer la fin d'une requête
+  onRequestComplete() {
+    this.pendingRequests--;
+    if (this.pendingRequests === 0) {
+      this.loading = false;
+    }
+  }
+
+
   // === Données des graphiques ===
-  evolutionChart!: ChartConfiguration<'line'>['data'];
+
   sortieChart!: ChartConfiguration<'pie'>['data'];
-  topChart!: ChartConfiguration<'bar'>['data'];
-  snapshotChart!: ChartConfiguration<'bar'>['data'];
-  evolutionProduitsChart!: ChartConfiguration<'line'>['data'];
+  sortieBarChart!: ChartConfiguration<'bar'>['data'];
+  produitDestinationChart!: ChartConfiguration<'line'>['data'];
+  consommationDestinationChart!: ChartConfiguration<'bar'>['data'];
+  classementDestinationChart!: ChartConfiguration<'bar'>['data'];
+  consommationProduitPeriodeChart!: ChartConfiguration<'bar'>['data'];
+
+
+
+
 
   // === Données temporaires ===
-  produits: any[] = [];
+  produits: Produit[] = [];
   produitSelectionne = '';
   snapshotPeriode = '';
+  destinations: string[] = [];
 
-  // === Statistiques clés ===
-  totalProduits = 0;
-  totalEntreesMois = 0;
-  totalSortiesMois = 0;
-  variationStock = 0;
-  topProduitNom = '—';
-  topProduitQuantite = 0;
 
   // === Filtres ===
-  moisSelectionne = new Date().getMonth() + 1;
+  moisSelectionne = new Date().getUTCMonth() + 1;
   anneeSelectionnee = new Date().getFullYear();
+  destinationSelectionnee = '';
   moisDisponibles = [
     'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
   ];
 
-  constructor(private stockService: StockService, private router: Router) { }
+  moisDebutSelectionne = 1;
+  moisFinSelectionne = new Date().getUTCMonth() + 1; // Mois courant par défaut
+
+
+  constructor(private stockService: StockService,
+    private router: Router,
+    private agencesService: AgencesService, private toastr: ToastrService) { }
 
   ngOnInit(): void {
     this.chargerTousLesGraphes();
+    this.getAvailableAgences();
+    this.loadProduits();
   }
 
   // ==========================================================
@@ -67,35 +92,27 @@ export class RapportsEtStatistiquesComponent {
     this.loading = true;
     this.resetCharts(); // ✅ Réinitialise avant chaque chargement
 
-    this.loadProduits();
-    this.chargerEvolutionStock();
-    this.chargerSortiesParDestination();
-    this.chargerTopProduits();
-    this.chargerSnapshot();
-    this.chargerEvolutionProduits();
+    this.pendingRequests = 3; // Nombre total de requêtes à effectuer
 
-    setTimeout(() => {
-      this.calculerStatistiques();
-      this.loading = false;
-      this.updateCharts();
-    }, 1200);
+    this.chargerSortiesParDestination();
+    this.chargerProduitDestination();
+    this.chargerConsommationDestination();
+    this.chargerSortiesParDestinationBar();
+    this.chargerClassementDestinationsProduit();  
+    this.chargerConsommationProduitParPeriode();
+
+
+
   }
 
   // ==========================================================
   // 🧹 Réinitialisation complète
   // ==========================================================
   resetCharts() {
-    this.evolutionChart = { labels: [], datasets: [] };
+    // Réinitialise les données des graphiques à vide après chaque chargement de nouveaux filtres
     this.sortieChart = { labels: [], datasets: [] };
-    this.topChart = { labels: [], datasets: [] };
-    this.snapshotChart = { labels: [], datasets: [] };
-    this.evolutionProduitsChart = { labels: [], datasets: [] };
-
-    this.totalEntreesMois = 0;
-    this.totalSortiesMois = 0;
-    this.variationStock = 0;
-    this.topProduitNom = '—';
-    this.topProduitQuantite = 0;
+    this.produitDestinationChart = { labels: [], datasets: [] };
+    this.consommationDestinationChart = { labels: [], datasets: [] };
 
     // Supprimer graphiques du DOM s’ils existent déjà. Cela évite les conflits lors du rechargement.
     // et force la recréation des graphiques avec les nouvelles données.
@@ -106,61 +123,40 @@ export class RapportsEtStatistiquesComponent {
     }
   }
 
+  getAvailableAgences() {
+    this.agencesService.getAllSites().subscribe({
+      next: (agences) => (this.destinations = agences),
+      error: () => this.toastr.error('Erreur lors du chargement des agences'),
+    });
+  }
+
   // ==========================================================
   // 🧩 Produits
   // ==========================================================
   loadProduits() {
-    this.stockService.getProduits().subscribe((data) => {
-      this.produits = data;
-      this.totalProduits = data.length;
-      if (this.produits.length > 0) {
-        this.produitSelectionne = this.produits[0].codeProduit;
-      }
+    this.stockService.getProduits().subscribe({
+      next: (produits) => { this.produits = produits; },
+      error: () => this.toastr.error('Erreur lors du chargement des produits'),
     });
   }
 
-  // ==========================================================
-  // 📈 Évolution du stock (par produit)
-  // ==========================================================
-  chargerEvolutionStock() {
-    if (!this.produitSelectionne) return;
-
-    this.stockService.getStockEvolution(this.produitSelectionne).subscribe((res) => {
-      if (!res.labels || res.labels.length === 0) {
-        this.evolutionChart = { labels: [], datasets: [] }; // ✅ vide
-        this.updateCharts();
-        return;
-      }
-
-      this.evolutionChart = {
-        labels: res.labels,
-        datasets: [
-          {
-            data: res.data,
-            label: 'Évolution du stock',
-            fill: true,
-            borderColor: '#2563EB',
-            backgroundColor: 'rgba(37,99,235,0.2)',
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-          },
-        ],
-      };
-
-      this.updateCharts();
-    });
-  }
 
   // ==========================================================
   // 🏢 Sorties par destination
   // ==========================================================
+  // === PIE ===
   chargerSortiesParDestination() {
+    if (!this.moisSelectionne || !this.anneeSelectionnee) {
+      this.onRequestComplete();
+      return;
+    }
+
     this.stockService.getSortiesParDestination(this.moisSelectionne, this.anneeSelectionnee)
-      .subscribe((res) => {
+      .subscribe((res: any) => {
         if (!res.labels || res.labels.length === 0) {
-          this.sortieChart = { labels: [], datasets: [] }; // ✅ vide
+          this.sortieChart = { labels: [], datasets: [] };
           this.updateCharts();
+          this.onRequestComplete();
           return;
         }
 
@@ -169,178 +165,233 @@ export class RapportsEtStatistiquesComponent {
           datasets: [
             {
               data: res.data,
-              backgroundColor: [
-                '#3B82F6', '#10B981', '#F59E0B',
-                '#EF4444', '#8B5CF6', '#14B8A6'
-              ],
-              borderWidth: 1,
-            },
-          ],
+              backgroundColor: this.generateDynamicColors(res.labels.length, 0.8),
+              borderWidth: 1
+            }
+          ]
         };
+
         this.updateCharts();
+        this.onRequestComplete();
       });
   }
 
+
   // ==========================================================
-  // 🏆 Top produits sortis (mois + année)
+  // 📦 Sorties par destination en Bar
   // ==========================================================
-  chargerTopProduits() {
-    this.stockService.getTopProduitsSortis(this.moisSelectionne, this.anneeSelectionnee)
-      .subscribe((res) => {
-        if (!res.labels || res.labels.length === 0) {
-          this.topChart = { labels: [], datasets: [] }; // ✅ vide
+  // === BAR ===
+  chargerSortiesParDestinationBar() {
+    if (!this.moisSelectionne || !this.anneeSelectionnee) {
+      this.onRequestComplete();
+      return;
+    }
+
+    this.stockService.getSortiesBarParDestination(this.moisSelectionne, this.anneeSelectionnee)
+      .subscribe((res: any) => {
+        if (!res.labels || res.labels.length === 0 || !res.datasets || res.datasets.length === 0) {
+          this.sortieBarChart = { labels: [], datasets: [] };
           this.updateCharts();
+          this.onRequestComplete();
           return;
         }
 
-        this.topChart = {
+        const backgroundColors = this.generateDynamicColors(res.labels.length, 0.7);
+        const borderColors = this.generateDynamicColors(res.labels.length, 1);
+
+        this.sortieBarChart = {
           labels: res.labels,
-          datasets: [
-            {
-              data: res.data,
-              label: 'Produits sortis',
-              backgroundColor: [
-                '#F87171', '#FB923C', '#FACC15',
-                '#4ADE80', '#60A5FA'
-              ],
-            },
-          ],
+          datasets: res.datasets.map((ds: any) => ({
+            label: ds.label,
+            data: ds.data,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1
+          }))
         };
+
         this.updateCharts();
+        this.onRequestComplete();
       });
   }
 
-  // ==========================================================
-  // 📊 Snapshot mensuel
-  // ==========================================================
-  chargerSnapshot() {
-    this.stockService.getSnapshotByMonth(this.moisSelectionne, this.anneeSelectionnee)
-      .subscribe((res) => {
+
+
+  chargerProduitDestination() {
+    if (!this.produitSelectionne || !this.destinationSelectionnee) {
+
+      this.onRequestComplete(); // Indiquer la fin de la requête
+      return;
+    }
+
+    this.stockService
+      .getQuantiteProduitParDestinationParMois(this.produitSelectionne, this.destinationSelectionnee, this.anneeSelectionnee)
+      .subscribe((res: any) => {
+
         if (!res.labels || res.labels.length === 0) {
-          this.snapshotChart = { labels: [], datasets: [] }; // ✅ vide
-          this.snapshotPeriode = '';
+          this.produitDestinationChart = { labels: [], datasets: [] }; // ✅ vide
           this.updateCharts();
+          this.onRequestComplete();
           return;
         }
 
-        this.snapshotPeriode = res.periode;
-        this.snapshotChart = {
+        this.produitDestinationChart = {
           labels: res.labels,
           datasets: [
             {
+              label: `Sorties de ${this.produitSelectionne} → ${this.destinationSelectionnee}`,
               data: res.data,
-              label: 'Stock net du mois',
-              backgroundColor: '#3B82F6',
-            },
-          ],
+              borderColor: '#2563EB',
+              backgroundColor: 'rgba(37,99,235,0.25)',
+              pointRadius: 5,
+              pointHoverRadius: 7
+            }
+          ]
         };
+
+
         this.updateCharts();
+        this.onRequestComplete(); // Indiquer la fin de la requête
       });
   }
 
-  // ==========================================================
-  // 📈 Évolution multi-produits
-  // ==========================================================
-  chargerEvolutionProduits() {
-    this.stockService.getEvolutionParProduits().subscribe((res) => {
-      if (!res || !res.labels || !res.datasets || res.datasets.length === 0) {
-        this.evolutionProduitsChart = { labels: [], datasets: [] };
+
+  chargerConsommationDestination() {
+    if (!this.destinationSelectionnee) {
+      this.onRequestComplete();
+      return;
+    }
+
+    this.stockService
+      .getConsommationParDestinationParMois(this.destinationSelectionnee, this.anneeSelectionnee)
+      .subscribe((res: any) => {
+
+        if (!res.labels || res.labels.length === 0 || !res.data || res.data.length === 0) {
+          this.consommationDestinationChart = { labels: [], datasets: [] }; // ✅ vide
+          this.updateCharts();
+          this.onRequestComplete();
+          return;
+        }
+        // Assigner les données reçues au graphique. 
+        this.consommationDestinationChart = {
+          labels: res.labels,
+          datasets: [
+            {
+              label: `Consommation totale`,
+              data: res.data,
+              backgroundColor: 'rgba(37,99,235,0.3)',
+              borderColor: '#2563EB',
+              borderWidth: 2
+            }
+          ]
+        };
+
         this.updateCharts();
+        this.onRequestComplete();
+      });
+
+  }
+
+  chargerClassementDestinationsProduit() {
+  if (!this.produitSelectionne || !this.moisSelectionne || !this.anneeSelectionnee) {
+    this.onRequestComplete();
+    return;
+  }
+
+  this.stockService.getClassementDestinationsParProduit(this.produitSelectionne, this.moisSelectionne, this.anneeSelectionnee)
+    .subscribe((res: any) => {
+      if (!res.labels || res.labels.length === 0 || !res.datasets || res.datasets.length === 0) {
+        this.classementDestinationChart = { labels: [], datasets: [] };
+        this.updateCharts();
+        this.onRequestComplete();
         return;
       }
 
-      const dataset = res.datasets[0]; // unique dataset reçu du backend
+      const backgroundColors = this.generateDynamicColors(res.labels.length, 0.7);
+      const borderColors = this.generateDynamicColors(res.labels.length, 1);
 
-      this.evolutionProduitsChart = {
-        labels: res.labels, // noms des produits
-        datasets: [
-          {
-            label: dataset.label,
-            data: dataset.data,
-            borderColor: '#2563EB', // bleu principal
-            backgroundColor: 'rgba(37,99,235,0.2)', // bleu clair transparent sous la ligne
-            fill: true, // remplit légèrement sous la ligne
-            tension: 0.4, // courbe douce
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: '#2563EB', // points bleus
-            pointBorderColor: '#fff', // bord blanc pour lisibilité
-          },
-        ],
+      this.classementDestinationChart = {
+        labels: res.labels,
+        datasets: res.datasets.map((ds: any) => ({
+          label: ds.label,
+          data: ds.data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }))
       };
 
       this.updateCharts();
+      this.onRequestComplete();
+    }, error => {
+      console.error('Erreur lors du chargement du classement des destinations par produit', error);
+      this.onRequestComplete();
     });
+}
+
+
+chargerConsommationProduitParPeriode() {
+  if (!this.produitSelectionne || !this.moisDebutSelectionne || !this.moisFinSelectionne || !this.anneeSelectionnee) {
+    this.onRequestComplete();
+    return;
   }
 
-  // ==========================================================
-  // 📈 Statistiques clés (corrigé)
-  // ==========================================================
-  calculerStatistiques() {
-    this.totalProduits = this.produits.length;
-
-    const rawData = this.snapshotChart?.datasets?.[0]?.data ?? [];
-    const allData = (rawData as (number | null | [number, number])[])
-      .filter((v): v is number => typeof v === 'number' && !isNaN(v));
-
-    const entrees = allData.reduce((acc, val) => acc + Math.max(0, val), 0);
-    let sorties = allData.reduce((acc, val) => acc + Math.max(0, -val), 0);
-
-    if (sorties === 0 && this.topChart?.datasets?.length) {
-      const topData = (this.topChart.datasets[0].data ?? []) as (number | null)[];
-      const totalSorties = topData
-        .filter((v): v is number => typeof v === 'number')
-        .reduce((a, b) => a + b, 0);
-      sorties = totalSorties;
+  this.stockService.getConsommationProduitParPeriode(
+    this.produitSelectionne,
+    this.moisDebutSelectionne,
+    this.moisFinSelectionne,
+    this.anneeSelectionnee
+  )
+  .subscribe((res: any) => {
+    if (!res.labels || res.labels.length === 0 || !res.datasets || res.datasets.length === 0) {
+      this.consommationProduitPeriodeChart = { labels: [], datasets: [] };
+      this.updateCharts();
+      this.onRequestComplete();
+      return;
     }
 
-    const variation = entrees - sorties;
+    const backgroundColors = this.generateDynamicColors(res.labels.length, 0.7);
+    const borderColors = this.generateDynamicColors(res.labels.length, 1);
+    console.log('moisDebutSelectionne:', this.moisDebutSelectionne );
+    console.log('moisFinSelectionne:', this.moisFinSelectionne );
+    this.consommationProduitPeriodeChart = {
+      labels: res.labels,
+      datasets: res.datasets.map((ds: any) => ({
+        label: ds.label,
+        data: ds.data,
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
+        borderWidth: 1
+      }))
+    };
 
-    this.animateCounter('totalEntreesMois', entrees);
-    this.animateCounter('totalSortiesMois', sorties);
-    this.animateCounter('variationStock', variation);
-    this.animateCounter('totalProduits', this.produits.length);
+    this.updateCharts();
+    this.onRequestComplete();
+  }, error => {
+    console.error('Erreur lors du chargement de la consommation du produit sur la période', error);
+    this.onRequestComplete();
+  });
+}
 
-    if (this.topChart?.labels?.length && this.topChart.datasets[0]?.data?.length) {
-      const data = (this.topChart.datasets[0].data ?? []) as (number | null)[];
-      const filteredData = data.filter((v): v is number => typeof v === 'number');
-      if (filteredData.length > 0) {
-        const maxValue = Math.max(...filteredData);
-        const maxIndex = data.indexOf(maxValue);
-        this.topProduitNom = this.topChart.labels[maxIndex] as string;
-        this.topProduitQuantite = maxValue;
-      } else {
-        this.topProduitNom = '—';
-        this.topProduitQuantite = 0;
-      }
-    } else {
-      this.topProduitNom = '—';
-      this.topProduitQuantite = 0;
+
+
+
+  /**
+ * Génère un tableau de couleurs HSL uniques, idéal pour 10, 50, 100+ barres.
+ */
+  generateDynamicColors(count: number, opacity: number = 1): string[] {
+    const colors: string[] = [];
+    const saturation = 70; // % de saturation
+    const lightness = 55;  // % de luminosité
+
+    for (let i = 0; i < count; i++) {
+      const hue = Math.round((360 / count) * i); // couleur répartie sur le cercle chromatique
+      colors.push(`hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity})`);
     }
+
+    return colors;
   }
 
-  // ==========================================================
-  // ⚡ Animation fluide des statistiques (compteurs)
-  // ==========================================================
-  animateCounter(targetVar: keyof RapportsEtStatistiquesComponent, endValue: number, duration = 800) {
-    const startValue = Number(this[targetVar]) || 0;
-    const frameRate = 1000 / 60;
-    const totalFrames = duration / frameRate;
-    let frame = 0;
-
-    const counter = setInterval(() => {
-      frame++;
-      const progress = Math.min(frame / totalFrames, 1);
-      const currentValue = Math.floor(startValue + (endValue - startValue) * this.easeOutCubic(progress));
-      (this as any)[targetVar] = currentValue;
-
-      if (progress === 1) clearInterval(counter);
-    }, frameRate);
-  }
-
-  easeOutCubic(t: number): number {
-    return 1 - Math.pow(1 - t, 3);
-  }
 
   // ==========================================================
   // 🎨 Couleurs dynamiques
@@ -370,14 +421,7 @@ export class RapportsEtStatistiquesComponent {
   // ==========================================================
   // ⚙️ Options graphiques communes
   // ==========================================================
-  evolutionOptions: ChartOptions<'line'> = {
-    responsive: true,
-    plugins: {
-      legend: { display: true },
-      title: { display: true, text: '📈 Évolution du stock (par mois)' },
-    },
-    scales: { y: { beginAtZero: true } },
-  };
+
 
   sortieOptions: ChartOptions<'pie'> = {
     responsive: true,
@@ -387,40 +431,103 @@ export class RapportsEtStatistiquesComponent {
     },
   };
 
-  topOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    indexAxis: 'y',
-    plugins: {
-      legend: { display: false },
-      title: { display: true, text: '🏆 Top 5 produits les plus sortis' },
-    },
-  };
-
-  snapshotOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    plugins: { title: { display: true, text: '📊 Répartition mensuelle du stock' } },
-  };
-
-  evolutionProduitsOptions: ChartOptions<'line'> = {
+  sortieBarOptions: ChartOptions<'bar'> = {
     responsive: true,
     plugins: {
       legend: { display: false },
-      title: { display: true, text: '📈 Stock global — par produit' },
+      title: {
+        display: true,
+        text: '📊 Quantité totale sortie par destination'
+      }
     },
     scales: {
       x: {
-        title: { display: true, text: 'Produits' },
-        ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 },
+        title: { display: true, text: 'Destinations' },
+        ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
       },
       y: {
         beginAtZero: true,
-        title: { display: true, text: 'Quantité en stock' },
-      },
-    },
-    elements: {
-      line: { tension: 0.4 },
-      point: { radius: 4 },
-    },
+        title: { display: true, text: 'Quantité sortie' }
+      }
+    }
   };
+
+  produitDestinationOptions: ChartOptions<'line'> = {
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: '📦 Sorties du produit par mois et par destination'
+      },
+      legend: { display: true }
+    },
+    scales: {
+      y: { beginAtZero: true },
+      x: { title: { display: true, text: 'Mois' } }
+    }
+  };
+
+  consommationDestinationOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: '🔥 Consommation totale de la destination par mois'
+      },
+      legend: { display: true }
+    },
+    scales: {
+      y: { beginAtZero: true },
+      x: { title: { display: true, text: 'Mois' } }
+    }
+  };
+
+  classementDestinationOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    title: {
+      display: true,
+      text: '🏆 Classement des destinations par produit (mois & année)'
+    }
+  },
+  scales: {
+    x: {
+      title: { display: true, text: 'Destinations' },
+      ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
+    },
+    y: {
+      beginAtZero: true,
+      title: { display: true, text: 'Quantité sortie' }
+    }
+  }
+};
+
+consommationProduitPeriodeOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    title: {
+      display: true,
+      text: '📊 Consommation du produit sur une période (toutes destinations)'
+    }
+  },
+  scales: {
+    x: {
+      title: { display: true, text: 'Destinations' },
+      ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
+    },
+    y: {
+      beginAtZero: true,
+      title: { display: true, text: 'Quantité consommée' }
+    }
+  }
+};
+
+
+
+
+
+
 
 }

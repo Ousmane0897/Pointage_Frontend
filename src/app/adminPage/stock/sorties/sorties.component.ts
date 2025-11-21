@@ -21,10 +21,10 @@ import { ProduitService } from '../../../services/produit.service';
 import { AgencesService } from '../../../services/agences.service';
 
 @Component({
-    selector: 'app-sorties',
-    imports: [CommonModule, ReactiveFormsModule],
-    templateUrl: './sorties.component.html',
-    styleUrls: ['./sorties.component.scss']
+  selector: 'app-sorties',
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './sorties.component.html',
+  styleUrls: ['./sorties.component.scss']
 })
 export class SortiesComponent implements OnInit {
   // 🔹 Données du composant
@@ -42,6 +42,11 @@ export class SortiesComponent implements OnInit {
   displayedMotifs: string[] = [];
   isInSubLevel = false; // Pour revenir au niveau principal
   animationClass = ''; // 🔹 transition Tailwind appliquée dynamiquement
+  isResetting = false;
+  showSubMotifs = false;
+  closing = false;
+
+
 
 
   constructor(
@@ -60,8 +65,8 @@ export class SortiesComponent implements OnInit {
       destination: ['', Validators.required],
       responsable: ['', Validators.required],
       motifSortieStock: ['', Validators.required],
-      typeMouvement: ['SORTIE', Validators.required],
-      dateMouvement: [new Date(), Validators.required],
+      typeMouvement: ['SORTIE'],
+      //dateMouvement: [new Date(), Validators.required],
 
     });
 
@@ -124,33 +129,33 @@ export class SortiesComponent implements OnInit {
   // 🧩 Gestion du sélecteur de motif avec sous-niveaux
   // ===========================================
   // Affiche les sous-motifs ou revient au niveau principal
+
   onMotifChange(event: Event) {
     const selected = (event.target as HTMLSelectElement).value;
 
-    if (selected === 'INTERNE' && !this.isInSubLevel) {
-      this.animationClass = '-translate-x-full opacity-0'; // 🔹 slide out
-      setTimeout(() => {
-        this.displayedMotifs = [...this.sousMotifs, '⬅️ Retour'];
-        this.animationClass = 'translate-x-0 opacity-100'; // 🔹 slide in
-        this.isInSubLevel = true;
-        this.sortieForm.patchValue({ motifSortieStock: '' });
-      }, 300);
-      return;
+    if (selected === 'INTERNE') {
+      this.showSubMotifs = true;
+      this.sortieForm.patchValue({ motifSortieStock: '' });
     }
-
-    if (selected === '⬅️ Retour') {
-      this.animationClass = 'translate-x-full opacity-0 scale-95'; // 🔹 slide out
-      setTimeout(() => {
-        this.displayedMotifs = [...this.motifs];
-        this.animationClass = 'translate-x-0 opacity-100 scale-100'; // 🔹 slide in
-        this.isInSubLevel = false;
-        this.sortieForm.patchValue({ motifSortieStock: '' });
-      }, 300);
-      return;
-    }
-
   }
 
+  selectSousMotif(sm: string) {
+    // On ajoute le sous-motif dynamiquement à la liste
+    if (!this.motifs.includes(sm)) {
+      this.motifs.push(sm);
+    }
+
+    // On met la valeur dans le formulaire
+    this.sortieForm.patchValue({ motifSortieStock: sm });
+
+    // On ferme la carte
+    this.showSubMotifs = false;
+  }
+
+  closeSubMotifs() {
+    this.showSubMotifs = false;
+    this.sortieForm.patchValue({ motifSortieStock: '' });
+  }
 
   getAvailableAgences() {
     this.agencesService.getAllSites().subscribe({
@@ -212,6 +217,9 @@ export class SortiesComponent implements OnInit {
     // On s’abonne à valueChanges du champ nomProduit.Chaque fois que l’utilisateur change le produit sélectionné (dans un <select> par exemple), cette fonction s’exécute. La variable nomProduit contient la nouvelle valeur sélectionnée.
     fg.get('nomProduit')?.valueChanges.subscribe((nomProduit) => { // valueChanges écoute les changements du champ nomProduit.
       //On parcourt tous les autres groupes de formulaire (FormGroup) dans le FormArray, sauf le fg courant. On récupère la valeur de nomProduit de chacun. Résultat : un tableau autres qui contient tous les autres produits déjà sélectionnés.
+
+      if (this.isResetting) return;  // 👈 Empêche le warning
+
       const autres = this.produitsFormArray.controls
         .filter((ctrl) => ctrl !== fg)
         .map((ctrl) => ctrl.get('nomProduit')?.value);
@@ -245,11 +253,40 @@ export class SortiesComponent implements OnInit {
     this.produitsFormArray.removeAt(index);
   }
 
+
+
+
   // ===========================================
   // 🧩 Aperçu avant validation
   // ===========================================
   genererApercu() {
+    console.log("FORM STATUS:", this.sortieForm.status);
+    console.log("FORM ERRORS:", this.sortieForm.errors);
+
+    console.log("ARRAY STATUS:", this.produitsFormArray.status);
+    console.log("ARRAY ERRORS:", this.produitsFormArray.errors);
+
+    this.produitsFormArray.controls.forEach((ctrl, index) => {
+      console.log("Ligne", index, "values:", ctrl.getRawValue());
+      console.log("Ligne", index, "errors:", ctrl.errors);
+    });
+
     if (this.sortieForm.invalid) {
+
+      console.log(
+        "Destination:", this.sortieForm.get("destination")?.value,
+        " | Valid:", this.sortieForm.get("destination")?.valid
+      );
+      console.log(
+        "Responsable:", this.sortieForm.get("responsable")?.value,
+        " | Valid:", this.sortieForm.get("responsable")?.valid
+      );
+      console.log(
+        "Motif:", this.sortieForm.get("motifSortieStock")?.value,
+        " | Valid:", this.sortieForm.get("motifSortieStock")?.valid
+      );
+      console.log("MOTIF FINAL = ", this.sortieForm.get("motifSortieStock")?.value);
+
       this.toastr.warning('Veuillez remplir tous les champs avant aperçu.');
       return;
     }
@@ -306,7 +343,7 @@ export class SortiesComponent implements OnInit {
         motifSortieStock: this.sortieForm.value.motifSortieStock,
         typeMouvement: 'SORTIE',
         dateMouvement: this.sortieForm.value.dateMouvement
-        
+
       }).subscribe({
         next: () => this.onSuccess(),
         error: (err) => this.toastr.error(err.error.message),
@@ -319,11 +356,18 @@ export class SortiesComponent implements OnInit {
   // 🧩 Reset après succès
   // ===========================================
   onSuccess() {
+    this.isResetting = true;
+
     this.toastr.success('Sortie enregistrée avec succès ✅');
+
     this.sortieForm.reset();
     this.produitsFormArray.clear();
     this.apercuProduits = [];
     this.stockDisponible = {};
-    //this.ajouterProduit();
+
+    setTimeout(() => {
+      this.isResetting = false;
+    }, 50);
   }
+
 }

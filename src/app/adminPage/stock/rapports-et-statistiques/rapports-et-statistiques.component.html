@@ -12,90 +12,74 @@
 
   <!-- Sélecteur Mois / Année / Produit -->
   <div class="flex flex-col md:flex-row gap-4 mb-8 items-center justify-between">
-    <div class="flex flex-wrap gap-4">
-      <!-- Mois -->
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Mois</label>
-        <select [(ngModel)]="moisSelectionne" (change)="chargerTopProduits()"
-          class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
-          <option *ngFor="let m of moisDisponibles; let i = index" [value]="i + 1">{{ m }}</option>
-        </select>
+    <div class="flex flex-col">
+      <div class="flex flex-wrap gap-4">
+        <!-- Mois -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Mois</label>
+          <select [(ngModel)]="moisSelectionne"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <option value="">-- Tous les mois --</option>
+            <option *ngFor="let m of moisDisponibles; let i = index" [value]="i + 1">{{ m }}</option>
+          </select>
+        </div>
+
+        <!-- Destination -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Destination</label>
+          <select [(ngModel)]="destinationSelectionnee"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <option value="">-- Choisir une destination --</option>
+            <option *ngFor="let dest of destinations" [value]="dest">
+              {{ dest }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Année -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Année</label>
+          <input type="number" [(ngModel)]="anneeSelectionnee"
+            class="border border-gray-300 rounded-lg px-3 py-2 w-28 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            min="2020" max="2100" />
+        </div>
+
+        <!-- Produit -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Produit</label>
+          <select [(ngModel)]="produitSelectionne"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <option value="">-- Choisir un produit --</option>
+            <option *ngFor="let p of produits" [value]="p.nomProduit">
+              {{ p.nomProduit }}
+            </option>
+          </select>
+        </div>
+        <!-- Mois début -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Mois début</label>
+          <select [(ngModel)]="moisDebutSelectionne"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <option *ngFor="let m of moisDisponibles; let i = index" [value]="i + 1">{{ m }}</option>
+          </select>
+        </div>
+
+        <!-- Mois fin -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Mois fin</label>
+          <select [(ngModel)]="moisFinSelectionne"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <option *ngFor="let m of moisDisponibles; let i = index" [value]="i + 1">{{ m }}</option>
+          </select>
+        </div>
+
       </div>
-
-      <!-- Année -->
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Année</label>
-        <input type="number" [(ngModel)]="anneeSelectionnee" (change)="chargerTopProduits()"
-          class="border border-gray-300 rounded-lg px-3 py-2 w-28 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-          min="2020" max="2100" />
-      </div>
-
-      <!-- Produit -->
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Produit</label>
-        <select [(ngModel)]="produitSelectionne" (change)="chargerEvolutionStock()"
-          class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
-          <option *ngFor="let p of produits" [value]="p.codeProduit">
-            {{ p.nomProduit }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <button (click)="chargerTousLesGraphes()"
-      class="mt-3 md:mt-0 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all duration-300">
-      🔄 Actualiser
-    </button>
-  </div>
-
-  <!-- 🔹 Section Statistiques Clés -->
-  <div *ngIf="!loading" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 animate-fadeIn">
-    <!-- Carte Stat -->
-    <div
-      class="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 text-center shadow-sm transition-transform duration-300 hover:-translate-y-1">
-      <p class="text-xs md:text-sm text-gray-500">Produits suivis</p>
-      <p class="text-xl md:text-2xl font-bold text-blue-600 mt-1">{{ totalProduits }}</p>
-    </div>
-
-    <div
-      class="bg-green-50 border-l-4 border-green-600 rounded-xl p-4 text-center shadow-sm transition-transform duration-300 hover:-translate-y-1">
-      <p class="text-xs md:text-sm text-gray-500">Entrées du mois</p>
-      <p class="text-xl md:text-2xl font-bold text-green-600 mt-1">{{ totalEntreesMois }}</p>
-    </div>
-
-    <div
-      class="bg-red-50 border-l-4 border-r-4 border-red-600 rounded-xl p-4 text-center shadow-sm transition-transform duration-300 hover:-translate-y-1">
-      <p class="text-xs md:text-sm text-gray-500">Sorties du mois</p>
-      <p class="text-xl md:text-2xl font-bold text-red-600 mt-1">{{ totalSortiesMois }}</p>
-    </div>
-
-    <div
-      class="bg-yellow-50 border-l-4 border-yellow-600 rounded-xl p-4 text-center shadow-sm transition-transform duration-300 hover:-translate-y-1"
-      [ngClass]="{
-        'text-green-600': variationStock >= 0,
-        'text-red-600': variationStock < 0
-      }">
-      <p class="text-xs md:text-sm text-gray-500">Variation nette</p>
-      <p class="text-xl md:text-2xl font-bold mt-1">
-        {{ variationStock >= 0 ? '+' + variationStock : variationStock }}
-      </p>
-    </div>
-
-    <div
-      class="bg-gray-50 border-l-4 border-gray-600 rounded-xl p-4 text-center shadow-sm transition-transform duration-300 hover:-translate-y-1 col-span-2 sm:col-span-1">
-      <p class="text-xs md:text-sm text-gray-500">Top produit</p>
-      <p class="text-base md:text-lg font-semibold text-gray-600 truncate mt-1">
-        {{ topProduitNom || '—' }}
-      </p>
-      <p class="text-xs text-gray-600" *ngIf="topProduitQuantite">
-        ({{ topProduitQuantite }} unités)
-      </p>
     </div>
   </div>
-
-  <div *ngIf="!snapshotChart?.labels?.length && !loading" class="text-gray-500 italic text-center">
-    Aucune donnée disponible pour cette période.
-  </div>
+  <button (click)="chargerTousLesGraphes()"
+    class="mt-3 md:mt-4 mb-3 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all duration-300">
+    🔄 Actualiser
+  </button>
 
 
   <!-- Loader global -->
@@ -103,41 +87,101 @@
     <span class="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600 border-opacity-60"></span>
     Chargement des données...
   </div>
+  <!-- Aucune donnée disponible -->
+
+  <!-- Quantité de produits consommée par destination -->
+  <div *ngIf="!loading && sortieChart && sortieChart.labels?.length === 0"
+    class="text-center text-gray-500 text-xl italic py-6">
+    Aucune donnée trouvée pour cette période pour les Sorties par destination. Veuillez ajuster les filtres et réessayer
+    (Graphe 1).
+  </div>
+
+  <!-- Quantité de produit consommée par destination pour chaque mois de l'année -->
+  <div *ngIf="!loading && produitDestinationChart && produitDestinationChart.labels?.length === 0"
+    class="text-center text-gray-500 text-xl italic py-6">
+    Aucune donnée trouvée pour cette période pour le Produit sélectionné. Veuillez ajuster les filtres et réessayer
+    (Graphe 2).
+  </div>
+
+  <!-- Consommation totale pour une destination pour chaque mois de l'année -->
+  <div *ngIf="!loading && consommationDestinationChart && consommationDestinationChart.labels?.length === 0"
+    class="text-center text-gray-500 text-xl italic py-6">
+    Aucune donnée trouvée pour cette période pour {{ destinationSelectionnee }}. Veuillez ajuster les filtres et
+    réessayer (Graphe 3).
+  </div>
+
+
+
 
   <!-- === GRAPHIQUES === -->
-  <div *ngIf="!loading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
-    <!-- 📈 Évolution du stock -->
-    <div class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-      <canvas baseChart [data]="evolutionChart" [options]="evolutionOptions" [type]="'line'"></canvas>
-    </div>
+  <div *ngIf="!loading" class="grid grid-cols-1 gap-6 animate-fadeIn">
 
-    <!-- 🏢 Sorties par destination -->
-    <div class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+    <!-- 🏢 Sorties par destination (NE PAS MODIFIER) -->
+    <div *ngIf="!loading" class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+      <h3 class="text-lg font-semibold mb-3 text-gray-700">
+        🏢 Sorties par destination (pie) pour le mois de
+        {{ moisSelectionne ? moisDisponibles[moisSelectionne - 1] : 'tous les mois' }}
+        de l'année ({{ anneeSelectionnee }})
+      </h3>
       <canvas baseChart [data]="sortieChart" [options]="sortieOptions" [type]="'pie'"></canvas>
     </div>
+
+    <!-- Sorties par destination en Bar -->
+    <div *ngIf="!loading" class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+      <h3 class="text-lg font-semibold mb-3 text-gray-700">
+        🏢 Sorties par destination (Bar) pour le mois de {{ moisDisponibles[moisSelectionne - 1] }} {{ anneeSelectionnee }}
+      </h3>
+      <canvas baseChart [data]="sortieBarChart" [options]="sortieBarOptions" [type]="'bar'"></canvas>
+    </div>
+
+    <div *ngIf="!loading"
+      class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
+      <h3 class="text-lg font-semibold mb-3 text-gray-700">
+        📈 Quantité de {{ produitSelectionne }} par mois pour {{ destinationSelectionnee }} de l'année ({{
+        anneeSelectionnee }})
+      </h3>
+      <canvas baseChart [data]="produitDestinationChart" [options]="produitDestinationOptions" type="line">
+      </canvas>
+
+    </div>
+
+    <div *ngIf="!loading"
+      class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
+      <h3 class="text-lg font-semibold mb-3 text-gray-700">
+        🏆 Classement des destinations selon {{ produitSelectionne }} —
+        {{ moisDisponibles[moisSelectionne - 1] }} {{ anneeSelectionnee }}
+      </h3>
+
+      <canvas baseChart [data]="classementDestinationChart" [options]="classementDestinationOptions" type="bar">
+      </canvas>
+    </div>
+
+
+    <div *ngIf="!loading"
+      class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
+      <h3 class="text-lg font-semibold mb-3 text-gray-700">
+        📈 Sorties total par mois pour de {{ destinationSelectionnee }} de l'année ({{ anneeSelectionnee }})
+      </h3>
+      <canvas baseChart [data]="consommationDestinationChart" [options]="consommationDestinationOptions" type="bar">
+      </canvas>
+    </div>
+
+    <!-- 📊 Consommation du produit sur une période -->
+    <div *ngIf="!loading"
+      class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
+      <h3 class="text-lg font-semibold mb-3 text-gray-700">
+        📊 Consommation de {{ produitSelectionne }} entre
+        {{ moisDisponibles[moisDebutSelectionne - 1] }} et
+        {{ moisDisponibles[moisFinSelectionne - 1] }}
+        ({{ anneeSelectionnee }})
+      </h3>
+
+      <canvas baseChart [data]="consommationProduitPeriodeChart" [options]="consommationProduitPeriodeOptions"
+        type="bar">
+      </canvas>
+    </div>
+
   </div>
 
-  <!-- 📊 Snapshot -->
-  <div *ngIf="!loading"
-    class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
-    <h3 class="text-base md:text-lg font-semibold mb-3 text-gray-700">
-      📊 Répartition mensuelle du stock — {{ snapshotPeriode }}
-    </h3>
-    <canvas baseChart [data]="snapshotChart" [options]="snapshotOptions" [type]="'bar'"></canvas>
-  </div>
 
-  <!-- 📈 Évolution multi-produits -->
-  <div *ngIf="!loading"
-    class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
-    <h3 class="text-base md:text-lg font-semibold mb-3 text-gray-700">
-      📈 Évolution du stock global par produit
-    </h3>
-    <canvas baseChart [data]="evolutionProduitsChart" [options]="evolutionProduitsOptions" [type]="'line'"></canvas>
-  </div>
-
-  <!-- 🏆 Top produits -->
-  <div *ngIf="!loading"
-    class="mt-8 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 animate-fadeIn">
-    <canvas baseChart [data]="topChart" [options]="topOptions" [type]="'bar'"></canvas>
-  </div>
 </div>

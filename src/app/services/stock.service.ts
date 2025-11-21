@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { MouvementEntreeStock } from '../models/MouvementEntreeStock.model';
 import { MouvementSortieStock, SortieStockBatch } from '../models/MouvementSortieStock.model';
+import { Produit } from '../models/produit.model';
 
 @Injectable({
   providedIn: 'root'
@@ -25,8 +26,8 @@ export class StockService {
   }
 
   // Récupérer la liste des produits
-  getProduits(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/produits/all`);
+  getProduits(): Observable<Produit[]> {
+    return this.http.get<Produit[]>(`${this.baseUrl}/api/produits/all`);
   }
 
   // Récupérer le stock actuel d'un produit
@@ -74,35 +75,74 @@ export class StockService {
   }
 
   // ===================== RAPPORTS ET STATISTIQUES =====================
-  getStockEvolution(produitId: string): Observable<{ labels: string[], data: number[] }> {
-    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/evolution/${produitId}`);
+
+  // ==========================================================
+  // 📦 Quantité d’un produit donné par mois pour chaque destination (année complète)
+  // ==========================================================
+  getQuantiteProduitParDestinationParMois(nomProduit: string, destination: string, annee: number): Observable<{ labels: string[], data: number[] }> {
+    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/stats/produit-destination-mois/${nomProduit}/${destination}/${annee}`);
   }
 
-  getTopProduitsSortis(mois: number, annee: number): Observable<{ labels: string[], data: number[] }> {
-    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/rapports/top-produits-sortis?mois=${mois}&annee=${annee}`);
+  // ==========================================================
+  // 🍽️ Consommation par destination pour chaque mois d’une année
+  // ==========================================================
+  getConsommationParDestinationParMois(destination: string, annee: number): Observable<{ labels: string[], data: number[] }> {
+    return this.http.get<{ labels: string[], data: number[] }>(`${this.baseUrl}/api/stock/stats/consommation-destination-mois/${destination}/${annee}`);
   }
 
-  getSnapshotByMonth(mois: number, annee: number) {
-    return this.http.get<any>(`${this.baseUrl}/api/stock/rapports/snapshot?mois=${mois}&annee=${annee}`);
+
+  // 🍰 Graphe Pie
+  getSortiesParDestination(mois: number, annee: number): Observable<{ labels: string[], data: number[] }> {
+    return this.http.get<{ labels: string[], data: number[] }>(
+      `${this.baseUrl}/api/stock/rapports/sorties-par-destination`,
+      { params: { mois: mois.toString(), annee: annee.toString() } }
+    );
   }
-  
 
-  getEvolutionParProduits() {
-  return this.http.get<any>(`${this.baseUrl}/api/stock/rapports/evolution-par-produits`);
-}
+  /**
+   * 
+   *Dans une requête HTTP, les query params sont toujours envoyés sous forme de texte (string), même si dans ton backend tu les reçois en int.
+    Donc on convertit les nombres en chaînes de caractères avant de les envoyer.
+    Pourquoi ? Parce que les query parameters font partie de l’URL, et une URL est une chaîne de caractères.
+   */
 
-getRapportMensuel(mois: number, annee: number) {
-  return this.http.get<any>(`${this.baseUrl}/api/stock/rapports/rapport-mensuel?mois=${mois}&annee=${annee}`);
-}
+  // 📊 Graphe Bar
+  getSortiesBarParDestination(mois: number, annee: number): Observable<{ labels: string[], datasets: any[] }> {
+    return this.http.get<{ labels: string[], datasets: any[] }>(
+      `${this.baseUrl}/api/stock/rapports/sorties-bar-par-destination`,
+      { params: { mois: mois.toString(), annee: annee.toString() } }
+    );
+  }
+
+  // 🏢 Classement des destinations par produit
+  getClassementDestinationsParProduit(produit: string, mois: number, annee: number): Observable<{ labels: string[], datasets: any[] }> {
+    return this.http.get<{ labels: string[], datasets: any[] }>(
+      `${this.baseUrl}/api/stock/rapports/classement-destinations-produit`,
+      { params: { produit, mois: mois.toString(), annee: annee.toString() } }
+    );
+  }
+  // 📈 Consommation d’un produit donné sur une période définie
+  getConsommationProduitParPeriode(
+    produit: string,
+    moisDebut: number,
+    moisFin: number,
+    annee: number
+  ): Observable<{ labels: string[], datasets: any[] }> {
+    return this.http.get<{ labels: string[], datasets: any[] }>(
+      `${this.baseUrl}/api/stock/rapports/consommation-produit-periode`,
+      {
+        params: {
+          produit,
+          moisDebut: moisDebut.toString(),
+          moisFin: moisFin.toString(),
+          annee: annee.toString()
+        }
+      }
+    );
+  }
 
 
 
-getSortiesParDestination(mois: number, annee: number): Observable<{ labels: string[], data: number[] }> {
-  return this.http.get<{ labels: string[], data: number[] }>(
-    `${this.baseUrl}/api/stock/rapports/sorties-par-destination`,
-    { params: { mois: mois.toString(), annee: annee.toString() } }
-  );
-}
 
 
 

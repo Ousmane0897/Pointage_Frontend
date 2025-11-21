@@ -114,30 +114,39 @@ export class CalendrierComponent implements OnInit {
     });
   }
 
-  getPlanificationByCodeEmploye(codeEmploye: string): Planification {
-
-    this.planification.getPlanificationByCodeEmploye(codeEmploye).subscribe(data => {
+  getPlanificationByCodeEmploye(codeSecret: string) {
+    this.planification.getPlanificationByCodeEmploye(codeSecret).subscribe(data => {
       this.getPlanification = data;
-    })
-    return this.getPlanification;
+      console.log('Planification de l\'employé:', this.getPlanification);
+    });
   }
 
   getEmployesDeplaces() {
     this.employesService.getEmployeEnDeplacement().subscribe(data => {
       this.employesDeplaces = data;
+      console.log('site destination employé:', this.employesDeplaces[0].site);
+      console.log('site avant déplacement employé:', this.employesDeplaces[0].siteAvantDeplacement);
       console.log('Employés en déplacement:', this.employesDeplaces);
     });
   }
 
   EmployeesDansUnSite() {
+  const site = this.modalData.siteDestination?.[0];
 
-    const site = this.modalData.siteDestination[0]
-
-    this.employesService.getEmployeesDansUnSite(site).subscribe(data => {
-      this.employeesDansUnSite = data;
-      console.log('Employés dans le site sélectionné:', this.employeesDansUnSite);
-    });
+  if (!site) {
+    this.employeesDansUnSite = [];
+    return;
   }
+
+  this.employesService.getEmployeesDansUnSite(site).subscribe({
+    next: (data) => this.employeesDansUnSite = data,
+    error: () => {
+      this.employeesDansUnSite = [];
+      this.toastr.error("Impossible de récupérer les employés du site", "Erreur");
+    }
+  });
+}
+
 
 
   onSiteChange(selectedSite: string) {
@@ -203,6 +212,8 @@ export class CalendrierComponent implements OnInit {
         //Idéal pour faire des actions « propres » comme: fermer un modal, arrêter un loader/spinner, réinitialiser un formulaire
       ).subscribe({
         next: () => {
+          console.log('site origine:', this.modalData.nomSite);
+          console.log('siteDestination après post :', this.modalData.siteDestination);
           this.toastr.success('Planification ajoutée avec succès !', 'Succès');
           this.ngOnInit(); // Rafraîchir les données du calendrier
         },
@@ -228,7 +239,7 @@ export class CalendrierComponent implements OnInit {
 
   openAddModal() {
     this.isEditMode = false;
-    this.modalData = { prenomNom: this.selectedEmploye.name, codeSecret: '', nomSite: this.selectedEmploye.departement, siteDestination: [] as string[], personneRemplacee: '', dateDebut: null, dateFin: null, heureDebut: '', heureFin: '', statut: 'EN_ATTENTE', matin: false, apresMidi: false, commentaires: null, motifAnnulation: null, dateCreation: null };
+    this.modalData = { prenomNom: this.selectedEmploye.name, codeSecret: this.selectedEmploye.codeEmploye, nomSite: this.selectedEmploye.departement, siteDestination: [] as string[], personneRemplacee: '', dateDebut: null, dateFin: null, heureDebut: '', heureFin: '', statut: 'EN_ATTENTE', matin: false, apresMidi: false, commentaires: null, motifAnnulation: null, dateCreation: null };
     this.selectedId = null;
     this.showModal = true;
     setTimeout(() => {
@@ -249,11 +260,18 @@ export class CalendrierComponent implements OnInit {
   }
 
   applyFilter() {
-    this.calendarOptions = {
-      ...this.calendarOptions,
-      events: this.getFilteredEvents()
-    };
+  const filteredEvents = this.getFilteredEvents();
+
+  if (this.calendarOptions.events === filteredEvents) {
+    return; // éviter un re-render FullCalendar inutile
   }
+
+  this.calendarOptions = {
+    ...this.calendarOptions,
+    events: filteredEvents
+  };
+}
+
 
   getMonday(d: Date) {
     const date = new Date(d);
@@ -304,27 +322,36 @@ export class CalendrierComponent implements OnInit {
     }
   }
 
- generateYearlyEvents(employes: Employe[]): EventInput[] {
+generateYearlyEvents(employes: Employe[]): EventInput[] {
   const events: EventInput[] = [];
   const today = new Date();
   const currentYear = today.getFullYear();
 
-  // Boucle sur tous les mois de l'année (0=Janvier, 11=Décembre)
   for (let month = 0; month < 12; month++) {
     const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
 
     employes.forEach(emp => {
+
+      // 🔥 Sécurisation du champ site
+      const siteList = Array.isArray(emp.site) // Vérifie si emp.site est un tableau
+        ? emp.site
+        : emp.site
+          ? [emp.site]
+          : ["Inconnu"];
+
       const joursTravailles = emp.joursDeTravail === 'Lundi-Vendredi' ? 5 : 6;
       const joursTravailles2 = emp.joursDeTravail2 === 'Lundi-Vendredi' ? 5 : 6;
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const currentDay = new Date(currentYear, month, day);
-        const dayOfWeek = currentDay.getDay(); // 0=Dimanche, 1=Lundi, ...
 
-        // Vérifier si c'est un jour travaillé pour la première plage
+        const currentDay = new Date(currentYear, month, day);
+        const dayOfWeek = currentDay.getDay(); // 0 = Dimanche
+
+        // ⏳ Filtrage jours travaillés — 1ère plage
         if (joursTravailles === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
         if (joursTravailles === 6 && dayOfWeek === 0) continue;
 
+        // ⭐ PREMIÈRE PLAGE
         events.push({
           id: `${emp.codeSecret}-${month + 1}-${day}-1`,
           title: `${emp.prenom} ${emp.nom}`,
@@ -334,7 +361,7 @@ export class CalendrierComponent implements OnInit {
             codeEmploye: emp.codeSecret,
             intervention: emp.intervention,
             statut: emp.statut,
-            site: emp.site[0],
+            site: siteList[0],        // ✔ plus jamais d'erreur
             employeCreePar: emp.employeCreePar,
             heureDebut: emp.heureDebut,
             heureFin: emp.heureFin,
@@ -347,8 +374,9 @@ export class CalendrierComponent implements OnInit {
               : '#545252'
         });
 
-        // Deuxième plage horaire si elle existe
+        // ⭐ DEUXIÈME PLAGE SI EXISTE
         if (emp.heureDebut2 && emp.heureFin2) {
+
           if (joursTravailles2 === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
           if (joursTravailles2 === 6 && dayOfWeek === 0) continue;
 
@@ -361,7 +389,7 @@ export class CalendrierComponent implements OnInit {
               codeEmploye: emp.codeSecret,
               intervention: emp.intervention,
               statut: emp.statut,
-              site: emp.site[1],
+              site: siteList[1] ?? siteList[0],   // ✔ sécurité + fallback
               employeCreePar: emp.employeCreePar,
               heureDebut2: emp.heureDebut2,
               heureFin2: emp.heureFin2,
@@ -378,6 +406,7 @@ export class CalendrierComponent implements OnInit {
 
   return events;
 }
+
 
 
 

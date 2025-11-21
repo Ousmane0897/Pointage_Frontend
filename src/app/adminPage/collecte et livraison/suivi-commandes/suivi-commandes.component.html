@@ -1,0 +1,103 @@
+<div class="p-6 bg-white rounded-lg shadow">
+  <h2 class="text-xl font-semibold mb-4">📦 Suivi des commandes de {{ moisNomComplet }}</h2>
+
+  <div *ngIf="loading" class="text-gray-500">Chargement...</div>
+
+  <div *ngIf="!loading && demandes.length === 0" class="text-gray-500 text-xl justify-center items-center">Aucune commande de produits pour le moment.</div>
+
+  <table class="w-full text-sm">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2">Destination</th>
+        <th class="p-2">Superviseur</th>
+        <th class="p-2">Date</th>
+        <th class="p-2">Statut</th>
+        <th class="p-2">Actions</th>
+        <th *ngIf="role == 'SUPERADMIN'" class="p-2"> Qui a modifié ?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of demandes" class="hover:bg-gray-50">
+        <td class="p-2 text-center">{{ d.destination }}</td>
+        <td class="p-2 text-center">{{ d.responsable }}</td>
+        <td class="p-2 text-center">{{ d.dateDemande }}</td>
+        <td class="p-2 text-center">
+          <span [ngClass]="{
+            'px-4 py-2 rounded-full bg-yellow-100 text-yellow-800': d.statut === 'EN_ATTENTE',
+            'px-4 py-2 rounded-full bg-orange-100 text-orange-800': d.statut === 'EN_COURS',
+            'px-4 py-2 rounded-full bg-green-100 text-green-800': d.statut === 'LIVREE'
+          }">{{ d.statut }}</span>
+        </td>
+        <td class="p-2 text-center">
+          <button class="text-blue-600" [disabled]="d.statut !== 'EN_ATTENTE'" (click)="ouvrirEdition(d)">Éditer</button>
+          <span class="mx-2">|</span>
+          <button class="text-indigo-600" [disabled]="d.statut !== 'EN_ATTENTE'" (click)="mettreEnCours(d)">Mettre en cours</button>
+          <span class="mx-2">|</span>
+          <button class="text-green-600" [disabled]="d.statut !== 'EN_COURS'" (click)="marquerLivree(d)">Marquer livrée</button>
+        </td>
+        <td *ngIf="role == 'SUPERADMIN'  " class="p-2 text-center">
+          <button class="p-2 text-red-600" (click)="afficherHistorique(d)">Voir les modifications</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal simple d'édition -->
+<div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+    <h3 class="text-lg font-semibold mb-4">Modifier la demande</h3>
+
+    <form [formGroup]="editForm" (ngSubmit)="sauvegarderEdition()">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input formControlName="destination" placeholder="Destination" readonly class="p-2 border rounded" />
+        <input formControlName="responsable" placeholder="Responsable" readonly class="p-2 border rounded" />
+      </div>
+
+      <div class="mt-4 space-y-2">
+        <div formArrayName="produitsDemandes" class="mt-4 space-y-2">
+
+          <div *ngFor="let group of produits.controls; let i = index" [formGroupName]="i"
+            class="flex gap-2 items-center">
+
+            <input formControlName="nomProduit" class="border p-2 rounded w-2/3" />
+            <input formControlName="quantite" type="number" class="border p-2 rounded w-1/4" />
+
+            <button type="button" class="text-red-600" (click)="supprimerProduit(i)">❌</button>
+          </div>
+
+          <button type="button" class="mt-2 px-3 py-1 bg-gray-200 rounded" (click)="ajouterProduitDefault()">
+            + Ajouter produit
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button type="button" class="px-4 py-2 bg-gray-200 rounded" (click)="fermerModal()">Annuler</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Historique des modifications -->
+<div *ngIf="showHistoryModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+    <h3 class="text-lg font-semibold mb-4">Historique des modifications</h3>
+
+    <div *ngIf="modificationHistory.length > 0; else noHistory">
+      <ul class="list-disc list-inside space-y-2">
+        <li *ngFor="let entry of modificationHistory">{{ "Détails de la modification : " + entry }}</li>
+      </ul>
+    </div>
+    <ng-template #noHistory>
+      <p>Aucune modification enregistrée.</p>
+    </ng-template>
+
+    <div class="mt-4 flex justify-end">
+      <button type="button" class="px-4 py-2 bg-gray-200 rounded" (click)="showHistoryModal = false">Fermer</button>
+    </div>
+  </div>
+</div>

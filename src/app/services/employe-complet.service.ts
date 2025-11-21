@@ -1,0 +1,55 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
+import { EmployeComplet } from '../models/employe-complet.model';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class EmployeCompletService {
+
+  searchEmployes(query: string):  Observable<{content: EmployeComplet[], total?: number}> {
+    
+    let params = new HttpParams().set('q', query);
+    return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/api/employe-complet/search`, { params });
+  }
+
+  constructor(private http: HttpClient) { }
+
+  private baseUrl = environment.apiUrlEmploye;
+
+
+  getEmployesComplet(page = 0, size = 20, q = ''): Observable<{content: EmployeComplet[], total?: number}> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (q) params = params.set('q', q);
+    return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/api/employe-complet/all`, { params });
+  }
+
+  getEmployeCompletByAgentId(agentId: string): Observable<EmployeComplet> {
+    return this.http.get<EmployeComplet>(`${this.baseUrl}/api/employe-complet/${agentId}`);
+  }
+
+  getByPrenomNom(prenom: string, nom: string): Observable<EmployeComplet> {
+    let params = new HttpParams().set('prenom', prenom).set('nom', nom);
+    return this.http.get<EmployeComplet>(`${this.baseUrl}/api/employe-complet/prenomNom`, { params });
+  }
+
+  createEmployeComplet(formData: FormData): Observable<any> {
+  return this.http.post<any>(`${this.baseUrl}/api/employe-complet/employe`, formData);
+}
+
+
+  getAllEmployesComplet(): Observable<EmployeComplet[]> {
+    return this.http.get<EmployeComplet[]>(`${this.baseUrl}/api/employe-complet/all`);
+  }
+
+  updateEmployeComplet(agentId: string, employe: any): Observable<EmployeComplet> {
+    return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/${agentId}`, employe);
+  }
+
+  deleteEmploye(matricule: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/${matricule}`);
+  }
+  
+}

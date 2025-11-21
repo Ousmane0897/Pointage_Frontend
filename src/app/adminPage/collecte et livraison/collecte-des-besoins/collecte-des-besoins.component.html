@@ -1,0 +1,106 @@
+<div class="p-8 bg-gray-50 min-h-screen">
+
+    <div class="max-w-4xl mx-auto bg-white p-8 shadow-xl rounded-2xl border border-gray-200">
+
+        <!-- Header -->
+        <h1 class="text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
+            <span>📝 Nouvelle demande</span>
+
+        </h1>
+
+        <!-- Formulaire principal -->
+        <form [formGroup]="form" class="space-y-6">
+
+            <!-- Informations principales -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Destination -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Destination</label>
+                    <input type="text" formControlName="destination" placeholder="Ex: Agence Dakar"
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                    <p *ngIf="form.get('destination')?.invalid && form.get('destination')?.touched"
+                        class="text-sm text-red-500 mt-1">Champ requis.</p>
+                </div>
+
+                <!-- Responsable -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Superviseur</label>
+                    <input type="text" formControlName="responsable" placeholder="Nom du superviseur"
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                    <p *ngIf="form.get('responsable')?.invalid && form.get('responsable')?.touched"
+                        class="text-sm text-red-500 mt-1">Champ requis.</p>
+                </div>
+
+            </div>
+
+            <!-- Produits demandés -->
+            <div class="mt-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    📦 Produits demandés
+                </h2>
+
+                <div formArrayName="produitsDemandes" class="space-y-4">
+
+                    <div *ngFor="let produit of produits.controls; let i = index" [formGroupName]="i"
+                        class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                            <!-- Produit -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-1">Nom du produit</label>
+                                <select formControlName="nomProduit"
+                                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500">
+                                    <option value="" disabled>Sélectionner un produit</option>
+                                    <option *ngFor="let p of Lesproduits" [value]="p.nomProduit"> {{ p.nomProduit }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Code Produit -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-1">Code produit</label>
+                                <input formControlName="codeProduit" readonly
+                                    class="w-full border rounded-lg p-3 bg-gray-100" />
+                            </div>
+
+                            <!-- Quantité -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-1">Quantité</label>
+                                <input type="number" formControlName="quantite" min="1"
+                                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500" />
+                            </div>
+
+                        </div>
+
+                        <!-- Bouton supprimer -->
+                        <div class="mt-4 text-right">
+                            <button *ngIf="produits.length > 1" type="button" (click)="removeProduit(i)"
+                                class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                ❌ Supprimer
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Ajouter un produit -->
+                <button type="button" (click)="addProduit()"
+                    class="mt-4 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md">
+                    + Ajouter un produit
+                </button>
+            </div>
+
+            <!-- Bouton de validation -->
+            <div class="pt-4 border-t border-gray-200 text-right">
+                <button type="button" (click)="save()"
+                    class="px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg text-lg font-medium">
+                    ✔ Valider la demande
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

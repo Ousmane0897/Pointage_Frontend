@@ -296,7 +296,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
 
           return of({ content: [], total: 0 }); // Retourne un tableau vide en cas d'erreur. Un flux de secours (of({ content: [], total: 0 })) pour éviter un plantage dans .subscribe().
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$) // Continue à écouter les données jusqu’à ce que destroy$ émette quelque chose. Lie une souscription à la durée de vie du composant. 👈 auto-désabonnement à la destruction. 
       )
       .subscribe((res) => {
         this.produits = res.content;
@@ -340,7 +340,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading = true; // Démarrer le loader 
 
     const formData = new FormData();
     formData.append('produit', new Blob([JSON.stringify(this.modalData)], { type: 'application/json' }));
@@ -351,7 +351,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     // --- 🧩 MODE ÉDITION ---
     if (this.isEditMode && this.selectedId) {
       this.produitService.updateProduit(this.selectedId, formData).pipe(
-        finalize(() => this.isLoading = false)
+        finalize(() => this.isLoading = false) // Toujours arrêter le loader à la fin
       ).subscribe({
         next: () => {
           this.loadProduits();
@@ -459,11 +459,17 @@ export class ProduitListComponent implements OnInit, OnDestroy {
       this.loadProduits();
     }
   }
-
+  // 🧹 Nettoyage des abonnements. 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.destroy$.next(); // Signale la fin des abonnements.  interrompt toutes les souscriptions liées. Émet un signal pour dire “stoppez toutes les souscriptions actives”.
+    this.destroy$.complete(); // Termine le Subject pour libérer les ressources.
   }
+  /**
+   * Résultat ✅ :
+     Toutes les souscriptions takeUntil(this.destroy$) sont automatiquement désabonnées.
+     Tu évites toute fuite de mémoire quand le composant est détruit (par exemple, quand tu changes de page).
+   */
+
 }
 
 

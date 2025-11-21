@@ -23,6 +23,8 @@ export class SidebarComponent implements OnInit {
   isOpen = true;
   openDropdown: string | null = null;
   openDropdownAbsent: string | null = null;
+  openDropdownEmploye: string | null = null;
+  openDropdownCollecte: string | null = null;
 
     ngOnInit(): void {
       
@@ -50,6 +52,16 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdown(menu: string) {
   this.openDropdown = this.openDropdown === menu ? null : menu;
+}
+
+
+
+toggleDropdownEmploye(menu: string) {
+  this.openDropdownEmploye = this.openDropdownEmploye === menu ? null : menu;
+}
+
+toggleDropdownCollecte(menu: string) {
+  this.openDropdownCollecte = this.openDropdownCollecte === menu ? null : menu;
 }
 
 toggleDropdownAbsent(menu: string) {
