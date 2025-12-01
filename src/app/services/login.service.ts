@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { JwtPayload } from '../models/JwtPayload.model';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 
 @Injectable({
@@ -9,9 +10,31 @@ import { JwtPayload } from '../models/JwtPayload.model';
 })
 export class LoginService {
 
+  private permissionsSubject = new BehaviorSubject<any>({});
+  permissions$ = this.permissionsSubject.asObservable(); // Observable pour les modules autorisés
+
   private baseUrl = environment.apiUrlEmploye
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
+
+  permissionsChanged = new Subject<void>();
+
+
+  notifyPermissionsChanged() {
+    const payload = this.decodeToken();
+    const modules = payload?.modules || {};
+    this.permissionsSubject.next(modules);
+  }
+
+  getUserPermissions(): any {
+    const fromStorage = localStorage.getItem("modulesAutorises");
+    if (fromStorage) return JSON.parse(fromStorage);
+
+    const payload = this.decodeToken();
+    return payload?.modules || {};
+  }
+
+
 
 
   login(email: string, password: string) {
@@ -21,27 +44,30 @@ export class LoginService {
   }
 
 
-setToken(token: string): void {
-    localStorage.setItem('token', token); 
+  setToken(token: string): void {
+    localStorage.setItem('token', token);
   }
 
-getToken(): string | null {
+  getToken(): string | null {
     return localStorage.getItem('token');
   }
 
 
-   private decodeToken(): JwtPayload | null {
-    const token = this.getToken();
+  decodeToken(): any {
+    const token = localStorage.getItem("token");
     if (!token) return null;
 
     try {
-      const payload = atob(token.split('.')[1]);
-      return JSON.parse(payload) as JwtPayload;
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(atob(payload));
+      return decoded;
     } catch (e) {
       this.logout(); // token is malformed
+      console.error("Erreur de décodage du token :", e);
       return null;
     }
   }
+
 
   isLoggedIn(): boolean {
     const payload = this.decodeToken();
@@ -58,7 +84,7 @@ getToken(): string | null {
     return true;
   }
 
-  getUserRole(): string  {
+  getUserRole(): string {
     const payload = this.decodeToken();
     if (!payload || !payload.role) return 'No role found';
     return payload.role.trim();
@@ -67,7 +93,7 @@ getToken(): string | null {
   getUserPoste(): string {
     const payload = this.decodeToken();
     if (!payload || !payload.poste) return 'No poste found';
-    return payload.poste.trim();  
+    return payload.poste.trim();
   }
 
 
@@ -81,7 +107,7 @@ getToken(): string | null {
     if (!prenom && !nom) return null; // aucun prénom ni nom → retourne null
 
     return `${prenom} ${nom}`.trim();
-}
+  }
 
   logout() {
     localStorage.removeItem('token');

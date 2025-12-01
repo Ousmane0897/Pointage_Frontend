@@ -31,6 +31,23 @@
       <h3 class="text-lg font-medium mb-2">Données annexes</h3>
       <!-- Champs globaux -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-3 rounded-lg">
+
+        <!-- ----- SELECT PRINCIPAL ----- -->
+        <div class="transition-transform duration-300 ease-in-out w-full">
+          <select id="motifSortieStock" formControlName="motifSortieStock"
+            class="w-full border rounded-lg p-2 shadow-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+            (change)="onMotifChange($event)">
+            <option value="">-- Choisir un motif --</option>
+            <option *ngFor="let option of motifs" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+          <!-- Affichage clair de la valeur effective (sous-motif ou motif principal) -->
+          <div class="mt-2 text-sm text-gray-600">
+            Motif sélectionné : <strong>{{ sortieForm.get('motifSortieStock')?.value || '—' }}</strong>
+          </div>
+        </div>
+
         <div>
           <select formControlName="destination" class="w-full border rounded-lg p-2">
             <option value="">-- Choisir une agence --</option>
@@ -47,41 +64,36 @@
 
           <!-- conteneur animé -->
 
-
-          <!-- ----- SELECT PRINCIPAL ----- -->
-          <div class="transition-transform duration-300 ease-in-out w-full">
-            <select id="motifSortieStock" formControlName="motifSortieStock"
-              class="w-full border rounded-lg p-2 shadow-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
-              (change)="onMotifChange($event)">
-              <option value="">-- Choisir un motif --</option>
-              <option *ngFor="let option of motifs" [value]="option">
-                {{ option }}
-              </option>
-            </select>
-          </div>
-
           <!-- ----- OVERLAY + CARTE DES SOUS-MOTIFS ----- -->
-          <div *ngIf="showSubMotifs" class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50"
+          <div *ngIf="showSubMotifs"
+            class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 backdrop-blur-sm"
             (click)="closeSubMotifs()">
 
-            <!-- La carte : stopPropagation empêche de fermer quand on clique dessus -->
-            <div class="bg-white p-4 rounded-xl shadow-xl w-11/12 md:w-1/2 animate-fade-in"
+            <!-- Carte -->
+            <div class="bg-white p-6 rounded-2xl shadow-2xl w-11/12 md:w-1/2 animate-fade-in"
               (click)="$event.stopPropagation()">
 
-              <h3 class="font-semibold text-lg mb-3 text-gray-700">
-                Choisir un sous-motif :
+              <h3 class="font-semibold text-xl mb-4 text-gray-700">
+                Choisir un sous-motif
               </h3>
 
-              <div class="grid grid-cols-1 gap-2">
-                <button *ngFor="let sm of sousMotifs"
-                  class="w-full p-2 rounded-lg border bg-gray-50 hover:bg-blue-100 transition"
+              <!-- CARTES SOUS-MOTIFS -->
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div *ngFor="let sm of sousMotifs" class="cursor-pointer rounded-xl p-4 shadow-md bg-gray-50 border border-gray-200 
+                  hover:bg-blue-100 hover:shadow-lg transition transform hover:-translate-y-1"
                   (click)="selectSousMotif(sm)">
-                  {{ sm }}
-                </button>
+
+                  <div class="text-center">
+                    <!-- Icône style Teams (optionnel) -->
+                    <div class="text-blue-600 mb-1 text-3xl">📌</div>
+                    <div class="font-medium text-gray-700">{{ sm }}</div>
+                  </div>
+
+                </div>
               </div>
             </div>
-
           </div>
+
 
         </div>
       </div>

@@ -14,6 +14,7 @@ import { P } from '@angular/cdk/platform.d-B3vREl3q';
 import { ProduitService } from '../../../services/produit.service';
 import { Produit } from '../../../models/produit.model';
 import { LoginService } from '../../../services/login.service';
+import { AgencesService } from '../../../services/agences.service';
 
 
 @Component({
@@ -40,6 +41,7 @@ export class CollecteDesBesoinsComponent {
   role: string | null = null;
   poste: string | null = null;
   moisNomComplet: string = '';
+  destinations: string[] = [];
 
   
 
@@ -53,7 +55,8 @@ export class CollecteDesBesoinsComponent {
     private besoinsService: BesoinsService,
     private toastr: ToastrService,
     private produitsService: ProduitService,
-    private loginService: LoginService
+    private loginService: LoginService,
+    private agencesService: AgencesService
   ) { }
 
   ngOnInit(): void {
@@ -68,6 +71,9 @@ export class CollecteDesBesoinsComponent {
 
     // Récupère le mois en cours
     this.moisEnCours();
+
+    // Récupère les agences disponibles
+    this.getAvailableAgences();
   }
 
   // ======================================
@@ -84,6 +90,13 @@ export class CollecteDesBesoinsComponent {
           }, { emitEvent: false });
         }
       }
+    });
+  }
+
+   getAvailableAgences() {
+    this.agencesService.getAllSites().subscribe({
+      next: (agences) => (this.destinations = agences),
+      error: () => this.toastr.error('Erreur lors du chargement des agences'),
     });
   }
 

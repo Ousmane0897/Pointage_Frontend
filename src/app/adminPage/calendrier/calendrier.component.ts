@@ -25,20 +25,20 @@ import { co, dE } from '@fullcalendar/core/internal-common';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-    selector: 'app-calendar-employes',
-    imports: [CommonModule,
-        FullCalendarModule,
-        MatMenuModule,
-        MatButtonModule,
-        FormsModule,
-        NgxMatTimepickerModule,
-        MatInputModule,
-        MatFormFieldModule,
-        MatDatepickerModule,
-        MatNativeDateModule
-    ],
-    templateUrl: './calendrier.component.html',
-    styleUrls: ['./calendrier.component.scss']
+  selector: 'app-calendar-employes',
+  imports: [CommonModule,
+    FullCalendarModule,
+    MatMenuModule,
+    MatButtonModule,
+    FormsModule,
+    NgxMatTimepickerModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
+  templateUrl: './calendrier.component.html',
+  styleUrls: ['./calendrier.component.scss']
 })
 export class CalendrierComponent implements OnInit {
 
@@ -131,21 +131,21 @@ export class CalendrierComponent implements OnInit {
   }
 
   EmployeesDansUnSite() {
-  const site = this.modalData.siteDestination?.[0];
+    const site = this.modalData.siteDestination?.[0];
 
-  if (!site) {
-    this.employeesDansUnSite = [];
-    return;
-  }
-
-  this.employesService.getEmployeesDansUnSite(site).subscribe({
-    next: (data) => this.employeesDansUnSite = data,
-    error: () => {
+    if (!site) {
       this.employeesDansUnSite = [];
-      this.toastr.error("Impossible de récupérer les employés du site", "Erreur");
+      return;
     }
-  });
-}
+
+    this.employesService.getEmployeesDansUnSite(site).subscribe({
+      next: (data) => this.employeesDansUnSite = data,
+      error: () => {
+        this.employeesDansUnSite = [];
+        this.toastr.error("Impossible de récupérer les employés du site", "Erreur");
+      }
+    });
+  }
 
 
 
@@ -260,17 +260,17 @@ export class CalendrierComponent implements OnInit {
   }
 
   applyFilter() {
-  const filteredEvents = this.getFilteredEvents();
+    const filteredEvents = this.getFilteredEvents();
 
-  if (this.calendarOptions.events === filteredEvents) {
-    return; // éviter un re-render FullCalendar inutile
+    if (this.calendarOptions.events === filteredEvents) {
+      return; // éviter un re-render FullCalendar inutile
+    }
+
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      events: filteredEvents
+    };
   }
-
-  this.calendarOptions = {
-    ...this.calendarOptions,
-    events: filteredEvents
-  };
-}
 
 
   getMonday(d: Date) {
@@ -322,90 +322,93 @@ export class CalendrierComponent implements OnInit {
     }
   }
 
-generateYearlyEvents(employes: Employe[]): EventInput[] {
-  const events: EventInput[] = [];
-  const today = new Date();
-  const currentYear = today.getFullYear();
+  generateYearlyEvents(employes: Employe[]): EventInput[] {
+    const events: EventInput[] = [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
 
-  for (let month = 0; month < 12; month++) {
-    const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+    for (let month = 0; month < 12; month++) {
+      const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
 
-    employes.forEach(emp => {
+      employes.forEach(emp => {
 
-      // 🔥 Sécurisation du champ site
-      const siteList = Array.isArray(emp.site) // Vérifie si emp.site est un tableau
-        ? emp.site
-        : emp.site
-          ? [emp.site]
-          : ["Inconnu"];
+        // 🔥 Sécurisation du champ site
+        const siteList = Array.isArray(emp.site) // Vérifie si emp.site est un tableau
+          ? emp.site
+          : emp.site
+            ? [emp.site]
+            : ["Inconnu"];
 
-      const joursTravailles = emp.joursDeTravail === 'Lundi-Vendredi' ? 5 : 6;
-      const joursTravailles2 = emp.joursDeTravail2 === 'Lundi-Vendredi' ? 5 : 6;
+        const joursTravailles = emp.joursDeTravail === 'Lundi-Vendredi' ? 5 : 6;
+        const joursTravailles2 = emp.joursDeTravail2 === 'Lundi-Vendredi' ? 5 : 6;
 
-      for (let day = 1; day <= daysInMonth; day++) {
+        for (let day = 1; day <= daysInMonth; day++) {
 
-        const currentDay = new Date(currentYear, month, day);
-        const dayOfWeek = currentDay.getDay(); // 0 = Dimanche
+          const currentDay = new Date(currentYear, month, day);
+          const dayOfWeek = currentDay.getDay(); // 0 = Dimanche
 
-        // ⏳ Filtrage jours travaillés — 1ère plage
-        if (joursTravailles === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
-        if (joursTravailles === 6 && dayOfWeek === 0) continue;
+          // ⏳ Filtrage jours travaillés — 1ère plage
+          if (joursTravailles === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
+          if (joursTravailles === 6 && dayOfWeek === 0) continue;
 
-        // ⭐ PREMIÈRE PLAGE
-        events.push({
-          id: `${emp.codeSecret}-${month + 1}-${day}-1`,
-          title: `${emp.prenom} ${emp.nom}`,
-          start: this.combineDateAndTime(currentDay, emp.heureDebut),
-          end: this.combineDateAndTime(currentDay, emp.heureFin),
-          extendedProps: {
-            codeEmploye: emp.codeSecret,
-            intervention: emp.intervention,
-            statut: emp.statut,
-            site: siteList[0],        // ✔ plus jamais d'erreur
-            employeCreePar: emp.employeCreePar,
-            heureDebut: emp.heureDebut,
-            heureFin: emp.heureFin,
-            deplacement: emp.deplacement
-          },
-          color: emp.deplacement
-            ? '#D10000'
-            : (emp.heureDebut === '06:00' && emp.heureFin === '19:00')
-              ? '#7E00DE'
-              : '#545252'
-        });
-
-        // ⭐ DEUXIÈME PLAGE SI EXISTE
-        if (emp.heureDebut2 && emp.heureFin2) {
-
-          if (joursTravailles2 === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
-          if (joursTravailles2 === 6 && dayOfWeek === 0) continue;
-
+          // ⭐ PREMIÈRE PLAGE
           events.push({
-            id: `${emp.codeSecret}-${month + 1}-${day}-2`,
+            id: `${emp.codeSecret}-${month + 1}-${day}-1`,
             title: `${emp.prenom} ${emp.nom}`,
-            start: this.combineDateAndTime(currentDay, emp.heureDebut2),
-            end: this.combineDateAndTime(currentDay, emp.heureFin2),
+            start: this.combineDateAndTime(currentDay, emp.heureDebut),
+            end: this.combineDateAndTime(currentDay, emp.heureFin),
             extendedProps: {
               codeEmploye: emp.codeSecret,
               intervention: emp.intervention,
               statut: emp.statut,
-              site: siteList[1] ?? siteList[0],   // ✔ sécurité + fallback
+              site: siteList[0],        // ✔ plus jamais d'erreur
               employeCreePar: emp.employeCreePar,
-              heureDebut2: emp.heureDebut2,
-              heureFin2: emp.heureFin2,
+              heureDebut: emp.heureDebut,
+              heureFin: emp.heureFin,
               deplacement: emp.deplacement
             },
-            color: emp.deplacement ? '#D10000' : '#FF9696'
+            color: emp.deplacement
+              ? '#D10000'
+              : emp.heureDebut === '06:00' && emp.heureFin === '19:00'
+                ? '#7E00DE'
+                : emp.heureDebut === '15:00' && emp.heureFin === '19:00'
+                  ? '#F78F7C'
+                  : '#545252'
+
           });
+
+          // ⭐ DEUXIÈME PLAGE SI EXISTE
+          if (emp.heureDebut2 && emp.heureFin2) {
+
+            if (joursTravailles2 === 5 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
+            if (joursTravailles2 === 6 && dayOfWeek === 0) continue;
+
+            events.push({
+              id: `${emp.codeSecret}-${month + 1}-${day}-2`,
+              title: `${emp.prenom} ${emp.nom}`,
+              start: this.combineDateAndTime(currentDay, emp.heureDebut2),
+              end: this.combineDateAndTime(currentDay, emp.heureFin2),
+              extendedProps: {
+                codeEmploye: emp.codeSecret,
+                intervention: emp.intervention,
+                statut: emp.statut,
+                site: siteList[1] ?? siteList[0],   // ✔ sécurité + fallback
+                employeCreePar: emp.employeCreePar,
+                heureDebut2: emp.heureDebut2,
+                heureFin2: emp.heureFin2,
+                deplacement: emp.deplacement
+              },
+              color: emp.deplacement ? '#D10000' : '#FF9696'
+            });
+          }
         }
-      }
 
-      this.changeMobileState(emp);
-    });
+        this.changeMobileState(emp);
+      });
+    }
+
+    return events;
   }
-
-  return events;
-}
 
 
 

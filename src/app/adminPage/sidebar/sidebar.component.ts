@@ -1,41 +1,53 @@
 import { CommonModule, NgClass, NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { HeaderComponent } from '../header/header.component';
 import { LoginService } from '../../services/login.service';
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
-    selector: 'app-sidebar',
-    imports: [
-        RouterModule,
-        NgClass,
-        CommonModule,
-        NgIf,
-        LucideAngularModule
-    ],
-    templateUrl: './sidebar.component.html',
-    styleUrl: './sidebar.component.scss'
+  selector: 'app-sidebar',
+  imports: [
+    RouterModule,
+    NgClass,
+    CommonModule,
+    NgIf,
+    LucideAngularModule
+  ],
+  templateUrl: './sidebar.component.html',
+  styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent implements OnInit {
 
-  role: string  = '';
+  role: string = '';
   isOpen = true;
   openDropdown: string | null = null;
   openDropdownAbsent: string | null = null;
   openDropdownEmploye: string | null = null;
   openDropdownCollecte: string | null = null;
 
-    ngOnInit(): void {
-      
-      this.role = this.loginService.getUserRole();
-      console.log('ROLE =>', this.role);
+  modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
+
+  ngOnInit(): void {
+
+    this.role = this.loginService.getUserRole();
+
+    // Lire immédiatement
+    this.modulesAutorises = this.loginService.getUserPermissions();
+    console.log("Modules chargés :", this.modulesAutorises);
+
+    // Mettre à jour en live après login
+    this.loginService.permissions$.subscribe(modules => {
+      console.log("Modules mis à jour :", modules);
+      this.modulesAutorises = modules;
+    });
   }
+
+
 
   constructor(private router: Router,
     private loginService: LoginService
 
-  ) {}
+  ) { }
 
   toggleSidebar() {
     this.isOpen = !this.isOpen;
@@ -45,33 +57,38 @@ export class SidebarComponent implements OnInit {
     return this.router.url === path;
   }
 
+  hasPermission(module: string): boolean {
+    return this.modulesAutorises && this.modulesAutorises[module] === true;
+  }
+
+
   logout() {
     localStorage.removeItem('token');
     this.router.navigateByUrl('/');
   }
 
   toggleDropdown(menu: string) {
-  this.openDropdown = this.openDropdown === menu ? null : menu;
-}
+    this.openDropdown = this.openDropdown === menu ? null : menu;
+  }
 
 
 
-toggleDropdownEmploye(menu: string) {
-  this.openDropdownEmploye = this.openDropdownEmploye === menu ? null : menu;
-}
+  toggleDropdownEmploye(menu: string) {
+    this.openDropdownEmploye = this.openDropdownEmploye === menu ? null : menu;
+  }
 
-toggleDropdownCollecte(menu: string) {
-  this.openDropdownCollecte = this.openDropdownCollecte === menu ? null : menu;
-}
+  toggleDropdownCollecte(menu: string) {
+    this.openDropdownCollecte = this.openDropdownCollecte === menu ? null : menu;
+  }
 
-toggleDropdownAbsent(menu: string) {
-  this.openDropdownAbsent = this.openDropdownAbsent === menu ? null : menu;
-}
+  toggleDropdownAbsent(menu: string) {
+    this.openDropdownAbsent = this.openDropdownAbsent === menu ? null : menu;
+  }
 
-// Permet également d'appliquer des styles aux liens parents lorsque l'un de leurs sous-liens est actif.
-isActivePrefix(prefix: string): boolean {
-  return this.router.url.startsWith(prefix);
-}
+  // Permet également d'appliquer des styles aux liens parents lorsque l'un de leurs sous-liens est actif.
+  isActivePrefix(prefix: string): boolean {
+    return this.router.url.startsWith(prefix);
+  }
 
 
 }

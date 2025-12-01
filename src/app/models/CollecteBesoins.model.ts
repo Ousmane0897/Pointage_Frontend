@@ -4,9 +4,13 @@ export interface CollecteBesoins {
   responsable: string;
   statut: 'EN_ATTENTE' | 'EN_COURS' | 'LIVREE';
   dateDemande?: string;
+  dateLivraison?: string;
+  heureLivraison?: string;
+  nombreModifications?: number;
   produitsDemandes: BesoinProduit[];
+  anciensProduitsDemandes?: BesoinProduit[];
   historiqueModifications?: string[];
-  moisAnnee?: string;
+  moisActuel?: string;
 
 }
 

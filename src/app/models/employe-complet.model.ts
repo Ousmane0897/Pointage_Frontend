@@ -4,6 +4,8 @@ export interface EmployeComplet {
     prenom: string;
     nom: string;
     sexe: string;
+    heureDebut: string; 
+    heureFin: string;
     dateNaissance: Date | null;
     lieuNaissance: string;
     nationalite: string;

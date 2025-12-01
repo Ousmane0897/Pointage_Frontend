@@ -90,11 +90,11 @@
   <!-- Aucune donnée disponible -->
 
   <!-- Quantité de produits consommée par destination -->
-  <div *ngIf="!loading && sortieChart && sortieChart.labels?.length === 0"
+  <!--<div *ngIf="!loading && sortieChart && sortieChart.labels?.length === 0"
     class="text-center text-gray-500 text-xl italic py-6">
     Aucune donnée trouvée pour cette période pour les Sorties par destination. Veuillez ajuster les filtres et réessayer
     (Graphe 1).
-  </div>
+  </div>-->
 
   <!-- Quantité de produit consommée par destination pour chaque mois de l'année -->
   <div *ngIf="!loading && produitDestinationChart && produitDestinationChart.labels?.length === 0"
@@ -117,14 +117,14 @@
   <div *ngIf="!loading" class="grid grid-cols-1 gap-6 animate-fadeIn">
 
     <!-- 🏢 Sorties par destination (NE PAS MODIFIER) -->
-    <div *ngIf="!loading" class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+    <!--<div *ngIf="!loading" class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
       <h3 class="text-lg font-semibold mb-3 text-gray-700">
         🏢 Sorties par destination (pie) pour le mois de
         {{ moisSelectionne ? moisDisponibles[moisSelectionne - 1] : 'tous les mois' }}
         de l'année ({{ anneeSelectionnee }})
       </h3>
       <canvas baseChart [data]="sortieChart" [options]="sortieOptions" [type]="'pie'"></canvas>
-    </div>
+    </div>-->
 
     <!-- Sorties par destination en Bar -->
     <div *ngIf="!loading" class="p-5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">

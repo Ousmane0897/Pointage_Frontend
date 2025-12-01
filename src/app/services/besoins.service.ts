@@ -38,6 +38,10 @@ export class BesoinsService {
     return this.http.get<string[]>(`${this.baseUrl}/api/besoins/historique-modifications/${id}`);
   }
 
+  getHistoriqueLivraisons(): Observable<CollecteBesoins[]> {
+    return this.http.get<CollecteBesoins[]>(`${this.baseUrl}/api/besoins/historique-livraisons`);
+  }
+
   getBesoinsByMoisActuel(): Observable<CollecteBesoins[]> {
     return this.http.get<CollecteBesoins[]>(`${this.baseUrl}/api/besoins/moisActuel`); // Encodage du moisAnnee pour gérer les espaces et caractères spéciaux
   }

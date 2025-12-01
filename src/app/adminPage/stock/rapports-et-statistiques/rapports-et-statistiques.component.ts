@@ -37,7 +37,7 @@ export class RapportsEtStatistiquesComponent {
 
   // === Données des graphiques ===
 
-  sortieChart!: ChartConfiguration<'pie'>['data'];
+  //sortieChart!: ChartConfiguration<'pie'>['data'];
   sortieBarChart!: ChartConfiguration<'bar'>['data'];
   produitDestinationChart!: ChartConfiguration<'line'>['data'];
   consommationDestinationChart!: ChartConfiguration<'bar'>['data'];
@@ -94,7 +94,7 @@ export class RapportsEtStatistiquesComponent {
 
     this.pendingRequests = 3; // Nombre total de requêtes à effectuer
 
-    this.chargerSortiesParDestination();
+    //this.chargerSortiesParDestination();
     this.chargerProduitDestination();
     this.chargerConsommationDestination();
     this.chargerSortiesParDestinationBar();
@@ -110,7 +110,7 @@ export class RapportsEtStatistiquesComponent {
   // ==========================================================
   resetCharts() {
     // Réinitialise les données des graphiques à vide après chaque chargement de nouveaux filtres
-    this.sortieChart = { labels: [], datasets: [] };
+    //this.sortieChart = { labels: [], datasets: [] };
     this.produitDestinationChart = { labels: [], datasets: [] };
     this.consommationDestinationChart = { labels: [], datasets: [] };
 
@@ -145,7 +145,7 @@ export class RapportsEtStatistiquesComponent {
   // 🏢 Sorties par destination
   // ==========================================================
   // === PIE ===
-  chargerSortiesParDestination() {
+  /*chargerSortiesParDestination() {
     if (!this.moisSelectionne || !this.anneeSelectionnee) {
       this.onRequestComplete();
       return;
@@ -174,7 +174,7 @@ export class RapportsEtStatistiquesComponent {
         this.updateCharts();
         this.onRequestComplete();
       });
-  }
+  }*/
 
 
   // ==========================================================

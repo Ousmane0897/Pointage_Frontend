@@ -62,7 +62,7 @@ export class SortiesComponent implements OnInit {
     // Initialisation du formulaire reactif 
     this.sortieForm = this.fb.group({
       produitsFormArray: this.fb.array([]),
-      destination: ['', Validators.required],
+      destination: [{ value: '', disabled: true }, Validators.required], // 🔒 désactivé par défaut et activé selon motif.
       responsable: ['', Validators.required],
       motifSortieStock: ['', Validators.required],
       typeMouvement: ['SORTIE'],
@@ -140,17 +140,9 @@ export class SortiesComponent implements OnInit {
   }
 
   selectSousMotif(sm: string) {
-    // On ajoute le sous-motif dynamiquement à la liste
-    if (!this.motifs.includes(sm)) {
-      this.motifs.push(sm);
-    }
-
-    // On met la valeur dans le formulaire
-    this.sortieForm.patchValue({ motifSortieStock: sm });
-
-    // On ferme la carte
-    this.showSubMotifs = false;
-  }
+  this.sortieForm.get('motifSortieStock')?.setValue(sm);
+  this.showSubMotifs = false; // on ferme la fenêtre
+}
 
   closeSubMotifs() {
     this.showSubMotifs = false;

@@ -1,0 +1,190 @@
+<div class="p-6">
+    <div class="relative w-full mb-4 max-w-md">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <!-- Search Icon -->
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+    </div>
+
+    <div class="mb-4 flex gap-2">
+        <button (click)="openAddModal()"
+            class="flex items-center justify-center space-x-1 bg-green-600 text-white px-4 py-2 rounded">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                <path
+                    d="M720-400v-120H600v-80h120v-120h80v120h120v80H800v120h-80Zm-360-80q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z" />
+            </svg>
+            <span>Ajouter</span></button>
+
+    </div>
+
+    <table class="table-auto w-full border">
+        <thead class="bg-gray-100">
+            <tr>
+                
+                <th class="px-4 py-2">prenom</th>
+                <th class="px-4 py-2">Nom</th>
+                <th class="px-4 py-2">Email</th>
+                <th class="px-4 py-2">Mot de passe</th>
+                <th class="px-4 py-2">Poste</th>
+                <th class="px-4 py-2">Rôle</th>
+                <th class="px-4 py-2">Motif de désactivation</th>
+                <th class="px-4 py-2">Statut</th>
+                <th class="px-4 py-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let superviseur of filteredSuperviseurs" class="border-t">
+
+                <td class="px-4 py-2">{{ superviseur.prenom }}</td>
+                <td class="px-4 py-2">{{ superviseur.nom }}</td>
+                <td class="px-4 py-2">{{ superviseur.email }}</td>
+                <td class="px-4 py-2">{{ superviseur.password }}</td>
+                <td class="px-4 py-2">{{ superviseur.poste }}</td>
+                <td class="px-4 py-2">{{ superviseur.role }}</td>
+                <td class="px-4 py-2">{{ superviseur.motifDesactivation }}</td>
+                <td class="px-4 py-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" [checked]="superviseur.active"
+                            (change)="toggleStatus(superviseur)">
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 
+              peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 
+              peer-checked:after:translate-x-full peer-checked:after:border-white 
+              after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+              after:bg-white after:border-gray-300 after:border after:rounded-full 
+              after:h-5 after:w-5 after:transition-all dark:border-gray-600 
+              peer-checked:bg-blue-600">
+                        </div>
+                        <span class="ml-3 text-sm font-medium text-gray-900">
+                            {{ superviseur.active ? 'Activé' : 'Désactivé' }}
+                        </span>
+                    </label>
+
+                </td>
+                <td class=" flex-col px-2 py-2 space-y-2">
+                    <button (click)="openEditModal(superviseur)"
+                        class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
+                        title="Edit">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                        </svg>
+
+                    </button>
+
+                    <button (click)="deleteRow(superviseur.id!)"
+                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
+                        title="Delete">
+                        <!-- Heroicons trash SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal d'ajout/modification -->
+<div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded-lg w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-4">
+            {{ isEditMode ? 'Modifier' : 'Ajouter' }} un profil superviseur
+        </h2>
+
+        <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate class="max-h-[100vh] overflow-y-auto">
+
+
+            <div class="mb-2">
+                <input type="text" class="w-full p-2 border rounded" name="prenom" [(ngModel)]="modalData.prenom"
+                    placeholder="Prénom" required />
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['prenom']?.valid">
+                    Prénom requis
+                </p>
+            </div>
+
+            <div class="mb-2">
+                <input type="text" class="w-full p-2 border rounded" name="nom" [(ngModel)]="modalData.nom"
+                    placeholder="Nom" required />
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['nom']?.valid">Nom requis</p>
+            </div>
+
+            <div class="mb-2">
+                <input type="email" class="w-full p-2 border rounded" name="email" [(ngModel)]="modalData.email"
+                    placeholder="Email" required />
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['email']?.valid">Email valide
+                    requis</p>
+            </div>
+
+            <div class="mb-2 relative">
+                <input [type]="showPassword ? 'text' : 'password'" class="w-full p-2 border rounded"
+                    name="confirmPassword" [(ngModel)]="confirmPassword" placeholder="Confirmez le mot de passe"
+                    required />
+
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && modalData.password !== confirmPassword">
+                    Les mots de passe ne correspondent pas.
+                </p>
+            </div>
+
+
+            <div class="mb-2 relative">
+                <input [type]=" showPassword ? 'text' : 'password' " class="w-full p-2 border rounded" name="motDePasse"
+                    [(ngModel)]="modalData.password" placeholder="Entrez le mot de passe" required />
+                <button type="button" (click)="togglePasswordVisibility()"
+                    class="absolute right-3 top-2 text-gray-500 hover:text-gray-800">
+                    {{ showPassword ? '🙈' : '👁️' }}
+                </button>
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['motDePasse']?.valid">
+                    Mot de passe requis
+                </p>
+            </div>
+            <div class="mb-2">
+                <input type="text" class="w-full p-2 border rounded" name="poste" [(ngModel)]="modalData.poste"
+                    placeholder="Poste" required />
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['poste']?.valid">Poste requis
+                </p>
+            </div>
+            <div class="mb-2">
+                <select class="w-full p-2 border rounded" name="role" [(ngModel)]="modalData.role" required>
+                    <option value="" disabled selected>Choisir le rôle</option>
+                    <option *ngFor="let r of profil" [value]="r">{{ r }}</option>
+                </select>
+                <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['role']?.valid">Rôle requis</p>
+            </div>
+
+            <div class="mb-2">
+                <input type="text" class="w-full p-2 border rounded" name="motifDesactivation"
+                    [(ngModel)]="modalData.motifDesactivation"
+                    placeholder="Laissez ce champ vide si l'admin est active!" />
+                <p class="text-red-500 text-sm"
+                    *ngIf="!modalData.active && form.submitted && !form.controls['motifDesactivation']?.valid">
+                    Motif de désactivation requis
+                </p>
+            </div>
+
+            <div class="mb-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="active" [(ngModel)]="modalData.active"
+                        class="form-checkbox h-5 w-5 text-blue-600" />
+                    <span class="ml-2">Activer ce supervisueur</span>
+                </label>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" (click)="closeModal()"
+                    class="mr-2 px-4 py-2 bg-gray-400 text-white rounded">Annuler</button>
+                <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-green-600 text-white rounded">
+                    {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

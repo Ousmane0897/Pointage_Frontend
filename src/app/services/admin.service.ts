@@ -18,11 +18,11 @@ export class AdminService {
     return this.http.post<Admin>(`${this.baseUrl}/api/superadmin`, admin);
   }
 
-  updateAdmin(identifiant: string, admin: Admin): Observable<Admin> {
-    return this.http.put<Admin>(`${this.baseUrl}/api/superadmin/${identifiant}`, admin);
+  updateAdmin(id: string, admin: Admin): Observable<Admin> {
+    return this.http.put<Admin>(`${this.baseUrl}/api/superadmin/${id}`, admin);
   } 
 
-  deleteAdmin(identifiant: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/superadmin/${identifiant}`);
+  deleteAdmin(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/superadmin/${id}`);
   } 
 }

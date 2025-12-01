@@ -6,5 +6,6 @@ export interface JwtPayload {
   iat?: number;        // Issued at (timestamp, optional)
   exp?: number;        // Expiration time (timestamp, optional)
   role?: string;       // Custom claim for user role
+  modules?: { [key: string]: boolean }; // Custom claim for user permissions
   [key: string]: any;  // Makes the interface open to other fields (optional claims, etc.)
 }

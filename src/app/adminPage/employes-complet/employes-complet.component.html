@@ -18,7 +18,7 @@
             <!-- Upload Excel -->
             <input type="file" accept=".xlsx, .xls" (change)="onFileSelected($event)"
                 class="mb-4 block w-80 border p-2 rounded" />
-            <button (click)="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+            <button (click)="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
                 + Ajouter
             </button>
         </div>
@@ -232,7 +232,7 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-semibold text-gray-700">
-                {{ isEditMode ? '✏️ Modifier Employé Complet' : '➕ Nouvel Employé Complet' }}
+                {{ isEditMode ? '✏️ Modifier Employé ' : '➕ Nouvel Employé Complet' }}
             </h2>
             <button (click)="closeModal()" class="text-gray-500 hover:text-red-500 text-xl font-bold">
                 ✕
@@ -318,6 +318,23 @@
                     #adresse="ngModel">
                 <div *ngIf="adresse.invalid && adresse.touched" class="text-red-500 text-sm">
                     L'adresse est requise.
+                </div>
+            </section>
+
+            <!-- Horaires -->
+            <section>
+                <h3 class="section-title">⏰ Horaires de Travail</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" class="input" placeholder="Heure de début" [(ngModel)]="modalData.heureDebut"
+                        name="heureDebut" #heureDebut="ngModel">
+                    <div *ngIf="heureDebut.invalid && heureDebut.touched" class="text-red-500 text-sm">
+                        L'heure de début est requise.
+                    </div>
+                    <input type="time" class="input" placeholder="Heure de fin" [(ngModel)]="modalData.heureFin"
+                        name="heureFin" #heureFin="ngModel">
+                    <div *ngIf="heureFin.invalid && heureFin.touched" class="text-red-500 text-sm">
+                        L'heure de fin est requise.
+                    </div>
                 </div>
             </section>
 
@@ -587,7 +604,7 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-semibold text-gray-700">
-                📋 Détails de l'Employé Complet
+                📋 Détails de l'Employé
             </h2>
             <button (click)="closeDetailsModal()" class="text-gray-500 hover:text-red-500 text-xl font-bold">
                 ✕
@@ -598,7 +615,7 @@
 
             <!-- Image -->
             <img [src]="baseUrl + '/api/employe-complet/image/' + employeCompletSelectionne.agentId"
-                alt="{{ employeCompletSelectionne.nom }}" class="w-30 h-30 object-cover mb-4 rounded" />
+                alt="{{ employeCompletSelectionne.nom }}" class="w-30 h-30 mb-4 rounded object-cover" />
 
             <!-- Contenu des détails ici -->
             <p><strong>Agent ID :</strong> {{ employeCompletSelectionne.agentId }}</p>

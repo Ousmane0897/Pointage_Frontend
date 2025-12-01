@@ -17,8 +17,11 @@
                 <!-- Destination -->
                 <div>
                     <label class="block text-gray-700 font-medium mb-1">Destination</label>
-                    <input type="text" formControlName="destination" placeholder="Ex: Agence Dakar"
-                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                    <select formControlName="destination"
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="" disabled>Sélectionner une agence</option>
+                        <option *ngFor="let dest of destinations" [value]="dest"> {{ dest }} </option>
+                    </select>
                     <p *ngIf="form.get('destination')?.invalid && form.get('destination')?.touched"
                         class="text-sm text-red-500 mt-1">Champ requis.</p>
                 </div>
