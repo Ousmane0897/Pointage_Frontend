@@ -184,7 +184,7 @@
                     <td class="p-3 space-x-2 flex-row flex justify-center items-center mt-10">
                         <button (click)="editEmploye(e)"
                             class="text-blue-600 hover:text-blue-800 text-2xl font-medium">✏️</button>
-                        <button (click)="deleteRow(e.matricule)"
+                        <button (click)="deleteRow(e.agentId)"
                             class="text-red-600 hover:text-red-800 text-2xl font-medium">🗑</button>
                         <button (click)="viewDetails(e)"
                             class="text-gray-600 hover:text-gray-800 text-xl font-medium">📋</button>
@@ -321,23 +321,6 @@
                 </div>
             </section>
 
-            <!-- Horaires -->
-            <section>
-                <h3 class="section-title">⏰ Horaires de Travail</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="time" class="input" placeholder="Heure de début" [(ngModel)]="modalData.heureDebut"
-                        name="heureDebut" #heureDebut="ngModel">
-                    <div *ngIf="heureDebut.invalid && heureDebut.touched" class="text-red-500 text-sm">
-                        L'heure de début est requise.
-                    </div>
-                    <input type="time" class="input" placeholder="Heure de fin" [(ngModel)]="modalData.heureFin"
-                        name="heureFin" #heureFin="ngModel">
-                    <div *ngIf="heureFin.invalid && heureFin.touched" class="text-red-500 text-sm">
-                        L'heure de fin est requise.
-                    </div>
-                </div>
-            </section>
-
             <!-- CONTACT -->
             <section>
                 <h3 class="section-title">☎️ Contact</h3>
@@ -385,33 +368,138 @@
             <section>
                 <h3 class="section-title">🏢 Agence & Site</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input class="input" placeholder="Agence" [(ngModel)]="modalData.agence" name="agence"
-                        #agence="ngModel">
-                    <div *ngIf="agence.invalid && agence.touched" class="text-red-500 text-sm">
-                        L'agence est requise.
+
+                    <!-- Dropdown button -->
+                    <button type="button" (click)="dropdownOpen = !dropdownOpen"
+                        class="w-full border border-gray-300 rounded p-2 flex justify-between items-center focus:outline-none focus:ring">
+                        <span>
+                            {{ modalData.agence.length > 0 ? modalData.agence.join(' - ') : 'Sélectionner un ouplusieurs sites'
+                            }}
+                        </span>
+                        <svg class="w-4 h-4 ml-2 transform" [class.rotate-180]="dropdownOpen" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown panel -->
+                    <div *ngIf="dropdownOpen"
+                        class="absolute z-10 mt-10 w-full bg-white border border-gray-200 rounded shadow max-h-60 overflow-y-auto">
+                        <div *ngFor="let site of availableSites"
+                            class="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                            <input type="checkbox" [value]="site" (change)="onCheckboxChange($event) "
+                                [checked]="modalData.agence.includes(site)"
+                                class="form-checkbox h-4 w-4 text-blue-600" />
+                            <span>{{ site }}</span>
+                        </div>
                     </div>
+
+                    <!-- Validation error -->
+                    <div *ngIf="siteTouched && modalData.agence.length === 0" class="text-red-500 text-sm mt-1">
+                        Au moins un site est requis.
+                    </div>
+
                     <input class="input" placeholder="Code site" [(ngModel)]="modalData.codeSite" name="codeSite"
                         #codeSite="ngModel">
                     <div *ngIf="codeSite.invalid && codeSite.touched" class="text-red-500 text-sm">
                         Le code site est requis.
                     </div>
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Code site 2" [(ngModel)]="modalData.codeSite2"
+                            name="codeSite2" #codeSite2="ngModel">
+                        <div *ngIf="codeSite2.invalid && codeSite2.touched" class="text-red-500 text-sm">
+                            Le code site est requis.
+                        </div>
+                    </ng-container>
                     <input class="input" placeholder="Ville du site" [(ngModel)]="modalData.villeSite" name="villeSite"
                         #villeSite="ngModel">
                     <div *ngIf="villeSite.invalid && villeSite.touched" class="text-red-500 text-sm">
                         La ville du site est requise.
                     </div>
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Ville du site 2" [(ngModel)]="modalData.villeSite2"
+                            name="villeSite2" #villeSite2="ngModel">
+                        <div *ngIf="villeSite2.invalid && villeSite2.touched" class="text-red-500 text-sm">
+                            La ville du site est requise.
+                        </div>
+                    </ng-container>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+
                     <input class="input" placeholder="Chef d'équipe" [(ngModel)]="modalData.chefEquipe"
                         name="chefEquipe" #chefEquipe="ngModel">
                     <div *ngIf="chefEquipe.invalid && chefEquipe.touched" class="text-red-500 text-sm">
                         Le chef d'équipe est requis.
                     </div>
+
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Chef d'équipe 2" [(ngModel)]="modalData.chefEquipe2"
+                            name="chefEquipe2" #chefEquipe2="ngModel">
+                        <div *ngIf="chefEquipe2.invalid && chefEquipe2.touched" class="text-red-500 text-sm">
+                            Le chef d'équipe est requis.
+                        </div>
+                    </ng-container>
+                    
                     <input class="input" placeholder="Manager Ops" [(ngModel)]="modalData.managerOps" name="managerOps"
                         #managerOps="ngModel">
                     <div *ngIf="managerOps.invalid && managerOps.touched" class="text-red-500 text-sm">
                         Le manager ops est requis.
+                    </div>
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Manager Ops 2" [(ngModel)]="modalData.managerOps2"
+                            name="managerOps2" #managerOps2="ngModel">
+                        <div *ngIf="managerOps2.invalid && managerOps2.touched" class="text-red-500 text-sm">
+                            Le manager ops est requis.
+                        </div>
+                    </ng-container>
+
+                    <!-- Jours de travail -->
+                    <input class="input" placeholder="Jours de travail 1" [(ngModel)]="modalData.joursDeTravail"
+                        name="joursDeTravail" #joursDeTravail="ngModel">
+                    <div *ngIf="joursDeTravail.invalid && joursDeTravail.touched" class="text-red-500 text-sm">
+                        Les jours de travail sont requis.
+                    </div>
+
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Jours de travail 2" [(ngModel)]="modalData.joursDeTravail2"
+                            name="joursDeTravail2" #joursDeTravail2="ngModel">
+                        <div *ngIf="joursDeTravail2.invalid && joursDeTravail2.touched" class="text-red-500 text-sm">
+                            Les jours de travail sont requis.
+                        </div>
+                    </ng-container>
+                </div>
+            </section>
+
+            <!-- Horaires -->
+            <section>
+                <h3 class="section-title">⏰ Horaires de Travail</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" class="input" placeholder="Heure de début" [(ngModel)]="modalData.heureDebut"
+                        name="heureDebut" #heureDebut="ngModel">
+                    <div *ngIf="heureDebut.invalid && heureDebut.touched" class="text-red-500 text-sm">
+                        L'heure de début est requise.
+                    </div>
+                    <input type="time" class="input" placeholder="Heure de fin" [(ngModel)]="modalData.heureFin"
+                        name="heureFin" #heureFin="ngModel">
+                    <div *ngIf="heureFin.invalid && heureFin.touched" class="text-red-500 text-sm">
+                        L'heure de fin est requise.
+                    </div>
+                </div>
+            </section>
+
+            <section *ngIf="modalData.agence.length === 2">
+                <h3 class="section-title">⏰ Horaires de Travail 2</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" class="input" placeholder="Heure de début" [(ngModel)]="modalData.heureDebut2"
+                        name="heureDebut2" #heureDebut2="ngModel">
+                    <div *ngIf="heureDebut2.invalid && heureDebut2.touched" class="text-red-500 text-sm">
+                        L'heure de début est requise.
+                    </div>
+                    <input type="time" class="input" placeholder="Heure de fin" [(ngModel)]="modalData.heureFin2"
+                        name="heureFin2" #heureFin2="ngModel">
+                    <div *ngIf="heureFin2.invalid && heureFin2.touched" class="text-red-500 text-sm">
+                        L'heure de fin est requise.
                     </div>
                 </div>
             </section>
@@ -443,7 +531,9 @@
                     <div *ngIf="dateDebut.invalid && dateDebut.touched" class="text-red-500 text-sm">
                         La date d'embauche est requise.
                     </div>
+
                     <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+
                         <mat-label>Date de fin de contrat</mat-label>
                         <input matInput [matDatepicker]="pickerFinContrat" name="dateFinContrat"
                             #dateFinContrat="ngModel" [(ngModel)]="modalData.dateFinContrat" required>
@@ -473,7 +563,7 @@
                     </div>
                 </div>
             </section>
-
+        
             <!-- PRIMES -->
             <section>
                 <h3 class="section-title">💰 Primes</h3>
@@ -638,11 +728,34 @@
             <p><strong>Lien de parenté avec ce contact :</strong> {{
                 employeCompletSelectionne.lienDeParenteAvecContactUrgence }}</p>
             <p><strong>Téléphone d'urgence :</strong> {{ employeCompletSelectionne.telephoneUrgent }}</p>
-            <p><strong>Agence :</strong> {{ employeCompletSelectionne.agence }}</p>
-            <p><strong>CodeSite :</strong> {{ employeCompletSelectionne.codeSite }}</p>
+            <p><strong>Agence :</strong> {{ employeCompletSelectionne.agence.join(', ') }}</p>
+            <p><strong>Jours de travail :</strong> {{ employeCompletSelectionne.joursDeTravail }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Jours de travail 2 :</strong> {{ employeCompletSelectionne.joursDeTravail2 }}</p>
+            </ng-container>
+            <p><strong>Code agence  :</strong> {{ employeCompletSelectionne.codeSite }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Code agence 2 :</strong> {{ employeCompletSelectionne.codeSite2 }}</p>  
+            </ng-container>
+
             <p><strong>Ville du site :</strong> {{ employeCompletSelectionne.villeSite }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Ville du site 2 :</strong> {{ employeCompletSelectionne.villeSite2 }}</p>
+            </ng-container>
             <p><strong>Chef d'équipe :</strong> {{ employeCompletSelectionne.chefEquipe }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Chef d'équipe 2 :</strong> {{ employeCompletSelectionne.chefEquipe2 }}</p>
+            </ng-container>
             <p><strong>ManagerOps :</strong> {{ employeCompletSelectionne.managerOps }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>ManagerOps 2 :</strong> {{ employeCompletSelectionne.managerOps2 }}</p>
+            </ng-container>
+            <p><strong>Heure de début :</strong> {{ employeCompletSelectionne.heureDebut }}</p>
+            <p><strong>Heure de fin :</strong> {{ employeCompletSelectionne.heureFin }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Heure de début 2 :</strong> {{ employeCompletSelectionne.heureDebut2 }}</p>
+                <p><strong>Heure de fin 2 :</strong> {{ employeCompletSelectionne.heureFin2 }}</p>
+            </ng-container>
             <p><strong>Poste :</strong> {{ employeCompletSelectionne.poste }}</p>
             <p><strong>Type de contrat :</strong> {{ employeCompletSelectionne.typeContrat }}</p>
             <p><strong>Date d'embauche :</strong> {{ employeCompletSelectionne.dateEmbauche | date:'dd/MM/yyyy' }}</p>

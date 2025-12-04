@@ -15,6 +15,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { AgencesService } from '../../services/agences.service';
 
 @Component({
   selector: 'app-employes-complet',
@@ -51,6 +52,9 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   errorMessage = '';
   subCategories: any;
   employeCompletSelectionne: EmployeComplet | null = null;
+  dropdownOpen = false;
+  availableSites: string[] = []; // Liste des agences disponibles
+  siteTouched: boolean = false;
 
   // 🟢 Observables utilitaires
   private destroy$ = new Subject<void>(); // Pour gérer le cycle de vie des abonnements
@@ -64,9 +68,11 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     prenom: '',
     nom: '',
     sexe: '',
-    heureDebut: '', 
+    heureDebut: '',
     heureFin: '',
-    dateNaissance: new Date,
+    joursDeTravail: '',
+    joursDeTravail2: '',
+    dateNaissance: new Date(),
     lieuNaissance: '',
     nationalite: '',
     etatCivil: '',
@@ -78,15 +84,19 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     contactUrgence: '',
     lienDeParenteAvecContactUrgence: '',
     telephoneUrgent: '',
-    agence: '',
+    agence: [] as string[],
     codeSite: '',
     villeSite: '',
     chefEquipe: '',
     managerOps: '',
+    codeSite2: '',
+    villeSite2: '',
+    chefEquipe2: '',
+    managerOps2: '',
     poste: '',
     typeContrat: '',
-    dateEmbauche: new Date(),
-    dateFinContrat: new Date(),
+    dateEmbauche: null,
+    dateFinContrat: null,
     tempsDeTravail: '',
     horaire: '',
     salaireDeBase: '',
@@ -101,7 +111,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     categoriePermis: '',
     statut: 'ACTIF',
     motifSortie: '',
-    dateSortie: new Date(),
+    dateSortie: null,
     observations: '',
 
   }
@@ -110,11 +120,12 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   constructor(private dialog: MatDialog,
     private employeService: EmployeCompletService,
-    private toastr: ToastrService
+    private toastr: ToastrService, private agenceService: AgencesService
   ) { }
   ngOnInit(): void {
     this.loadEmployes();
     this.setupSearch();
+    this.getAvailableSites();
   }
 
   setupSearch(): void {
@@ -141,9 +152,11 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       prenom: '',
       nom: '',
       sexe: '',
-      heureDebut: '', 
+      heureDebut: '',
       heureFin: '',
-      dateNaissance: new Date,
+      joursDeTravail: '',
+      joursDeTravail2: '',
+      dateNaissance: new Date(),
       lieuNaissance: '',
       nationalite: '',
       etatCivil: '',
@@ -155,15 +168,15 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       contactUrgence: '',
       lienDeParenteAvecContactUrgence: '',
       telephoneUrgent: '',
-      agence: '',
+      agence: [] as string[],
       codeSite: '',
       villeSite: '',
       chefEquipe: '',
       managerOps: '',
       poste: '',
       typeContrat: '',
-      dateEmbauche: new Date(),
-      dateFinContrat: new Date(),
+      dateEmbauche: null,
+      dateFinContrat: null,
       tempsDeTravail: '',
       horaire: '',
       salaireDeBase: '',
@@ -178,7 +191,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       categoriePermis: '',
       statut: 'ACTIF',
       motifSortie: '',
-      dateSortie: new Date(),
+      dateSortie: null,
       observations: '',
 
     };
@@ -249,6 +262,46 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   closeDetailsModal() {
     this.showDetailsModal = false;
   }
+
+  getAvailableSites() {
+    this.agenceService.getAllSites().subscribe(sites => {
+      this.availableSites = sites;
+    });
+  }
+
+  onFieldChange() {
+    if (this.modalData.agence.length === 1) this.myMethod(this.modalData.agence[0]);
+    else if (this.modalData.agence.length === 2) this.myMethod2(this.modalData.agence[1]);
+  }
+
+  myMethod(value: string) {
+    this.agenceService.getJoursOuverture(value).subscribe(data => {
+      return this.modalData.joursDeTravail = data;
+
+    })
+  }
+
+  myMethod2(value: string) {
+    this.agenceService.getJoursOuverture(value).subscribe(data => {
+      this.modalData.joursDeTravail2 = data;
+    })
+  }
+
+  onCheckboxChange(event: any) {
+    const value = event.target.value;
+    const isChecked = event.target.checked;
+    this.siteTouched = true;
+
+    if (isChecked) {
+      if (!this.modalData.agence.includes(value)) {
+        this.modalData.agence.push(value);
+        this.onFieldChange();
+      }
+    } else {
+      this.modalData.agence = this.modalData.agence.filter(s => s !== value);
+    }
+  }
+
 
   viewDetails(employe: EmployeComplet) {
     this.employeCompletSelectionne = employe;
@@ -385,89 +438,208 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
 
   saveModal(form: NgForm) {
-    if (form.invalid) {
-      Object.values(form.controls).forEach(control => control.markAsTouched());
-      this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
-      return;
-    }
 
-    this.isLoading = true;
+  if (form.invalid) {
+    Object.values(form.controls).forEach(control => control.markAsTouched());
+    this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
+    return;
+  }
 
-    const formData = new FormData();
-    const payload = {
-      ...this.modalData,
-      dateNaissance: this.modalData.dateNaissance ? this.modalData.dateNaissance.toISOString() : null,
-      dateEmbauche: this.modalData.dateEmbauche ? this.modalData.dateEmbauche.toISOString() : null,
-      dateFinContrat: this.modalData.dateFinContrat ? this.modalData.dateFinContrat.toISOString() : null,
-      dateSortie: this.modalData.dateSortie ? this.modalData.dateSortie.toISOString() : null,
-    }
-    formData.append('employe', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    if (this.selectedFile) {
-      formData.append('photo', this.selectedFile);
-    }
+  this.isLoading = true;
 
-    // --- 🧩 MODE ÉDITION ---
-    if (this.isEditMode && this.selectedId) {
-      this.employeService.updateEmployeComplet(this.selectedId, formData).pipe(
-        finalize(() => this.isLoading = false)
-      ).subscribe({
-        next: () => {
-          this.loadEmployes();
-          this.closeModal();
-          this.toastr.success('Employé mis à jour avec succès !', 'Succès');
-        },
-        error: (err) => {
-          console.error('Erreur lors de la mise à jour :', err);
-          this.toastr.error('Erreur lors de la mise à jour de l\'employé.', 'Erreur');
-        }
-      });
-      return;
-    }
+  // --- Préparation du FormData
+  const formData = new FormData();
+  const payload = {
+    ...this.modalData,
+    dateNaissance: this.modalData.dateNaissance ? this.modalData.dateNaissance.toISOString() : null,
+    dateEmbauche: this.modalData.dateEmbauche ? this.modalData.dateEmbauche.toISOString() : null,
+    dateFinContrat: this.modalData.dateFinContrat ? this.modalData.dateFinContrat.toISOString() : null,
+    dateSortie: this.modalData.dateSortie ? this.modalData.dateSortie.toISOString() : null,
+  };
 
-    // --- 🧩 MODE CRÉATION ---
-    this.employeService.getEmployeCompletByAgentId(this.modalData.agentId).pipe(
-      // Si erreur 404 → on renvoie null au lieu d'une erreur bloquante
-      catchError(err => err.status === 404 ? of(null) : throwError(() => err)),
+  formData.append('employe', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+  if (this.selectedFile) {
+    formData.append('photo', this.selectedFile);
+  }
 
-      switchMap(existingByCode => {
-        if (existingByCode) {
-          this.toastr.error('Un employé avec ce code existe déjà.', 'Erreur');
-          return EMPTY; // EMPTY stoppe proprement la chaîne quand une condition de doublon est détectée.
-        }
-
-        return this.employeService.getByPrenomNom(this.modalData.prenom, this.modalData.nom).pipe(
-          catchError(err => err.status === 404 ? of(null) : throwError(() => err)) // throwError(() => err) permet de relancer une erreur dans la chaîne RxJS. Ici, on l’utilise pour propager les erreurs autres que 404, afin qu’elles soient traitées par le error du subscribe().
-        );
-      }),
-
-      switchMap(existingByName => {
-        if (existingByName) {
-          this.toastr.error('Un employé avec ce nom existe déjà.', 'Erreur');
-          return EMPTY; // On stoppe la chaîne si doublon détecté
-        }
-
-        // ✅ Aucun doublon → on crée l'employé
-        return this.employeService.createEmployeComplet(formData);
-      }),
-
+  // ======================================================================
+  //                          MODE EDITION
+  // ======================================================================
+  if (this.isEditMode && this.selectedId) {
+    this.employeService.updateEmployeComplet(this.selectedId, formData).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe({
-      next: (result) => {
-        if (!result) return;
+      next: () => {
         this.loadEmployes();
         this.closeModal();
-        this.toastr.success('Employé ajouté avec succès !', 'Succès');
-        form.resetForm();
-        this.previewUrl = null;
-        this.selectedFile = null;
+        this.toastr.success('Employé mis à jour avec succès !', 'Succès');
       },
-      error: (err) => {
-        console.error('Erreur lors de la création de l\'employé :', err);
-        this.toastr.error('Erreur lors de la création de l\'employé.', 'Erreur');
+      error: () => {
+        this.toastr.error('Erreur lors de la mise à jour.', 'Erreur');
       }
     });
+    return;
+  }
+
+  // ======================================================================
+  //              MODE CRÉATION – DÉBUT DU PIPE
+  // ======================================================================
+  this.employeService.getEmployeCompletByAgentId(this.modalData.agentId).pipe(
+
+    catchError(err => err.status === 404 ? of(null) : throwError(() => err)),
+
+    switchMap(existingByCode => {
+      if (existingByCode) {
+        this.toastr.error('Un employé avec ce code existe déjà.', 'Erreur');
+        return EMPTY;
+      }
+      return this.employeService.getByPrenomNom(this.modalData.prenom, this.modalData.nom).pipe(
+        catchError(err => err.status === 404 ? of(null) : throwError(() => err))
+      );
+    }),
+
+    switchMap(existingByName => {
+      if (existingByName) {
+        this.toastr.error('Un employé avec ce nom existe déjà.', 'Erreur');
+        return EMPTY;
+      }
+
+      // ======================================================================
+      //              🔥 INTÉGRATION DU CODE 1 — LOGIQUE HORAIRES + AGENCES
+      // ======================================================================
+
+      const sites = this.modalData.agence ?? []; // Récupérer les agences sélectionnées
+
+      
+      // ============================================================
+      // Cas 2 agences
+      // ============================================================
+      if (sites.length === 2) {
+
+        return forkJoin([
+          this.agenceService.getAgenceByNom(sites[0]),
+          this.agenceService.getAgenceByNom(sites[1])
+        ]).pipe(
+          switchMap(([ag1, ag2]) => {
+
+            const h1 = ag1.heuresTravail.split('-')[0].trim();
+            const h2 = ag1.heuresTravail.split('-')[1].trim();
+            const h3 = ag2.heuresTravail.split('-')[0].trim();
+            const h4 = ag2.heuresTravail.split('-')[1].trim();
+
+            if (
+              this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
+              this.compareHeures(this.modalData.heureFin, h2) <= 0 &&
+              this.compareHeures(h3, this.modalData.heureDebut2 ?? '') <= 0 &&
+              this.compareHeures(this.modalData.heureFin2 ?? '', h4) <= 0
+            ) {
+
+              // Vérifier capacité des 2 agences
+              return forkJoin({
+                count1: this.agenceService.getNumberofEmployeesInOneAgence(sites[0]),
+                max1: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[0]),
+                count2: this.agenceService.getNumberofEmployeesInOneAgence(sites[1]),
+                max2: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[1])
+              }).pipe(
+                switchMap(({ count1, max1, count2, max2 }) => {
+
+                  if (count1 >= max1) {
+                    this.toastr.error(`Le nombre maximum d'employés dans ${sites[0]} est atteint !`, 'Erreur');
+                    return EMPTY;
+                  }
+                  if (count2 >= max2) {
+                    this.toastr.error(`Le nombre maximum d'employés dans ${sites[1]} est atteint !`, 'Erreur');
+                    return EMPTY;
+                  }
+
+                  // Définir flags matin/après-midi
+                  this.modalData.matin = !!this.modalData.heureDebut;
+                  this.modalData.apresMidi = !!this.modalData.heureDebut2;
+
+                  // Étape finale : création employé
+                  return this.employeService.createEmployeComplet(formData);
+                })
+              );
+            }
+
+            this.toastr.error("Les horaires doivent être compris dans ceux des agences.", "Erreur");
+            return EMPTY;
+          })
+        );
+      }
+
+      // ============================================================
+      // Cas 1 agence
+      // ============================================================
+      if (sites.length === 1) {
+
+        return this.agenceService.getAgenceByNom(sites[0]).pipe(
+          switchMap(ag1 => {
+
+            const h1 = ag1.heuresTravail.split('-')[0].trim();
+            const h2 = ag1.heuresTravail.split('-')[1].trim();
+
+            if (
+              this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
+              this.compareHeures(this.modalData.heureFin, h2) <= 0
+            ) {
+              // Vérifier capacité
+              return forkJoin({
+                count: this.agenceService.getNumberofEmployeesInOneAgence(sites[0]),
+                max: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[0])
+              }).pipe(
+                switchMap(({ count, max }) => {
+
+                  if (count >= max) {
+                    this.toastr.error(`Capacité maximale atteinte pour ${sites[0]}`, 'Erreur');
+                    return EMPTY;
+                  }
+
+                  return this.employeService.createEmployeComplet(formData);
+                })
+              );
+            }
+
+            this.toastr.error("Les horaires doivent être compris dans ceux de l'agence.", "Erreur");
+            return EMPTY;
+          })
+        );
+      }
+
+      // Aucun site sélectionné = erreur
+      this.toastr.error("Veuillez sélectionner au moins une agence.", "Erreur");
+      return EMPTY;
+    }),
+
+    finalize(() => this.isLoading = false)
+
+  ).subscribe({
+    next: result => {
+      if (!result) return;
+      this.loadEmployes();
+      this.closeModal();
+      this.toastr.success("Employé ajouté avec succès !", "Succès");
+      form.resetForm();
+      this.previewUrl = null;
+      this.selectedFile = null;
+    },
+    error: err => {
+      console.error(err);
+      this.toastr.error("Erreur lors de l'ajout de l'employé.", "Erreur");
+    }
+  });
+
+}
 
 
+  compareHeures(h1: string, h2: string): number {
+    const [h1Hours, h1Minutes] = h1.split(':').map(Number);
+    const [h2Hours, h2Minutes] = h2.split(':').map(Number);
+
+    const totalMinutes1 = h1Hours * 60 + h1Minutes;
+    const totalMinutes2 = h2Hours * 60 + h2Minutes;
+
+    return totalMinutes1 - totalMinutes2;
   }
 
   importerDepuisExcel() {

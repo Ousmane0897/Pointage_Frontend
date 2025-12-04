@@ -48,8 +48,8 @@ export class EmployeCompletService {
     return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/complet/${agentId}`, formData);
   }
 
-  deleteEmploye(matricule: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/${matricule}`);
+  deleteEmploye(agentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/${agentId}`);
   }
   
 }
