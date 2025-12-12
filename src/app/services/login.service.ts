@@ -33,8 +33,24 @@ export class LoginService {
     const payload = this.decodeToken();
     return payload?.modules || {};
   }
+  
+  changePassword(email: string, oldPassword: string, newPassword: string, confirmPassword: string, role: string | null) {
+    return this.http.post<{ message: string, token: string }>(`${this.baseUrl}/api/login/change-password`, { email, oldPassword, newPassword, confirmPassword, role }); // message est une confirmation du changement de mot de passe en provenance du backend
+  }
 
+  getUserEmail(): string | null {
+    const payload = this.decodeToken();
+    if (!payload || !payload.email) return null;
+    return payload.email;
+}
 
+  getMustChangePassword(): boolean {
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  return payload.mustChangePassword === true; // Retourne true si mustChangePassword est true, sinon false
+}
 
 
   login(email: string, password: string) {
@@ -70,19 +86,23 @@ export class LoginService {
 
 
   isLoggedIn(): boolean {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+
     const payload = this.decodeToken();
     if (!payload) return false;
 
     const expiry = payload.exp;
     const now = Math.floor(Date.now() / 1000);
 
-    if (expiry && expiry < now) {
-      this.logout(); // clean up expired token
-      return false;
+    if (!expiry || expiry < now) {
+        this.logout();
+        return false;
     }
 
     return true;
-  }
+}
+
 
   getUserRole(): string {
     const payload = this.decodeToken();

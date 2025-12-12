@@ -29,7 +29,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
   admins: Admin[] = [];
   selectedAdmin: Admin | null = null;
-  role: string[] = ['EXPLOITATION', 'BACKOFFICE'];
+  role: string[] = ['EXPLOITATION', 'BACKOFFICE', 'SUPERVISEUR', 'MAGASINIER', 'RESPONSABLE_IT'];
   searchText: string = '';
   showModal = false;
   showPassword: boolean = false;
@@ -165,12 +165,17 @@ export class GestionPrivilegeComponent implements OnInit {
           this.toastr.success('Admin créé avec succès !', 'Succès');
         },
         error: (err) => {
-          console.error('Erreur de création de l\'admin :', err);
-          this.toastr.error('Erreur lors de la création de l\'admin', 'Erreur');
+          console.error('Erreur création admin :', err);
 
+          // SI LE BACK RENVOIE LE MESSAGE :
+          if (err.status === 409) {
+            this.toastr.error(err.error.message, 'Erreur');
+          } else {
+            this.toastr.error('Erreur lors de la création de l\'admin', 'Erreur');
+          }
         }
-
       });
+
     }
   }
 

@@ -12,6 +12,14 @@ export const routes: Routes = [
     { path: '', loadComponent: () => import('./home-page/home-page.component').then(m => m.HomePageComponent) }, // lazy loading de la page d'accueil
     { path: 'home', loadComponent: () => import('./home-page/home-page.component').then(m => m.HomePageComponent) }, // lazy loading de la page d'accueil
     { path: 'code-pin', loadComponent: () => import('./page-code-pin/page-code-pin.component').then(m => m.PageCodePinComponent) }, // lazy loading de la page code pin
+    { 
+    path: 'change-password', 
+    loadComponent: () => import('./changement-password/changement-password.component')
+        .then(m => m.ChangementPasswordComponent),
+    canActivate: [AuthGuard]   // 🔐 protection ici
+},
+    { path: 'forgot-password', loadComponent: () => import('./adminPage/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) }, // lazy loading de la page mot de passe oublié
+    { path: 'reset-password', loadComponent: () => import('./adminPage/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) }, // lazy loading de la page réinitialisation mot de passe
     { path: 'pagefinal1/:codeSecret', loadComponent: () => import('./final-page1/final-page1.component').then(m => m.FinalPage1Component) }, // lazy loading de la page final 1
     { path: 'pagefinal2/:codeSecret', loadComponent: () => import('./final-page2/final-page2.component').then(m => m.FinalPage2Component) }, // lazy loading de la page final 2
     {
@@ -22,8 +30,9 @@ export const routes: Routes = [
 
         canActivate: [AuthGuard], // protection de la route admin avec AuthGuard
         children: [
-            { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // redirection vers la page dashboard par défaut
+            //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // redirection vers la page dashboard par défaut
             { path: 'dashboard', loadComponent: () => import('./adminPage/dashboard/dashboard.component').then(m => m.DashboardComponent) }, // lazy loading de la page dashboard
+            { path: 'page-par-defaut-apres-login', loadComponent: () => import('./adminPage/page-par-defaut-apres-login/page-par-defaut-apres-login.component').then(m => m.PageParDefautApresLoginComponent) }, // lazy loading de la page par défaut après login
             { path: 'dashboard-par-agence', loadComponent: () => import('./adminPage/dashboard-par-agence/tableau-de-bord-par-agence.component').then(m => m.TableauDeBordParAgenceComponent) }, // lazy loading de la page tableau de bord par agence
             { path: 'planification', loadComponent: () => import('./adminPage/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
             { path: 'gestion-superviseurs', loadComponent: () => import('./adminPage/superviseur/superviseur.component').then(m => m.SuperviseurComponent) }, // lazy loading de la page gestion superviseurs

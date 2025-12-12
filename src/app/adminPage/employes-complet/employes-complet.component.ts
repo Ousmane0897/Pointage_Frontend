@@ -340,6 +340,8 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     this.selectedFile = null;
   }
 
+  
+
 
   onFileSelectedUpload(event: any) {
     const file = event.target.files[0];
@@ -431,7 +433,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   editEmploye(employe: EmployeComplet) {
     this.isEditMode = true;
     this.modalData = { ...employe };
-    this.selectedId = employe.agentId;
+    this.selectedId = employe.matricule;
     this.showModal = true;
   }
 
@@ -614,20 +616,30 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     finalize(() => this.isLoading = false)
 
   ).subscribe({
-    next: result => {
-      if (!result) return;
-      this.loadEmployes();
-      this.closeModal();
-      this.toastr.success("Employé ajouté avec succès !", "Succès");
-      form.resetForm();
-      this.previewUrl = null;
-      this.selectedFile = null;
-    },
-    error: err => {
-      console.error(err);
+  next: result => {
+    if (!result) return;
+    this.loadEmployes();
+    this.closeModal();
+    this.toastr.success("Employé ajouté avec succès !", "Succès");
+    form.resetForm();
+    this.previewUrl = null;
+    this.selectedFile = null;
+  },
+  error: err => {
+    console.error(err); 
+
+    if (err.error?.message) {
+      this.toastr.error(err.error.message, "Erreur");
+    } 
+    else if (err.error?.error) {
+      this.toastr.error(err.error.error, "Erreur");
+    }
+    else {
       this.toastr.error("Erreur lors de l'ajout de l'employé.", "Erreur");
     }
-  });
+  }
+});
+
 
 }
 

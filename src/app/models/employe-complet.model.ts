@@ -1,4 +1,5 @@
 export interface EmployeComplet {
+    id?: string;
     agentId: string;
     matricule: string;
     prenom: string;

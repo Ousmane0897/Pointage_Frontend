@@ -16,5 +16,7 @@ import { NgxSpinnerComponent, NgxSpinnerModule, NgxSpinnerService } from 'ngx-sp
 })
 export class AppComponent {
 
-  constructor() { }
+  constructor() { 
+    localStorage.removeItem("token");
+  }
 }

@@ -184,7 +184,7 @@
                     <td class="p-3 space-x-2 flex-row flex justify-center items-center mt-10">
                         <button (click)="editEmploye(e)"
                             class="text-blue-600 hover:text-blue-800 text-2xl font-medium">✏️</button>
-                        <button (click)="deleteRow(e.agentId)"
+                        <button (click)="deleteRow(e.matricule)"
                             class="text-red-600 hover:text-red-800 text-2xl font-medium">🗑</button>
                         <button (click)="viewDetails(e)"
                             class="text-gray-600 hover:text-gray-800 text-xl font-medium">📋</button>
@@ -456,14 +456,14 @@
 
                     <!-- Jours de travail -->
                     <input class="input" placeholder="Jours de travail 1" [(ngModel)]="modalData.joursDeTravail"
-                        name="joursDeTravail" #joursDeTravail="ngModel">
+                        name="joursDeTravail" readonly #joursDeTravail="ngModel">
                     <div *ngIf="joursDeTravail.invalid && joursDeTravail.touched" class="text-red-500 text-sm">
                         Les jours de travail sont requis.
                     </div>
 
                     <ng-container *ngIf="modalData.agence.length === 2">
                         <input class="input" placeholder="Jours de travail 2" [(ngModel)]="modalData.joursDeTravail2"
-                            name="joursDeTravail2" #joursDeTravail2="ngModel">
+                            name="joursDeTravail2" readonly #joursDeTravail2="ngModel">
                         <div *ngIf="joursDeTravail2.invalid && joursDeTravail2.touched" class="text-red-500 text-sm">
                             Les jours de travail sont requis.
                         </div>
@@ -718,7 +718,7 @@
             <!-- Donne moi tous les données restantes -->
             <p><strong>Lieu de Naissance :</strong> {{ employeCompletSelectionne.lieuNaissance }}</p>
             <p><strong>Nationalité :</strong> {{ employeCompletSelectionne.nationalite }}</p>
-            <p><strong> Etat civil :</strong> {{ employeCompletSelectionne.etatCivil }}</p>
+            <p><strong>Etat civil :</strong> {{ employeCompletSelectionne.etatCivil }}</p>
             <p><strong>Adresse :</strong> {{ employeCompletSelectionne.adresse }}</p>
             <p><strong>Ville :</strong> {{ employeCompletSelectionne.ville }}</p>
             <p><strong>Téléphone 1 :</strong> {{ employeCompletSelectionne.telephone1 }}</p>

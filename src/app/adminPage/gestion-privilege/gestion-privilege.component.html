@@ -46,7 +46,7 @@
         <td class="px-4 py-2">{{ admin.prenom }}</td>
         <td class="px-4 py-2">{{ admin.nom }}</td>
         <td class="px-4 py-2">{{ admin.email }}</td>
-        <td class="px-4 py-2">{{ admin.password }}</td>
+        <td class="px-4 py-2">{{ admin.password ? '*******************' : '' }}</td>
         <td class="px-4 py-2">{{ admin.poste }}</td>
         <td class="px-4 py-2">{{ admin.role }}</td>
         <td class="px-4 py-2">{{ admin.motifDesactivation }}</td>
@@ -104,7 +104,7 @@
               max-h-[90vh] overflow-y-auto">
 
     <h2 class="text-xl font-semibold mb-4">
-      {{ isEditMode ? 'Modifier' : 'Ajouter' }} un Administrateur
+      {{ isEditMode ? 'Modifier' : 'Ajouter' }} un utilisateur
     </h2>
 
     <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate>

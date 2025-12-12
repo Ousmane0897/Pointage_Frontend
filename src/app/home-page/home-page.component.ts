@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { Router, RouterLinkWithHref } from '@angular/router';
 import { LoginService } from '../services/login.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -14,8 +14,9 @@ import { ToastrService } from 'ngx-toastr';
     CommonModule,
     MatButtonModule,
     MatIconModule,
-    ReactiveFormsModule
-  ],
+    ReactiveFormsModule,
+    RouterLinkWithHref
+],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
@@ -59,39 +60,57 @@ export class HomePageComponent {
 
 
   login() {
-    this.loginService.login(this.contactForm.get('email')?.value, this.contactForm.get('password')?.value).subscribe({
-      next: (res) => {
+  const email = this.contactForm.get('email')?.value;
+  const password = this.contactForm.get('password')?.value;
 
-        // 1️⃣ Stocker le token
-        this.loginService.setToken(res.token);
+  this.loginService.login(email, password).subscribe({
+    next: (res) => {
 
-        // 2️⃣ Décoder
-        const decoded = this.loginService.decodeToken();
-        console.log("TOKEN DECODED :", decoded);
+      // 1️⃣ Stocker le token
+      this.loginService.setToken(res.token);
 
-        // 3️⃣ Récupérer les permissions du JWT
-        const permissions = decoded.modules || {};
-        console.log("MODULES EXTRAITS :", permissions);
+      // 2️⃣ Décoder le token JWT
+      const decoded = this.loginService.decodeToken();
+      console.log("TOKEN DECODED :", decoded);
 
-        // 4️⃣ Sauvegarder dans localStorage
-        localStorage.setItem("modulesAutorises", JSON.stringify(permissions));
+      // 2.1️⃣ Vérifier si l'utilisateur doit changer son mot de passe
+      const mustChangePassword = decoded.mustChangePassword === true;
 
-        // 5️⃣ Notifier Angular
-        this.loginService.notifyPermissionsChanged();
+      // 3️⃣ Récupérer les permissions depuis le JWT (si tu les utilises)
+      const permissions = decoded.modules || {};
+      localStorage.setItem("modulesAutorises", JSON.stringify(permissions));
 
-        this.closeForm();
+      // 4️⃣ Notifier le frontend des changements de permissions
+      this.loginService.notifyPermissionsChanged();
+
+      this.closeForm();
+      if(decoded.mustChangePassword) {
+        this.toastr.info('Veuillez changer votre mot de passe lors de votre première connexion.', 'Information');
+      } else {
         this.toastr.success('Connexion réussie !', 'Bienvenue');
-        setTimeout(() => {
-          console.log('role:', this.loginService.getUserRole());
-          this.router.navigateByUrl('/admin/dashboard');
-        }, 2000);
-      },
-      error: (err) => {
-        const errorMessage = err.error?.error || 'Email ou mot de passe incorrect';
-        this.toastr.error(errorMessage, 'Erreur de connexion');
       }
-    });
-  }
+
+      // 5️⃣ Redirection basée sur mustChangePassword
+      setTimeout(() => {
+
+        if (mustChangePassword) {
+          console.log("Première connexion → redirection vers change-password");
+          this.router.navigateByUrl('/change-password'); 
+        } else {
+          console.log('Connexion normale → dashboard');
+          this.router.navigateByUrl('/admin/dashboard');
+        }
+
+      }, 200);
+    },
+
+    error: (err) => {
+      const errorMessage = err.error?.message || 'Email ou mot de passe incorrect';
+      this.toastr.error(errorMessage, 'Erreur de connexion');
+    }
+  });
+}
+
 
 
   SuperAdminLogin() {

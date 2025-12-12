@@ -44,12 +44,12 @@ export class EmployeCompletService {
     return this.http.get<EmployeComplet[]>(`${this.baseUrl}/api/employe-complet/all`);
   }
 
-  updateEmployeComplet(agentId: string, formData: FormData): Observable<EmployeComplet> {
-    return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/complet/${agentId}`, formData);
+  updateEmployeComplet(matricule: string, formData: FormData): Observable<EmployeComplet> {
+    return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/complet/${matricule}`, formData);
   }
 
-  deleteEmploye(agentId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/${agentId}`);
+  deleteEmploye(matricule: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/${matricule}`);
   }
   
 }
