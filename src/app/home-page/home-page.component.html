@@ -1,79 +1,189 @@
-<div class="relative h-screen w-screen overflow-hidden bg-white flex flex-col">
-  <!-- Logo container -->
-  <div class="flex flex-col" [ngClass]="{
-        'absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-in-out': true,
-        'translate-y-0 scale-150': !logoMoved,
-        '-translate-y-[40%] scale-50 top-0': logoMoved
-      }">
-    <img src="assets/Cleanic_logo.png" alt="Logo" class="w-60 h-60" />
-    <h2 class="md:text-5xl text-4xl">Bienvenue à Cleanic Sénégal</h2>
+<!-- MAIN CONTAINER -->
+<div
+  class="relative min-h-screen w-full bg-white
+         flex flex-col overflow-y-auto"
+>
+
+  <!-- LOGO + TITLE -->
+  <div
+    class="flex flex-col items-center justify-center
+           transition-all duration-1000 ease-in-out
+           px-4 text-center"
+    [ngClass]="{
+      'scale-110': !logoMoved,
+      'mt-6 scale-75': logoMoved
+    }"
+  >
+    <img
+      src="assets/Cleanic_logo.png"
+      alt="Logo"
+      class="w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56"
+    />
+
+    <h2 class="text-2xl sm:text-3xl md:text-5xl mt-4 font-semibold">
+      Bienvenue à Cleanic Sénégal
+    </h2>
   </div>
 
-  <!-- Buttons -->
+  <!-- ACTION BUTTONS -->
+  <div
+    *ngIf="logoMoved"
+    class="flex flex-col sm:flex-row
+           justify-center items-center
+           gap-4 mt-10 mb-6
+           animate-fadeInUp"
+  >
+    <button
+      class="bg-amber-600 text-white
+             text-xl sm:text-3xl
+             px-8 py-4 rounded-2xl
+             shadow-lg hover:bg-amber-700 transition"
+      (click)="CodePinPage()"
+    >
+      Arrivée
+    </button>
 
-  <div *ngIf="logoMoved" class="absolute bottom-80 w-full flex justify-center gap-4 opacity-0 animate-fadeInUp">
-    <button class="bg-amber-600 text-5xl text-white px-6 py-2 rounded-2xl shadow-lg"
-      (click)="CodePinPage()">Arrivée</button>
-    <button class="bg-slate-600 text-5xl text-white px-6 py-2 rounded-2xl shadow-lg"
-      (click)="CodePinPage()">Départ</button>
-  </div>
-  <div class="p-5">
-    <button (click)="toggleForm()"
-      class="w-16 h-16 top-20 rounded-full bg-amber-600 hover:bg-slate-600 text-white flex items-center justify-center shadow-md transition duration-500">
-      <span class="font-bold">ADMIN</span>
+    <button
+      class="bg-slate-600 text-white
+             text-xl sm:text-3xl
+             px-8 py-4 rounded-2xl
+             shadow-lg hover:bg-slate-700 transition"
+      (click)="CodePinPage()"
+    >
+      Départ
     </button>
   </div>
+
+  <!-- ADMIN FLOATING BUTTON -->
+  <button
+    (click)="toggleForm()"
+    class="fixed bottom-6 right-6
+           w-16 h-16 rounded-full
+           bg-amber-600 hover:bg-slate-600
+           text-white flex items-center justify-center
+           shadow-xl transition z-40"
+  >
+    <span class="text-xs font-bold">ADMIN</span>
+  </button>
+
 </div>
 
-<!-- Slide-down Form -->
-<div class="fixed top-0 left-0 w-full bg-white shadow-xl transform transition-transform duration-500 z-50" [ngClass]="{
-    'translate-y-0': showForm,
-    '-translate-y-full': !showForm
-  }">
+<!-- SLIDE-DOWN FORM -->
+<div
+  class="fixed inset-0 bg-black/30 z-50 flex justify-center items-start"
+  [ngClass]="{ 'hidden': !showForm }"
+>
 
-  <!-- Close Button -->
-  <div class="flex justify-end p-4">
-    <button (click)="closeForm()" aria-label="Close form" class="text-gray-500 hover:text-red-600 text-2xl font-bold">
-      &times;
-    </button>
-  </div>
+  <div
+    class="w-full max-w-md
+           bg-white shadow-xl
+           transform transition-transform duration-500
+           mt-6 mx-4 rounded-xl
+           max-h-[90vh] overflow-y-auto"
+    [ngClass]="{
+      'translate-y-0': showForm,
+      '-translate-y-full': !showForm
+    }"
+  >
 
-  <!-- Reactive Form -->
-  <div class="max-w-md mx-auto p-6 pb-10">
-    <h2 class="text-2xl font-semibold text-center mb-6">Connexion</h2>
-    <form [formGroup]="contactForm" (ngSubmit)="login()" class="space-y-4">
+    <!-- CLOSE -->
+    <div class="flex justify-end p-4">
+      <button
+        (click)="closeForm()"
+        aria-label="Close form"
+        class="text-gray-500 hover:text-red-600
+               text-2xl font-bold"
+      >
+        &times;
+      </button>
+    </div>
 
-      <input type="email" placeholder="Entrez votre adresse mail" formControlName="email"
-        class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
-      <div *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched" class="text-red-500 text-sm">
-        Veuillez saisir une adresse mail valide
-      </div>
+    <!-- FORM -->
+    <div class="p-6 pb-10">
+      <h2 class="text-2xl font-semibold text-center mb-6">
+        Connexion
+      </h2>
 
-      <div class="relative">
-        <input [type]=" showPassword ? 'text' : 'password'" placeholder="Entrez votre mot de passe"
-          formControlName="password"
-          class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        <button type="button" (click)="togglePasswordVisibility()"
-          class="absolute right-3 top-4 text-gray-500 hover:text-gray-800">
-          {{ showPassword ? '🙈' : '👁️' }}
-        </button>
-        <div *ngIf="contactForm.get('password')?.invalid && contactForm.get('password')?.touched"
-          class="text-red-500 text-sm">
+      <form
+        [formGroup]="contactForm"
+        (ngSubmit)="login()"
+        class="space-y-4"
+      >
+
+        <!-- EMAIL -->
+        <input
+          type="email"
+          placeholder="Entrez votre adresse mail"
+          formControlName="email"
+          class="w-full p-3 border border-gray-300 rounded
+                 focus:outline-none focus:ring-2 focus:ring-amber-500"
+        />
+
+        <div
+          *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched"
+          class="text-red-500 text-sm"
+        >
+          Veuillez saisir une adresse mail valide
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="relative">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Entrez votre mot de passe"
+            formControlName="password"
+            class="w-full p-3 border border-gray-300 rounded
+                   focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+
+          <button
+            type="button"
+            (click)="togglePasswordVisibility()"
+            class="absolute right-3 top-1/2 -translate-y-1/2
+                   text-gray-500 hover:text-gray-800"
+          >
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+
+        <div
+          *ngIf="contactForm.get('password')?.invalid && contactForm.get('password')?.touched"
+          class="text-red-500 text-sm"
+        >
           Veuillez saisir votre mot de passe
         </div>
-      </div>
 
-      <button type="submit" [disabled]="contactForm.invalid"
-        class="w-full bg-amber-600 text-white text-xl py-3 rounded hover:bg-amber-800 transition disabled:opacity-50">
-        Se connecter
+        <!-- LOGIN -->
+        <button
+          type="submit"
+          [disabled]="contactForm.invalid"
+          class="w-full bg-amber-600 text-white
+                 text-xl py-3 rounded
+                 hover:bg-amber-800 transition
+                 disabled:opacity-50"
+        >
+          Se connecter
+        </button>
+      </form>
+
+      <!-- SUPER ADMIN -->
+      <button
+        (click)="SuperAdminLogin()"
+        class="w-full mt-3 bg-slate-600 text-white
+               text-xl py-3 rounded
+               hover:bg-slate-800 transition"
+      >
+        Super Admin
       </button>
-    </form>
-    <button (click)="SuperAdminLogin()"
-      class="w-full mt-3 bg-slate-600 text-white text-xl py-3 rounded hover:bg-slate-800 transition disabled:opacity-50">
-      Super Admin
-    </button>
-    <a routerLink="/forgot-password"
-      class="flex items-center justify-center text-blue-700 mt-3 hover:underline hover:text-blue-800">
-      Mot de passe oublié ?
-    </a>
+
+      <!-- FORGOT PASSWORD -->
+      <a
+        routerLink="/forgot-password"
+        class="block text-center text-blue-700 mt-4
+               hover:underline hover:text-blue-800"
+      >
+        Mot de passe oublié ?
+      </a>
+    </div>
   </div>
+</div>

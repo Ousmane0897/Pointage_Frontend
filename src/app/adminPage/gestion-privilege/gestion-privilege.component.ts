@@ -209,10 +209,6 @@ export class GestionPrivilegeComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
-  cheffesEquipe() {
-    this.router.navigate(['/admin/gestion-privilege/cheffes-equipe']);
-  }
-
 
   deleteRow(id: string) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {

@@ -1,8 +1,26 @@
-<div class="flex flex-col justify-center items-center">
-    <img src="assets/Cleanic_logo.png" alt="Logo" class="w-40 h-40" />
-    <img  src="assets/check2.png" alt="Logo" class="w-40 h-25" />
-    <h1 class="font-bold text-3xl">Super!</h1>
-    <h2>votre pointage a été enregistré avec succès.</h2>
-    <p><span class="text-2xl">Bonjour <span class="font-bold">{{ pointage.prenom }}, </span>  Cleanic Sénégal</span> vous souhaite de passer une excellente journée.</p>
+<div class="flex flex-col justify-center items-center
+         space-y-4 px-4 py-6 text-center">
+
+    <!-- LOGO -->
+    <img src="assets/Cleanic_logo.png" alt="Logo" class="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40" />
+
+    <!-- CHECK ICON -->
+    <img src="assets/check2.png" alt="Succès" class="w-24 sm:w-32 md:w-40 h-auto" />
+
+    <!-- TITLES -->
+    <h1 class="font-bold text-2xl sm:text-3xl">
+        Super !
+    </h1>
+
+    <h2 class="text-base sm:text-lg max-w-md">
+        Votre pointage a été enregistré avec succès.
+    </h2>
+
+    <!-- MESSAGE -->
+    <p class="text-base sm:text-lg max-w-lg">
+        Bonjour
+        <span class="font-bold">{{ pointage.prenom }}</span>,
+        Cleanic Sénégal vous souhaite de passer une excellente journée.
+    </p>
 
 </div>

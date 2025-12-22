@@ -1,104 +1,107 @@
-<div class="p-4">
-    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+<div class="p-6 space-y-6">
 
-    </span>
-    <div class="relative w-full mb-4 max-w-md">
-        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-        <!-- Search Icon -->
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <!-- 🔍 Recherche -->
+    <div class="relative w-full max-w-md">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm
+             focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
     </div>
 
-    <div class="mb-4 flex gap-2">
-        <button (click)="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
+    <!-- ➕ Action -->
+    <div class="flex justify-start">
+        <button (click)="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+            ➕ Ajouter un jour férié
+        </button>
     </div>
 
-    <table class="w-2/3 table-auto border-collapse border border-gray-300">
-        <thead>
-            <tr class="bg-gray-200">
+    <!-- 📋 Tableau -->
+    <div class="overflow-x-auto">
+        <table class="min-w-[600px] w-full border border-gray-300 rounded-lg overflow-hidden text-sm">
+            <thead class="bg-gray-100">
+                <tr class="text-left">
+                    <th class="p-3">Date</th>
+                    <th class="p-3">Nom</th>
+                    <th class="p-3 text-center">Actions</th>
+                </tr>
+            </thead>
 
-                <th class="p-2">date</th>
-                <th class="p-2">Nom</th>
-                <th class="p-2">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let ferie of feries">
-                <td class="p-2">{{ ferie.date }}</td>
-                <td class="p-2">{{ ferie.nom }}</td>
-                <td class="p-2 flex gap-1">
-                    <button (click)="openEditModal(ferie)"
-                        class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
-                        title="Edit">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-4">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                        </svg>
+            <tbody>
+                <tr *ngFor="let ferie of feries" class="border-t hover:bg-gray-50">
+                    <td class="p-3">{{ ferie.date }}</td>
+                    <td class="p-3">{{ ferie.nom }}</td>
 
-                    </button>
+                    <td class="p-3 flex justify-center gap-2">
+                        <!-- Edit -->
+                        <button (click)="openEditModal(ferie)" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow
+                     transition-transform hover:scale-110" title="Modifier">
+                            ✏️
+                        </button>
 
-                    <button (click)="deleteRow(ferie.date)"
-                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
-                        title="Delete">
-                        <!-- Heroicons trash SVG -->
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-4">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                        </svg>
-
-                    </button>
-
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                        <!-- Delete -->
+                        <button (click)="deleteRow(ferie.date)" class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow
+                     transition-transform hover:scale-110" title="Supprimer">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- Modal d'ajout/modification -->
-<div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
-    <div class="bg-white p-6 rounded-lg w-full max-w-md">
+<!-- 🪟 MODAL AJOUT / MODIFICATION -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
+    <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
         <h2 class="text-xl font-semibold mb-4">
-            {{ isEditMode ? 'Modifier' : 'Ajouter' }} un employé
+            {{ isEditMode ? 'Modifier' : 'Ajouter' }} un jour férié
         </h2>
 
-        <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate>
+        <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate class="space-y-4">
 
-            <div class="mb-2">
-                <input class="w-full p-2 border rounded" [class.border-red-500]="date.invalid && date.touched"
-                    name="prenom" #date="ngModel" [(ngModel)]="modalData.date" placeholder="Date du jour férié" required />
-                <div *ngIf="date.invalid && date.touched" class="text-red-500 text-sm">
-                    Le date est requis.
-                </div>
+            <!-- Date -->
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">
+                    Date du jour férié
+                </label>
+                <input type="date" class="w-full p-2 border rounded-lg" name="date" #date="ngModel"
+                    [(ngModel)]="modalData.date" required />
+                <p *ngIf="date.invalid && date.touched" class="text-red-500 text-sm">
+                    La date est requise.
+                </p>
             </div>
 
-            <div class="mb-2">
-                <input class="w-full p-2 border rounded" [class.border-red-500]="nom.invalid && nom.touched" name="nom"
-                    #nom="ngModel" [(ngModel)]="modalData.nom" placeholder="Le nom du jour férié.Par ex: Fête de l'indépendance" required />
-                <div *ngIf="nom.invalid && nom.touched" class="text-red-500 text-sm">
+            <!-- Nom -->
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">
+                    Nom du jour férié
+                </label>
+                <input type="text" class="w-full p-2 border rounded-lg" name="nom" #nom="ngModel"
+                    [(ngModel)]="modalData.nom" placeholder="Ex : Fête de l’indépendance" required />
+                <p *ngIf="nom.invalid && nom.touched" class="text-red-500 text-sm">
                     Le nom est requis.
-                </div>
+                </p>
             </div>
 
-            <div class="flex justify-end">
-                <button type="button" (click)="closeModal()"
-                    class="mr-2 px-4 py-2 bg-gray-400 text-white rounded">Annuler</button>
-                <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-blue-600 text-white rounded">
+            <!-- Actions -->
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" (click)="closeModal()" class="px-4 py-2 bg-gray-400 text-white rounded-lg">
+                    Annuler
+                </button>
+                <button type="submit" [disabled]="form.invalid"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
                     {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
                 </button>
             </div>
         </form>
-
     </div>
 </div>
 
-<!-- ✅ Toast de confirmation -->
-<div *ngIf="toastMessage"
-    class="fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg animate-fade-in-out z-50">
+<!-- ✅ TOAST -->
+<div *ngIf="toastMessage" class="fixed bottom-5 right-5 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
     {{ toastMessage }}
 </div>

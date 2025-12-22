@@ -1,45 +1,72 @@
-<div class="p-4">
-    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+<div class="p-6 max-w-7xl mx-auto">
 
-    </span>
-    <div class="relative w-full mb-4 max-w-md">
-        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-        <!-- Search Icon -->
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
+    <!-- 🔍 Recherche -->
+    <div class="relative w-full max-w-md mb-6">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..." class="w-full pl-10 pr-4 py-2
+             border border-gray-300 rounded-lg shadow-sm
+             focus:outline-none focus:ring-2 focus:ring-blue-500
+             focus:border-blue-500 transition" />
+        <!-- Icône recherche -->
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
     </div>
 
-    <h2 class="text-lg font-semibold mb-4 text-gray-500 text-center">Absences en temps réel</h2>
+    <!-- 🟡 Titre -->
+    <h2 class="text-xl font-semibold mb-4 text-center text-gray-600">
+        Absences en temps réel
+    </h2>
 
-    <table class="min-w-full table-auto border-collapse border border-gray-300">
-        <thead>
-            <tr class="bg-gray-200">
-                <th class="p-2">code employé</th>
-                <th class="p-2">Prénom</th>
-                <th class="p-2">Nom</th>
-                <th class="p-2">Numéro</th>
-                <th class="p-2">dateAbsence</th>
-                <th class="p-2">Motif</th>
-                <th class="p-2">Justification</th>
-                <th class="p-2">Site</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let absent of filteredAbsents">
-                <td class="p-2">{{ absent.codeSecret }}</td>
-                <td class="p-2">{{ absent.prenom }}</td>
-                <td class="p-2">{{ absent.nom }}</td>
-                <td class="p-2">{{ absent.numero }}</td>
-                <td class="p-2">{{ absent.dateAbsence }}</td>
-                <td class="p-2">{{ absent.motif }}</td>
-                <td class="p-2">{{ absent.justification }}</td>
-                <td class="p-2">{{ absent.site }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- 📋 Tableau -->
+    <div class="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+        <table class="min-w-full table-auto text-sm">
+
+            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-3 text-left">Code</th>
+                    <th class="px-4 py-3 text-left">Prénom</th>
+                    <th class="px-4 py-3 text-left">Nom</th>
+                    <th class="px-4 py-3 text-left">Numéro</th>
+                    <th class="px-4 py-3 text-left">Date</th>
+                    <th class="px-4 py-3 text-left">Motif</th>
+                    <th class="px-4 py-3 text-left">Justification</th>
+                    <th class="px-4 py-3 text-left">Site</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let absent of filteredAbsents" class="border-t hover:bg-gray-50 transition">
+                    <td class="px-4 py-2 font-medium text-gray-700">
+                        {{ absent.codeSecret }}
+                    </td>
+                    <td class="px-4 py-2">{{ absent.prenom }}</td>
+                    <td class="px-4 py-2">{{ absent.nom }}</td>
+                    <td class="px-4 py-2">{{ absent.numero }}</td>
+                    <td class="px-4 py-2">{{ absent.dateAbsence }}</td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                            {{ absent.motif }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-2">{{ absent.justification || '—' }}</td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+                            {{ absent.site }}
+                        </span>
+                    </td>
+                </tr>
+
+                <!-- 💤 Aucune donnée -->
+                <tr *ngIf="filteredAbsents.length === 0">
+                    <td colspan="8" class="text-center py-6 text-gray-500">
+                        Aucune absence trouvée
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
 </div>
-

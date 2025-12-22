@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { JwtPayload } from '../models/JwtPayload.model';
 import { BehaviorSubject, Subject } from 'rxjs';
+import { Router } from '@angular/router';
 
 
 @Injectable({
@@ -15,7 +15,7 @@ export class LoginService {
 
   private baseUrl = environment.apiUrlEmploye
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private router: Router) { }
 
   permissionsChanged = new Subject<void>();
 
@@ -33,7 +33,7 @@ export class LoginService {
     const payload = this.decodeToken();
     return payload?.modules || {};
   }
-  
+
   changePassword(email: string, oldPassword: string, newPassword: string, confirmPassword: string, role: string | null) {
     return this.http.post<{ message: string, token: string }>(`${this.baseUrl}/api/login/change-password`, { email, oldPassword, newPassword, confirmPassword, role }); // message est une confirmation du changement de mot de passe en provenance du backend
   }
@@ -42,15 +42,15 @@ export class LoginService {
     const payload = this.decodeToken();
     if (!payload || !payload.email) return null;
     return payload.email;
-}
+  }
 
   getMustChangePassword(): boolean {
-  const token = localStorage.getItem("token");
-  if (!token) return false;
+    const token = localStorage.getItem("token");
+    if (!token) return false;
 
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  return payload.mustChangePassword === true; // Retourne true si mustChangePassword est true, sinon false
-}
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.mustChangePassword === true; // Retourne true si mustChangePassword est true, sinon false
+  }
 
 
   login(email: string, password: string) {
@@ -96,12 +96,12 @@ export class LoginService {
     const now = Math.floor(Date.now() / 1000);
 
     if (!expiry || expiry < now) {
-        this.logout();
-        return false;
+      this.logout();
+      return false;
     }
 
     return true;
-}
+  }
 
 
   getUserRole(): string {
@@ -131,6 +131,7 @@ export class LoginService {
 
   logout() {
     localStorage.removeItem('token');
-    window.location.href = '/'; // Redirect to the home page
+     this.router.navigateByUrl('/');
   }
+
 }

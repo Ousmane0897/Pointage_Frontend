@@ -1,45 +1,61 @@
-<div class="p-4 flex flex-col space-y-2">
+<div class="p-4 flex flex-col space-y-4">
 
-    <div class="relative w-full mb-4 max-w-md">
-        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-        <!-- Search Icon -->
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+    <!-- 🔍 Recherche -->
+    <div class="relative w-full max-w-md">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
+             shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
     </div>
 
-    
+    <!-- 📊 Tableau -->
+    <div class="overflow-x-auto rounded-lg border border-gray-300 bg-white">
+        <table class="min-w-[1000px] w-full border-collapse text-sm">
 
-    <table class="min-w-full table-auto border-collapse border border-gray-300">
-        <thead>
-            <tr class="bg-gray-200">
-                <th class="p-2">code secret</th>
-                <th class="p-2">Prénom</th>
-                <th class="p-2">Nom</th>
-                <th class="p-2">date</th>
-                <th class="p-2">Heure d'arrivée</th>
-                <th class="p-2">Heure de sortie</th>
-                <th class="p-2">Durée</th>
-                <th class="p-2">Status</th>
-                <th class="p-2">Site</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let pointage of filteredPointages">
-                <td class="p-2">{{ pointage.codeSecret }}</td>
-                <td class="p-2">{{ pointage.prenom }}</td>
-                <td class="p-2">{{ pointage.nom }}</td>
-                <td class="p-2">{{ pointage.date }}</td>
-                <td class="p-2">{{ pointage.heureArrive }}</td>
-                <td class="p-2">{{ pointage.heureDepart }}</td>
-                <td class="p-2">{{ pointage.duree }}</td>
-                <td class="p-2" [ngStyle]="{'background-color': pointage.status == 'En cours...'? 'yellow':'text-green-400'}">{{
-                    pointage.status }}</td>
-                <td class="p-2">{{ pointage.site }}</td>
-            </tr>
-        </tbody>
-    </table>
+            <thead class="bg-gray-200 sticky top-0 z-10">
+                <tr>
+                    <th class="p-3 text-left">Code secret</th>
+                    <th class="p-3 text-left">Prénom</th>
+                    <th class="p-3 text-left">Nom</th>
+                    <th class="p-3 text-left">Date</th>
+                    <th class="p-3 text-left">Arrivée</th>
+                    <th class="p-3 text-left">Sortie</th>
+                    <th class="p-3 text-left">Durée</th>
+                    <th class="p-3 text-left">Statut</th>
+                    <th class="p-3 text-left">Site</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let pointage of filteredPointages" class="border-t hover:bg-gray-50 transition">
+
+                    <td class="p-3">{{ pointage.codeSecret }}</td>
+                    <td class="p-3">{{ pointage.prenom }}</td>
+                    <td class="p-3">{{ pointage.nom }}</td>
+                    <td class="p-3">{{ pointage.date }}</td>
+                    <td class="p-3">{{ pointage.heureArrive }}</td>
+                    <td class="p-3">{{ pointage.heureDepart || '-' }}</td>
+                    <td class="p-3">{{ pointage.duree || '-' }}</td>
+
+                    <!-- ✅ Statut -->
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold" [ngClass]="{
+                'bg-yellow-100 text-yellow-800': pointage.status === 'En cours...',
+                'bg-green-100 text-green-700': pointage.status !== 'En cours...'
+              }">
+                            {{ pointage.status }}
+                        </span>
+                    </td>
+
+                    <td class="p-3">{{ pointage.site }}</td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
 </div>

@@ -29,6 +29,8 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
 
+    this.handleResize();
+    window.addEventListener('resize', () => this.handleResize());
     this.role = this.loginService.getUserRole();
 
     // Lire immédiatement
@@ -48,6 +50,20 @@ export class SidebarComponent implements OnInit {
     private loginService: LoginService
 
   ) { }
+
+  handleResize() {
+    const width = window.innerWidth;
+
+    // Tablette
+    if (width >= 768 && width < 1024) {
+      this.isOpen = false;
+    }
+
+    // PC
+    if (width >= 1024) {
+      this.isOpen = true;
+    }
+  }
 
   toggleSidebar() {
     this.isOpen = !this.isOpen;

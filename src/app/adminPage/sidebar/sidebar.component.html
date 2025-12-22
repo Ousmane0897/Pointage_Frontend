@@ -1,21 +1,30 @@
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-screen overflow-hidden bg-gray-100">
 
-  <!-- Sidebar (desktop) -->
-  <div [ngClass]="{
+  <!-- Sidebar -->
+  <aside class="bg-slate-500 text-white shadow-lg
+           transition-all duration-300 ease-in-out
+           flex flex-col rounded-3xl
+           h-full" [ngClass]="{
       'w-64': isOpen,
       'w-16': !isOpen
-    }"
-    class="shadow-lg z-20 text-white mb-20  bg-slate-500 transition-all duration-300 ease-in-out flex flex-col rounded-3xl">
-    <!-- Toggle Button -->
-    <button (click)="toggleSidebar()" class="p-4 focus:outline-none ">
+    }">
+
+    <!-- Toggle (tablette uniquement) -->
+    <button class="p-4 focus:outline-none md:hidden" (click)="toggleSidebar()">
+      ⏴
+    </button>
+
+    <!-- Toggle (PC & tablette) -->
+    <button class="hidden md:block p-4 focus:outline-none" (click)="toggleSidebar()">
       <span *ngIf="isOpen">⏴</span>
       <span *ngIf="!isOpen">⏵</span>
     </button>
 
-    <img src="assets/Cleanic_logo.png" alt="logo" class=" mx-auto w-32 h-14">
+    <!-- Logo -->
+    <img src="assets/Cleanic_logo.png" alt="logo" class="mx-auto w-32 h-14 my-2" *ngIf="isOpen">
 
-    <!-- Nav Links -->
-    <nav class="flex-1 space-y-2 mt-2 mb-1 overflow-y-scroll scrollbar-hidden">
+    <!-- Menu -->
+    <nav class="flex-1 overflow-y-auto scrollbar-hidden px-2">
       <ul>
         <li *ngIf="hasPermission('Dashboard') || role === 'SUPERADMIN'">
           <a routerLink="/admin/dashboard" [ngClass]="{
@@ -153,7 +162,7 @@
 
             <!-- Sorties / Livraisons -->
 
-            <li >
+            <li>
               <a routerLink="/admin/stock/sorties" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="ArrowDown" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
@@ -439,10 +448,23 @@
       </ul>
 
     </nav>
-  </div>
 
-  <!-- Content Area -->
-  <div class="flex-1 p-4 overflow-auto bg-gray-100 rounded-3xl mb-20">
+    <!-- Logout -->
+    <div class="p-3">
+      <button (click)="logout()" class="bg-red-600 w-full flex items-center justify-center gap-2
+               py-2 rounded-xl hover:bg-red-700 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="currentColor" viewBox="0 0 24 24">
+          <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75Z" />
+        </svg>
+        <span *ngIf="isOpen">Déconnexion</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 overflow-auto p-4">
     <router-outlet></router-outlet>
-  </div>
+  </main>
+
 </div>

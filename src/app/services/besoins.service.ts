@@ -3,7 +3,6 @@ import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CollecteBesoins } from '../models/CollecteBesoins.model';
-import { encode } from 'punycode';
 
 @Injectable({
   providedIn: 'root'

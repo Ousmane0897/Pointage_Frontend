@@ -19,10 +19,6 @@ export class EmployeService {
     return this.http.get<Employe[]>(`${this.baseUrl}/api/employe`);
   }
 
-  getEmployesChefsEquipe(): Observable<Employe[]> {
-    return this.http.get<Employe[]>(`${this.baseUrl}/api/employe/Cheffes`);
-  } 
-
   getEmployeesDansUnSite(site: string): Observable<Employe[]> {
     return this.http.get<Employe[]>(`${this.baseUrl}/api/employe/employeesDansUnSite?site=${encodeURIComponent(site)}`);
   }

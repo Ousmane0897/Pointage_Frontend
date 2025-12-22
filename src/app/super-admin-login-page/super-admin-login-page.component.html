@@ -1,48 +1,71 @@
-<div class="h-screen w-screen fixed inset-0 
-     bg-cover bg-center bg-no-repeat
-     flex items-center justify-center 
-     px-4 overflow-hidden" style="background-image: url('assets/bg1.jpg')">
+<!-- BACKGROUND CONTAINER -->
+<div class="min-h-screen w-full
+         bg-cover bg-center bg-no-repeat
+         flex items-center justify-center
+         px-4 py-6 sm:py-0" style="background-image: url('assets/bg1.jpg')">
 
-    <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 
-               border border-gray-200 dark:border-gray-700 transition-all">
+    <!-- LOGIN CARD -->
+    <div class="w-full max-w-md
+           bg-white dark:bg-gray-800
+           rounded-xl shadow-lg
+           p-6 sm:p-8
+           border border-gray-200 dark:border-gray-700
+           transition-all">
 
-        <!-- HEADER LOGO + TITLE -->
+        <!-- HEADER -->
         <div class="flex flex-col items-center mb-6">
-            <img src="assets/Cleanic_logo.png" alt="Logo" class="w-20 opacity-90" />
-            <h2 class="text-3xl font-semibold text-gray-800 dark:text-gray-100 mt-3">
+            <img src="assets/Cleanic_logo.png" alt="Logo" class="w-20 opacity-90 mb-2" />
+
+            <h2 class="text-2xl sm:text-3xl
+               font-semibold
+               text-gray-800 dark:text-gray-100
+               text-center">
                 Directrice générale
             </h2>
         </div>
 
         <!-- FORM -->
-        <form (ngSubmit)="login()" #loginForm="ngForm">
+        <form (ngSubmit)="login()" #loginForm="ngForm" class="space-y-4">
 
-            <!-- Email -->
-            <div class="mb-4">
-                <input type="email" name="email" [(ngModel)]="email" required placeholder="Votre adresse email" class="w-full mt-1 p-3 border border-gray-300 dark:border-gray-600
-                              rounded-lg bg-white dark:bg-gray-700">
+            <!-- EMAIL -->
+            <div>
+                <input type="email" name="email" [(ngModel)]="email" required placeholder="Votre adresse email" class="w-full p-3
+                 border border-gray-300 dark:border-gray-600
+                 rounded-lg
+                 bg-white dark:bg-gray-700
+                 text-gray-900 dark:text-gray-100
+                 focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
 
-            <!-- Password -->
-            <div class="mb-4 relative">
+            <!-- PASSWORD -->
+            <div class="relative">
                 <input [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password" required
-                    placeholder="********" class="w-full mt-1 p-3 border border-gray-300 dark:border-gray-600
-                              rounded-lg bg-white dark:bg-gray-700">
+                    placeholder="********" class="w-full p-3
+                 border border-gray-300 dark:border-gray-600
+                 rounded-lg
+                 bg-white dark:bg-gray-700
+                 text-gray-900 dark:text-gray-100
+                 focus:outline-none focus:ring-2 focus:ring-green-500" />
 
-                <button type="button" (click)="togglePasswordVisibility()"
-                    class="absolute right-3 top-4 text-gray-500 dark:text-gray-300">
+                <button type="button" (click)="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2
+                 text-gray-500 dark:text-gray-300">
                     {{ showPassword ? '🙈' : '👁️' }}
                 </button>
             </div>
 
-            <!-- Button -->
-            <button type="submit" [disabled]="!email || !password" class="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50
-                           text-white font-medium py-3 rounded-lg shadow">
+            <!-- SUBMIT -->
+            <button type="submit" [disabled]="!email || !password" class="w-full bg-green-600 hover:bg-green-700
+               disabled:opacity-50 disabled:cursor-not-allowed
+               text-white font-medium
+               py-3 rounded-lg
+               shadow transition">
                 Se connecter
             </button>
 
-            <a href="/forgot-password"
-                class="flex items-center justify-center text-green-600 dark:text-green-400 mt-3 hover:underline">
+            <!-- FORGOT PASSWORD -->
+            <a href="/forgot-password" class="block text-center
+               text-green-600 dark:text-green-400
+               hover:underline">
                 Mot de passe oublié ?
             </a>
 

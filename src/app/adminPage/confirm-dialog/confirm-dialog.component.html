@@ -1,6 +1,25 @@
-<h2 mat-dialog-title>Confirmation</h2>
-<mat-dialog-content>{{ data.message }}</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Annuler</button>
-  <button mat-button color="warn" (click)="onConfirm()">Supprimer</button>
+<!-- TITLE -->
+<h2 mat-dialog-title class="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-2">
+
+  ⚠️ Confirmation
+</h2>
+
+<!-- CONTENT -->
+<mat-dialog-content class="text-gray-700 text-sm md:text-base py-2">
+  {{ data.message }}
+</mat-dialog-content>
+
+<!-- ACTIONS -->
+<mat-dialog-actions align="end" class="mt-4 flex gap-3">
+
+  <!-- Bouton Annuler -->
+  <button mat-stroked-button color="primary" (click)="onCancel()" class="px-4 py-1">
+    Annuler
+  </button>
+
+  <!-- Bouton Supprimer -->
+  <button mat-flat-button color="warn" (click)="onConfirm()" class="px-4 py-1 font-semibold">
+    Supprimer
+  </button>
+
 </mat-dialog-actions>

@@ -1,82 +1,123 @@
-<div class="p-6">
-  <div class="flex space-x-3 mb-6">
-    <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#000000">
+<div class="p-8 max-w-7xl mx-auto">
+
+  <!-- ===================== -->
+  <!-- 🧭 EN-TÊTE -->
+  <!-- ===================== -->
+  <div class="flex items-center gap-4 mb-8">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-800" viewBox="0 -960 960 960"
+      fill="currentColor">
       <path
-        d="M450-154v-309L180-619v309l270 156Zm60 0 270-156v-310L510-463v309Zm-60 69L150-258q-14-8-22-22t-8-30v-340q0-16 8-30t22-22l300-173q14-8 30-8t30 8l300 173q14 8 22 22t8 30v340q0 16-8 30t-22 22L510-85q-14 8-30 8t-30-8Zm194-525 102-59-266-154-102 59 266 154Zm-164 96 104-61-267-154-104 60 267 155Z" />
+        d="M450-154v-309L180-619v309l270 156Zm60 0 270-156v-310L510-463v309Zm-60 69L150-258q-14-8-22-22t-8-30v-340q0-16 8-30t22-22l300-173q14-8 30-8t30 8l300 173q14 8 22 22t8 30v340q0 16-8 30t-22 22L510-85q-14 8-30 8t-30-8Z" />
     </svg>
-    <h1 class="text-2xl font-semibold mb-4"> Entrées en Stock</h1>
+
+    <h1 class="text-3xl font-semibold text-gray-800">
+      Entrées en stock
+    </h1>
   </div>
 
-  <!-- Formulaire d’ajout -->
-  <div class="bg-white rounded-lg shadow p-4 mb-6">
-    <h2 class="text-lg font-bold mb-3">Nouvelle entrée</h2>
+  <!-- ===================== -->
+  <!-- 📝 FORMULAIRE -->
+  <!-- ===================== -->
+  <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
 
-    <div class="grid grid-cols-2 gap-4">
+    <h2 class="text-xl font-bold mb-6">
+      Nouvelle entrée
+    </h2>
+
+    <!-- Grille desktop / tablette -->
+    <div class="grid grid-cols-2 gap-6">
+
+      <!-- Code produit -->
       <input type="text" placeholder="Code Produit" [(ngModel)]="nouvelleEntree.codeProduit" readonly
-        class="border rounded p-2" />
+        class="border rounded-lg p-3 bg-gray-100" />
+
+      <!-- Produit -->
       <select [(ngModel)]="nouvelleEntree.nomProduit" (ngModelChange)="onProduitChange($event)"
-        class="border rounded p-2"> <!-- $event représente le nom du produit sélectionné -->
+        class="border rounded-lg p-3">
         <option value="">-- Sélectionner un produit --</option>
         <option *ngFor="let produit of produits" [value]="produit.nomProduit">
           {{ produit.nomProduit }}
         </option>
       </select>
 
-
-      <select [(ngModel)]="nouvelleEntree.type" class="border rounded p-2">
+      <!-- Type -->
+      <select [(ngModel)]="nouvelleEntree.type" class="border rounded-lg p-3">
         <option value="ENTREE">Entrée</option>
         <option value="AJUSTEMENT">Ajustement</option>
       </select>
-      <input type="number" placeholder="Quantité" [(ngModel)]="nouvelleEntree.quantite" class="border rounded p-2" />
+
+      <!-- Quantité -->
+      <input type="number" placeholder="Quantité" [(ngModel)]="nouvelleEntree.quantite" class="border rounded-lg p-3" />
+
+      <!-- Responsable -->
       <input type="text" placeholder="Responsable" [(ngModel)]="nouvelleEntree.responsable"
-        class="border rounded p-2" />
-      <select [(ngModel)]="nouvelleEntree.motifMouvement" class="border rounded p-2">
+        class="border rounded-lg p-3" />
+
+      <!-- Motif -->
+      <select [(ngModel)]="nouvelleEntree.motifMouvement" class="border rounded-lg p-3">
         <option value="">-- Sélectionner un motif --</option>
         <option *ngFor="let motif of motifs" [value]="motif">
           {{ motif }}
         </option>
       </select>
-      <input
-        *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK' && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'"
-        type="text" placeholder="Fournisseur" [(ngModel)]="nouvelleEntree.fournisseur" class="border rounded p-2" />
-      <input
-        *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK' && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'"
-        type="text" placeholder="Numéro de Facture" [(ngModel)]="nouvelleEntree.numeroFacture"
-        class="border rounded p-2" />
 
+      <!-- Fournisseur -->
+      <input *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK'
+               && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'" type="text" placeholder="Fournisseur"
+        [(ngModel)]="nouvelleEntree.fournisseur" class="border rounded-lg p-3" />
+
+      <!-- Facture -->
+      <input *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK'
+               && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'" type="text"
+        placeholder="Numéro de facture" [(ngModel)]="nouvelleEntree.numeroFacture" class="border rounded-lg p-3" />
     </div>
 
-    <div>
-      <mat-form-field
-        *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK' && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'"
-        appearance="fill" class="border rounded p-2 w-full">
-        <mat-label>Date de peremption</mat-label>
-        <input matInput [matDatepicker]="pickerPeremption" name="dateDebut"
-          [(ngModel)]="nouvelleEntree.dateDePeremption" required [min]="dateAujourdhui" readonly>
+    <!-- ===================== -->
+    <!-- 📅 DATES -->
+    <!-- ===================== -->
+    <div class="grid grid-cols-2 gap-6 mt-6">
+
+      <!-- Date péremption -->
+      <mat-form-field *ngIf="nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK'
+               && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'" appearance="fill" class="w-full">
+        <mat-label>Date de péremption</mat-label>
+        <input matInput [matDatepicker]="pickerPeremption" [(ngModel)]="nouvelleEntree.dateDePeremption"
+          [min]="dateAujourdhui" readonly>
         <mat-datepicker-toggle matSuffix [for]="pickerPeremption"></mat-datepicker-toggle>
         <mat-datepicker #pickerPeremption></mat-datepicker>
       </mat-form-field>
-    </div>
 
-    <div>
-      <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+      <!-- Date entrée -->
+      <mat-form-field appearance="fill" class="w-full">
         <mat-label>Date d'entrée en stock</mat-label>
-        <input matInput [matDatepicker]="pickerEntree" name="dateDebut" [(ngModel)]="nouvelleEntree.dateMouvement"
-          required [min]="dateAujourdhui" readonly>
+        <input matInput [matDatepicker]="pickerEntree" [(ngModel)]="nouvelleEntree.dateMouvement" [min]="dateAujourdhui"
+          readonly>
         <mat-datepicker-toggle matSuffix [for]="pickerEntree"></mat-datepicker-toggle>
         <mat-datepicker #pickerEntree></mat-datepicker>
       </mat-form-field>
+
     </div>
   </div>
 
-  <button (click)="ajouterEntree()"
-    [disabled]="!nouvelleEntree.codeProduit || !nouvelleEntree.nomProduit || !nouvelleEntree.type || !nouvelleEntree.quantite || !nouvelleEntree.responsable || !nouvelleEntree.motifMouvement || !nouvelleEntree.dateDePeremption || !nouvelleEntree.dateMouvement"
-    class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-    ➕ Enregistrer l'entrée
-  </button>
+  <!-- ===================== -->
+  <!-- ✅ BOUTON VALIDATION -->
+  <!-- ===================== -->
+  <div class="text-right">
+    <button (click)="ajouterEntree()" [disabled]="!nouvelleEntree.codeProduit
+                  || !nouvelleEntree.nomProduit
+                  || !nouvelleEntree.type
+                  || !nouvelleEntree.quantite
+                  || !nouvelleEntree.responsable
+                  || !nouvelleEntree.motifMouvement
+                  || !nouvelleEntree.dateMouvement
+                  || (nouvelleEntree.motifMouvement !== 'RETOUR_EN_STOCK'
+                      && nouvelleEntree.motifMouvement !== 'AJUSTEMENT_INVENTAIRE'
+                      && !nouvelleEntree.dateDePeremption)" class="bg-green-600 hover:bg-green-700
+             text-white text-lg
+             px-6 py-3 rounded-lg
+             transition">
+      ➕ Enregistrer l'entrée
+    </button>
+  </div>
 
 </div>
-
-
-
-
