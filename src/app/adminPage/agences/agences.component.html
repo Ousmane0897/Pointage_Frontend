@@ -1,129 +1,226 @@
-<div class="p-6 max-w-7xl mx-auto">
+<div class="p-4">
+    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
 
-    <!-- 🔍 Recherche -->
-    <div class="relative w-full max-w-md mb-6">
-        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..." class="w-full pl-10 pr-4 py-2
-             border border-gray-300 rounded-lg shadow-sm
-             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-             outline-none transition" />
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+    </span>
+    <div class="relative w-full mb-4 max-w-md">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <!-- Search Icon -->
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
     </div>
 
-    <!-- ➕ Actions & légende -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex mb-4 gap-5 justify-between items-center">
 
-        <button (click)="openAddModal()"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition">
-            ➕ Ajouter une agence
-        </button>
+        <button (click)="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
 
-        <div class="flex items-center gap-6 text-sm">
+        <div class="flex items-center justify-center gap-3">
             <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-red-500"></span>
-                <span>Déplacement d’agent</span>
+                <div class="w-5 h-5 rounded-full bg-red-500"></div>
+                <span class="text-gray-600">Déplacement d'agent</span>
             </div>
             <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-green-300"></span>
-                <span>Réception d’agent</span>
+                <div class="w-5 h-5 rounded-full bg-green-300"></div>
+                <span class="text-gray-600">Réception d'agent</span>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-cyan-300"></span>
-                <span>Remplacement interne</span>
+             <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full bg-cyan-300"></div>
+                <span class="text-gray-600">Remplacement interne</span>
             </div>
         </div>
 
     </div>
-
-    <!-- 🏢 Liste des agences -->
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
-
-        <div *ngFor="let agence of filteredAgences" class="relative p-6 rounded-2xl shadow-md cursor-pointer
-             transition hover:shadow-xl group" [ngClass]="{
-        'bg-red-100': agence.deplacementEmploye,
-        'bg-green-100': agence.receptionEmploye,
-        'bg-cyan-100': agence.deplacementInterne,
-        'bg-white': !agence.deplacementEmploye && !agence.receptionEmploye && !agence.deplacementInterne
-      }">
-
-            <!-- Icône -->
+    <!-- item-list.component.html -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
+        <div *ngFor="let agence of filteredAgences"
+            class="rounded-2xl shadow-md p-6 hover:shadow-xl transition duration-300 relative cursor-pointer group"
+            [ngClass]="{
+                             'bg-red-500': agence.deplacementEmploye, 
+                             'bg-green-300': agence.receptionEmploye,
+                             'bg-cyan-300': agence.deplacementInterne,
+                             'bg-white': !agence.deplacementEmploye && !agence.receptionEmploye && !agence.deplacementInterne
+                         }">
+            <!-- Card Content -->
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="w-10 h-10 text-gray-600 mb-3">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-6 9 6v12H3V9z" />
+                stroke="currentColor" class="size-10">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
             </svg>
 
-            <h3 class="text-lg font-bold text-gray-800">{{ agence.nom }}</h3>
-            <p class="text-sm text-gray-600">{{ agence.adresse }}</p>
-            <p class="text-sm text-gray-600">{{ agence.joursOuverture }}</p>
-            <p class="text-sm text-gray-600">{{ agence.heuresTravail }}</p>
-            <p class="text-sm font-semibold mt-2">
-                Agents max : {{ agence.nombreAgentsMaximum }}
-            </p>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ agence.nom }}</h3>
+            <p class="text-gray-600 font-semibold">{{ agence.adresse }}</p>
+            <p class="text-gray-600 font-semibold">{{ agence.joursOuverture }}</p>
+            <p class="text-gray-600 font-semibold">{{ agence.heuresTravail }}</p>
+            <p class="text-gray-600 font-semibold">Agents maximum: {{ agence.nombreAgentsMaximum }} </p>
 
-            <!-- Actions -->
-            <div class="absolute top-4 right-4 flex gap-3
-               opacity-0 group-hover:opacity-100 transition">
+
+            <!-- Action Icons (appears on hover) -->
+            <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button (click)="openEditModal(agence)" class="text-blue-600 hover:text-blue-800">
-                    ✏️
+                    <i class="fas fa-edit"></i>
                 </button>
                 <button (click)="deleteAgence(agence.nom)" class="text-red-600 hover:text-red-800">
-                    🗑️
+                    <i class="fas fa-trash-alt"></i>
                 </button>
                 <button (click)="viewEmployeesByAgence(agence.nom)" class="text-green-600 hover:text-green-800">
-                    👁️
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                        <path fill-rule="evenodd"
+                            d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 0 1 0-1.113ZM17.25 12a5.25 5.25 0 1 1-10.5 0 5.25 5.25 0 0 1 10.5 0Z"
+                            clip-rule="evenodd" />
+                    </svg>
                 </button>
             </div>
-
         </div>
     </div>
+
 </div>
 
-<!-- 🟦 MODAL AJOUT / MODIFICATION -->
-<div *ngIf="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-
-    <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+<!-- Modal d'ajout/modification -->
+<div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded-lg w-full max-w-md">
         <h2 class="text-xl font-semibold mb-4">
             {{ isEditMode ? 'Modifier' : 'Ajouter' }} une agence
         </h2>
 
-        <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate class="space-y-3">
+        <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate>
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded" [class.border-red-500]="nom.invalid && nom.touched" name="nom"
+                    #nom="ngModel" [(ngModel)]="modalData.nom" placeholder="Nom de l'agence" required />
+                <div *ngIf="nom.invalid && nom.touched" class="text-red-500 text-sm">
+                    Le nom est requis.
+                </div>
+            </div>
 
-            <input [(ngModel)]="modalData.nom" name="nom" placeholder="Nom de l'agence" required
-                class="w-full p-2 border rounded" />
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded" [class.border-red-500]="adresse.invalid && adresse.touched"
+                    name="adresse" #adresse="ngModel" [(ngModel)]="modalData.adresse" placeholder="adresse" required />
+                <div *ngIf="adresse.invalid && adresse.touched" class="text-red-500 text-sm">
+                    L'adresse est requis.
+                </div>
+            </div>
 
-            <input [(ngModel)]="modalData.adresse" name="adresse" placeholder="Adresse" required
-                class="w-full p-2 border rounded" />
+            <div class="mb-2">
+                <label for="joursOuverture" class="block mb-2 text-sm font-medium">Jours d'ouverture</label>
+                <select id="joursOuverture" [(ngModel)]="modalData.joursOuverture" name="joursOuverture"
+                    class="p-2 border rounded-md w-full" required>
+                    <option [ngValue]="''">Sélectionner les jours</option>
+                    <option *ngFor="let jour of joursOuverture" [ngValue]="jour">
+                        {{ jour }}
+                    </option>
+                </select>
 
-            <select [(ngModel)]="modalData.joursOuverture" name="joursOuverture" required
-                class="w-full p-2 border rounded">
-                <option value="">Jours d’ouverture</option>
-                <option *ngFor="let j of joursOuverture" [value]="j">{{ j }}</option>
-            </select>
+                <!-- ✅ Message affiché si rien n'est sélectionné -->
+                <p *ngIf="form.submitted && !form.controls['joursOuverture']?.valid" class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner les jours d'ouverture.
+                </p>
+            </div>
 
-            <select [(ngModel)]="modalData.heuresTravail" name="heuresTravail" required
-                class="w-full p-2 border rounded">
-                <option value="">Heures de travail</option>
-                <option *ngFor="let h of heuresTravail" [value]="h">{{ h }}</option>
-            </select>
+            <div class="mb-2">
+                <label for="heuresTravail" class="block mb-2 text-sm font-medium">Heures de travail</label>
+                <select id="heuresTravail" [(ngModel)]="modalData.heuresTravail" name="heuresTravail"
+                    class="p-2 border rounded-md w-full" required>
+                    <option [ngValue]="''">Sélectionner une plage horaire</option>
+                    <option *ngFor="let heures of heuresTravail" [ngValue]="heures">
+                        {{ heures }}
+                    </option>
+                </select>
 
-            <select [(ngModel)]="modalData.nombreAgentsMaximum" name="nombreAgentsMaximum" required
-                class="w-full p-2 border rounded">
-                <option value="">Nombre max d’agents</option>
-                <option *ngFor="let n of nombreAgentsMaximum" [value]="n">{{ n }}</option>
-            </select>
+                <!-- ✅ Message affiché si rien n'est sélectionné -->
+                <p *ngIf="form.submitted && !form.controls['heuresTravail']?.valid" class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner une plage horaire.
+                </p>
+            </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-                <button type="button" (click)="closeModal()" class="px-4 py-2 bg-gray-300 rounded">
-                    Annuler
-                </button>
+            <div class="mb-2">
+                <label for="nombreAgentsMaximum" class="block mb-2 text-sm font-medium">Nomdre d'agents</label>
+                <select id="nombreAgentsMaximum" [(ngModel)]="modalData.nombreAgentsMaximum" name="nombreAgentsMaximum"
+                    class="p-2 border rounded-md w-full" required>
+                    <option [ngValue]="''">Sélectionner un nombre maximum</option>
+                    <option *ngFor="let agents of nombreAgentsMaximum" [ngValue]="agents">
+                        {{ agents }}
+                    </option>
+                </select>
+
+                <!-- ✅ Message affiché si rien n'est sélectionné -->
+                <p *ngIf="form.submitted && !form.controls['nombreAgentsMaximum']?.valid"
+                    class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner un nombre maximum d'agents.
+                </p>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" class="mr-2 px-4 py-2 bg-gray-400 text-white rounded"
+                    (click)="closeModal()">Annuler</button>
+
                 <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-blue-600 text-white rounded">
                     {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
                 </button>
             </div>
-
         </form>
+
+
+    </div>
+</div>
+
+
+<!-- Modal pour afficher les employés par agence -->
+<div *ngIf="showModal2" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-4xl shadow-lg relative">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+            Les employés de <span class="font-bold">{{ SelectedDepartment }}</span>
+        </h2>
+
+        <div class="overflow-x-auto">
+            <table
+                class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden shadow-sm">
+                <thead class="bg-gray-100 text-gray-700 text-sm font-semibold">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Code employé</th>
+                        <th class="px-4 py-2 text-left">Prénom</th>
+                        <th class="px-4 py-2 text-left">Nom</th>
+                        <th class="px-4 py-2 text-left">Numéro</th>
+                        <th class="px-4 py-2 text-left">Intervention</th>
+                        <th class="px-4 py-2 text-left">Statut</th>
+                        <th class="px-4 py-2 text-left">site d'origine </th>
+                        <th class="px-4 py-2 text-left">Heures début - fin</th>
+                        <th class="px-4 py-2 text-left">Heures de remplacement</th>
+                        <th class="px-4 py-2 text-left">Personne remplacée</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white text-sm text-gray-700">
+                    <tr [ngClass]="{'bg-red-200': emp.deplacement, 'bg-slate-300': emp.remplacement}"
+                        *ngFor="let emp of employesByAgence" class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-2">{{ emp.codeSecret }}</td>
+                        <td class="px-4 py-2">{{ emp.prenom }}</td>
+                        <td class="px-4 py-2">{{ emp.nom }}</td>
+                        <td class="px-4 py-2">{{ emp.numero }}</td>
+                        <td class="px-4 py-2">{{ emp.intervention }}</td>
+                        <td class="px-4 py-2">{{ emp.statut }}</td>
+                        <td class="px-4 py-2">{{ emp.siteAvantDeplacement ? emp.siteAvantDeplacement : 'Null' }}</td>
+                        <td *ngIf="SelectedDepartment == emp.site[0]" class="px-4 py-2">{{ emp.heureDebut }} - {{
+                            emp.heureFin }}</td>
+                        <td *ngIf="SelectedDepartment == emp.site[1]" class="px-4 py-2">{{ emp.heureDebut2 }} - {{
+                            emp.heureFin2 }}</td>
+                        <td class="px-4 py-2">{{ emp.horairesDeRemplacement ? emp.horairesDeRemplacement : 'Null' }}</td>
+                        <td class="px-4 py-2">{{ emp.personneRemplacee ? emp.personneRemplacee : 'Null' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <!-- Close Button -->
+        <button (click)="closeModal2()"
+            class="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-2xl font-bold">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                fill="currentColor">
+                <path
+                    d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+            </svg>
+        </button>
     </div>
 </div>

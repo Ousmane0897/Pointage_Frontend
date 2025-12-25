@@ -100,7 +100,7 @@ describe('AdminService', () => {
   // ===================== DELETE ADMIN =====================
   it('should delete an admin', () => {
     service.deleteAdmin('1').subscribe(response => {
-      expect(response).toBeUndefined();
+      expect(response).toBeNull();
     });
 
     const req = httpMock.expectOne(`${baseUrl}/api/superadmin/1`);

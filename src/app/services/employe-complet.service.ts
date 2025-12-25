@@ -44,12 +44,38 @@ export class EmployeCompletService {
     return this.http.get<EmployeComplet[]>(`${this.baseUrl}/api/employe-complet/all`);
   }
 
-  updateEmployeComplet(matricule: string, formData: FormData): Observable<EmployeComplet> {
-    return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/complet/${matricule}`, formData);
+  updateEmployeComplet(agentId: string, formData: FormData): Observable<EmployeComplet> {
+    return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/complet/${agentId}`, formData);
   }
 
-  deleteEmploye(matricule: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/${matricule}`);
+  deleteEmploye(agentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/by-agent/${agentId}`);
   }
-  
+
+
+  /**
+   * 🚀 Envoie la liste des employés vers le backend pour import massif
+   */
+  importEmployes(employes: EmployeComplet[]): Observable<ImportEmployeResponse> {
+  return this.http.post<ImportEmployeResponse>(
+    `${this.baseUrl}/api/employe-complet/import-excel`,
+    employes   // 👈 on envoie DIRECTEMENT la liste
+  );
 }
+
+}
+
+/* ==================== DTO de réponse ==================== */
+
+export interface ImportEmployeResponse {
+  success: EmployeComplet[];
+  errors: ImportError[];
+}
+
+export interface ImportError {
+  line: number;
+  agentId: string;
+  message: string;
+}
+  
+

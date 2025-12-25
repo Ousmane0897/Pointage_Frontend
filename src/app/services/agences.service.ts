@@ -41,13 +41,12 @@ export class AgencesService {
   }
 
   getJoursOuverture(nomAgence: string): Observable<string> {
-    return this.http.get<{ joursOuverture: string }>(
-      `${this.apiUrl}/api/agences/${encodeURIComponent(nomAgence)}`
-    ).pipe(
-      map(response => response.joursOuverture) // Sachant que le backend retourne {"joursOuverture":"Lundi-Vendredi"}, on recupère la valeur de joursOuverture
+  return this.http.get(
+    `${this.apiUrl}/api/agences/${encodeURIComponent(nomAgence)}`,
+    { responseType: 'text' } // Spécifie que la réponse est de type texte par exemple "Lundi-Vendredi"
+  );
+}
 
-    );
-  }
 
   createAgence(agence: Agence): Observable<Agence> {
     return this.http.post<Agence>(`${this.apiUrl}/api/agences`, agence);

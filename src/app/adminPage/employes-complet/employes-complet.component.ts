@@ -312,7 +312,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     this.showModal = true;
   }
 
-  deleteRow(matricule: string) {
+  deleteRow(agentId: string) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '350px',
       data: { message: "Êtes-vous sûr de vouloir supprimer cet employé ?" },
@@ -320,7 +320,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.employeService.deleteEmploye(matricule).subscribe({
+        this.employeService.deleteEmploye(agentId).subscribe({
           next: () => {
             this.loadEmployes();
             this.toastr.success('Employé supprimé avec succès !', 'Succès');
@@ -340,7 +340,81 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     this.selectedFile = null;
   }
 
-  
+  mapRowToEmploye(row: any): EmployeComplet {
+    return {
+      agentId: (row.agentId ?? '').toString().trim(),
+      matricule: (row.matricule ?? '').toString().trim(),
+      prenom: row.prenom?.trim() ?? '',
+      nom: row.nom?.trim() ?? '',
+      sexe: row.sexe ?? '',
+
+      dateNaissance: this.parseDateFromExcel(row.dateNaissance),
+      lieuNaissance: row.lieuNaissance ?? '',
+      nationalite: row.nationalite ?? '',
+      etatCivil: row.etatCivil ?? '',
+      adresse: row.adresse ?? '',
+      ville: row.ville ?? '',
+
+      telephone1: row.telephone1?.toString() ?? '',
+      telephone2: row.telephone2?.toString() ?? null,
+      email: row.email ?? '',
+
+      contactUrgence: row.contactUrgence ?? '',
+      lienDeParenteAvecContactUrgence: row.lienDeParenteAvecContactUrgence ?? '',
+      telephoneUrgent: row.telephoneUrgent?.toString() ?? '',
+
+      agence:
+        typeof row.agence === 'string'
+          ? row.agence.split(',').map((a: string) => a.trim())
+          : [],
+
+      codeSite: row.codeSite ?? '',
+      codeSite2: row.codeSite2 ?? '',
+      villeSite: row.villeSite ?? '',
+      villeSite2: row.villeSite2 ?? '',
+
+      chefEquipe: row.chefEquipe ?? '',
+      chefEquipe2: row.chefEquipe2 ?? '',
+      managerOps: row.managerOps ?? '',
+      managerOps2: row.managerOps2 ?? '',
+
+      joursDeTravail: row.joursDeTravail ?? '',
+      joursDeTravail2: row.joursDeTravail2 ?? '',
+
+      heureDebut: row.heureDebut ?? '',
+      heureFin: row.heureFin ?? '',
+      heureDebut2: row.heureDebut2 ?? '',
+      heureFin2: row.heureFin2 ?? '',
+
+      poste: row.poste ?? '',
+      typeContrat: row.typeContrat ?? '',
+
+      dateEmbauche: this.parseDateFromExcel(row.dateEmbauche),
+      dateFinContrat: this.parseDateFromExcel(row.dateFinContrat),
+      dateSortie: this.parseDateFromExcel(row.dateSortie),
+
+      tempsDeTravail: row.tempsDeTravail ?? '',
+      horaire: row.horaire ?? '',
+      salaireDeBase: row.salaireDeBase ?? '',
+
+      primeTransport: row.primeTransport ?? '',
+      primeAssiduite: row.primeAssiduite ?? '',
+      primeRisque: row.primeRisque ?? '',
+
+      ribCompteBancaire: row.ribCompteBancaire ?? '',
+      banque: row.banque ?? '',
+      cnssOuIpres: row.cnssOuIpres ?? '',
+      ipmNumero: row.ipmNumero ?? '',
+
+      permisConduire: row.permisConduire ?? 'NON',
+      categoriePermis: row.categoriePermis ?? '',
+
+      statut: row.statut ?? 'ACTIF',
+      motifSortie: row.motifSortie ?? '',
+      observations: row.observations ?? '',
+    };
+  }
+
 
 
   onFileSelectedUpload(event: any) {
@@ -352,58 +426,16 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     reader.onload = (e: any) => {
       const binary = e.target.result;
       const workbook = XLSX.read(binary, { type: 'binary' });
-
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
-      this.preview = rows.map((row: any) => <EmployeComplet>{
-        agentId: row.agentId,
-        matricule: row.matricule,
-        prenom: row.prenom,
-        nom: row.nom,
-        sexe: row.sexe,
-        dateNaissance: this.parseDateFromExcel(row.dateNaissance),
-        lieuNaissance: row.lieuNaissance,
-        nationalite: row.nationalite,
-        etatCivil: row.etatCivil,
-        adresse: row.adresse,
-        ville: row.ville,
-        telephone1: row.telephone1,
-        telephone2: row.telephone2 || null,
-        email: row.email,
-        contactUrgence: row.contactUrgence,
-        lienDeParenteAvecContactUrgence: row.lienDeParenteAvecContactUrgence,
-        telephoneUrgent: row.telephoneUrgent,
-        agence: row.agence,
-        codeSite: row.codeSite,
-        villeSite: row.villeSite,
-        chefEquipe: row.chefEquipe,
-        managerOps: row.managerOps,
-        poste: row.poste,
-        typeContrat: row.typeContrat,
-        dateEmbauche: this.parseDateFromExcel(row.dateEmbauche),
-        dateFinContrat: this.parseDateFromExcel(row.dateFinContrat),
-        tempsDeTravail: row.tempsDeTravail,
-        horaire: row.horaire,
-        salaireDeBase: row.salaireDeBase,
-        primeTransport: row.primeTransport,
-        primeAssiduite: row.primeAssiduite,
-        primeRisque: row.primeRisque,
-        ribCompteBancaire: row.ribCompteBancaire,
-        banque: row.banque,
-        cnssOuIpres: row.cnssOuIpres,
-        ipmNumero: row.ipmNumero,
-        permisConduire: row.permisConduire,
-        categoriePermis: row.categoriePermis,
-        statut: row.statut,
-        motifSortie: row.motifSortie,
-        dateSortie: this.parseDateFromExcel(row.dateSortie),
-        observations: row.observations,
-      });
+      this.preview = rows.map((row: any) => this.mapRowToEmploye(row));
     };
 
     reader.readAsBinaryString(file);
   }
+
+
 
 
   // 🟢 Sélection de l’image
@@ -421,6 +453,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     }
   }
 
+
   /** 🔍 Ouvrir modal de détails */
   ouvrirDetails(employeComplet: EmployeComplet): void {
     this.employeCompletSelectionne = employeComplet;
@@ -433,7 +466,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   editEmploye(employe: EmployeComplet) {
     this.isEditMode = true;
     this.modalData = { ...employe };
-    this.selectedId = employe.matricule;
+    this.selectedId = employe.agentId;
     this.showModal = true;
   }
 
@@ -441,207 +474,211 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   saveModal(form: NgForm) {
 
-  if (form.invalid) {
-    Object.values(form.controls).forEach(control => control.markAsTouched());
-    this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
-    return;
-  }
+    if (form.invalid) {
+      Object.values(form.controls).forEach(control => control.markAsTouched());
+      this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
+      return;
+    }
 
-  this.isLoading = true;
+    this.isLoading = true;
 
-  // --- Préparation du FormData
-  const formData = new FormData();
-  const payload = {
-    ...this.modalData,
-    dateNaissance: this.modalData.dateNaissance ? this.modalData.dateNaissance.toISOString() : null,
-    dateEmbauche: this.modalData.dateEmbauche ? this.modalData.dateEmbauche.toISOString() : null,
-    dateFinContrat: this.modalData.dateFinContrat ? this.modalData.dateFinContrat.toISOString() : null,
-    dateSortie: this.modalData.dateSortie ? this.modalData.dateSortie.toISOString() : null,
-  };
+    // --- Préparation du FormData
+    const formData = new FormData();
+    const formatDate = (d?: Date | null) => d ? d.toISOString().split('T')[0] : null;
 
-  formData.append('employe', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-  if (this.selectedFile) {
-    formData.append('photo', this.selectedFile);
-  }
+    const payload = {
+      ...this.modalData,
+      dateNaissance: formatDate(this.modalData.dateNaissance),
+      dateEmbauche: formatDate(this.modalData.dateEmbauche),
+      dateFinContrat: formatDate(this.modalData.dateFinContrat),
+      dateSortie: formatDate(this.modalData.dateSortie),
+    };
 
-  // ======================================================================
-  //                          MODE EDITION
-  // ======================================================================
-  if (this.isEditMode && this.selectedId) {
-    this.employeService.updateEmployeComplet(this.selectedId, formData).pipe(
+
+
+    formData.append('employe', JSON.stringify(payload));
+    if (this.selectedFile) {
+      formData.append('photo', this.selectedFile);
+    }
+
+    // ======================================================================
+    //                          MODE EDITION
+    // ======================================================================
+    if (this.isEditMode && this.selectedId) {
+      this.employeService.updateEmployeComplet(this.selectedId, formData).pipe(
+        finalize(() => this.isLoading = false)
+      ).subscribe({
+        next: () => {
+          this.loadEmployes();
+          this.closeModal();
+          this.toastr.success('Employé mis à jour avec succès !', 'Succès');
+        },
+        error: () => {
+          this.toastr.error('Erreur lors de la mise à jour.', 'Erreur');
+        }
+      });
+      return;
+    }
+
+    // ======================================================================
+    //              MODE CRÉATION – DÉBUT DU PIPE
+    // ======================================================================
+    this.employeService.getEmployeCompletByAgentId(this.modalData.agentId).pipe(
+
+      catchError(err => err.status === 404 ? of(null) : throwError(() => err)),
+
+      switchMap(existingByCode => {
+        if (existingByCode) {
+          this.toastr.error('Un employé avec ce code existe déjà.', 'Erreur');
+          return EMPTY;
+        }
+        return this.employeService.getByPrenomNom(this.modalData.prenom, this.modalData.nom).pipe(
+          catchError(err => err.status === 404 ? of(null) : throwError(() => err))
+        );
+      }),
+
+      switchMap(existingByName => {
+        if (existingByName) {
+          this.toastr.error('Un employé avec ce nom existe déjà.', 'Erreur');
+          return EMPTY;
+        }
+
+        // ======================================================================
+        //              🔥 INTÉGRATION DU CODE 1 — LOGIQUE HORAIRES + AGENCES
+        // ======================================================================
+
+        const sites = this.modalData.agence ?? []; // Récupérer les agences sélectionnées
+
+
+        // ============================================================
+        // Cas 2 agences
+        // ============================================================
+        if (sites.length === 2) {
+
+          return forkJoin([
+            this.agenceService.getAgenceByNom(sites[0]),
+            this.agenceService.getAgenceByNom(sites[1])
+          ]).pipe(
+            switchMap(([ag1, ag2]) => {
+
+              const h1 = ag1.heuresTravail.split('-')[0].trim();
+              const h2 = ag1.heuresTravail.split('-')[1].trim();
+              const h3 = ag2.heuresTravail.split('-')[0].trim();
+              const h4 = ag2.heuresTravail.split('-')[1].trim();
+
+              if (
+                this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
+                this.compareHeures(this.modalData.heureFin, h2) <= 0 &&
+                this.compareHeures(h3, this.modalData.heureDebut2 ?? '') <= 0 &&
+                this.compareHeures(this.modalData.heureFin2 ?? '', h4) <= 0
+              ) {
+
+                // Vérifier capacité des 2 agences
+                return forkJoin({
+                  count1: this.agenceService.getNumberofEmployeesInOneAgence(sites[0]),
+                  max1: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[0]),
+                  count2: this.agenceService.getNumberofEmployeesInOneAgence(sites[1]),
+                  max2: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[1])
+                }).pipe(
+                  switchMap(({ count1, max1, count2, max2 }) => {
+
+                    if (count1 >= max1) {
+                      this.toastr.error(`Le nombre maximum d'employés dans ${sites[0]} est atteint !`, 'Erreur');
+                      return EMPTY;
+                    }
+                    if (count2 >= max2) {
+                      this.toastr.error(`Le nombre maximum d'employés dans ${sites[1]} est atteint !`, 'Erreur');
+                      return EMPTY;
+                    }
+
+                    // Définir flags matin/après-midi
+                    this.modalData.matin = !!this.modalData.heureDebut;
+                    this.modalData.apresMidi = !!this.modalData.heureDebut2;
+
+                    // Étape finale : création employé
+                    return this.employeService.createEmployeComplet(formData);
+                  })
+                );
+              }
+
+              this.toastr.error("Les horaires doivent être compris dans ceux des agences.", "Erreur");
+              return EMPTY;
+            })
+          );
+        }
+
+        // ============================================================
+        // Cas 1 agence
+        // ============================================================
+        if (sites.length === 1) {
+
+          return this.agenceService.getAgenceByNom(sites[0]).pipe(
+            switchMap(ag1 => {
+
+              const h1 = ag1.heuresTravail.split('-')[0].trim();
+              const h2 = ag1.heuresTravail.split('-')[1].trim();
+
+              if (
+                this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
+                this.compareHeures(this.modalData.heureFin, h2) <= 0
+              ) {
+                // Vérifier capacité
+                return forkJoin({
+                  count: this.agenceService.getNumberofEmployeesInOneAgence(sites[0]),
+                  max: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[0])
+                }).pipe(
+                  switchMap(({ count, max }) => {
+
+                    if (count >= max) {
+                      this.toastr.error(`Capacité maximale atteinte pour ${sites[0]}`, 'Erreur');
+                      return EMPTY;
+                    }
+
+                    return this.employeService.createEmployeComplet(formData);
+                  })
+                );
+              }
+
+              this.toastr.error("Les horaires doivent être compris dans ceux de l'agence.", "Erreur");
+              return EMPTY;
+            })
+          );
+        }
+
+        // Aucun site sélectionné = erreur
+        this.toastr.error("Veuillez sélectionner au moins une agence.", "Erreur");
+        return EMPTY;
+      }),
+
       finalize(() => this.isLoading = false)
+
     ).subscribe({
-      next: () => {
+      next: result => {
+        if (!result) return;
         this.loadEmployes();
         this.closeModal();
-        this.toastr.success('Employé mis à jour avec succès !', 'Succès');
+        this.toastr.success("Employé ajouté avec succès !", "Succès");
+        form.resetForm();
+        this.previewUrl = null;
+        this.selectedFile = null;
       },
-      error: () => {
-        this.toastr.error('Erreur lors de la mise à jour.', 'Erreur');
+      error: err => {
+        console.error(err);
+
+        if (err.error?.message) {
+          this.toastr.error(err.error.message, "Erreur");
+        }
+        else if (err.error?.error) {
+          this.toastr.error(err.error.error, "Erreur");
+        }
+        else {
+          this.toastr.error("Erreur lors de l'ajout de l'employé.", "Erreur");
+        }
       }
     });
-    return;
+
+
   }
-
-  // ======================================================================
-  //              MODE CRÉATION – DÉBUT DU PIPE
-  // ======================================================================
-  this.employeService.getEmployeCompletByAgentId(this.modalData.agentId).pipe(
-
-    catchError(err => err.status === 404 ? of(null) : throwError(() => err)),
-
-    switchMap(existingByCode => {
-      if (existingByCode) {
-        this.toastr.error('Un employé avec ce code existe déjà.', 'Erreur');
-        return EMPTY;
-      }
-      return this.employeService.getByPrenomNom(this.modalData.prenom, this.modalData.nom).pipe(
-        catchError(err => err.status === 404 ? of(null) : throwError(() => err))
-      );
-    }),
-
-    switchMap(existingByName => {
-      if (existingByName) {
-        this.toastr.error('Un employé avec ce nom existe déjà.', 'Erreur');
-        return EMPTY;
-      }
-
-      // ======================================================================
-      //              🔥 INTÉGRATION DU CODE 1 — LOGIQUE HORAIRES + AGENCES
-      // ======================================================================
-
-      const sites = this.modalData.agence ?? []; // Récupérer les agences sélectionnées
-
-      
-      // ============================================================
-      // Cas 2 agences
-      // ============================================================
-      if (sites.length === 2) {
-
-        return forkJoin([
-          this.agenceService.getAgenceByNom(sites[0]),
-          this.agenceService.getAgenceByNom(sites[1])
-        ]).pipe(
-          switchMap(([ag1, ag2]) => {
-
-            const h1 = ag1.heuresTravail.split('-')[0].trim();
-            const h2 = ag1.heuresTravail.split('-')[1].trim();
-            const h3 = ag2.heuresTravail.split('-')[0].trim();
-            const h4 = ag2.heuresTravail.split('-')[1].trim();
-
-            if (
-              this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
-              this.compareHeures(this.modalData.heureFin, h2) <= 0 &&
-              this.compareHeures(h3, this.modalData.heureDebut2 ?? '') <= 0 &&
-              this.compareHeures(this.modalData.heureFin2 ?? '', h4) <= 0
-            ) {
-
-              // Vérifier capacité des 2 agences
-              return forkJoin({
-                count1: this.agenceService.getNumberofEmployeesInOneAgence(sites[0]),
-                max1: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[0]),
-                count2: this.agenceService.getNumberofEmployeesInOneAgence(sites[1]),
-                max2: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[1])
-              }).pipe(
-                switchMap(({ count1, max1, count2, max2 }) => {
-
-                  if (count1 >= max1) {
-                    this.toastr.error(`Le nombre maximum d'employés dans ${sites[0]} est atteint !`, 'Erreur');
-                    return EMPTY;
-                  }
-                  if (count2 >= max2) {
-                    this.toastr.error(`Le nombre maximum d'employés dans ${sites[1]} est atteint !`, 'Erreur');
-                    return EMPTY;
-                  }
-
-                  // Définir flags matin/après-midi
-                  this.modalData.matin = !!this.modalData.heureDebut;
-                  this.modalData.apresMidi = !!this.modalData.heureDebut2;
-
-                  // Étape finale : création employé
-                  return this.employeService.createEmployeComplet(formData);
-                })
-              );
-            }
-
-            this.toastr.error("Les horaires doivent être compris dans ceux des agences.", "Erreur");
-            return EMPTY;
-          })
-        );
-      }
-
-      // ============================================================
-      // Cas 1 agence
-      // ============================================================
-      if (sites.length === 1) {
-
-        return this.agenceService.getAgenceByNom(sites[0]).pipe(
-          switchMap(ag1 => {
-
-            const h1 = ag1.heuresTravail.split('-')[0].trim();
-            const h2 = ag1.heuresTravail.split('-')[1].trim();
-
-            if (
-              this.compareHeures(h1, this.modalData.heureDebut) <= 0 &&
-              this.compareHeures(this.modalData.heureFin, h2) <= 0
-            ) {
-              // Vérifier capacité
-              return forkJoin({
-                count: this.agenceService.getNumberofEmployeesInOneAgence(sites[0]),
-                max: this.agenceService.MaxNumberOfEmployeesInOneAgence(sites[0])
-              }).pipe(
-                switchMap(({ count, max }) => {
-
-                  if (count >= max) {
-                    this.toastr.error(`Capacité maximale atteinte pour ${sites[0]}`, 'Erreur');
-                    return EMPTY;
-                  }
-
-                  return this.employeService.createEmployeComplet(formData);
-                })
-              );
-            }
-
-            this.toastr.error("Les horaires doivent être compris dans ceux de l'agence.", "Erreur");
-            return EMPTY;
-          })
-        );
-      }
-
-      // Aucun site sélectionné = erreur
-      this.toastr.error("Veuillez sélectionner au moins une agence.", "Erreur");
-      return EMPTY;
-    }),
-
-    finalize(() => this.isLoading = false)
-
-  ).subscribe({
-  next: result => {
-    if (!result) return;
-    this.loadEmployes();
-    this.closeModal();
-    this.toastr.success("Employé ajouté avec succès !", "Succès");
-    form.resetForm();
-    this.previewUrl = null;
-    this.selectedFile = null;
-  },
-  error: err => {
-    console.error(err); 
-
-    if (err.error?.message) {
-      this.toastr.error(err.error.message, "Erreur");
-    } 
-    else if (err.error?.error) {
-      this.toastr.error(err.error.error, "Erreur");
-    }
-    else {
-      this.toastr.error("Erreur lors de l'ajout de l'employé.", "Erreur");
-    }
-  }
-});
-
-
-}
 
 
   compareHeures(h1: string, h2: string): number {
@@ -654,7 +691,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     return totalMinutes1 - totalMinutes2;
   }
 
-  importerDepuisExcel() {
+  /*importerDepuisExcel() {
     if (this.preview.length === 0) {
       this.toastr.error('Aucune donnée à importer.', 'Erreur');
       return;
@@ -673,7 +710,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
         dateSortie: emp.dateSortie ? emp.dateSortie.toISOString() : null,
       };
 
-      formData.append('employe', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+      formData.append('employe', JSON.stringify(payload));
 
       return this.employeService.createEmployeComplet(formData).pipe(
         catchError(err => {
@@ -695,7 +732,90 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
         this.preview = []; // vider le preview
         this.loadEmployes(); // recharger la liste réelle
       });
+  } */
+
+
+  importerDepuisExcel() {
+    if (this.preview.length === 0) {
+      this.toastr.error('Aucune donnée à importer.', 'Erreur');
+      return;
+    }
+
+    this.isLoading = true;
+
+    const payload = this.preview.map(emp => this.preparePayloadForBackend(emp));
+
+
+    this.employeService.importEmployes(payload)
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: res => {
+          this.toastr.success(`${res.success.length} employés importés avec succès`, 'Succès');
+
+          if (res.errors.length > 0) {
+            this.toastr.warning(`${res.errors.length} lignes ont échoué`, 'Avertissement');
+            console.table(res.errors);
+          }
+
+          this.preview = [];
+          this.loadEmployes();
+        },
+        error: err => {
+          console.error(err);
+          this.toastr.error("Erreur lors de l'import", 'Erreur');
+        }
+      });
   }
+
+
+
+  preparePayloadForBackend(emp: EmployeComplet): any {
+    return {
+      ...emp,
+      dateNaissance: this.convertExcelDateToISO(emp.dateNaissance as any),
+      dateEmbauche: this.convertExcelDateToISO(emp.dateEmbauche as any),
+      dateFinContrat: this.convertExcelDateToISO(emp.dateFinContrat as any),
+      dateSortie: this.convertExcelDateToISO(emp.dateSortie as any)
+    };
+  }
+
+
+
+
+  convertExcelDateToISO(value: any): string | null {
+
+    if (!value) return null;
+
+    // 🟢 Cas 1 : Excel fournit déjà une vraie date
+    if (value instanceof Date) {
+      return value.toISOString().split('T')[0];
+    }
+
+    // 🟡 Cas 2 : Excel fournit un nombre (format Excel)
+    if (typeof value === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + value * 86400000);
+      return date.toISOString().split('T')[0];
+    }
+
+    // 🔵 Cas 3 : Excel fournit une string (12/03/1990)
+    if (typeof value === 'string') {
+      if (value.includes('/')) {
+        const [d, m, y] = value.split('/');
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+
+      // Déjà en format ISO ?
+      if (value.includes('-')) {
+        return value;
+      }
+    }
+
+    console.warn('Format de date non reconnu :', value);
+    return null;
+  }
+
+
 
 
   // Fonction utilitaire pour parser une date au format "dd/MM/yyyy" et retourner un objet Date

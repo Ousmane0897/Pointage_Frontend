@@ -1,165 +1,315 @@
-<div class="max-w-7xl mx-auto p-4 space-y-6">
+<!-- Statut -->
+<!--<td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs" [ngClass]="{
+                'bg-green-100 text-green-800': e.statut=='ACTIF',
+                'bg-yellow-100 text-yellow-800': e.statut=='Pause',
+                'bg-red-100 text-red-800': e.statut=='Sortie'
+              }">
+                            {{ e.statut }}
+                        </span>
+                    </td> -->
+<div class="p-4">
+    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
 
-    <!-- 🔍 Recherche -->
-    <div class="relative w-full max-w-md">
-        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..." class="w-full pl-10 pr-4 py-2 border rounded-lg shadow-sm
-             focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    </span>
+    <div class="relative w-full mb-4 max-w-md">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <!-- Search Icon -->
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
     </div>
 
-    <!-- 🎯 Actions -->
-    <div class="flex flex-wrap gap-3">
-        <button (click)="exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded">
-            Excel
-        </button>
-        <button (click)="exportPdf()" class="bg-red-600 text-white px-4 py-2 rounded">
-            PDF
-        </button>
-        <button (click)="openAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded">
-            ➕ Ajouter
-        </button>
+    <div class="mb-4 flex gap-2">
+        <button (click)="exportExcel()" class="bg-green-500 text-white px-4 py-2 rounded">Excel</button>
+        <button (click)="exportPdf()" class="bg-red-500 text-white px-4 py-2 rounded">PDF</button>
+        <button (click)="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
     </div>
 
-    <!-- 📋 TABLE -->
-    <div class="overflow-x-auto border rounded-xl shadow">
-        <table class="min-w-[1200px] w-full text-sm border-collapse">
-            <thead class="bg-gray-100 uppercase text-xs">
-                <tr>
-                    <th class="p-3">Code</th>
-                    <th class="p-3">Prénom</th>
-                    <th class="p-3">Nom</th>
-                    <th class="p-3">Numéro</th>
-                    <th class="p-3">Intervention</th>
-                    <th class="p-3">Statut</th>
-                    <th class="p-3">Site(s)</th>
-                    <th class="p-3">Horaires</th>
-                    <th class="p-3 text-center">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                <tr *ngFor="let employe of filteredEmployes" class="border-t hover:bg-gray-50">
-
-                    <td class="p-3 font-medium">{{ employe.codeSecret }}</td>
-                    <td class="p-3">{{ employe.prenom }}</td>
-                    <td class="p-3">{{ employe.nom }}</td>
-                    <td class="p-3">{{ employe.numero }}</td>
-                    <td class="p-3">{{ employe.intervention }}</td>
-
-                    <!-- ✅ Statut badge -->
-                    <td class="p-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="{
-                'bg-green-100 text-green-800': employe.statut === 'ACTIF',
-                'bg-yellow-100 text-yellow-800': employe.statut === 'Pause',
-                'bg-red-100 text-red-800': employe.statut === 'Sortie'
-              }">
-                            {{ employe.statut }}
+    <table class="min-w-full table-auto border-collapse border border-gray-300 overflow-x-scroll">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="p-2">code Secret</th>
+                <th class="p-2">Agent ID</th>
+                <th class="p-2">Prénom</th>
+                <th class="p-2">Nom</th>
+                <th class="p-2">Numéro</th>
+                <th class="p-2">Intervention</th>
+                <th class="p-2">Statut</th>
+                <th class="p-2">Site(s)</th>
+                <th class="p-2">Heure de début et Fin</th>
+                <th class="p-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let employe of filteredEmployes">
+                <td class="p-2">{{ employe.codeSecret }}</td>
+                <td class="p-2">{{ employe.agentId }}</td>
+                <td class="p-2">{{ employe.prenom }}</td>
+                <td class="p-2">{{ employe.nom }}</td>
+                <td class="p-2">{{ employe.numero }}</td>
+                <td class="p-2">{{ employe.intervention }}</td>
+                <td class="p-2">{{ employe.statut }}</td>
+                <td class="p-2">
+                    <div *ngFor="let site of employe.site"
+                        class="flex flex-col bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs items-center justify-center">
+                        {{ site }}
+                    </div>
+                </td>
+                <td class="p-2">
+                    <div
+                        class="flex flex-col bg-orange-100 text-orange-800 py-1 rounded-full text-sm items-center justify-center">
+                        {{ employe.heureDebut }} - {{ employe.heureFin }}
+                        <span *ngIf="employe.heureDebut2 && employe.heureFin2">
+                            {{ employe.heureDebut2 }} - {{ employe.heureFin2 }}
                         </span>
-                    </td>
+                    </div>
+                </td>
 
-                    <!-- Sites -->
-                    <td class="p-3 space-y-1">
-                        <span *ngFor="let site of employe.site"
-                            class="block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs text-center">
-                            {{ site }}
-                        </span>
-                    </td>
+                <td class="p-2 flex gap-1">
+                    <button (click)="openEditModal(employe)"
+                        class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
+                        title="Edit">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                        </svg>
 
-                    <!-- Horaires -->
-                    <td class="p-3">
-                        <div class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs text-center">
-                            {{ employe.heureDebut }} - {{ employe.heureFin }}
-                            <div *ngIf="employe.heureDebut2 && employe.heureFin2">
-                                {{ employe.heureDebut2 }} - {{ employe.heureFin2 }}
-                            </div>
-                        </div>
-                    </td>
+                    </button>
 
-                    <!-- Actions -->
-                    <td class="p-3 flex justify-center gap-2">
-                        <button (click)="openEditModal(employe)"
-                            class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full">
-                            ✏️
-                        </button>
-                        <button (click)="deleteRow(employe.codeSecret)"
-                            class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full">
-                            🗑
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                    <button (click)="deleteRow(employe.codeSecret)"
+                        class="bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-md transition-transform duration-200 transform hover:scale-110 active:scale-95"
+                        title="Delete">
+                        <!-- Heroicons trash SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+
+                    </button>
+
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
-<!-- 🪟 MODAL -->
-<div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-
-    <div class="bg-white w-full max-w-lg p-6 rounded-xl shadow max-h-[90vh] overflow-y-auto">
+<!-- Modal d'ajout/modification -->
+<div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
+    <div class="max-h-[90vh] overflow-y-auto bg-white p-6 rounded-lg w-full max-w-md ">
         <h2 class="text-xl font-semibold mb-4">
             {{ isEditMode ? 'Modifier' : 'Ajouter' }} un employé
         </h2>
 
-        <form (ngSubmit)="saveModal(form)" #form="ngForm" class="space-y-3">
-
-            <input class="w-full p-2 border rounded" name="code" [(ngModel)]="modalData.codeSecret"
-                placeholder="Code employé" required />
-
-            <input class="w-full p-2 border rounded" name="prenom" [(ngModel)]="modalData.prenom" placeholder="Prénom"
-                required />
-
-            <input class="w-full p-2 border rounded" name="nom" [(ngModel)]="modalData.nom" placeholder="Nom"
-                required />
-
-            <input class="w-full p-2 border rounded" name="numero" [(ngModel)]="modalData.numero"
-                placeholder="Numéro (9 chiffres)" required pattern="^\d{9}$" />
-
-            <input class="w-full p-2 border rounded" name="intervention" [(ngModel)]="modalData.intervention"
-                placeholder="Intervention" required />
-
-            <!-- Statut -->
-            <select class="w-full p-2 border rounded" name="statut" [(ngModel)]="modalData.statut" required>
-                <option value="">Sélectionner un statut</option>
-                <option *ngFor="let statut of statuts" [value]="statut">
-                    {{ statut }}
-                </option>
-            </select>
-
-            <!-- Horaires -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <mat-form-field appearance="outline">
-                    <mat-label>Heure début</mat-label>
-                    <input matInput [ngxMatTimepicker]="startPicker" [(ngModel)]="modalData.heureDebut"
-                        name="heureDebut" readonly />
-                    <ngx-mat-timepicker #startPicker></ngx-mat-timepicker>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>Heure fin</mat-label>
-                    <input matInput [ngxMatTimepicker]="endPicker" [(ngModel)]="modalData.heureFin" name="heureFin"
-                        readonly />
-                    <ngx-mat-timepicker #endPicker></ngx-mat-timepicker>
-                </mat-form-field>
+        <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate>
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded" [class.border-red-500]="code.invalid && code.touched"
+                    name="code" #code="ngModel" [(ngModel)]="modalData.codeSecret" placeholder="Code employé"
+                    required />
+                <div *ngIf="code.invalid && code.touched" class="text-red-500 text-sm">
+                    Le code est requis.
+                </div>
             </div>
 
-            <!-- Boutons -->
-            <div class="flex justify-end gap-2 pt-4">
-                <button type="button" (click)="closeModal()" class="px-4 py-2 bg-gray-400 text-white rounded">
-                    Annuler
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded" [class.border-red-500]="prenom.invalid && prenom.touched"
+                    name="prenom" #prenom="ngModel" [(ngModel)]="modalData.prenom" placeholder="Prénom" required />
+                <div *ngIf="prenom.invalid && prenom.touched" class="text-red-500 text-sm">
+                    Le prénom est requis.
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded" [class.border-red-500]="nom.invalid && nom.touched" name="nom"
+                    #nom="ngModel" [(ngModel)]="modalData.nom" placeholder="Nom" required />
+                <div *ngIf="nom.invalid && nom.touched" class="text-red-500 text-sm">
+                    Le nom est requis.
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded" [class.border-red-500]="numero.invalid && numero.touched"
+                    name="numero" #numero="ngModel" [(ngModel)]="modalData.numero" placeholder="Numéro" required
+                    pattern="^\d{9}$" maxlength="9" minlength="9" />
+                <div *ngIf="numero.invalid && numero.touched" class="text-red-500 text-sm">
+                    Le numéro doit contenir exactement 9 chiffres. (chiffres uniquement)
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <input class="w-full p-2 border rounded"
+                    [class.border-red-500]="intervention.invalid && intervention.touched" name="intervention"
+                    #intervention="ngModel" [(ngModel)]="modalData.intervention" placeholder="Intervention" required />
+                <div *ngIf="intervention.invalid && intervention.touched" class="text-red-500 text-sm">
+                    L’intervention est requise.
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <label for="statut" class="block mb-2 font-semibold text-gray-600">Type</label>
+                <select id="statut" [(ngModel)]="modalData.statut" name="statut" class="p-2 border rounded-md w-full"
+                    required>
+                    <option [ngValue]="''">Sélectionner un statut</option>
+                    <option *ngFor="let statut of statuts" [ngValue]="statut">
+                        {{ statut }}
+                    </option>
+                </select>
+
+                <!-- ✅ Message affiché si rien n'est sélectionné -->
+                <p *ngIf="form.submitted && !form.controls['statut']?.valid" class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner un statut.
+                </p>
+            </div>
+
+
+            <input type="hidden" name="employeCreePar" [(ngModel)]="modalData.employeCreePar" />
+
+
+
+            <div class="mb-2 relative">
+                <label class="block mb-2 font-semibold text-gray-600">Site(s)</label>
+
+                <!-- Dropdown button -->
+                <button type="button" (click)="dropdownOpen = !dropdownOpen"
+                    class="w-full border border-gray-300 rounded p-2 flex justify-between items-center focus:outline-none focus:ring">
+                    <span>
+                        {{ modalData.site.length > 0 ? modalData.site.join(' - ') : 'Sélectionner un ou plusieurs sites'
+                        }}
+                    </span>
+                    <svg class="w-4 h-4 ml-2 transform" [class.rotate-180]="dropdownOpen" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </button>
+
+                <!-- Dropdown panel -->
+                <div *ngIf="dropdownOpen"
+                    class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow max-h-60 overflow-y-auto">
+                    <div *ngFor="let site of availableSites" class="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                        <input type="checkbox" [value]="site" (change)="onCheckboxChange($event) "
+                            [checked]="modalData.site.includes(site)" class="form-checkbox h-4 w-4 text-blue-600" />
+                        <span>{{ site }}</span>
+                    </div>
+                </div>
+
+                <!-- Validation error -->
+                <div *ngIf="siteTouched && modalData.site.length === 0" class="text-red-500 text-sm mt-1">
+                    Au moins un site est requis.
+                </div>
+            </div>
+
+            <!--<div class="mb-2">
+                <label for="JoursDeTravail" class="block mb-2 font-semibold text-gray-600">Jours de travail</label>
+                <select id="JoursDeTravail" [(ngModel)]="modalData.JoursDeTravail" name="JoursDeTravail" class="p-2 border rounded-md w-full"
+                    required>
+                    <option [ngValue]="''">Sélectionner les jours de travail</option>
+                    <option *ngFor="let jour of JoursDeTravail" [ngValue]="jour">
+                        {{ jour }}
+                    </option>
+                </select>
+                
+               
+                <p *ngIf="form.submitted && !form.controls['JoursDeTravail']?.valid" class="text-red-600 text-sm mt-2">
+                    Veuillez sélectionner les jours d'ouverture.
+                </p>
+            </div> -->
+
+            <div class="mb-2">
+                <label class="block mb-2 font-semibold text-gray-600">Jours de travail dans site 1</label>
+                <input class="w-full p-2 border rounded"
+                    [class.border-red-500]="JoursDeTravail.invalid && JoursDeTravail.touched" readonly
+                    name="JoursDeTravail" #JoursDeTravail="ngModel" [(ngModel)]="modalData.joursDeTravail"
+                    placeholder="Jours de Travail" required />
+            </div>
+
+            <div *ngIf="modalData.site.length === 2" class="mb-2">
+                <label class="block mb-2 font-semibold text-gray-600">Jours de travail dans site 2</label>
+                <input class="w-full p-2 border rounded"
+                    [class.border-red-500]="JoursDeTravail2.invalid && JoursDeTravail2.touched" name="JoursDeTravail2"
+                    #JoursDeTravail2="ngModel" [(ngModel)]="modalData.joursDeTravail2" readonly
+                    (ngModelChange)="onFieldChange2($event)" placeholder="Jours de Travail du site 2" required />
+            </div>
+
+            <div class="flex flex-col mb-2">
+                <p class="block mb-2 font-semibold text-gray-600">Horaires de travail</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Heure de début -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de début</mat-label>
+                        <input matInput [ngxMatTimepicker]="startPicker" [format]="24"
+                            [(ngModel)]="modalData.heureDebut" readonly placeholder="Sélectionner l'heure"
+                            name="heureDebut" #heureDebut="ngModel" />
+                        <ngx-mat-timepicker #startPicker></ngx-mat-timepicker>
+
+
+                    </mat-form-field>
+
+                    <!-- Heure de fin -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de fin</mat-label>
+                        <input matInput [ngxMatTimepicker]="endPicker" [format]="24" [(ngModel)]="modalData.heureFin"
+                            readonly placeholder="Sélectionner l'heure" name="heureFin" #heureFin="ngModel" />
+                        <ngx-mat-timepicker #endPicker></ngx-mat-timepicker>
+
+                    </mat-form-field>
+
+                    <div *ngIf=" (heureDebut.touched && heureDebut.invalid) || (heureFin.touched && heureFin.invalid)"
+                        class="text-sm text-red-500">
+                        Les heures de début et de fin sont requises.
+                    </div>
+                </div>
+
+            </div>
+
+            <div *ngIf="modalData.site.length === 2" class="mb-2">
+                <p class="text-sm text-gray-600">Horaires du second site</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Heure de début supplémentaire -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de début</mat-label>
+                        <input matInput [ngxMatTimepicker]="startPicker2" [format]="24"
+                            [(ngModel)]="modalData.heureDebut2" readonly placeholder="Sélectionner l'heure"
+                            name="heureDebut2" #heureDebut2="ngModel" />
+                        <ngx-mat-timepicker #startPicker2></ngx-mat-timepicker>
+                    </mat-form-field>
+
+                    <!-- Heure de fin supplémentaire -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Heure de fin</mat-label>
+                        <input matInput [ngxMatTimepicker]="endPicker2" [format]="24" [(ngModel)]="modalData.heureFin2"
+                            readonly placeholder="Sélectionner l'heure" name="heureFin2" #heureFin2="ngModel" />
+                        <ngx-mat-timepicker #endPicker2></ngx-mat-timepicker>
+                    </mat-form-field>
+                    <div *ngIf=" (heureDebut2.touched && heureDebut2.invalid) || (heureFin2.touched && heureFin2.invalid)"
+                        class="text-sm text-red-500">
+                        Les heures de début et de fin sont requises.
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" class="mr-2 px-4 py-2 bg-gray-400 text-white rounded"
+                    (click)="closeModal()">Annuler</button>
+
                 <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-blue-600 text-white rounded">
                     {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
                 </button>
             </div>
         </form>
+
+
     </div>
 </div>
 
-<!-- ✅ Toast -->
-<div *ngIf="toastMessage" class="fixed bottom-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50">
+<!-- ✅ Toast de confirmation -->
+<div *ngIf="toastMessage"
+    class="fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg animate-fade-in-out z-50">
     {{ toastMessage }}
 </div>

@@ -55,6 +55,7 @@ export class EmployesComponent implements OnInit {
   MaxNumberOfEmployeesInOneAgence2!: number;
   modalData: Employe = {
     codeSecret: '',
+    agentId: '',
     nom: '',
     prenom: '',
     numero: '',
@@ -135,7 +136,7 @@ export class EmployesComponent implements OnInit {
   openAddModal() {
     console.log('Employé connecté (CreePar):', this.employeCreePar2);
     this.isEditMode = false;
-    this.modalData = { codeSecret: '', nom: '', prenom: '', numero: '', intervention: '', statut: '', employeCreePar: this.employeCreePar2, deplacement: false, remplacement: false, site: [], joursDeTravail: '', joursDeTravail2: '', matin: false, apresMidi: false, heureDebut: '', heureFin: '', heureDebut2: '', heureFin2: '', dateEtHeureCreation: '' };
+    this.modalData = { codeSecret: '', agentId: '', nom: '', prenom: '', numero: '', intervention: '', statut: '', employeCreePar: this.employeCreePar2, deplacement: false, remplacement: false, site: [], joursDeTravail: '', joursDeTravail2: '', matin: false, apresMidi: false, heureDebut: '', heureFin: '', heureDebut2: '', heureFin2: '', dateEtHeureCreation: '' };
     this.selectedId = null;
     this.showModal = true;
   }
@@ -298,7 +299,7 @@ export class EmployesComponent implements OnInit {
   get filteredEmployes() {
     const term = this.searchText.toLowerCase();
     return this.employes.filter(employe =>
-      `${employe.codeSecret} ${employe.prenom} ${employe.nom} ${employe.numero} ${employe.intervention} ${employe.statut} ${employe.employeCreePar} ${employe.site}`
+      `${employe.codeSecret} ${employe.agentId} ${employe.prenom} ${employe.nom} ${employe.numero} ${employe.intervention} ${employe.statut} ${employe.employeCreePar} ${employe.site}`
         .toLowerCase()
         .includes(term)
     );

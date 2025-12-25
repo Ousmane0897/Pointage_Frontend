@@ -17,6 +17,7 @@ describe('EmployeService', () => {
 
   const employeMock: Employe = {
   codeSecret: 'EMP123',
+  agentId: 'AGT123',
   nom: 'Diouf',
   prenom: 'Ousmane',
   numero: '770000000',

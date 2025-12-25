@@ -1,206 +1,232 @@
-<!-- ===================== PLANNING ===================== -->
-<div class="p-6 space-y-6 max-w-7xl mx-auto">
+<div class="p-4">
+    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
 
-  <!-- 🔍 Recherche -->
-  <div class="relative w-full max-w-md">
-    <input
-      type="text"
-      [(ngModel)]="searchText"
-      placeholder="Recherche..."
-      class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
-             shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-    <svg
-      class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none" viewBox="0 0 24 24"
-      stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round"
-        d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  </div>
-
-  <!-- 🧭 Titre -->
-  <h2 class="text-2xl font-bold">
-    Planning -
-    <span class="text-green-600">Point</span><span class="text-pink-600">IC</span>
-  </h2>
-
-  <!-- 📦 Cartes -->
-  <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
-
-    <div
-      *ngFor="let planification of planifications"
-      class="relative bg-white rounded-2xl shadow-md p-6
-             hover:shadow-xl transition cursor-pointer">
-
-      <!-- Statut -->
-      <span
-        class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold"
-        [ngClass]="getStatusClass(planification.statut)">
-        {{ planification.statut }}
-      </span>
-
-      <!-- Icône -->
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-           viewBox="0 0 24 24" stroke-width="1.5"
-           stroke="currentColor" class="w-10 h-10 mb-3">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M9 12h3.75M9 15h3.75M9 18h3.75" />
-      </svg>
-
-      <!-- Infos -->
-      <span class="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">
-        {{ planification.codeSecret }}
-      </span>
-
-      <h3 class="text-lg font-semibold text-gray-800 mt-2">
-        {{ planification.prenomNom }}
-      </h3>
-
-      <!-- Sites -->
-      <div
-        *ngIf="planification.nomSite !== planification.siteDestination[0]; else sameSite"
-        class="flex items-center gap-2 mt-2 text-sm">
-        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-          {{ planification.nomSite }}
-        </span>
-        ➡️
-        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-          {{ planification.siteDestination }}
-        </span>
-      </div>
-
-      <ng-template #sameSite>
-        <span class="inline-block mt-2 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
-          Shift INTERNE
-        </span>
-      </ng-template>
-
-      <span class="inline-block mt-2 bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">
-        Agent à remplacer : {{ planification.personneRemplacee }}
-      </span>
-
-      <!-- Actions -->
-      <div class="flex justify-between items-center mt-4">
-
-        <div class="flex gap-3">
-          <button
-            (click)="openEditModal(planification)"
-            class="text-blue-600 hover:text-blue-800 text-2xl">
-            ✏️
-          </button>
-
-          <button
-            *ngIf="planification.statut === 'EN_ATTENTE'"
-            (click)="cancelTask(planification.id!)"
-            class="text-red-600 hover:text-red-800 text-2xl">
-            ❌
-          </button>
-        </div>
-
-        <span
-          *ngIf="planification.statut !== 'EXECUTEE'
-              && planification.statut !== 'ANNULEE'
-              && planification.statut !== 'ANNULATION_ACCEPTEE'
-              && planification.joursRestants! >= 0"
-          class="font-semibold text-gray-600">
-          J-{{ planification.joursRestants }}
-        </span>
-      </div>
+    </span>
+    <div class="relative w-full mb-4 max-w-md">
+        <input type="text" [(ngModel)]="searchText" placeholder="Recherche..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <!-- Search Icon -->
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
     </div>
-  </div>
+
+    <h2 class="text-2xl font-bold">Planning - <span class="text-green-600">Point</span><span
+            class="text-pink-600">IC</span></h2>
+
+    <!-- item-list.component.html -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
+        <div *ngFor="let planification of planifications"
+            class="bg-white rounded-2xl shadow-md p-6 hover:shadow-xl transition duration-300 relative cursor-pointer group">
+            <!-- Card Content -->
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-10">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+            </svg>
+
+            <p
+                class="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs item-center justify-center">
+                {{ planification.codeSecret }}</p>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ planification.prenomNom }}</h3>
+            <div *ngIf="planification.nomSite !== planification.siteDestination[0]; else sameSite" class="flex gap-2">
+                <p
+                    class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs item-center justify-center">
+                    {{ planification.nomSite }}</p>
+
+                ➡️
+                <p
+                    class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs item-center justify-center">
+                    {{ planification.siteDestination }}</p>
+            </div>
+            <ng-template #sameSite> <!-- Template pour le cas où les sites sont identiques. ng-template représente le code alternatif la condition 'planification.nomSite !== planification.siteDestination[0]' est fausse -->
+                <!-- Code affiché si la condition est fausse -->
+                <p
+                    class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs item-center justify-center">
+                     Shift INTERNE </p>
+            </ng-template>
+            <p
+                class="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs item-center justify-center">
+                Agent à remplacer : {{ planification.personneRemplacee }}</p>
+            <div class="flex gap-2 mt-3 justify-between">
+                <div class="flex gap-2">
+                    <button (click)="openEditModal(planification)" class="text-blue-500 hover:text-blue-800 text-3xl">
+                        <i class="fa fa-pencil-square" aria-hidden="true"></i>
+                    </button>
+                    <button *ngIf="planification.statut === 'EN_ATTENTE'"
+                        class=" text-red-500 hover:text-red-800 rounded text-3xl"
+                        (click)="cancelTask(planification.id!)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-8">
+                            <path fill-rule="evenodd"
+                                d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z"
+                                clip-rule="evenodd" />
+                        </svg>
+
+                    </button>
+                </div>
+
+                <span
+                    *ngIf="planification.statut != 'EXECUTEE' && planification.statut != 'ANNULEE' && planification.statut != 'ANNULATION_ACCEPTEE' && planification.joursRestants! >= 0"
+                    class="font-semibold">j-{{ planification.joursRestants }}</span>
+
+            </div>
+
+
+
+            <!-- Action Icons (appears on hover) -->
+            <div class="absolute top-4 right-4 flex space-x-2 opacity-100">
+                <span class="px-3 py-1 rounded-full text-xs font-medium"
+                    [ngClass]="getStatusClass(planification.statut)">
+                    {{ planification.statut }}
+                </span>
+                <!--  <button *ngIf="employe.statut === 'Cheffe d\'équipe'">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                        <path fill-rule="evenodd"
+                            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                            clip-rule="evenodd" />
+                    </svg>
+
+                </button> 
+
+                <button (click)="GetplanificationAVenir(planification.codeSecret)"
+                    class="text-blue-600 hover:text-blue-800">
+                    <i class="fa fa-hourglass-half"></i>
+                </button>
+                <button (click)="GetplanificationEnCours(planification.codeSecret)"
+                    class="text-lime-600 hover:text-lime-800">
+                    <i class="fa fa-spinner"></i>
+                </button>
+                <button (click)="GetplanificationTerminee(planification.codeSecret)"
+                    class="text-amber-600 hover:text-amber-800">
+                    <i class="fa fa-archive"></i>
+                </button> -->
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<!-- ===================== MODAL ===================== -->
-<div
-  *ngIf="showModal"
-  class="fixed inset-0 bg-black bg-opacity-50 z-50
-         flex items-center justify-center">
+<!-- Modal d'ajout/modification -->
 
-  <div
-    class="bg-white rounded-xl shadow-lg w-3/4 max-h-[90vh]
-           overflow-y-auto p-6 transition">
+<!-- Overlay + Container -->
+<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 transition-opacity duration-300"
+    [class.opacity-100]="modalVisible" [class.opacity-0]="!modalVisible" [class.hidden]="!showModal">
+    <!-- Modal content -->
+    <div class="max-h-[90vh] bg-white rounded-lg shadow-lg p-6 w-2/3 mx-auto transform transition-all duration-300 overflow-y-scroll"
+        [class.scale-100]="modalVisible" [class.scale-90]="!modalVisible">
+        <h2 class="text-xl text-blue-500 font-semibold mb-4">
+            Modifier une planification
+        </h2>
+        <form (ngSubmit)="saveModal()" #form="ngForm" novalidate>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
 
-    <h2 class="text-xl text-blue-600 font-semibold mb-4">
-      Modifier une planification
-    </h2>
 
-    <form (ngSubmit)="saveModal()" #form="ngForm">
+                <div class="mb-2">
+                    <label class="block mb-2 font-semibold text-gray-600">Agence d'origine</label>
+                    <input class="w-full p-2 border-2 rounded"
+                        [class.border-red-500]="adresseSite.invalid && adresseSite.touched" name="adresseSite"
+                        #adresseSite="ngModel" [(ngModel)]="modalData.nomSite" placeholder="L'adresse du site" required
+                        readonly />
+                </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="mb-5">
+                    <label class="block mb-2 font-semibold text-gray-600">Agence de destination ➡️ </label>
+                    <select id="department-select" [(ngModel)]="modalData.siteDestination" class="border rounded p-1">
+                        <option *ngFor="let site of availableSites" [value]="site"
+                            [disabled]="readonlyIfStatusIsExecuted(modalData)">{{ site }}</option>
+                    </select>
+                </div>
 
-        <div>
-          <label class="font-semibold text-gray-600">Agence d'origine</label>
-          <input
-            class="w-full p-2 border rounded"
-            [(ngModel)]="modalData.nomSite"
-            name="nomSite"
-            readonly />
-        </div>
+                <div class="mb-2">
+                    <mat-form-field appearance="fill" class="w-full ">
+                        <mat-label>Date de début</mat-label>
+                        <input matInput [matDatepicker]="pickerDebut" [readonly]="readonlyIfStatusIsExecuted(modalData)"
+                            name="dateDebut" [(ngModel)]="modalData.dateDebut">
+                        <mat-datepicker-toggle matSuffix [for]="pickerDebut"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerDebut></mat-datepicker>
+                    </mat-form-field>
+                </div>
+                <div *ngIf="form.submitted && form.controls['dateDebut'].invalid" class="text-red-500 text-sm">
+                    La date de début est requise.
+                </div>
+                <div class="mb-2">
+                    <mat-form-field appearance="fill" class="w-full">
+                        <mat-label>Date de fin</mat-label>
+                        <input matInput [matDatepicker]="pickerFin" [readonly]="readonlyIfStatusIsExecuted(modalData)"
+                            name="dateFin" [(ngModel)]="modalData.dateFin">
+                        <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerFin></mat-datepicker>
+                    </mat-form-field>
+                </div>
+                <div *ngIf="form.submitted && form.controls['dateFin'].invalid" class="text-red-500 text-sm">
+                    La date de fin est requise.
+                </div>
 
-        <div>
-          <label class="font-semibold text-gray-600">Agence de destination</label>
-          <select
-            class="w-full p-2 border rounded"
-            [(ngModel)]="modalData.siteDestination"
-            name="siteDestination">
-            <option *ngFor="let site of availableSites" [value]="site">
-              {{ site }}
-            </option>
-          </select>
-        </div>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Heure de début</mat-label>
+                    <input matInput [ngxMatTimepicker]="startPicker" [readonly]="readonlyIfStatusIsExecuted(modalData)"
+                        [format]="24" [(ngModel)]="modalData.heureDebut" placeholder="Sélectionner l'heure"
+                        name="heureDebut" #heureDebut="ngModel" />
+                    <ngx-mat-timepicker #startPicker></ngx-mat-timepicker>
+                </mat-form-field>
 
-        <mat-form-field appearance="fill" class="w-full">
-          <mat-label>Date de début</mat-label>
-          <input matInput [matDatepicker]="pickerDebut"
-                 [(ngModel)]="modalData.dateDebut" name="dateDebut">
-          <mat-datepicker-toggle matSuffix [for]="pickerDebut"></mat-datepicker-toggle>
-          <mat-datepicker #pickerDebut></mat-datepicker>
-        </mat-form-field>
 
-        <mat-form-field appearance="fill" class="w-full">
-          <mat-label>Date de fin</mat-label>
-          <input matInput [matDatepicker]="pickerFin"
-                 [(ngModel)]="modalData.dateFin" name="dateFin">
-          <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
-          <mat-datepicker #pickerFin></mat-datepicker>
-        </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full ">
+                    <mat-label>Heure de fin</mat-label>
+                    <input matInput [ngxMatTimepicker]="endPicker" [format]="24" [(ngModel)]="modalData.heureFin"
+                        [readonly]="readonlyIfStatusIsExecuted(modalData)" placeholder="Sélectionner l'heure"
+                        name="heureFin" #heureFin="ngModel" />
+                    <ngx-mat-timepicker #endPicker></ngx-mat-timepicker>
 
-        <div class="md:col-span-2">
-          <label class="font-semibold text-gray-600">Commentaire</label>
-          <textarea
-            class="w-full p-2 border rounded"
-            rows="4"
-            [(ngModel)]="modalData.commentaires"
-            name="commentaires"></textarea>
-        </div>
+                </mat-form-field>
 
-        <div *ngIf="modalData.motifAnnulation" class="md:col-span-2">
-          <label class="font-semibold text-gray-600">Motif d'annulation</label>
-          <textarea
-            class="w-full p-2 border rounded"
-            rows="4"
-            [(ngModel)]="modalData.motifAnnulation"
-            name="motifAnnulation"></textarea>
-        </div>
+                <div *ngIf=" (heureDebut.touched && heureDebut.invalid) || (heureFin.touched && heureFin.invalid)"
+                    class="text-sm text-red-500">
+                    Les heures de début et de fin sont requises.
+                </div>
 
-      </div>
+                <div class="mb-2">
+                     <label class="block mb-2 font-semibold text-gray-600">Commentaire </label>
+                    <textarea class="w-full p-2 border-2  rounded" [readonly]="readonlyIfStatusIsExecuted(modalData)"
+                        [(ngModel)]="modalData.commentaires" name="commentaires" rows="5" cols="30" placeholder="Entrez un commentaire..."
+                        #commentaires="ngModel"></textarea>
+                </div>
 
-      <div class="flex justify-end gap-3 mt-6">
-        <button
-          type="button"
-          (click)="closeModal()"
-          class="bg-gray-500 hover:bg-gray-700 text-white px-4 py-2 rounded">
-          Annuler
-        </button>
+                <div *ngIf="modalData.motifAnnulation !== null" class="mb-2">
+                     <label class="block mb-2 font-semibold text-gray-600">Motif de l'annulation</label>
+                    <textarea class="w-full p-2 border-2  rounded" [readonly]="readonlyIfStatusIsExecuted(modalData)"
+                        [(ngModel)]="modalData.motifAnnulation" name="motifAnnulation" rows="5" cols="30" 
+                        #motifAnnulation="ngModel"></textarea>
+                </div>
 
-        <button
-          type="submit"
-          [disabled]="readonlyIfStatusIsExecuted(modalData)"
-          class="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded">
-          Enregistrer
-        </button>
-      </div>
-    </form>
-  </div>
+                <div class="mb-2">
+                    <mat-form-field appearance="fill" class="w-full ">
+                        <mat-label>Date de Création</mat-label>
+                        <input matInput [matDatepicker]="pickerCreation"
+                            [readonly]="readonlyIfStatusIsExecuted(modalData)" name="dateCreation"
+                            [(ngModel)]="modalData.dateCreation">
+                        <mat-datepicker-toggle matSuffix [for]="pickerCreation"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerCreation></mat-datepicker>
+                    </mat-form-field>
+                </div>
+                <div *ngIf="form.submitted && form.controls['dateCreation'].invalid" class="text-red-500 text-sm">
+                    La date de création est requise.
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button type="button" class="bg-gray-500 hover:bg-gray-800 text-white px-4 py-2 rounded"
+                    (click)="closeModal()">Annuler</button>
+
+                <button type="submit" [disabled]="readonlyIfStatusIsExecuted(modalData)"
+                    class="bg-blue-500 hover:bg-blue-800 text-white px-4 py-2 rounded flex gap-1">
+                    <i class="fa fa-floppy"></i>
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+
+    </div>
 </div>

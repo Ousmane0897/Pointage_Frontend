@@ -184,6 +184,6 @@ describe('AbsencesHistoriqueComponent', () => {
 
     component.exportPdf();
 
-    expect(saveSpy).toHaveBeenCalledWith('Absents.pdf', jasmine.anything());
+    expect(saveSpy.calls.first().args[0]).toBe('Absents.pdf');
   });
 });

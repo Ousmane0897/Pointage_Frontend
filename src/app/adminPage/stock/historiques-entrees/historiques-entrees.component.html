@@ -1,155 +1,110 @@
-<!-- ===================== -->
-<!-- 📊 TABLEAU HISTORIQUE DES ENTRÉES -->
-<!-- ===================== -->
-<div class="mt-10">
+<!-- Tableau historique -->
 
-    <h2 class="text-lg font-semibold mb-4 text-center text-gray-500">
-        Historique des entrées
-    </h2>
 
-    <!-- Wrapper nécessaire pour tablette (portrait) -->
-    <div class="overflow-x-auto">
-
-        <table class="w-full min-w-[1000px]
-             bg-white rounded-lg shadow">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-4 text-left">Code Produit</th>
-                    <th class="p-4 text-left">Nom produit</th>
-                    <th class="p-4 text-center">Quantité</th>
-                    <th class="p-4 text-left">Fournisseur</th>
-                    <th class="p-4 text-left">Date d'entrée</th>
-                    <th class="p-4 text-left">Date de péremption</th>
-                    <th class="p-4 text-center">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                <tr *ngFor="let e of entrees" class="border-b hover:bg-gray-50">
-
-                    <td class="p-4 whitespace-nowrap">
-                        {{ e.codeProduit }}
-                    </td>
-
-                    <td class="p-4 whitespace-nowrap">
-                        {{ e.nomProduit }}
-                    </td>
-
-                    <td class="p-4 text-center">
-                        {{ e.quantite }}
-                    </td>
-
-                    <td class="p-4">
-                        {{ e.fournisseur }}
-                    </td>
-
-                    <td class="p-4 whitespace-nowrap">
-                        {{ e.dateMouvement ? (e.dateMouvement | date:'dd/MM/yyyy') : '-' }}
-                    </td>
-
-                    <td class="p-4 whitespace-nowrap">
-                        {{ e.dateDePeremption ? (e.dateDePeremption | date:'dd/MM/yyyy') : '-' }}
-                    </td>
-
-                    <td class="p-4 text-center">
-                        <button (click)="openModal(e)" class="px-3 py-1.5
-                     bg-gray-200 hover:bg-gray-300
-                     rounded-lg font-medium transition">
-                            Détails
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-    </div>
+<div class="mt-8">
+    <h2 class="text-lg font-semibold mb-3 text-center text-gray-500">Historique des entrées</h2>
+    <table class="min-w-full bg-white rounded-lg shadow overflow-y-auto max-h-96">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-3 text-left"> Code Produit</th>
+                <th class="p-3 text-left"> Nom produit</th>
+                <th class="p-3 text-left">Quantité</th>
+                <th class="p-3 text-left">Fournisseur</th>
+                <th class="p-3 text-left">Date d'entrée en stock</th>
+                <th class="p-3 text-left">Date de Péremption</th>
+                <th class="p-3 text-left">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let e of entrees" class="border-b hover:bg-gray-50">
+                <td class="p-3">{{ e.codeProduit }}</td>
+                <td class="p-3">{{ e.nomProduit }}</td>
+                <td class="p-3">{{ e.quantite }}</td>
+                <td class="p-3">{{ e.fournisseur }}</td>
+                <td class="p-3">{{ e.dateMouvement ? (e.dateMouvement | date: 'dd/MM/yyyy') : '-' }}</td>
+                <td class="p-3">{{ e.dateDePeremption ? (e.dateDePeremption | date: 'dd/MM/yyyy') : '-' }}</td>
+                <td class="p-3">
+                    <button (click)="openModal(e)"
+                        class="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">Détails</button>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
-<!-- ===================== -->
-<!-- 🪟 MODAL DÉTAILS ENTRÉE -->
-<!-- ===================== -->
-<div *ngIf="selectedProduit" class="fixed inset-0
-            flex items-center justify-center
-            bg-black bg-opacity-50 z-50">
 
-    <div class="bg-white rounded-2xl shadow-xl
-           w-full max-w-2xl
-           p-6 relative
-           max-h-[90vh] overflow-y-auto
-           animate-fadeIn">
 
-        <!-- Bouton fermeture -->
-        <button (click)="closeModal()" class="absolute top-4 right-4
-             text-gray-500 hover:text-red-500
-             text-xl transition">
+<!-- Modal Détails Entrée -->
+<!-- Modal -->
+<div *ngIf="selectedProduit" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div
+        class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative transform transition-all duration-300 scale-100 animate-fadeIn max-h-[90vh] overflow-y-auto">
+        <!-- Bouton de fermeture -->
+        <button (click)="closeModal()" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 transition">
             ✕
         </button>
 
         <!-- Titre -->
-        <h2 class="text-2xl font-semibold text-gray-800
-             mb-6 border-b pb-3">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">
             Détails de l'entrée en stock
         </h2>
 
-        <!-- Contenu (grille lisible desktop/tablette) -->
-        <div class="grid grid-cols-2 gap-x-6 gap-y-4 text-gray-700">
-
+        <!-- Contenu -->
+        <div class="space-y-3 text-gray-700">
             <div>
-                <span class="font-semibold">Code Produit :</span><br>
-                {{ selectedProduit.codeProduit }}
+                <span class="font-semibold">Code Produit :</span>
+                <span>{{ selectedProduit.codeProduit }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Nom :</span><br>
-                {{ selectedProduit.nomProduit }}
+                <span class="font-semibold">Nom :</span>
+                <span>{{ selectedProduit.nomProduit }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Quantité :</span><br>
-                {{ selectedProduit.quantite }}
+                <span class="font-semibold">Quantité :</span>
+                <span>{{ selectedProduit.quantite }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Fournisseur :</span><br>
-                {{ selectedProduit.fournisseur }}
+                <span class="font-semibold">Fournisseur :</span>
+                <span>{{ selectedProduit.fournisseur }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Motif :</span><br>
-                {{ selectedProduit.motifMouvement }}
+                <span class="font-semibold">Motif du Mouvement :</span>
+                <span>{{ selectedProduit.motifMouvement }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Responsable :</span><br>
-                {{ selectedProduit.responsable }}
+                <span class="font-semibold">Responsable :</span>
+                <span>{{ selectedProduit.responsable }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Type :</span><br>
-                {{ selectedProduit.type }}
+                <span class="font-semibold">Type de Mouvement :</span>
+                <span>{{ selectedProduit.type }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">N° Facture :</span><br>
-                {{ selectedProduit.numeroFacture }}
+                <span class="font-semibold">Numéro de Facture :</span>
+                <span>{{ selectedProduit.numeroFacture }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Date d'entrée :</span><br>
-                {{ selectedProduit.dateMouvement | date:'dd/MM/yyyy' }}
+                <span class="font-semibold">Date d'entrée en stock :</span>
+                <span>{{ selectedProduit.dateMouvement | date: 'dd/MM/yyyy' }}</span>
             </div>
 
             <div>
-                <span class="font-semibold">Date de péremption :</span><br>
-                {{ selectedProduit.dateDePeremption | date:'dd/MM/yyyy' }}
+                <span class="font-semibold">Date de Péremption :</span>
+                <span>{{ selectedProduit.dateDePeremption | date: 'dd/MM/yyyy' }}</span>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="mt-8 text-right">
-            <button (click)="closeModal()" class="px-5 py-2
-               bg-gray-200 hover:bg-gray-300
-               rounded-lg font-medium transition">
+        <!-- Bouton de fermeture -->
+        <div class="mt-6 text-right">
+            <button (click)="closeModal()"
+                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
                 Fermer
             </button>
         </div>

@@ -25,6 +25,7 @@ describe('EmployesComponent', () => {
   const mockEmployes = [
     {
       codeSecret: 'EMP001',
+      agentId: 'AGT001',
       nom: 'Diouf',
       prenom: 'Ousmane',
       numero: '770000000',
@@ -43,6 +44,7 @@ describe('EmployesComponent', () => {
 
   const mockEmploye: Employe = {
     codeSecret: 'EMP001',
+    agentId: 'AGT001',
     nom: 'Diouf',
     prenom: 'Ousmane',
     numero: '770000000',

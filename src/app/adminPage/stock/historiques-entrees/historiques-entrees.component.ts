@@ -3,10 +3,11 @@ import { Component, OnInit } from '@angular/core';
 import { MouvementEntreeStock } from '../../../models/MouvementEntreeStock.model';
 import { StockService } from '../../../services/stock.service';
 import { ToastrService } from 'ngx-toastr';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-historiques-entrees',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './historiques-entrees.component.html',
   styleUrls: ['./historiques-entrees.component.scss']
 })

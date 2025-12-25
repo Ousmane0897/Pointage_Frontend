@@ -129,8 +129,11 @@ describe('AgencesService', () => {
       `${apiUrl}/api/agences/Agence%20Dakar`
     );
     expect(req.request.method).toBe('GET');
-    req.flush({ joursOuverture: 'Lundi-Vendredi' });
+
+    // ⬇️ STRING, pas objet
+    req.flush('Lundi-Vendredi');
   });
+
 
   // ===================== CREATE =====================
   it('should create agence', () => {

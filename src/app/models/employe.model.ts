@@ -1,5 +1,6 @@
 export interface Employe {
     codeSecret: string;
+    agentId: string;
     nom: string;
     prenom: string;
     numero: string;

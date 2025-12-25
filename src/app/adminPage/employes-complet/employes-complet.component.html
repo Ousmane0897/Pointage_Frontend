@@ -1,57 +1,58 @@
-<div class="max-w-7xl mx-auto mt-6 bg-white p-6 rounded-xl shadow space-y-6">
+<div class="max-w-6xl mx-auto mt-6 bg-white p-6 rounded-xl shadow">
 
-    <!-- 🔍 Recherche -->
-    <div class="relative w-full max-w-md">
+    <div class="relative w-1/2 mb-4 max-w-md">
         <input type="text" [value]="searchQuery" #searchInput (input)="onSearchChange(searchInput.value)"
-            placeholder="Rechercher un produit..." class="w-full pl-10 pr-4 py-2 border rounded-lg shadow-sm
-             focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            placeholder="Rechercher un produit..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <!-- Search Icon -->
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
     </div>
 
-    <!-- 🎯 Header actions -->
-    <div class="flex justify-between items-center flex-wrap gap-4">
-        <h2 class="text-xl font-semibold text-gray-700">👥 Liste des employés</h2>
-
-        <div class="flex gap-3 items-center">
-            <input type="file" accept=".xlsx, .xls" (change)="onFileSelected($event)"
-                class="border p-2 rounded-lg text-sm" />
-
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-700">👥 Liste des Employés</h2>
+        <div class="flex items-center space-x-4">
+            <!-- Upload Excel -->
+            <input type="file" accept=".xlsx, .xls" (change)="onFileSelectedUpload($event)"
+                class="mb-4 block w-80 border p-2 rounded" />
             <button (click)="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                ➕ Ajouter
+                + Ajouter
             </button>
         </div>
     </div>
 
-    <!-- 📥 APERÇU IMPORT EXCEL -->
-    <div *ngIf="preview.length > 0" class="overflow-x-auto border rounded-xl shadow">
-        <h3 class="p-4 font-semibold bg-blue-50 text-gray-700">
-            📥 Aperçu des données importées
-        </h3>
+    <!-- 📌 TABLE PREVIEW DE L’EXCEL IMPORTÉ -->
+    <!-- 📥 TABLE PREVIEW EXCEL -->
+    <div *ngIf="preview.length > 0" class="overflow-x-auto mt-6 border rounded-xl shadow-md">
 
-        <table class="min-w-[1000px] w-full text-sm border-collapse">
-            <thead class="bg-gray-100 text-xs uppercase">
+        <h2 class="text-lg font-semibold text-gray-700 p-4 bg-blue-50">
+            📥 Aperçu des données importées (Excel)
+        </h2>
+
+        <table class="w-full text-sm text-left border-collapse">
+            <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
                 <tr>
                     <th class="p-3">Agent ID</th>
                     <th class="p-3">Matricule</th>
-                    <th class="p-3">Nom</th>
+                    <th class="p-3">Prénom & Nom</th>
                     <th class="p-3">Sexe</th>
-                    <th class="p-3">Naissance</th>
+                    <th class="p-3">Date Naissance</th>
                     <th class="p-3">Ville</th>
-                    <th class="p-3">Téléphone</th>
+                    <th class="p-3">Téléphone 1</th>
                     <th class="p-3">Email</th>
                     <th class="p-3">Poste</th>
                     <th class="p-3">Contrat</th>
                     <th class="p-3">Statut</th>
-                    <th class="p-3 text-center">Détails</th>
+                    <th class="p-3">Détails</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let e of preview" class="border-t hover:bg-gray-50">
+                <tr *ngFor="let e of preview" class="border-b hover:bg-gray-50">
+
                     <td class="p-3">{{ e.agentId }}</td>
                     <td class="p-3">{{ e.matricule }}</td>
                     <td class="p-3">{{ e.prenom }} {{ e.nom }}</td>
@@ -62,97 +63,718 @@
                     <td class="p-3">{{ e.email }}</td>
                     <td class="p-3">{{ e.poste }}</td>
                     <td class="p-3">{{ e.typeContrat }}</td>
+
                     <td class="p-3 font-semibold" [ngClass]="{
-                'text-green-600': e.statut === 'ACTIF',
-                'text-yellow-600': e.statut === 'Pause',
-                'text-red-600': e.statut === 'Sortie'
-              }">
+                  'text-green-600': e.statut === 'ACTIF',
+                  'text-yellow-600': e.statut === 'Pause',
+                  'text-red-600': e.statut === 'Sortie'
+                }">
                         {{ e.statut }}
                     </td>
-                    <td class="p-3 text-center">
-                        <button (click)="viewDetails(e)">📋</button>
+
+                    <td class="p-3">
+                        <button (click)="viewDetails(e)" class="text-gray-700 hover:text-gray-900 text-lg">
+                            📋
+                        </button>
                     </td>
+
                 </tr>
             </tbody>
         </table>
 
-        <div class="p-4 text-right bg-gray-50">
+        <div class="flex justify-end p-4 bg-gray-50">
             <button (click)="importerDepuisExcel()"
-                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
-                ✔ Importer
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                ✔ Importer ces données
             </button>
         </div>
-    </div>
 
-    <!-- 📋 TABLE EMPLOYÉS -->
+    </div>
+    <!-- FIN TABLE PREVIEW EXCEL -->
+    <!-- 🔸 TABLE DES EMPLOYÉS COMPLETS -->
+
     <div class="overflow-x-auto">
-        <table class="min-w-[1400px] w-full text-sm border-collapse">
-            <thead class="bg-gray-100 text-xs uppercase">
+        <table class="w-full text-sm text-left border-collapse">
+            <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
                 <tr>
                     <th class="p-3">Photo</th>
                     <th class="p-3">Agent ID</th>
                     <th class="p-3">Matricule</th>
-                    <th class="p-3">Nom</th>
+                    <th class="p-3">Prénom & Nom</th>
                     <th class="p-3">Sexe</th>
-                    <th class="p-3">Naissance</th>
+                    <th class="p-3">Date de Naissance</th>
+                    <th class="p-3">Lieu</th>
+                    <th class="p-3">Nationalité</th>
+                    <th class="p-3">État Civil</th>
                     <th class="p-3">Ville</th>
-                    <th class="p-3">Téléphone</th>
+                    <th class="p-3">Adresse</th>
+                    <th class="p-3">Téléphone 1</th>
+                    <th class="p-3">Téléphone 2</th>
+                    <th class="p-3">Email</th>
                     <th class="p-3">Poste</th>
-                    <th class="p-3">Contrat</th>
+                    <th class="p-3">Type Contrat</th>
                     <th class="p-3">Statut</th>
-                    <th class="p-3 text-center">Actions</th>
+                    <th class="p-3">Actions</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let e of employeComplet" class="border-t hover:bg-gray-50">
+                <tr *ngFor="let e of employeComplet" class="border-b hover:bg-gray-50">
+                    <!-- Photo -->
                     <td class="p-3">
-                        <img [src]="baseUrl + '/api/employe-complet/image/' + e.agentId"
-                            class="w-20 h-20 object-cover rounded-lg" />
+                        <!-- Image -->
+                        <div class="w-40 h-40 overflow-hidden rounded">
+                            <img [src]="baseUrl + '/api/employe-complet/image/' + e.agentId"
+                                alt="{{ e.prenom }} {{ e.nom }}" class="w-full h-full object-cover" />
+                        </div>
+
                     </td>
 
+                    <!-- AgentId -->
                     <td class="p-3 font-medium">{{ e.agentId }}</td>
-                    <td class="p-3">{{ e.matricule }}</td>
-                    <td class="p-3">{{ e.prenom }} {{ e.nom }}</td>
+
+                    <!-- Matricule -->
+                    <td class="p-3 font-medium">{{ e.matricule }}</td>
+
+                    <!-- Nom & prénom -->
+                    <td class="p-3 font-medium"> {{ e.prenom }} {{ e.nom }}</td>
+
+                    <!-- Sexe -->
                     <td class="p-3">{{ e.sexe }}</td>
-                    <td class="p-3">{{ e.dateNaissance | date:'dd/MM/yyyy' }}</td>
+
+                    <!-- Date naissance -->
+                    <td class="p-3">{{ e.dateNaissance | date: 'dd/MM/yyyy' }}</td>
+
+                    <!-- Lieu de naissance -->
+                    <td class="p-3">{{ e.lieuNaissance }}</td>
+
+                    <!-- Nationalité -->
+                    <td class="p-3">{{ e.nationalite }}</td>
+
+                    <!-- État civil -->
+                    <td class="p-3">{{ e.etatCivil }}</td>
+
+                    <!-- Ville -->
                     <td class="p-3">{{ e.ville }}</td>
+
+                    <!-- Adresse -->
+                    <td class="p-3">{{ e.adresse }}</td>
+
+                    <!-- Téléphones -->
                     <td class="p-3">{{ e.telephone1 }}</td>
+                    <td class="p-3">{{ e.telephone2 || '-' }}</td>
+
+                    <!-- Email -->
+                    <td class="p-3">{{ e.email }}</td>
+
+                    <!-- Poste & contrat -->
                     <td class="p-3">{{ e.poste }}</td>
                     <td class="p-3">{{ e.typeContrat }}</td>
 
-                    <td class="p-3 font-semibold" [ngClass]="{
-                'text-green-600': e.statut === 'ACTIF',
-                'text-yellow-600': e.statut === 'Pause',
-                'text-red-600': e.statut === 'Sortie'
-              }">
-                        {{ e.statut }}
+                    <!-- Statut -->
+                    <td class="p-3">
+                        <span [ngClass]="{
+              'text-green-600 font-semibold': e.statut === 'ACTIF',
+              'text-yellow-600 font-semibold': e.statut === 'Pause',
+              'text-red-600 font-semibold': e.statut === 'Sortie'
+            }">{{ e.statut }}</span>
                     </td>
 
-                    <td class="p-3 flex justify-center gap-3">
-                        <button (click)="editEmploye(e)" class="text-blue-600 text-xl">✏️</button>
-                        <button (click)="deleteRow(e.matricule)" class="text-red-600 text-xl">🗑</button>
-                        <button (click)="viewDetails(e)" class="text-gray-600 text-xl">📋</button>
+                    <!-- Actions -->
+                    <td class="p-3 space-x-2 flex-row flex justify-center items-center mt-10">
+                        <button (click)="editEmploye(e)"
+                            class="text-blue-600 hover:text-blue-800 text-2xl font-medium">✏️</button>
+                        <button (click)="deleteRow(e.agentId)"
+                            class="text-red-600 hover:text-red-800 text-2xl font-medium">🗑</button>
+                        <button (click)="viewDetails(e)"
+                            class="text-gray-600 hover:text-gray-800 text-xl font-medium">📋</button>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-
-    <!-- Pagination -->
-    <div class="flex justify-between items-center text-sm mt-4">
-        <button (click)="prevPage()" [disabled]="page === 0" class="px-3 py-1 border rounded disabled:opacity-50">◀
-            Précédent</button>
-
-        <span>Page <strong>{{ page + 1 }}</strong> / {{ totalPages || 1 }}</span>
-
-        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
-            class="px-3 py-1 border rounded disabled:opacity-50">Suivant ▶</button>
-    </div>
-
-    <!-- Aucun résultat -->
-    <div *ngIf="!loading && employeComplet.length === 0" class="text-center text-gray-400 text-2xl mt-10">
-        Aucun employé trouvé
-    </div>
-
 </div>
+
+<!-- 🔸 Pagination -->
+<div class="flex justify-between items-center mt-4 text-sm text-gray-700">
+    <button class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50" (click)="prevPage()"
+        [disabled]="page === 0">
+        ◀ Précédent
+    </button>
+
+    <div>
+        Page <strong>{{ page + 1 }}</strong> / {{ totalPages || 1 }}
+    </div>
+
+    <button class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50" (click)="nextPage()"
+        [disabled]="page + 1 >= totalPages">
+        Suivant ▶
+    </button>
+</div>
+
+<!-- Aucun résultat -->
+<div *ngIf="!loading && employeComplet.length === 0"
+    class="text-gray-500 text-3xl mt-10 justify-center items-center text-center">
+    Aucun employé trouvé.
+</div>
+
+
+<!-- Modal d'ajout/modification d'employé complet -->
+<div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center z-50">
+
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-50" (click)="closeModal()"></div>
+
+    <!-- Modal Card -->
+    <div
+        class="relative bg-white max-w-6xl w-full mx-4 p-6 rounded-xl shadow-xl animate-fadeInUp overflow-y-auto max-h-[90vh]">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-700">
+                {{ isEditMode ? '✏️ Modifier Employé ' : '➕ Nouvel Employé Complet' }}
+            </h2>
+            <button (click)="closeModal()" class="text-gray-500 hover:text-red-500 text-xl font-bold">
+                ✕
+            </button>
+        </div>
+
+        <form (ngSubmit)="saveModal(form)" #form="ngForm" class="space-y-10">
+
+            <!-- IDENTITÉ -->
+            <section>
+                <h3 class="section-title">👤 Identité</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input class="input" placeholder="Agent ID" [(ngModel)]="modalData.agentId" name="agentId"
+                        #agentId="ngModel">
+                    <div *ngIf="agentId.invalid && agentId.touched" class="text-red-500 text-sm">
+                        L'agent ID est requis.
+                    </div>
+                    <input class="input" placeholder="Matricule" [(ngModel)]="modalData.matricule" name="matricule"
+                        #matricule="ngModel">
+                    <div *ngIf="matricule.invalid && matricule.touched" class="text-red-500 text-sm">
+                        Le matricule est requis.
+                    </div>
+                    <input class="input" placeholder="Prénom" [(ngModel)]="modalData.prenom" name="prenom"
+                        #prenom="ngModel">
+                    <div *ngIf="prenom.invalid && prenom.touched" class="text-red-500 text-sm">
+                        Le prénom est requis.
+                    </div>
+                    <input class="input" placeholder="Nom" [(ngModel)]="modalData.nom" name="nom" #nom="ngModel">
+                    <div *ngIf="nom.invalid && nom.touched" class="text-red-500 text-sm">
+                        Le nom est requis.
+                    </div>
+
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <select class="input" [(ngModel)]="modalData.sexe" name="sexe" #sexe="ngModel">
+                        <option value="" disabled selected>Sexe</option>
+                        <option value="Masculin">Masculin</option>
+                        <option value="Féminin">Féminin</option>
+                    </select>
+                    <div *ngIf="sexe.invalid && sexe.touched" class="text-red-500 text-sm">
+                        Le sexe est requis.
+                    </div>
+                    <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+                        <mat-label>Date de naissance</mat-label>
+                        <input matInput [matDatepicker]="pickerDateNaissance" name="dateNaissance"
+                            #dateNaissance="ngModel" [(ngModel)]="modalData.dateNaissance" required>
+                        <mat-datepicker-toggle matSuffix [for]="pickerDateNaissance"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerDateNaissance></mat-datepicker>
+                    </mat-form-field>
+                    <div *ngIf="dateNaissance.invalid && dateNaissance.touched" class="text-red-500 text-sm">
+                        La date de naissance est requise.
+                    </div>
+                    <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+                        <mat-label>Lieu de naissance</mat-label>
+                        <input matInput placeholder="Lieu de naissance" [(ngModel)]="modalData.lieuNaissance"
+                            name="lieuNaissance" #lieuNaissance="ngModel">
+                    </mat-form-field>
+                    <div *ngIf="lieuNaissance.invalid && lieuNaissance.touched" class="text-red-500 text-sm">
+                        Le lieu de naissance est requis.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <input class="input" placeholder="Nationalité" [(ngModel)]="modalData.nationalite"
+                        name="nationalite" #nationalite="ngModel">
+                    <div *ngIf="nationalite.invalid && nationalite.touched" class="text-red-500 text-sm">
+                        La nationalité est requise.
+                    </div>
+                    <input class="input" placeholder="État civil" [(ngModel)]="modalData.etatCivil" name="etatCivil"
+                        #etatCivil="ngModel">
+                    <div *ngIf="etatCivil.invalid && etatCivil.touched" class="text-red-500 text-sm">
+                        L'état civil est requis.
+                    </div>
+                    <input class="input" placeholder="Ville" [(ngModel)]="modalData.ville" name="ville"
+                        #ville="ngModel">
+                    <div *ngIf="ville.invalid && ville.touched" class="text-red-500 text-sm">
+                        La ville est requise.
+                    </div>
+                </div>
+
+                <input class="input mt-3" placeholder="Adresse" [(ngModel)]="modalData.adresse" name="adresse"
+                    #adresse="ngModel">
+                <div *ngIf="adresse.invalid && adresse.touched" class="text-red-500 text-sm">
+                    L'adresse est requise.
+                </div>
+            </section>
+
+            <!-- CONTACT -->
+            <section>
+                <h3 class="section-title">☎️ Contact</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input class="input" placeholder="Téléphone 1" [(ngModel)]="modalData.telephone1" name="telephone1"
+                        #telephone1="ngModel" pattern="^\d{9}$" maxlength="9" minlength="9">
+                    <div *ngIf="telephone1.invalid && telephone1.touched" class="text-red-500 text-sm">
+                        Le numéro doit contenir exactement 9 chiffres. (chiffres uniquement)
+                    </div>
+                    <input class="input" placeholder="Téléphone 2" [(ngModel)]="modalData.telephone2" name="telephone2"
+                        #telephone2="ngModel" pattern="^\d{9}$" maxlength="9" minlength="9">
+                    <!--<div *ngIf="telephone2.invalid && telephone2.touched" class="text-red-500 text-sm">
+                        Le téléphone 2 est requis.
+                    </div>-->
+                    <input type="email" class="input" placeholder="Email" [(ngModel)]="modalData.email" name="email"
+                        #email="ngModel" required email>
+                    <div *ngIf="email.invalid && email.touched" class="text-red-500 text-sm">
+                        Veuillez entrer une adresse email valide.
+                    </div>
+
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <input class="input" placeholder="Personne à contacter en cas d'urgence"
+                        [(ngModel)]="modalData.contactUrgence" name="contactUrgence" #contactUrgence="ngModel">
+                    <div *ngIf="contactUrgence.invalid && contactUrgence.touched" class="text-red-500 text-sm">
+                        Le contact d'urgence est requis.
+                    </div>
+                    <input class="input" placeholder="Lien de parenté"
+                        [(ngModel)]="modalData.lienDeParenteAvecContactUrgence" name="lienDeParenteAvecContactUrgence"
+                        #lienDeParenteAvecContactUrgence="ngModel">
+                    ️<div *ngIf="lienDeParenteAvecContactUrgence.invalid && lienDeParenteAvecContactUrgence.touched"
+                        class="text-red-500 text-sm">
+                        Le lien de parenté est requis.
+                    </div>
+                    <input class="input" placeholder="Téléphone d'urgence" [(ngModel)]="modalData.telephoneUrgent"
+                        name="telephoneUrgent" #telephoneUrgent="ngModel" pattern="^\d{9}$" maxlength="9" minlength="9">
+                    <div *ngIf="telephoneUrgent.invalid && telephoneUrgent.touched" class="text-red-500 text-sm">
+                        Le numéro doit contenir exactement 9 chiffres. (chiffres uniquement)
+                    </div>
+                </div>
+            </section>
+
+            <!-- AGENCE / SITE -->
+            <section>
+                <h3 class="section-title">🏢 Agence & Site</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <!-- Dropdown button -->
+                    <button type="button" (click)="dropdownOpen = !dropdownOpen"
+                        class="w-full border border-gray-300 rounded p-2 flex justify-between items-center focus:outline-none focus:ring">
+                        <span>
+                            {{ modalData.agence.length > 0 ? modalData.agence.join(' - ') : 'Sélectionner un ou deux sites'
+                            }}
+                        </span>
+                        <svg class="w-4 h-4 ml-2 transform" [class.rotate-180]="dropdownOpen" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown panel -->
+                    <div *ngIf="dropdownOpen"
+                        class="absolute z-10 mt-10 w-full bg-white border border-gray-200 rounded shadow max-h-60 overflow-y-auto">
+                        <div *ngFor="let site of availableSites"
+                            class="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                            <input type="checkbox" [value]="site" (change)="onCheckboxChange($event) "
+                                [checked]="modalData.agence.includes(site)"
+                                class="form-checkbox h-4 w-4 text-blue-600" />
+                            <span>{{ site }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Validation error -->
+                    <div *ngIf="siteTouched && modalData.agence.length === 0" class="text-red-500 text-sm mt-1">
+                        Au moins un site est requis.
+                    </div>
+
+                    <input class="input" placeholder="Code site" [(ngModel)]="modalData.codeSite" name="codeSite"
+                        #codeSite="ngModel">
+                    <div *ngIf="codeSite.invalid && codeSite.touched" class="text-red-500 text-sm">
+                        Le code site est requis.
+                    </div>
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Code site 2" [(ngModel)]="modalData.codeSite2"
+                            name="codeSite2" #codeSite2="ngModel">
+                        <div *ngIf="codeSite2.invalid && codeSite2.touched" class="text-red-500 text-sm">
+                            Le code site est requis.
+                        </div>
+                    </ng-container>
+                    <input class="input" placeholder="Ville du site" [(ngModel)]="modalData.villeSite" name="villeSite"
+                        #villeSite="ngModel">
+                    <div *ngIf="villeSite.invalid && villeSite.touched" class="text-red-500 text-sm">
+                        La ville du site est requise.
+                    </div>
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Ville du site 2" [(ngModel)]="modalData.villeSite2"
+                            name="villeSite2" #villeSite2="ngModel">
+                        <div *ngIf="villeSite2.invalid && villeSite2.touched" class="text-red-500 text-sm">
+                            La ville du site est requise.
+                        </div>
+                    </ng-container>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+
+                    <input class="input" placeholder="Chef d'équipe" [(ngModel)]="modalData.chefEquipe"
+                        name="chefEquipe" #chefEquipe="ngModel">
+                    <div *ngIf="chefEquipe.invalid && chefEquipe.touched" class="text-red-500 text-sm">
+                        Le chef d'équipe est requis.
+                    </div>
+
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Chef d'équipe 2" [(ngModel)]="modalData.chefEquipe2"
+                            name="chefEquipe2" #chefEquipe2="ngModel">
+                        <div *ngIf="chefEquipe2.invalid && chefEquipe2.touched" class="text-red-500 text-sm">
+                            Le chef d'équipe est requis.
+                        </div>
+                    </ng-container>
+                    
+                    <input class="input" placeholder="Manager Ops" [(ngModel)]="modalData.managerOps" name="managerOps"
+                        #managerOps="ngModel">
+                    <div *ngIf="managerOps.invalid && managerOps.touched" class="text-red-500 text-sm">
+                        Le manager ops est requis.
+                    </div>
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Manager Ops 2" [(ngModel)]="modalData.managerOps2"
+                            name="managerOps2" #managerOps2="ngModel">
+                        <div *ngIf="managerOps2.invalid && managerOps2.touched" class="text-red-500 text-sm">
+                            Le manager ops est requis.
+                        </div>
+                    </ng-container>
+
+                    <!-- Jours de travail -->
+                    <input class="input" placeholder="Jours de travail 1" [(ngModel)]="modalData.joursDeTravail"
+                        name="joursDeTravail" readonly #joursDeTravail="ngModel">
+                    
+
+                    <ng-container *ngIf="modalData.agence.length === 2">
+                        <input class="input" placeholder="Jours de travail 2" [(ngModel)]="modalData.joursDeTravail2"
+                            name="joursDeTravail2" readonly #joursDeTravail2="ngModel">
+                        <div *ngIf="joursDeTravail2.invalid && joursDeTravail2.touched" class="text-red-500 text-sm">
+                            Les jours de travail sont requis.
+                        </div>
+                    </ng-container>
+                </div>
+            </section>
+
+            <!-- Horaires -->
+            <section>
+                <h3 class="section-title">⏰ Horaires de Travail</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" class="input" placeholder="Heure de début" [(ngModel)]="modalData.heureDebut"
+                        name="heureDebut" #heureDebut="ngModel">
+                    <div *ngIf="heureDebut.invalid && heureDebut.touched" class="text-red-500 text-sm">
+                        L'heure de début est requise.
+                    </div>
+                    <input type="time" class="input" placeholder="Heure de fin" [(ngModel)]="modalData.heureFin"
+                        name="heureFin" #heureFin="ngModel">
+                    <div *ngIf="heureFin.invalid && heureFin.touched" class="text-red-500 text-sm">
+                        L'heure de fin est requise.
+                    </div>
+                </div>
+            </section>
+
+            <section *ngIf="modalData.agence.length === 2">
+                <h3 class="section-title">⏰ Horaires de Travail 2</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" class="input" placeholder="Heure de début" [(ngModel)]="modalData.heureDebut2"
+                        name="heureDebut2" #heureDebut2="ngModel">
+                    <div *ngIf="heureDebut2.invalid && heureDebut2.touched" class="text-red-500 text-sm">
+                        L'heure de début est requise.
+                    </div>
+                    <input type="time" class="input" placeholder="Heure de fin" [(ngModel)]="modalData.heureFin2"
+                        name="heureFin2" #heureFin2="ngModel">
+                    <div *ngIf="heureFin2.invalid && heureFin2.touched" class="text-red-500 text-sm">
+                        L'heure de fin est requise.
+                    </div>
+                </div>
+            </section>
+
+            <!-- EMPLOI -->
+            <section>
+                <h3 class="section-title">💼 Poste & Contrat</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input class="input" placeholder="Poste" [(ngModel)]="modalData.poste" name="poste"
+                        #poste="ngModel">
+                    <div *ngIf="poste.invalid && poste.touched" class="text-red-500 text-sm">
+                        Le poste est requis.
+                    </div>
+                    <input class="input" placeholder="Type de contrat" [(ngModel)]="modalData.typeContrat"
+                        name="typeContrat" #typeContrat="ngModel">
+                    <div *ngIf="typeContrat.invalid && typeContrat.touched" class="text-red-500 text-sm">
+                        Le type de contrat est requis.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+                        <mat-label>Date d'embauche</mat-label>
+                        <input matInput [matDatepicker]="pickerEntree" name="dateDebut" #dateDebut="ngModel"
+                            [(ngModel)]="modalData.dateEmbauche" required>
+                        <mat-datepicker-toggle matSuffix [for]="pickerEntree"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerEntree></mat-datepicker>
+                    </mat-form-field>
+                    <div *ngIf="dateDebut.invalid && dateDebut.touched" class="text-red-500 text-sm">
+                        La date d'embauche est requise.
+                    </div>
+
+                    <mat-form-field appearance="fill" class="border rounded p-2 w-full">
+
+                        <mat-label>Date de fin de contrat</mat-label>
+                        <input matInput [matDatepicker]="pickerFinContrat" name="dateFinContrat"
+                            #dateFinContrat="ngModel" [(ngModel)]="modalData.dateFinContrat" required>
+                        <mat-datepicker-toggle matSuffix [for]="pickerFinContrat"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerFinContrat></mat-datepicker>
+                    </mat-form-field>
+                    <div *ngIf="dateFinContrat.invalid && dateFinContrat.touched" class="text-red-500 text-sm">
+                        La date de fin de contrat est requise.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <input class="input" placeholder="Temps de travail" [(ngModel)]="modalData.tempsDeTravail"
+                        name="tempsDeTravail" #tempsDeTravail="ngModel">
+                    <div *ngIf="tempsDeTravail.invalid && tempsDeTravail.touched" class="text-red-500 text-sm">
+                        Le temps de travail est requis.
+                    </div>
+                    <input class="input" placeholder="Horaire" [(ngModel)]="modalData.horaire" name="horaire"
+                        #horaire="ngModel">
+                    <div *ngIf="horaire.invalid && horaire.touched" class="text-red-500 text-sm">
+                        L'horaire est requis.
+                    </div>
+                    <input class="input" placeholder="Salaire de base" [(ngModel)]="modalData.salaireDeBase"
+                        name="salaireDeBase" #salaireDeBase="ngModel">
+                    <div *ngIf="salaireDeBase.invalid && salaireDeBase.touched" class="text-red-500 text-sm">
+                        Le salaire de base est requis.
+                    </div>
+                </div>
+            </section>
+        
+            <!-- PRIMES -->
+            <section>
+                <h3 class="section-title">💰 Primes</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input class="input" placeholder="Prime transport" [(ngModel)]="modalData.primeTransport"
+                        name="primeTransport" #primeTransport="ngModel">
+                    <div *ngIf="primeTransport.invalid && primeTransport.touched" class="text-red-500 text-sm">
+                        La prime de transport est requise.
+                    </div>
+                    <input class="input" placeholder="Prime assiduité" [(ngModel)]="modalData.primeAssiduite"
+                        name="primeAssiduite" #primeAssiduite="ngModel">
+                    <div *ngIf="primeAssiduite.invalid && primeAssiduite.touched" class="text-red-500 text-sm">
+                        La prime d'assiduité est requise.
+                    </div>
+                    <input class="input" placeholder="Prime risque" [(ngModel)]="modalData.primeRisque"
+                        name="primeRisque" #primeRisque="ngModel">
+                    <div *ngIf="primeRisque.invalid && primeRisque.touched" class="text-red-500 text-sm">
+                        La prime de risque est requise.
+                    </div>
+                </div>
+            </section>
+
+            <!-- BANQUE -->
+            <section>
+                <h3 class="section-title">🏦 Informations bancaires</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input class="input" placeholder="RIB / Compte bancaire" [(ngModel)]="modalData.ribCompteBancaire"
+                        name="ribCompteBancaire" #ribCompteBancaire="ngModel">
+                    <input class="input" placeholder="Banque" [(ngModel)]="modalData.banque" name="banque"
+                        #banque="ngModel">
+                    <input class="input" placeholder="CNSS ou IPRES" [(ngModel)]="modalData.cnssOuIpres"
+                        name="cnssOuIpres" #cnssOuIpres="ngModel">
+                </div>
+                <input class="input mt-3" placeholder="IPM Numéro" [(ngModel)]="modalData.ipmNumero" name="ipmNumero"
+                    #ipmNumero="ngModel">
+            </section>
+
+            <!-- PERMIS -->
+            <section>
+                <h3 class="section-title">🚗 Permis</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select class="input" [(ngModel)]="modalData.permisConduire" name="permisConduire"
+                        #permisConduire="ngModel">
+                        <option value="OUI">OUI</option>
+                        <option value="NON">NON</option>
+                    </select>
+                    <div *ngIf="permisConduire.invalid && permisConduire.touched" class="text-red-500 text-sm">
+                        Le statut du permis est requis.
+                    </div>
+                    <input class="input" placeholder="Catégorie du permis" [(ngModel)]="modalData.categoriePermis"
+                        name="categoriePermis" #categoriePermis="ngModel">
+                    <div *ngIf="categoriePermis.invalid && categoriePermis.touched" class="text-red-500 text-sm">
+                        La catégorie du permis est requise.
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATUT -->
+            <section>
+                <h3 class="section-title">⚙️ Statut</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select class="input" [(ngModel)]="modalData.statut" name="statut" #statut="ngModel">
+                        <option value="ACTIF">ACTIF</option>
+                        <option value="PAUSE">PAUSE</option>
+                        <option value="SORTIE">SORTIE</option>
+                    </select>
+                    <div *ngIf="statut.invalid && statut.touched" class="text-red-500 text-sm">
+                        Le statut est requis.
+                    </div>
+                    <input class="input" placeholder="Motif de sortie" [(ngModel)]="modalData.motifSortie"
+                        name="motifSortie" #motifSortie="ngModel">
+                    <div *ngIf="motifSortie.invalid && motifSortie.touched" class="text-red-500 text-sm">
+                        Le motif de sortie est requis.
+                    </div>
+                </div>
+
+                <mat-form-field appearance="fill" class="border rounded p-2 w-full mt-3">
+                    <mat-label>Date de sortie</mat-label>
+                    <input matInput [matDatepicker]="pickerDateSortie" name="dateSortie" #dateSortie="ngModel"
+                        [(ngModel)]="modalData.dateSortie">
+                    <mat-datepicker-toggle matSuffix [for]="pickerDateSortie"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerDateSortie></mat-datepicker>
+                </mat-form-field>
+                <div *ngIf="dateSortie.invalid && dateSortie.touched" class="text-red-500 text-sm">
+                    La date de sortie est requise.
+                </div>
+            </section>
+
+            <!-- PHOTO -->
+            <section>
+                <h3 class="section-title">🖼 Photo</h3>
+                <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+                <img *ngIf="previewUrl" [src]="previewUrl" class="h-32 w-32 rounded-lg object-cover shadow mt-3">
+            </section>
+
+            <!-- OBSERVATIONS -->
+            <section>
+                <h3 class="section-title">📝 Observations</h3>
+                <textarea class="input h-24" placeholder="Observations" [(ngModel)]="modalData.observations"
+                    name="observations" #observations="ngModel"></textarea>
+            </section>
+
+            <!-- Boutons d'action -->
+            <div class="flex justify-end space-x-4 mt-6">
+                <button type="submit" class="btn-primary w-full md:w-auto px-4 py-2" [disabled]="form.invalid">
+                    <span *ngIf="isEditMode">✏️ Modifier</span>
+                    <span *ngIf="!isEditMode">➕ Ajouter</span>
+                </button>
+                <button type="button" (click)="closeModal()" class="btn-secondary w-full md:w-auto px-4 py-2">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal de détails employé complet -->
+<div *ngIf="showDetailsModal" class="fixed inset-0 flex items-center justify-center z-50">
+
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-50" (click)="closeDetailsModal()"></div>
+
+    <!-- Modal Card -->
+    <div
+        class="relative bg-white max-w-4xl w-full mx-4 p-6 rounded-xl shadow-xl animate-fadeInUp overflow-y-auto max-h-[90vh]">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-700">
+                📋 Détails de l'Employé
+            </h2>
+            <button (click)="closeDetailsModal()" class="text-gray-500 hover:text-red-500 text-xl font-bold">
+                ✕
+            </button>
+        </div>
+
+        <div *ngIf="employeCompletSelectionne">
+
+            <!-- Image -->
+            <img [src]="baseUrl + '/api/employe-complet/image/' + employeCompletSelectionne.agentId"
+                alt="{{ employeCompletSelectionne.nom }}" class="w-30 h-30 mb-4 rounded object-cover" />
+
+            <!-- Contenu des détails ici -->
+            <p><strong>Agent ID :</strong> {{ employeCompletSelectionne.agentId }}</p>
+            <p><strong>Matricule :</strong> {{ employeCompletSelectionne.matricule }}</p>
+            <p><strong>Nom :</strong> {{ employeCompletSelectionne.nom }}</p>
+            <p><strong>Prénom :</strong> {{ employeCompletSelectionne.prenom }}</p>
+            <p><strong>Sexe :</strong> {{ employeCompletSelectionne.sexe }}</p>
+            <p><strong>Date de Naissance :</strong> {{ employeCompletSelectionne.dateNaissance | date:'dd/MM/yyyy' }}
+            </p>
+            <!-- Donne moi tous les données restantes -->
+            <p><strong>Lieu de Naissance :</strong> {{ employeCompletSelectionne.lieuNaissance }}</p>
+            <p><strong>Nationalité :</strong> {{ employeCompletSelectionne.nationalite }}</p>
+            <p><strong>Etat civil :</strong> {{ employeCompletSelectionne.etatCivil }}</p>
+            <p><strong>Adresse :</strong> {{ employeCompletSelectionne.adresse }}</p>
+            <p><strong>Ville :</strong> {{ employeCompletSelectionne.ville }}</p>
+            <p><strong>Téléphone 1 :</strong> {{ employeCompletSelectionne.telephone1 }}</p>
+            <p><strong>Téléphone 2 :</strong> {{ employeCompletSelectionne.telephone2 }}</p>
+            <p><strong>Email :</strong> {{ employeCompletSelectionne.email }}</p>
+            <p><strong>Contact d'urgence :</strong> {{ employeCompletSelectionne.contactUrgence }}</p>
+            <p><strong>Lien de parenté avec ce contact :</strong> {{
+                employeCompletSelectionne.lienDeParenteAvecContactUrgence }}</p>
+            <p><strong>Téléphone d'urgence :</strong> {{ employeCompletSelectionne.telephoneUrgent }}</p>
+            <p><strong>Agence :</strong> {{ employeCompletSelectionne.agence.join(', ') }}</p>
+            <p><strong>Jours de travail :</strong> {{ employeCompletSelectionne.joursDeTravail }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Jours de travail 2 :</strong> {{ employeCompletSelectionne.joursDeTravail2 }}</p>
+            </ng-container>
+            <p><strong>Code agence  :</strong> {{ employeCompletSelectionne.codeSite }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Code agence 2 :</strong> {{ employeCompletSelectionne.codeSite2 }}</p>  
+            </ng-container>
+
+            <p><strong>Ville du site :</strong> {{ employeCompletSelectionne.villeSite }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Ville du site 2 :</strong> {{ employeCompletSelectionne.villeSite2 }}</p>
+            </ng-container>
+            <p><strong>Chef d'équipe :</strong> {{ employeCompletSelectionne.chefEquipe }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Chef d'équipe 2 :</strong> {{ employeCompletSelectionne.chefEquipe2 }}</p>
+            </ng-container>
+            <p><strong>ManagerOps :</strong> {{ employeCompletSelectionne.managerOps }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>ManagerOps 2 :</strong> {{ employeCompletSelectionne.managerOps2 }}</p>
+            </ng-container>
+            <p><strong>Heure de début :</strong> {{ employeCompletSelectionne.heureDebut }}</p>
+            <p><strong>Heure de fin :</strong> {{ employeCompletSelectionne.heureFin }}</p>
+            <ng-container *ngIf="employeCompletSelectionne.agence.length === 2">
+                <p><strong>Heure de début 2 :</strong> {{ employeCompletSelectionne.heureDebut2 }}</p>
+                <p><strong>Heure de fin 2 :</strong> {{ employeCompletSelectionne.heureFin2 }}</p>
+            </ng-container>
+            <p><strong>Poste :</strong> {{ employeCompletSelectionne.poste }}</p>
+            <p><strong>Type de contrat :</strong> {{ employeCompletSelectionne.typeContrat }}</p>
+            <p><strong>Date d'embauche :</strong> {{ employeCompletSelectionne.dateEmbauche | date:'dd/MM/yyyy' }}</p>
+            <p><strong>Date de fin de contrat :</strong> {{ employeCompletSelectionne.dateFinContrat | date:'dd/MM/yyyy'
+                }}</p>
+            <p><strong>Temps de travail :</strong> {{ employeCompletSelectionne.tempsDeTravail }}</p>
+            <p><strong>Horaire :</strong> {{ employeCompletSelectionne.horaire }}</p>
+            <p><strong>Salaire de base :</strong> {{ employeCompletSelectionne.salaireDeBase }}</p>
+            <p><strong>Prime de transport :</strong> {{ employeCompletSelectionne.primeTransport }}</p>
+            <p><strong>Prime d'assiduité :</strong> {{ employeCompletSelectionne.primeAssiduite }}</p>
+            <p><strong>Prime de risque :</strong> {{ employeCompletSelectionne.primeRisque }}</p>
+            <p><strong>RIB Compte Bancaire :</strong> {{ employeCompletSelectionne.ribCompteBancaire }}</p>
+            <p><strong>Banque :</strong> {{ employeCompletSelectionne.banque }}</p>
+            <p><strong>CNSS ou Ipres :</strong> {{ employeCompletSelectionne.cnssOuIpres }}</p>
+            <p><strong>IPM Numéro :</strong> {{ employeCompletSelectionne.ipmNumero }}</p>
+            <p><strong>Permis de conduire :</strong> {{ employeCompletSelectionne.permisConduire }}</p>
+            <p><strong>Catégorie de permis :</strong> {{ employeCompletSelectionne.categoriePermis }}</p>
+            <p><strong>Statut :</strong> {{ employeCompletSelectionne.statut }}</p>
+            <p><strong>Motif de sortie :</strong> {{ employeCompletSelectionne.motifSortie }}</p>
+            <p><strong>Date de sortie :</strong> {{ employeCompletSelectionne.dateSortie | date:'dd/MM/yyyy' }}</p>
+            <p><strong>Observations :</strong> {{ employeCompletSelectionne.observations }}</p>
+        </div>
+
+    </div>

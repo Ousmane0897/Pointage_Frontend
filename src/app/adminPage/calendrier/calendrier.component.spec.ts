@@ -16,6 +16,7 @@ import { Planification } from '../../models/planification.model';
 ============================ */
 const mockEmploye: Employe = {
   codeSecret: 'EMP001',
+  agentId: 'AGT001',
   nom: 'Diouf',
   prenom: 'Ousmane',
   numero: '770000000',
@@ -38,6 +39,7 @@ const mockEmployes: Employe[] = [mockEmploye];
 // ============================
 const mockEmployeDoublePlage: Employe = {
   codeSecret: 'EMP002',
+  agentId: 'AGT002',
   nom: 'Fall',
   prenom: 'Moussa',
   numero: '780000000',
@@ -61,6 +63,7 @@ const mockEmployeDoublePlage: Employe = {
 // ============================
 const mockEmployeDeplace: Employe = {
   codeSecret: 'EMP003',
+  agentId: 'AGT003',
   nom: 'Ba',
   prenom: 'Awa',
   numero: '760000000',
