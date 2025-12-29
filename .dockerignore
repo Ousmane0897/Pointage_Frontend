@@ -1,8 +1,12 @@
+# Ignore node modules and build output
 node_modules
 dist
-Dockerfile
-.dockerignore
+.angular
 .git
 .gitignore
+Dockerfile
 docker-compose.yml
-.vscode 
+*.log
+coverage
+.vscode
+.env

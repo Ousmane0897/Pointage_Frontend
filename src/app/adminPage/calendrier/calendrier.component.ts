@@ -19,9 +19,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { PlanificationService } from '../../services/planification.service';
-import { ToastrModule, ToastrService } from 'ngx-toastr';
-import { concatMap, finalize } from 'rxjs';
-import { co, dE } from '@fullcalendar/core/internal-common';
+import { ToastrService } from 'ngx-toastr';
+import { finalize } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
@@ -97,6 +96,7 @@ export class CalendrierComponent implements OnInit {
     eventDrop: this.handleEventChange.bind(this),
     eventResize: this.handleEventChange.bind(this)
   };
+  employes!: Employe[];
 
   constructor(private employesService: EmployeService, private agence: AgencesService,
     private planification: PlanificationService, private toastr: ToastrService,
@@ -112,6 +112,12 @@ export class CalendrierComponent implements OnInit {
       this.getEmployesDeplaces();
 
     });
+
+    this.refreshEmployes();
+
+    setInterval(() => {
+      this.refreshEmployes();
+    }, 10000); // toutes les 10s  
   }
 
   getPlanificationByCodeEmploye(codeSecret: string) {
@@ -409,6 +415,17 @@ export class CalendrierComponent implements OnInit {
 
     return events;
   }
+
+
+  refreshEmployes() {
+    this.employesService.getEmployes().subscribe(employes => {
+      this.employes = employes;
+
+      // 🔥 RECRÉATION DES EVENTS
+      this.calendarOptions.events = this.generateYearlyEvents(this.employes);
+    });
+  }
+
 
 
 

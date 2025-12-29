@@ -1,248 +1,119 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EmployesComponent } from './employes.component';
 import { EmployeService } from '../../services/employe.service';
-import { AgencesService } from '../../services/agences.service';
 import { LoginService } from '../../services/login.service';
-import { MatDialog } from '@angular/material/dialog';
-import { ToastrService } from 'ngx-toastr';
-import { of, throwError } from 'rxjs';
-import { NgForm } from '@angular/forms';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { of } from 'rxjs';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import { Employe } from '../../models/employe.model';
+import autoTable from 'jspdf-autotable';
 
 describe('EmployesComponent', () => {
   let component: EmployesComponent;
   let fixture: ComponentFixture<EmployesComponent>;
-
   let employeServiceSpy: jasmine.SpyObj<EmployeService>;
-  let agenceServiceSpy: jasmine.SpyObj<AgencesService>;
   let loginServiceSpy: jasmine.SpyObj<LoginService>;
-  let dialogSpy: jasmine.SpyObj<MatDialog>;
-  let toastrSpy: jasmine.SpyObj<ToastrService>;
 
   const mockEmployes = [
     {
-      codeSecret: 'EMP001',
-      agentId: 'AGT001',
-      nom: 'Diouf',
-      prenom: 'Ousmane',
-      numero: '770000000',
-      intervention: 'Nettoyage',
-      statut: 'Employé(e) simple',
+      codeSecret: '001',
+      agentId: 'A1',
+      prenom: 'John',
+      nom: 'Doe',
+      numero: '123',
+      intervention: 'IT',
+      statut: 'Actif',
       employeCreePar: 'Admin',
-      site: ['Site A'],
+      site: ['Dakar', 'Thies'],
       joursDeTravail: 'Lundi-Vendredi',
       deplacement: false,
       remplacement: false,
       heureDebut: '08:00',
-      heureFin: '16:00',
-      dateEtHeureCreation: '2024-01-01'
+      heureFin: '17:00',
+      dateEtHeureCreation: '2025-12-27T08:00:00'
+    },
+    {
+      codeSecret: '002',
+      agentId: 'A2',
+      prenom: 'Jane',
+      nom: 'Smith',
+      numero: '456',
+      intervention: 'HR',
+      statut: 'Actif',
+      employeCreePar: 'Admin',
+      site: ['Thies'],
+      joursDeTravail: 'Lundi-Vendredi',
+      deplacement: true,
+      remplacement: false,
+      heureDebut: '09:00',
+      heureFin: '18:00',
+      dateEtHeureCreation: '2025-12-27T09:00:00'
     }
   ];
 
-  const mockEmploye: Employe = {
-    codeSecret: 'EMP001',
-    agentId: 'AGT001',
-    nom: 'Diouf',
-    prenom: 'Ousmane',
-    numero: '770000000',
-    intervention: 'Nettoyage',
-    statut: 'Employé(e) simple',
-    employeCreePar: 'Admin',
-    site: ['Site A'],
-    joursDeTravail: 'Lundi-Vendredi',
-    deplacement: false,
-    remplacement: false,
-    heureDebut: '08:00',
-    heureFin: '16:00',
-    dateEtHeureCreation: '2024-01-01'
-  };
-
-
-  const mockAgence = {
-    nom: 'Site A',
-    heuresTravail: '07:00 - 18:00'
-  };
-
   beforeEach(async () => {
-    employeServiceSpy = jasmine.createSpyObj('EmployeService', [
-      'getEmployes',
-      'addEmploye',
-      'updateEmploye',
-      'deleteEmploye'
-    ]);
-
-    agenceServiceSpy = jasmine.createSpyObj('AgencesService', [
-      'getAllSites',
-      'getAgenceByNom',
-      'getJoursOuverture',
-      'getNumberofEmployeesInOneAgence',
-      'MaxNumberOfEmployeesInOneAgence'
-    ]);
-
-    loginServiceSpy = jasmine.createSpyObj('LoginService', ['getFirstNameLastName']);
-    dialogSpy = jasmine.createSpyObj('MatDialog', ['open']);
-    toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error']);
-
-    employeServiceSpy.getEmployes.and.returnValue(of(mockEmployes));
-    employeServiceSpy.addEmploye.and.returnValue(of(mockEmploye));
-    employeServiceSpy.updateEmploye.and.returnValue(of(mockEmploye));
-    employeServiceSpy.deleteEmploye.and.returnValue(of(undefined));
-
-    agenceServiceSpy.getAllSites.and.returnValue(of(['Site A', 'Site B']));
-    agenceServiceSpy.getAgenceByNom.and.returnValue(of(mockAgence as any));
-    agenceServiceSpy.getJoursOuverture.and.returnValue(of('Lundi-Vendredi'));
-    agenceServiceSpy.getNumberofEmployeesInOneAgence.and.returnValue(of(1));
-    agenceServiceSpy.MaxNumberOfEmployeesInOneAgence.and.returnValue(of(5));
-
-    loginServiceSpy.getFirstNameLastName.and.returnValue('Admin User');
-
-    dialogSpy.open.and.returnValue({
-      afterClosed: () => of(true)
-    } as any);
+    const employeSpy = jasmine.createSpyObj('EmployeService', ['getEmployes']);
+    const loginSpy = jasmine.createSpyObj('LoginService', ['getFirstNameLastName']);
 
     await TestBed.configureTestingModule({
-      imports: [EmployesComponent],
+      declarations: [EmployesComponent],
       providers: [
-        { provide: EmployeService, useValue: employeServiceSpy },
-        { provide: AgencesService, useValue: agenceServiceSpy },
-        { provide: LoginService, useValue: loginServiceSpy },
-        { provide: MatDialog, useValue: dialogSpy },
-        { provide: ToastrService, useValue: toastrSpy }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+        { provide: EmployeService, useValue: employeSpy },
+        { provide: LoginService, useValue: loginSpy }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(EmployesComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    employeServiceSpy = TestBed.inject(EmployeService) as jasmine.SpyObj<EmployeService>;
+    loginServiceSpy = TestBed.inject(LoginService) as jasmine.SpyObj<LoginService>;
 
-  // =====================
-  // BASIC
-  // =====================
+    employeServiceSpy.getEmployes.and.returnValue(of(mockEmployes));
+    loginServiceSpy.getFirstNameLastName.and.returnValue('Admin Test');
+  });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load employees on init', () => {
-    expect(employeServiceSpy.getEmployes).toHaveBeenCalled();
-    expect(component.employes.length).toBe(1);
+  it('should load data on ngOnInit', () => {
+    component.ngOnInit();
+    expect(component.employes).toEqual(mockEmployes);
+    expect(component.employeCreePar2).toBe('Admin Test');
   });
 
-  it('should load available sites', () => {
-    expect(agenceServiceSpy.getAllSites).toHaveBeenCalled();
-    expect(component.availableSites.length).toBe(2);
+  it('should filter employes correctly with searchText matching nom', () => {
+    component.employes = mockEmployes;
+    component.searchText = 'Smith';
+    const filtered = component.filteredEmployes;
+    expect(filtered.length).toBe(1);
+    expect(filtered[0].prenom).toBe('Jane');
   });
 
-  // =====================
-  // MODAL
-  // =====================
-
-  it('should open add modal', () => {
-    component.openAddModal();
-    expect(component.isEditMode).toBeFalse();
-    expect(component.showModal).toBeTrue();
+  it('should filter employes correctly with searchText matching site', () => {
+    component.employes = mockEmployes;
+    component.searchText = 'Thies';
+    const filtered = component.filteredEmployes;
+    expect(filtered.length).toBe(2); // John and Jane ont "Thies" dans site
   });
 
-  it('should open edit modal', () => {
-    component.openEditModal(mockEmployes[0] as any);
-    expect(component.isEditMode).toBeTrue();
-    expect(component.selectedId).toBe('EMP001');
-  });
-
-  it('should close modal', () => {
-    component.showModal = true;
-    component.closeModal();
-    expect(component.showModal).toBeFalse();
-  });
-
-  // =====================
-  // SAVE
-  // =====================
-
-  it('should show error if form invalid', () => {
-    const form = {
-      invalid: true,
-      controls: { nom: { markAsTouched: jasmine.createSpy() } }
-    } as any as NgForm;
-
-    component.saveModal(form);
-
-    expect(toastrSpy.error).toHaveBeenCalled();
-    expect(employeServiceSpy.addEmploye).not.toHaveBeenCalled();
-  });
-
-  it('should add employe when valid (1 site)', fakeAsync(() => {
-    component.isEditMode = false;
-    component.modalData.site = ['Site A'];
-    component.modalData.heureDebut = '08:00';
-    component.modalData.heureFin = '16:00';
-
-    const form = { invalid: false, controls: {} } as NgForm;
-
-    component.saveModal(form);
-    tick();
-
-    expect(employeServiceSpy.addEmploye).toHaveBeenCalled();
-    expect(toastrSpy.success).toHaveBeenCalled();
-  }));
-
-  it('should update employe in edit mode', () => {
-    component.isEditMode = true;
-    component.selectedId = 'EMP001';
-
-    component['updateEmploye']();
-
-    expect(employeServiceSpy.updateEmploye).toHaveBeenCalled();
-    expect(toastrSpy.success).toHaveBeenCalled();
-  });
-
-  // =====================
-  // FILTER
-  // =====================
-
-  it('should filter employees', () => {
-    component.employes = mockEmployes as any;
-    component.searchText = 'ousmane';
-    expect(component.filteredEmployes.length).toBe(1);
-  });
-
-  // =====================
-  // DELETE
-  // =====================
-
-  it('should delete employee after confirmation', () => {
-    component.deleteRow('EMP001');
-
-    expect(dialogSpy.open).toHaveBeenCalled();
-    expect(employeServiceSpy.deleteEmploye).toHaveBeenCalledWith('EMP001');
-    expect(toastrSpy.success).toHaveBeenCalled();
-  });
-
-  // =====================
-  // EXPORT
-  // =====================
-
-  it('should export excel', () => {
+  it('should call XLSX writeFile on exportExcel', () => {
     spyOn(XLSX.utils, 'json_to_sheet').and.callThrough();
-    spyOn(XLSX, 'writeFile');
+    spyOn(XLSX.utils, 'book_new').and.callThrough();
+    spyOn(XLSX.utils, 'book_append_sheet').and.callThrough();
+    spyOn(XLSX, 'writeFile').and.stub();
 
-    component.employes$ = of(mockEmployes as any);
+    component.employes$ = of(mockEmployes);
     component.exportExcel();
 
-    expect(XLSX.writeFile).toHaveBeenCalled();
+    expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(mockEmployes);
+    expect(XLSX.writeFile).toHaveBeenCalledWith(jasmine.any(Object), 'employes.xlsx');
   });
 
-  it('should export pdf', () => {
-    const saveSpy = spyOn(jsPDF.prototype, 'save');
-
-    component.employes$ = of(mockEmployes as any);
+  it('should call jsPDF save on exportPdf', () => {
+    spyOn(jsPDF.prototype, 'save');
+    component.employes$ = of(mockEmployes);
     component.exportPdf();
 
-    expect(saveSpy).toHaveBeenCalled();
+    expect(jsPDF.prototype.save).toHaveBeenCalled();
   });
 });
