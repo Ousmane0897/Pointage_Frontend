@@ -66,8 +66,8 @@
 
                     <td class="p-3 font-semibold" [ngClass]="{
                   'text-green-600': e.statut === 'ACTIF',
-                  'text-yellow-600': e.statut === 'Pause',
-                  'text-red-600': e.statut === 'Sortie'
+                  'text-yellow-600': e.statut === 'PAUSE',
+                  'text-red-600': e.statut === 'SORTIE'
                 }">
                         {{ e.statut }}
                     </td>
@@ -175,8 +175,8 @@
                     <td class="p-3">
                         <span [ngClass]="{
               'text-green-600 font-semibold': e.statut === 'ACTIF',
-              'text-yellow-600 font-semibold': e.statut === 'Pause',
-              'text-red-600 font-semibold': e.statut === 'Sortie'
+              'text-yellow-600 font-semibold': e.statut === 'PAUSE',
+              'text-red-600 font-semibold': e.statut === 'SORTIE'
             }">{{ e.statut }}</span>
                     </td>
 

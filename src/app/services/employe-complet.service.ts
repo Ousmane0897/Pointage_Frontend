@@ -20,7 +20,7 @@ export class EmployeCompletService {
   private baseUrl = environment.apiUrlEmploye;
 
 
-  getEmployesComplet(page = 0, size = 20, q = ''): Observable<{content: EmployeComplet[], total?: number}> {
+  getEmployesComplet(page = 0, size = 10, q = ''): Observable<{content: EmployeComplet[], total?: number}> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (q) params = params.set('q', q);
     return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/api/employe-complet/all`, { params });

@@ -50,7 +50,7 @@ export interface EmployeComplet {
     ipmNumero?: string;
     permisConduire: 'OUI' | 'NON';
     categoriePermis?: string;
-    statut: 'ACTIF' | 'Pause' | 'Sortie';
+    statut: 'ACTIF' | 'PAUSE' | 'SORTIE';
     motifSortie?: string;
     dateSortie?: Date | null;
     observations?: string;
