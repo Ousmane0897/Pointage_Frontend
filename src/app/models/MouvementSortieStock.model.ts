@@ -13,6 +13,7 @@ export interface MouvementSortieStock {
     destination: string; // agence 
     motifSortieStock: MotifMouvementSortieStock;
     responsable: string;
+    beneficaire: string | null;
     mois?: string; // A renseigner coté backend pour les rapports mensuels
     dateMouvement: Date | null;
 
@@ -29,6 +30,7 @@ export interface SortieStockBatch {
     destination: string; // agence ou chantier
     motifSortieStock: MotifMouvementSortieStock;
     responsable: string;
+    beneficaire: string | null;
     mois?: string; // A renseigner coté backend pour les rapports mensuels
     dateMouvement: Date | null;
 

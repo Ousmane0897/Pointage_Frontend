@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { LoginService } from '../../services/login.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { ModulesAutorises } from '../../models/admin.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -24,10 +25,20 @@ export class SidebarComponent implements OnInit {
   openDropdownAbsent: string | null = null;
   openDropdownEmploye: string | null = null;
   openDropdownCollecte: string | null = null;
+  openDropdownOperations: string | null = null;
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
   ngOnInit(): void {
+
+    console.log('ROLE =', this.role);
+    console.log('TYPE ROLE =', typeof this.role);
+    console.log('PERMISSIONS RAW =', this.modulesAutorises);
+
+    Object.entries(this.modulesAutorises || {}).forEach(([k, v]) => {
+      console.log(k, v, typeof v);
+    });
+
 
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
@@ -73,9 +84,32 @@ export class SidebarComponent implements OnInit {
     return this.router.url === path;
   }
 
-  hasPermission(module: string): boolean {
-    return this.modulesAutorises && this.modulesAutorises[module] === true;
+  hasPermission(permission: keyof ModulesAutorises): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    return this.modulesAutorises?.[permission] === true;
   }
+
+
+  hasAnyOperationPermission(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+
+    const ops = [
+      'StatistiquesAgences',
+      'Planifications',
+      'Calendrier',
+      'Stock',
+      'CollecteLivraison',
+      'JourFeries',
+      'Employes',
+      'Agences',
+      'Absences',
+      'Pointages',
+    ];
+
+    return ops.some(p => this.modulesAutorises?.[p] === true);
+  }
+
+
 
 
   logout() {
@@ -91,6 +125,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownEmploye(menu: string) {
     this.openDropdownEmploye = this.openDropdownEmploye === menu ? null : menu;
+  }
+
+  toggleDropdownOperations(menu: string) {
+    this.openDropdownOperations = this.openDropdownOperations === menu ? null : menu;
   }
 
   toggleDropdownCollecte(menu: string) {

@@ -1,0 +1,46 @@
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+
+  <div *ngFor="let group of agencyGroups"
+       (click)="filterByGroup(group)"
+       class="cursor-pointer rounded-xl bg-white p-6 shadow
+              hover:shadow-lg transition flex flex-col items-center justify-center
+              border-2"
+       [ngClass]="{
+         'border-blue-500 bg-blue-50': selectedGroup === group,
+         'border-transparent': selectedGroup !== group
+       }">
+
+    <h2 class="text-xl font-semibold text-gray-700">
+      {{ group }}
+    </h2>
+
+  </div>
+
+</div>
+
+<button *ngIf="selectedGroup"
+        (click)="reset()"
+        class="mb-6 text-sm text-blue-600 underline">
+  Réinitialiser le filtre
+</button>
+
+<div class="overflow-x-auto">
+    <table class="min-w-full table-auto border-collapse border border-gray-300">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="p-2">Agence</th>
+                <th class="p-2">👥 Employés enregistrés</th>
+                <th class="p-2">✅ Présents aujourd'hui</th>
+                <th class="p-2">❌ Absents aujourd'hui</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let stat of filteredStats | keyvalue">
+                <td class="p-2 font-medium text-gray-800">{{ stat.key }}</td>
+                <td class="p-2">{{ stat.value.total }}</td>
+                <td class="p-2">{{ stat.value.present }}</td>
+                <td class="p-2">{{ stat.value.absent }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

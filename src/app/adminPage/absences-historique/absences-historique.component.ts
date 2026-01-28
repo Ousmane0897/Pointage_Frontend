@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { AbsencesService } from '../../services/absences.service';
 import { ToastrService } from 'ngx-toastr';
 import { Absent } from '../../models/absent.model';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -37,6 +37,10 @@ export class AbsencesHistoriqueComponent {
       site: ''
     };
     selectedId: string | null = null;
+
+     private destroy$ = new Subject<void>();
+
+    
   
     constructor(private absenceService: AbsencesService, private toastr: ToastrService
     ) { }
@@ -48,7 +52,7 @@ export class AbsencesHistoriqueComponent {
   
   
     loadData() {
-      this.absenceService.AbsenceHistorique().subscribe(data => {
+      this.absenceService.AbsenceHistorique().pipe(takeUntil(this.destroy$)).subscribe(data => {
         this.Absences = data;
       });
     }
@@ -128,7 +132,10 @@ export class AbsencesHistoriqueComponent {
       });
     }
   
-  
+    onDestroy() {
+      this.destroy$.next();
+      this.destroy$.complete();
+    }
   
 
 }

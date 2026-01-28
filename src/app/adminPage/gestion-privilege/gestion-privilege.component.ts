@@ -29,7 +29,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
   admins: Admin[] = [];
   selectedAdmin: Admin | null = null;
-  role: string[] = ['EXPLOITATION', 'BACKOFFICE', 'SUPERVISEUR', 'MAGASINIER', 'RESPONSABLE_IT', 'Responsable_QHSE','CONTROLEUR_STOCK'];
+  role: string[] = ['EXPLOITATION', 'BACKOFFICE', 'SUPERVISEUR', 'MAGASINIER', 'RESPONSABLE_IT', 'Responsable_QHSE', 'CONTROLEUR_STOCK'];
   searchText: string = '';
   showModal = false;
   showPassword: boolean = false;
@@ -83,8 +83,6 @@ export class GestionPrivilegeComponent implements OnInit {
 
 
 
-
-
   openAddModal() {
     this.isEditMode = false;
     this.modalData = {
@@ -110,11 +108,31 @@ export class GestionPrivilegeComponent implements OnInit {
 
   openEditModal(admin: Admin) {
     this.isEditMode = true;
-    this.modalData = { ...admin };
+
+    this.modalData = {
+      ...admin,
+      modulesAutorises: {
+        Dashboard: !!admin.modulesAutorises?.Dashboard,
+        Admin: !!admin.modulesAutorises?.Admin,
+        StatistiquesAgences: !!admin.modulesAutorises?.StatistiquesAgences,
+        Planifications: !!admin.modulesAutorises?.Planifications,
+        Calendrier: !!admin.modulesAutorises?.Calendrier,
+        Stock: !!admin.modulesAutorises?.Stock,
+        CollecteLivraison: !!admin.modulesAutorises?.CollecteLivraison,
+        JourFeries: !!admin.modulesAutorises?.JourFeries,
+        Employes: !!admin.modulesAutorises?.Employes,
+        Agences: !!admin.modulesAutorises?.Agences,
+        Absences: !!admin.modulesAutorises?.Absences,
+        Pointages: !!admin.modulesAutorises?.Pointages,
+      }
+    };
+
     this.confirmPassword = admin.password;
     this.selectedId = admin.id!;
     this.showModal = true;
   }
+
+
 
   closeModal() {
     this.showModal = false;

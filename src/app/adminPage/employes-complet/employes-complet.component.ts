@@ -4,7 +4,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { MatDialog } from '@angular/material/dialog';
 import { EmployeCompletService } from '../../services/employe-complet.service';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, debounceTime, distinctUntilChanged, EMPTY, finalize, forkJoin, of, Subject, switchMap, takeUntil, throwError } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, EMPTY, finalize, forkJoin, map, of, Subject, switchMap, takeUntil, throwError } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import * as XLSX from 'xlsx';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -44,6 +44,8 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   previewUrl: string | ArrayBuffer | null = null;
   isLoading = false;
   preview: EmployeComplet[] = [];
+
+
 
   // ⚙️ États UI
   loading = false;
@@ -113,6 +115,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     observations: '',
 
   }
+
   showDetailsModal: boolean = false;
   baseUrl: string = environment.apiUrlEmploye;
 
@@ -120,20 +123,32 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     private employeService: EmployeCompletService,
     private toastr: ToastrService, private agenceService: AgencesService
   ) { }
+
   ngOnInit(): void {
-    this.loadEmployes();
     this.setupSearch();
+    this.searchSubject.next(''); // chargement initial
     this.getAvailableSites();
+  }
+
+
+  // 🔍 Appelé à chaque frappe dans barre de recherche
+  onSearchChange(value: string): void {
+    this.searchQuery = value;
+    this.searchSubject.next(value); // Ici, on émet la nouvelle valeur dans un Subject RxJS (souvent appelé searchSubject).
+    //Cela permet d’émettre la recherche vers un flux RxJS, d’utiliser les opérateurs réactifs (comme debounceTime, distinctUntilChanged, switchMap, etc.) ailleurs dans le code — souvent dans le ngOnInit().
   }
 
   setupSearch(): void {
     this.searchSubject.pipe(
-      debounceTime(300), // Attendre 300ms après la dernière saisie
-      distinctUntilChanged(), // Ne passer que les valeurs uniques
-      switchMap((query) => this.employeService.searchEmployes(query)),
-      catchError(() => EMPTY), // En cas d'erreur, retourner un Observable vide
+      debounceTime(300),
+      map(q => q.trim().toLowerCase()),
+      distinctUntilChanged(),
+      switchMap(q =>
+        this.employeService.getEmployesComplet(this.page, this.size, q)
+      ),
+      catchError(() => EMPTY),
       takeUntil(this.destroy$)
-    ).subscribe((res) => {
+    ).subscribe(res => {
       this.employeComplet = res.content;
       this.total = res.total ?? 0;
       this.totalPages = Math.ceil(this.total / this.size);
@@ -750,8 +765,11 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
         next: res => {
           this.toastr.success(`${res.success.length} employés importés avec succès`, 'Succès');
 
-          if (res.errors.length > 0) {
-            this.toastr.warning(`${res.errors.length} lignes ont échoué`, 'Avertissement');
+          if (res?.errors?.length > 0) {
+            this.toastr.warning(
+              `${res.errors.length} lignes ont échoué`,
+              'Avertissement'
+            );
             console.table(res.errors);
           }
 
@@ -763,6 +781,30 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
           this.toastr.error("Erreur lors de l'import", 'Erreur');
         }
       });
+  }
+
+
+  downloadExcelTemplate(): void {
+    // Récupérer toutes les clés de ton modèle pour les utiliser comme en-têtes
+    const headers = Object.keys(this.modalData);
+
+    // Préparer les données
+    const rows = this.employeComplet.map(emp =>
+      headers.map(header => emp[header as keyof EmployeComplet] ?? '')
+    );
+
+    // Ajouter les en-têtes au début
+    const data = [headers, ...rows];
+
+    // Convertir en feuille Excel
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Employes');
+
+    // Télécharger le fichier
+    XLSX.writeFile(wb, 'employes.xlsx');
+
   }
 
 
@@ -832,14 +874,6 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     return isNaN(date.getTime()) ? null : date;
   }
 
-
-
-  // 🔍 Appelé à chaque frappe dans barre de recherche
-  onSearchChange(value: string): void {
-    this.searchQuery = value;
-    this.searchSubject.next(value); // Ici, on émet la nouvelle valeur dans un Subject RxJS (souvent appelé searchSubject).
-    //Cela permet d’émettre la recherche vers un flux RxJS, d’utiliser les opérateurs réactifs (comme debounceTime, distinctUntilChanged, switchMap, etc.) ailleurs dans le code — souvent dans le ngOnInit().
-  }
 
   // ⏭️ Pagination suivante
   nextPage(): void {

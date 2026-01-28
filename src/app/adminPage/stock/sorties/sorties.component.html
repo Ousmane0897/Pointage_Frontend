@@ -54,11 +54,11 @@
             <option *ngFor="let agence of agences" [value]="agence">{{ agence }}</option>
           </select>
         </div>
-
-        <div>
-          <input type="text" formControlName="responsable" class="w-full border rounded-lg p-2"
-            placeholder="Nom du responsable" />
+        <div *ngIf="isBeneficiaireVisible">
+          <input type="text" formControlName="beneficiaire" class="w-full border rounded-lg p-2"
+            placeholder="Nom du bénéficiaire" />
         </div>
+
 
         <div>
 
@@ -159,8 +159,9 @@
               <th class="p-2 border">Produit</th>
               <th class="p-2 border">Code</th>
               <th class="p-2 border">Quantité</th>
-              <th class="p-2 border">Agence</th>
+              <th *ngIf="sortieForm.get('destination')?.value" class="p-2 border">Destination</th>
               <th class="p-2 border">Responsable</th>
+              <th *ngIf="sortieForm.get('beneficaire')?.value" class="p-2 border">Bénéficiaire</th>
               <th class="p-2 border">Motif</th>
             </tr>
           </thead>
@@ -169,8 +170,9 @@
               <td class="p-2 border">{{ ap.nomProduit }}</td>
               <td class="p-2 border">{{ ap.codeProduit }}</td>
               <td class="p-2 border">{{ ap.quantite }}</td>
-              <td class="p-2 border">{{ ap.destination ? ap.destination : 'Null' }}</td>
+              <td *ngIf="sortieForm.get('destination')?.value" class="p-2 border">{{ ap.destination ? ap.destination : 'null' }}</td>
               <td class="p-2 border">{{ ap.responsable }}</td>
+              <td *ngIf="sortieForm.get('beneficaire')?.value" class="p-2 border">{{ ap.beneficaire ? ap.beneficaire : 'null' }}</td>
               <td class="p-2 border">{{ ap.motif }}</td>
             </tr>
           </tbody>

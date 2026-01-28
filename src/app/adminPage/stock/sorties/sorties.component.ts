@@ -19,6 +19,9 @@ import { Produit } from '../../../models/produit.model';
 import { StockService } from '../../../services/stock.service';
 import { ProduitService } from '../../../services/produit.service';
 import { AgencesService } from '../../../services/agences.service';
+import { LoginService } from '../../../services/login.service';
+
+
 
 @Component({
   selector: 'app-sorties',
@@ -46,6 +49,9 @@ export class SortiesComponent implements OnInit {
   showSubMotifs = false;
   closing = false;
 
+  prenomNom: string | null = null;
+  role: string | null = null;
+  poste: string | null = null;
 
 
 
@@ -54,7 +60,8 @@ export class SortiesComponent implements OnInit {
     private stockService: StockService,
     private produitService: ProduitService,
     private agencesService: AgencesService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private loginService: LoginService
   ) { }
 
   ngOnInit(): void {
@@ -62,8 +69,9 @@ export class SortiesComponent implements OnInit {
     // Initialisation du formulaire reactif 
     this.sortieForm = this.fb.group({
       produitsFormArray: this.fb.array([]),
-      destination: [{ value: '', disabled: true }, Validators.required], // 🔒 désactivé par défaut et activé selon motif.
-      responsable: ['', Validators.required],
+      destination: [{ value: '', disabled: true }], // 🔒 désactivé par défaut et activé selon motif.
+      responsable: [this.prenomNom ?? 'Diarra Niang', Validators.required],
+      beneficaire: [''],
       motifSortieStock: ['', Validators.required],
       typeMouvement: ['SORTIE'],
       //dateMouvement: [new Date(), Validators.required],
@@ -106,6 +114,10 @@ export class SortiesComponent implements OnInit {
     this.ajouterProduit(); // commence avec 1 ligne
 
     this.displayedMotifs = [...this.motifs]; // Initialement, affiche les motifs principaux
+
+    this.prenomNom = this.loginService.getFirstNameLastName();
+    this.role = this.loginService.getUserRole();
+    this.poste = this.loginService.getUserPoste();
   }
 
   // ===========================================
@@ -148,6 +160,16 @@ export class SortiesComponent implements OnInit {
     this.showSubMotifs = false;
     this.sortieForm.patchValue({ motifSortieStock: '' });
   }
+
+  // ===========================================
+  // 🧩 Gestion de l’affichage du champ bénéficiaire
+  // ===========================================
+
+  get isBeneficiaireVisible(): boolean {
+  const sm = this.sortieForm.get('motifSortieStock')?.value;
+  return sm === 'DON' || sm === 'CHANTIER';
+}
+
 
   getAvailableAgences() {
     this.agencesService.getAllSites().subscribe({
@@ -252,6 +274,8 @@ export class SortiesComponent implements OnInit {
   // 🧩 Aperçu avant validation
   // ===========================================
   genererApercu() {
+
+    console.log("Responsable:", this.prenomNom);
     console.log("FORM STATUS:", this.sortieForm.status);
     console.log("FORM ERRORS:", this.sortieForm.errors);
 
@@ -274,6 +298,10 @@ export class SortiesComponent implements OnInit {
         " | Valid:", this.sortieForm.get("responsable")?.valid
       );
       console.log(
+        "Bénéficiaire:", this.sortieForm.get("beneficaire")?.value,
+        " | Valid:", this.sortieForm.get("beneficaire")?.valid
+      );  
+      console.log(
         "Motif:", this.sortieForm.get("motifSortieStock")?.value,
         " | Valid:", this.sortieForm.get("motifSortieStock")?.valid
       );
@@ -291,7 +319,8 @@ export class SortiesComponent implements OnInit {
         codeProduit: p.codeProduit,
         quantite: p.quantite,
         destination: formValue.destination ?? null,
-        responsable: formValue.responsable,
+        responsable: this.prenomNom ?? 'Diarra Niang',
+        beneficaire: formValue.beneficaire ?? null,
         motif: formValue.motifSortieStock,
 
       };
@@ -320,7 +349,8 @@ export class SortiesComponent implements OnInit {
         ...mouvements[0],
         typeMouvement: 'SORTIE',
         destination: this.sortieForm.value.destination,
-        responsable: this.sortieForm.value.responsable,
+        responsable: this.prenomNom ?? 'Diarra Niang  ',
+        beneficaire: this.sortieForm.value.beneficaire ?? null,
         motifSortieStock: this.sortieForm.value.motifSortieStock,
         dateMouvement: this.sortieForm.value.dateMouvement
       }).subscribe({
@@ -331,7 +361,8 @@ export class SortiesComponent implements OnInit {
       this.stockService.creerSortieBatch({
         mouvements, // tableau des produits à sortir du stock
         destination: this.sortieForm.value.destination,
-        responsable: this.sortieForm.value.responsable,
+        responsable: this.prenomNom ?? 'Diarra Niang',
+        beneficaire: this.sortieForm.value.beneficaire ?? null,
         motifSortieStock: this.sortieForm.value.motifSortieStock,
         typeMouvement: 'SORTIE',
         dateMouvement: this.sortieForm.value.dateMouvement

@@ -30,11 +30,13 @@ export class HistoriquesSortiesComponent implements OnInit {
   }
 
   get filteredSorties() {
-    const term = this.searchText.toLowerCase();
-    return this.sorties.filter(sortie =>
-      sortie.destination.toLowerCase().includes(term)
-    );
-  }
+  const term = (this.searchText ?? '').toLowerCase();
+
+  return this.sorties.filter(sortie =>
+    (sortie.destination ?? '').toLowerCase().includes(term)
+  );
+}
+
 
   get filteredSortiesByMonth() {
     const monthTerm = this.searchText2.toLowerCase();
