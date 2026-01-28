@@ -90,19 +90,6 @@
           <!-- Sous-menu -->
           <ul *ngIf="openDropdownOperations === 'operations'" class="ml-8 mt-1 space-y-1 text-sm">
 
-            <li *ngIf="hasPermission('StatistiquesAgences') || role === 'SUPERADMIN'">
-              <a routerLink="/admin/dashboard-par-agence" [ngClass]="{
-      'bg-gray-700 font-bold': isActive('/admin/dashboard-par-agence'),
-      'text-center': !isOpen
-    }" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 px-2 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                  fill="#FFFFFF">
-                  <path d="M160-160v-320h160v320H160Zm240 0v-640h160v640H400Zm240 0v-440h160v440H640Z" />
-                </svg>
-                <span *ngIf="isOpen">Statistiques par agence</span>
-              </a>
-            </li>
-
 
             <li *ngIf="hasPermission('Calendrier') || role === 'SUPERADMIN'">
               <a routerLink="/admin/calendrier" [ngClass]="{
