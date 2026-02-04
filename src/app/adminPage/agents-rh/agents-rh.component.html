@@ -13,16 +13,16 @@
     <table class="w-full border rounded-lg overflow-y-auto max-h-96">
         <thead class="bg-gray-100 text-left text-sm">
             <tr>
-                <th class="p-4">Prénom</th>
-                <th class="p-4">Nom</th>
+                <th class="p-3">Prénom</th>
+                <th class="p-3">Nom</th>
             </tr>
         </thead>
 
         <tbody>
             <tr *ngFor="let emp of filteredEmployees" (mouseenter)="onRowEnter(emp, $event)" (mouseleave)="onRowLeave()"
                 class="hover:bg-blue-50 transition cursor-pointer">
-                <td class="p-4">{{ emp.prenom }}</td>
-                <td class="p-4">{{ emp.nom }}</td>
+                <td class="p-3">{{ emp.prenom }}</td>
+                <td class="p-3">{{ emp.nom }}</td>
             </tr>
 
 
