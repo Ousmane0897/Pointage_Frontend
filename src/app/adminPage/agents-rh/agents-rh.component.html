@@ -1,0 +1,264 @@
+<div class="relative p-6 bg-white rounded-xl shadow">
+
+    <!-- 🔍 Recherche -->
+    <div class="flex justify-between items-center mb-4">
+        <input type="text" placeholder="Rechercher par prénom, nom ou poste..."
+            class="w-1/3 px-4 py-2 border rounded-lg focus:ring focus:ring-blue-200" [(ngModel)]="searchTerm" />
+        <span class="text-sm text-gray-500">
+            {{ filteredEmployees.length }} résultat(s)
+        </span>
+    </div>
+
+    <!-- 📊 Table -->
+    <table class="w-full border rounded-lg overflow-y-auto max-h-96">
+        <thead class="bg-gray-100 text-left text-sm">
+            <tr>
+                <th class="p-4">Prénom</th>
+                <th class="p-4">Nom</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr *ngFor="let emp of filteredEmployees" (mouseenter)="onRowEnter(emp, $event)" (mouseleave)="onRowLeave()"
+                class="hover:bg-blue-50 transition cursor-pointer">
+                <td class="p-4">{{ emp.prenom }}</td>
+                <td class="p-4">{{ emp.nom }}</td>
+            </tr>
+
+
+
+        </tbody>
+    </table>
+
+    <!-- 🔸 Pagination -->
+    <div class="flex justify-between items-center mt-4 text-sm text-gray-700">
+        <button class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50" (click)="prevPage()"
+            [disabled]="currentPage === 0">
+            ◀ Précédent
+        </button>
+
+        <div>
+            Page <strong>{{ currentPage + 1 }}</strong> / {{ totalPages || 1 }}
+        </div>
+
+        <button class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50" (click)="nextPage()"
+            [disabled]="currentPage + 1 >= totalPages">
+            Suivant ▶
+        </button>
+    </div>
+
+    <!-- 🪪 Card détail (toujours dans le DOM, simple) -->
+    <div class="fixed w-72 bg-white border rounded-xl shadow-xl p-4 z-50
+         transition-opacity duration-150" [style.left.px]="mouseX" [style.top.px]="mouseY"
+        [class.opacity-0]="!tooltipVisible" [class.pointer-events-none]="!tooltipVisible"
+        [class.opacity-100]="tooltipVisible" (mouseenter)="onCardEnter()" (mouseleave)="onCardLeave()">
+
+
+        <ng-container *ngIf="hoveredEmployee">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-40 h-40 overflow-hidden rounded">
+                    <img [src]="baseUrl + '/api/employe-complet/image/' + hoveredEmployee.agentId"
+                        alt="{{ hoveredEmployee.prenom }} {{ hoveredEmployee.nom }}"
+                        class="w-full h-full object-cover" />
+                </div>
+
+                <div>
+                    <p class="font-semibold">
+                        {{ hoveredEmployee.prenom }} {{ hoveredEmployee.nom }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        {{ hoveredEmployee.poste }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        Horaires:
+                        <span>
+                            {{ hoveredEmployee.heureDebut }} - {{ hoveredEmployee.heureFin }}
+                            <span *ngIf="hoveredEmployee.heureDebut2 && hoveredEmployee.heureFin2">, {{
+                                hoveredEmployee.heureDebut2 }} - {{ hoveredEmployee.heureFin2 }}</span>
+                        </span>
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        Agence(s):
+                        <span *ngFor="let agence of hoveredEmployee.agence; let isLast = last">
+                            {{ agence }}
+                            <span *ngIf="!isLast">, </span>
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="text-sm space-y-1">
+                <!-- Date d'embauche -->
+                <p>📅 Date d'embauche: {{ hoveredEmployee.dateEmbauche | date:'dd/MM/yyyy' }}</p>
+                <p>📄 Contrat : <b>{{ hoveredEmployee.typeContrat }}</b></p>
+                <p>📧 {{ hoveredEmployee.email }}</p>
+                <p>📞 {{ hoveredEmployee.telephone1 }}</p>
+                <p>
+                    🟢 Statut :
+                    <span class="font-semibold" [class.text-green-600]="hoveredEmployee.statut === 'ACTIF'"
+                        [class.text-red-600]="hoveredEmployee.statut === 'PAUSE'">
+                        {{ hoveredEmployee.statut }}
+                    </span>
+                </p>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+                <button class="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg"
+                    (click)="openModal(hoveredEmployee)">
+                    Voir
+                </button>
+
+                <button class="w-full px-3 py-2 text-sm border rounded-lg">
+                    Modifier
+                </button>
+            </div>
+
+        </ng-container>
+    </div>
+
+</div>
+
+<!-- 🌫️ Overlay -->
+<div *ngIf="modalOpen" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" (click)="closeModal()">
+</div>
+
+<!-- 🪟 Modal -->
+<div *ngIf="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-6 relative" (click)="$event.stopPropagation()">
+
+        <!-- ❌ Close -->
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-600" (click)="closeModal()">
+            ✕
+        </button>
+
+        <!-- 👤 Header -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold">
+                {{ selectedEmployee?.prenom }} {{ selectedEmployee?.nom }}
+            </h2>
+            <p class="text-sm text-gray-500">
+                Sélectionnez une catégorie
+            </p>
+        </div>
+
+        <!-- 🧩 Grille 4 cards -->
+        <div class="grid grid-cols-2 gap-4">
+
+            <!-- Données personnelles -->
+            <div (click)="openSection('personnel', $event)"
+                class="cursor-pointer border rounded-xl p-5 hover:bg-blue-50 hover:border-blue-400 transition">
+                <div class="text-3xl mb-2">👤</div>
+                <h3 class="font-semibold">Données personnelles</h3>
+                <p class="text-sm text-gray-500">
+                    Identité, contacts, adresse
+                </p>
+            </div>
+
+            <!-- Contrat -->
+            <div (click)="openSection('contrat', $event)"
+                class="cursor-pointer border rounded-xl p-5 hover:bg-blue-50 hover:border-blue-400 transition">
+                <div class="text-3xl mb-2">📄</div>
+                <h3 class="font-semibold">Contrat</h3>
+                <p class="text-sm text-gray-500">
+                    Type, dates, statut
+                </p>
+            </div>
+
+            <!-- Santé -->
+            <div (click)="openSection('sante', $event)"
+                class="cursor-pointer border rounded-xl p-5 hover:bg-blue-50 hover:border-blue-400 transition">
+                <div class="text-3xl mb-2">🩺</div>
+                <h3 class="font-semibold">Santé</h3>
+                <p class="text-sm text-gray-500">
+                    Assurance, infos médicales
+                </p>
+            </div>
+
+            <!-- Famille -->
+            <div (click)="openSection('famille', $event)"
+                class="cursor-pointer border rounded-xl p-5 hover:bg-blue-50 hover:border-blue-400 transition">
+                <div class="text-3xl mb-2">👨‍👩‍👧</div>
+                <h3 class="font-semibold">Famille</h3>
+                <p class="text-sm text-gray-500">
+                    Conjoint, enfants
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- 🌫️ Overlay -->
+<div *ngIf="drawerOpen" class="fixed inset-0 bg-black/40 z-[70]" (click)="closeDrawer()">
+</div>
+
+<!-- 🧾 Drawer carré flottant -->
+<div *ngIf="drawerOpen" class="fixed z-[80] bg-white rounded-2xl shadow-2xl border
+         transition-all duration-200" [style.width.px]="DRAWER_WIDTH" [style.height.px]="DRAWER_HEIGHT"
+    [style.left.px]="drawerX" [style.top.px]="drawerY" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b">
+        <h2 class="text-sm font-semibold">
+            {{ getSectionTitle() }}
+        </h2>
+        <button class="text-gray-400 hover:text-gray-600" (click)="closeDrawer()">✕</button>
+    </div>
+
+    <!-- Body -->
+    <form [formGroup]="employeeForm" class="p-4 grid grid-cols-2 gap-3 overflow-y-auto
+           h-[calc(100%-110px)]">
+
+        <!-- 👤 PERSONNEL -->
+        <ng-container *ngIf="activeSection === 'personnel'">
+            <input class="input1" formControlName="prenom" [readOnly]="editMode == false" placeholder="Prénom">
+            <input class="input1" formControlName="nom" [readOnly]="editMode == false" placeholder="Nom">
+            <input class="input1 col-span-2" formControlName="email" [readOnly]="editMode == false" placeholder="Email">
+            <input class="input1" formControlName="telephone1" [readOnly]="editMode == false" placeholder="Téléphone">
+            <input class="input1 col-span-2" formControlName="adresse" [readOnly]="editMode == false" placeholder="Adresse">
+        </ng-container>
+
+        <!-- 📄 CONTRAT -->
+        <ng-container *ngIf="activeSection === 'contrat'">
+            <select class="input1 col-span-2" formControlName="typeContrat" [disabled]="editMode == false">
+                <option>CDI</option>
+                <option>CDD</option>
+                <option>Stage</option>
+            </select>
+
+            <input type="date" class="input1" [readOnly]="editMode == false" formControlName="dateEmbauche">
+            <input class="input1" formControlName="statut" [readOnly]="editMode == false"  placeholder="Statut">
+            <input class="input1" formControlName="heureDebut" [readOnly]="editMode == false" placeholder="Début">
+            <input class="input1" formControlName="heureFin" [readOnly]="editMode == false" placeholder="Fin">
+        </ng-container>
+
+        <!-- 🩺 SANTÉ -->
+        <ng-container *ngIf="activeSection === 'sante'">
+            <input class="input1" formControlName="assurance" [readOnly]="editMode == false" placeholder="Assurance">
+            <input class="input1" formControlName="mutuelle" [readOnly]="editMode == false" placeholder="Mutuelle">
+            
+            <input class="input1" formControlName="contactUrgence" [readOnly]="editMode == false" placeholder="Urgence">
+        </ng-container>
+
+        <!-- 👨‍👩‍👧 FAMILLE -->
+        <ng-container *ngIf="activeSection === 'famille'" >
+            <input class="input1 col-span-2" formControlName="situationFamiliale" [readOnly]="editMode == false" placeholder="Situation familiale">
+            <input type="number" class="input1" formControlName="nombreEnfants" [readOnly]="editMode == false" placeholder="Enfants">
+            <input class="input1" formControlName="nomConjoint" [readOnly]="editMode == false" placeholder="Conjoint">
+        </ng-container>
+
+    </form>
+
+    <!-- Footer -->
+    <div class="px-4 py-3 border-t flex gap-2">
+        <button class="flex-1 px-3 py-2 text-sm border rounded-lg" (click)="editMode = !editMode">
+            {{ editMode ? 'Annuler' : 'Modifier' }}
+        </button>
+
+        <button class="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg" (click)="saveSection()"
+            [disabled]="employeeForm.invalid">
+            Enregistrer
+        </button>
+    </div>
+
+</div>
