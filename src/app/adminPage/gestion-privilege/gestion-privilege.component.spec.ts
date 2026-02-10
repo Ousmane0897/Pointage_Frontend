@@ -41,6 +41,7 @@ describe('GestionPrivilegeComponent', () => {
         Agences: false,
         Absences: false,
         Pointages: false,
+        RH: false
       },
       motifDesactivation: '',
       active: true,

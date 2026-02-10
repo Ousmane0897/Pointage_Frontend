@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Produit } from '../models/produit.model';
 import { Observable } from 'rxjs';
+import { PageResponse } from '../models/pageResponse.model';
 
 @Injectable({
   providedIn: 'root'
@@ -32,11 +33,20 @@ export class ProduitService {
     En résumé: page, size, q Contrôlent la pagination et la recherche
    */
 
- getProduits(page = 0, size = 20, q = ''): Observable<{content: Produit[], total?: number}> { // content: tableau de Produit → les produits de la page.total?: le nombre total de produits (facultatif, d’où le ?).
+getProduits(
+  page = 0,
+  size = 15,
+  q = ''
+): Observable<PageResponse<Produit>> {
   let params = new HttpParams().set('page', page).set('size', size);
   if (q) params = params.set('q', q);
-  return this.http.get<{content: Produit[], total?: number}>(`${this.baseUrl}/api/produits`, { params });
+
+  return this.http.get<PageResponse<Produit>>(
+    `${this.baseUrl}/api/produits`,
+    { params }
+  );
 }
+
 
 getProduitById(id: string): Observable<Produit> {
   return this.http.get<Produit>(`${this.baseUrl}/api/produits/${id}`);

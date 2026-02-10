@@ -8,4 +8,5 @@ export interface Pointage {
     duree: string;
     status: string;
     site: string;
+    adresse: string;
 }

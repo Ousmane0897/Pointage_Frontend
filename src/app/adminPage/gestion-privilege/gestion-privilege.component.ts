@@ -54,7 +54,7 @@ export class GestionPrivilegeComponent implements OnInit {
       Agences: false,
       Absences: false,
       Pointages: false,
-
+      RH: false
     },
     motifDesactivation: '',
     active: true,
@@ -99,6 +99,7 @@ export class GestionPrivilegeComponent implements OnInit {
         Agences: false,
         Absences: false,
         Pointages: false,
+        RH: false
       }, motifDesactivation: '', active: true
     };
     this.confirmPassword = "";
@@ -124,6 +125,7 @@ export class GestionPrivilegeComponent implements OnInit {
         Agences: !!admin.modulesAutorises?.Agences,
         Absences: !!admin.modulesAutorises?.Absences,
         Pointages: !!admin.modulesAutorises?.Pointages,
+        RH: !!admin.modulesAutorises?.RH
       }
     };
 

@@ -46,7 +46,7 @@ describe('ProduitListComponent', () => {
     dialog = jasmine.createSpyObj('MatDialog', ['open']);
 
     produitService.getProduits.and.returnValue(
-      of({ content: [mockProduit], total: 1 })
+      of({ content: [mockProduit], totalElements: 1 })
     );
 
     await TestBed.configureTestingModule({

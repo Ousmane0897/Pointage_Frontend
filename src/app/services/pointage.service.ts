@@ -27,14 +27,38 @@ export class PointageService {
     return localStorage.getItem(this.deviceIdKey)!;
   }
 
-  pointer(codeSecret: string): Observable<Pointage> {
+  /*pointer(codeSecret: string): Observable<Pointage> {
     const body = {
       codeSecret,
       deviceId: this.getDeviceId()
     };
     console.log("Données envoyées :", body);
     return this.http.post<Pointage>(`${this.baseUrl}/api/pointages`, body);
-  }
+  }*/
+
+ pointer(payload: {
+  codeSecret: string;
+  deviceId?: string;
+  latitude?: number;
+  longitude?: number;
+}): Observable<Pointage> {
+
+  const body = {
+    codeSecret: payload.codeSecret,
+    deviceId: payload.deviceId ?? this.getDeviceId(),
+    latitude: payload.latitude,
+    longitude: payload.longitude
+  };
+
+  console.log('Données envoyées :', body);
+
+  return this.http.post<Pointage>(
+    `${this.baseUrl}/api/pointages`,
+    body
+  );
+}
+
+
 
   getPointages(): Observable<Pointage[]> {
     return this.http.get<Pointage[]>(`${this.baseUrl}/api/pointages`);

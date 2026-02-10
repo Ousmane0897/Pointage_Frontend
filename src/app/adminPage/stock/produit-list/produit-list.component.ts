@@ -22,6 +22,7 @@ import { environment } from '../../../../environments/environment';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog.component';
 import { Activity, ArrowDownCircle, ArrowUpCircle, BarChart3, Package } from 'lucide-angular';
+import { PageResponse } from '../../../models/pageResponse.model';
 
 
 /**
@@ -89,7 +90,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
   produit: Produit | null = null;
   total = 0;
   page = 0;
-  size = 10;
+  size = 15;
   totalPages = 0;
   searchQuery = '';
   showModal = false;
@@ -157,7 +158,10 @@ export class ProduitListComponent implements OnInit, OnDestroy {
               console.error('Erreur backend :', err);
               this.errorMessage = 'Erreur lors du chargement des produits.';
               this.toastr.error(this.errorMessage, 'Erreur');
-              return of({ content: [], total: 0 });
+              return of({
+                content: [],
+                totalElements: 0
+              } as PageResponse<Produit>); // Retourne une page vide en cas d'erreur pour que le composant puisse continuer à fonctionner même en cas de problème avec le backend pour éviter que le composant ne soit bloqué par une erreur non gérée.
             })
           )
         ),
@@ -165,7 +169,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
       )
       .subscribe((res) => {
         this.produits = res.content;
-        this.total = res.total ?? 0;
+        this.total = res.totalElements ?? 0;
         this.totalPages = Math.ceil(this.total / this.size);
         this.loading = false;
       });
@@ -294,13 +298,17 @@ export class ProduitListComponent implements OnInit, OnDestroy {
             this.toastr.error(this.errorMessage, 'Erreur');
           }
 
-          return of({ content: [], total: 0 }); // Retourne un tableau vide en cas d'erreur. Un flux de secours (of({ content: [], total: 0 })) pour éviter un plantage dans .subscribe().
+          return of({
+            content: [],
+            totalElements: 0
+          } as PageResponse<Produit>); // Retourne une page vide pour que le composant puisse continuer à fonctionner même en cas d’erreur. Cela évite que le composant ne soit bloqué par une erreur non gérée et permet d’afficher un message d’erreur à l’utilisateur tout en maintenant une expérience utilisateur fluide.
         }),
         takeUntil(this.destroy$) // Continue à écouter les données jusqu’à ce que destroy$ émette quelque chose. Lie une souscription à la durée de vie du composant. 👈 auto-désabonnement à la destruction. 
       )
       .subscribe((res) => {
         this.produits = res.content;
-        this.total = res.total ?? 0;
+        this.total = res.totalElements ?? 0;
+        console.log('Total produits trouvés :', this.total);
         this.totalPages = Math.ceil(this.total / this.size);
         this.loading = false;
       });

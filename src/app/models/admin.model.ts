@@ -27,4 +27,5 @@ export interface ModulesAutorises {
   Agences: boolean;
   Absences: boolean;
   Pointages: boolean;
+  RH: boolean;
 }
