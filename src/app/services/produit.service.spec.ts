@@ -48,7 +48,7 @@ describe('ProduitService', () => {
     service.getProduits(1, 10, 'savon').subscribe(res => {
       expect(res.content.length).toBe(1);
       expect(res.content[0].nomProduit).toBe('Savon');
-      expect(res.total).toBe(1);
+      expect(res.totalElements).toBe(1);
     });
 
     const req = httpMock.expectOne(
