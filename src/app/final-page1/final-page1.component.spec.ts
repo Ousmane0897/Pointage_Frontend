@@ -19,6 +19,7 @@ describe('FinalPage1Component', () => {
     heureArrive: '09:00',
     heureDepart: '18:00',
     duree: '9h',
+    adresse: 'Dakar',
     status: 'PRESENT',
     site: 'Agence Thiès'
   };

@@ -40,8 +40,8 @@ export class AgencesComponent implements OnInit {
   employesByAgence: Employe[] = [];
   employeeDeplacee!: Employe;
   employeeRemplacee!: Employe;
-  joursOuverture: string[] = ['Lundi-Vendredi', 'Lundi-Samedi'];
-  heuresTravail: string[] = ['06:00-10:00','06:00-15:00','06:00-19:00','06:00-20:00'];
+  joursOuverture: string[] = ['Lundi-Vendredi', 'Lundi-Samedi', 'Lundi-Dimanche'];
+  heuresTravail: string[] = ['06:00-10:00','06:00-15:00','06:00-19:00','06:00-20:00', '06:00-23:00'];
   nombreAgentsMaximum: number[] = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
 
@@ -55,6 +55,7 @@ export class AgencesComponent implements OnInit {
     this.getEmployeeDeplacee(this.modalData);
     this.getEmployeeRemplacee(this.modalData);
   }
+
 
   loadData() {
     this.agencesService.getAgences().subscribe(data => {

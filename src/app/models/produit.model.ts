@@ -4,7 +4,7 @@ export interface Produit {
   nomProduit: string;
   description: string;
   categorie: string;
-  destination: string; // usage prévu: vente, agence
+  destination: string[]; // usage prévu: vente ou/et agence
   //sousCategorie?: string;
   uniteDeMesure: string;
   conditionnement: string;

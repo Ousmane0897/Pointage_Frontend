@@ -193,23 +193,26 @@
         </div>
 
         <div class="mb-2">
-          <label for="destination" class="block mb-2 font-semibold text-gray-600">Destination</label>
-          <select id="destination" [(ngModel)]="modalData.destination" name="destination"
-            class="p-2 border rounded-md w-full" required>
-            <option value="">Sélectionner une destination</option>
-            <option *ngFor="let dest of availableDestinations" [value]="dest">
+          <label class="block mb-2 font-semibold text-gray-600">Destination</label>
+
+          <div class="flex flex-col space-y-1">
+            <label *ngFor="let dest of availableDestinations" class="inline-flex items-center">
+              <input type="checkbox" [value]="dest" (change)="onDestination($event)"
+                [checked]="modalData.destination.includes(dest)" class="mr-2">
               {{ dest }}
-            </option>
-          </select>
+            </label>
+          </div>
 
           <!-- ✅ Message affiché si rien n'est sélectionné -->
-          <p *ngIf="form.submitted && !form.controls['destination']?.valid" class="text-red-600 text-sm mt-2">
-            Veuillez sélectionner une destination.
+          <p *ngIf="form.submitted && (!modalData.destination || modalData.destination.length === 0)"
+            class="text-red-600 text-sm mt-2">
+            Veuillez sélectionner au moins une destination.
           </p>
         </div>
 
 
-        <div *ngIf="modalData.destination === 'VENTE'" class="mb-4">
+
+        <div *ngIf="modalData.destination.includes('VENTE')" class="mb-4">
           <label for="prixDeVente" class="block mb-2 font-semibold text-gray-600">Prix de vente</label>
           <input class="w-full p-2 border rounded" name="prixDeVente" #prixDeVente="ngModel"
             [(ngModel)]="modalData.prixDeVente" placeholder="Prix de vente" type="number" min="0" required />
@@ -219,7 +222,7 @@
 
         </div>
 
-        <div *ngIf="modalData.destination === 'VENTE'" class="mb-4">
+        <div *ngIf="modalData.destination.includes('VENTE')" class="mb-4">
           <label for="uniteDeMesure" class="block mb-2 font-semibold text-gray-600">Unité de mesure</label>
           <input class="w-full p-2 border rounded" name="uniteDeMesure" #uniteDeMesure="ngModel"
             [(ngModel)]="modalData.uniteDeMesure" placeholder="ex: pièce, kg, litre" required />
@@ -243,8 +246,8 @@
 
         <div class="mb-4">
           <label for="quantite" class="block mb-2 font-semibold text-gray-600">Quantité en stock</label>
-          <input class="w-full p-2 border rounded" name="quantite" #quantite="ngModel" [(ngModel)]="modalData.quantiteSnapshot"
-            placeholder="Quantité en stock" type="number" readonly min="0" />
+          <input class="w-full p-2 border rounded" name="quantite" #quantite="ngModel"
+            [(ngModel)]="modalData.quantiteSnapshot" placeholder="Quantité en stock" type="number" readonly min="0" />
           <div *ngIf="quantite.invalid && quantite.touched" class="text-red-500 text-sm">
             La quantité en stock est requise et doit être un nombre positif.
           </div>
@@ -351,7 +354,7 @@
         Conditionnement : {{ produitSelectionne.conditionnement }}
       </p>
       <p *ngIf="produitSelectionne.quantiteSnapshot" class="text-gray-600 mb-2">
-        Quantité : {{ produitSelectionne.quantiteSnapshot }} 
+        Quantité : {{ produitSelectionne.quantiteSnapshot }}
       </p>
       <p *ngIf="produitSelectionne.prixDeVente" class="text-gray-600 mb-2">
         Prix de vente : {{ produitSelectionne.prixDeVente }} FCFA

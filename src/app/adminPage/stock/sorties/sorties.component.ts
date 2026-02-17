@@ -84,9 +84,9 @@ export class SortiesComponent implements OnInit {
       ctrl.valueChanges.subscribe(motif => { // À chaque changement de motif de sortie de stock. valueChanges pour écouter les changements de valeur
         this.produitService.getAllProduits().subscribe(allProduits => {
           if (motif === 'VENTE') {
-            this.produits = allProduits.filter(p => p.destination === 'VENTE');
+            this.produits = allProduits.filter(p => p.destination.includes('VENTE'));
           } else if (motif === 'DESTINATION_AGENCE') {
-            this.produits = allProduits.filter(p => p.destination === 'DESTINATION_AGENCE');
+            this.produits = allProduits.filter(p => p.destination.includes('DESTINATION_AGENCE'));
           } else {
             this.produits = allProduits;
           }

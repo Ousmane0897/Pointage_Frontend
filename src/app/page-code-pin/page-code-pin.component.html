@@ -1,11 +1,7 @@
 <div class="flex flex-col justify-center items-center space-y-5 px-4 py-6">
 
   <!-- LOGO -->
-  <img
-    src="assets/Cleanic_logo.png"
-    alt="Logo"
-    class="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40"
-  />
+  <img src="assets/Cleanic_logo.png" alt="Logo" class="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40" />
 
   <!-- ICON -->
   <mat-icon class="text-gray-500 text-2xl">lock</mat-icon>
@@ -20,13 +16,9 @@
 
     <form [formGroup]="form">
       <mat-form-field appearance="fill" class="w-full">
-        <input
-          matInput
-          formControlName="number"
-          type="text"
-          inputmode="numeric"
-          pattern="[0-9]*"
-        />
+        <input matInput type="text" inputmode="numeric" formControlName="number" autocomplete="one-time-code"
+          pattern="[0-9]*" />
+
 
         <mat-error *ngIf="form.controls['number'].hasError('required')">
           Entrez votre code employé
@@ -43,17 +35,8 @@
       <button mat-stroked-button class="bg-white w-full sm:w-auto" (click)="homePage()">
         Précédent
       </button>
-    
-
       <button mat-raised-button color="primary" class="w-full sm:w-auto" (click)="pointer()">
         Valider
-      </button>
-
-      <button
-        mat-raised-button color="secondary" class="w-full sm:w-auto"
-        (click)="testGPSMobile()"
-      >
-        test
       </button>
     </div>
 

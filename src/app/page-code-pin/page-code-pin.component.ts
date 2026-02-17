@@ -44,10 +44,10 @@ export class PageCodePinComponent implements OnInit {
   pointage!: Pointage;
 
 
-  ngOnInit(): void {
-   // this.getPointage();
+  async ngOnInit() {
 
   }
+
 
   getPointage() {
     this.pagecodeService.getPointageById(this.form.value).subscribe(data => {
@@ -84,29 +84,23 @@ export class PageCodePinComponent implements OnInit {
    */
   getLocation(): Promise<{ lat: number; lng: number }> {
     return new Promise((resolve, reject) => {
+
+      if (!navigator.geolocation) {
+        reject({ code: -1, message: 'GPS non supporté' });
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(
-        position => resolve({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        }),
-        error => {
-          switch (error.code) {
-            case 1:
-              reject(new Error('Permission GPS refusée')); // L'utilisateur a refusé la demande de géolocalisation
-              break;
-            case 2:
-              reject(new Error('Position GPS indisponible')); // Le service de localisation ne peut pas déterminer la position actuelle
-              break;
-            case 3:
-              reject(new Error('Timeout GPS')); // La demande de géolocalisation a expiré
-              break;
-            default:
-              reject(new Error('Erreur GPS inconnue'));
-          }
+        pos => {
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          });
         },
+        err => reject(err),
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
+          enableHighAccuracy: false,
+          timeout: 20000,
           maximumAge: 0
         }
       );
@@ -115,73 +109,105 @@ export class PageCodePinComponent implements OnInit {
 
 
 
-  async pointer() {
-    const codeSecret = this.form.get('number')?.value;
 
+  async pointer() {
+    const codeSecret = String(this.form.get('number')?.value).trim();
     if (!codeSecret) return;
 
-    this.spinner.show();
+    console.log('Code secret avant GPS:', codeSecret); // 🔥 log mobile
 
+    let location;
+
+    // 🔥 1️⃣ GPS EN PREMIER (clic utilisateur)
     try {
-      // 1️⃣ GPS
-      const location = await this.getLocation();
-
-      // 2️⃣ API
-      this.pointage = await firstValueFrom(
-        this.pointageService.pointer({
-          codeSecret,
-          deviceId: this.pointageService.getDeviceId(),
-          latitude: location.lat,
-          longitude: location.lng
-        })
-      );
-
-      // 3️⃣ Navigation logique
-      if (this.pointage.heureArrive && !this.pointage.heureDepart) {
-        this.router.navigateByUrl('/pagefinal1/' + this.pointage.codeSecret);
-      } else if (this.pointage.heureArrive && this.pointage.heureDepart) {
-        this.router.navigateByUrl('/pagefinal2/' + this.pointage.codeSecret);
-      }
-
+      location = await this.getLocation();
     } catch (err: any) {
-      
+
       console.error('GPS ERROR', err);
-      if (err?.status === 429) {
+
+      if (err?.code === 1) {
         this.toastr.error(
-          '⛔ Vous avez déjà pointé récemment avec ce téléphone.',
-          'Pointage refusé'
+          '📍 Localisation refusée.\nActivez la localisation dans le navigateur puis rechargez la page.',
+          'Erreur GPS'
         );
-      } else if (err?.message?.includes('GPS')) {
+      } else if (err?.code === 2) {
         this.toastr.error(
-          'Impossible de récupérer votre position',
+          '📍 Position indisponible.',
+          'Erreur GPS'
+        );
+      } else if (err?.code === 3) {
+        this.toastr.error(
+          '⏱️ Impossible d’obtenir la position. Réessayez.',
           'Erreur GPS'
         );
       } else {
         this.toastr.error(
-          '❌ Code employé invalide ou inexistant.',
-          'Erreur de pointage'
+          '❌ Erreur GPS.',
+          'Erreur'
         );
       }
 
-    } finally {
-      this.spinner.hide();
+      return; // ❌ STOP TOUT
     }
+
+    // ✅ 2️⃣ SPINNER APRÈS GPS
+    this.spinner.show();
+
+    // ✅ 3️⃣ API (comme AVANT)
+    this.pointageService.pointer({
+      codeSecret,
+      deviceId: this.pointageService.getDeviceId(),
+      latitude: location.lat,
+      longitude: location.lng
+    }).subscribe({
+      next: (data) => {
+        this.pointage = data;
+
+        setTimeout(() => {
+          this.spinner.hide();
+
+          if (this.pointage.heureArrive && !this.pointage.heureDepart) {
+            this.router.navigateByUrl('/pagefinal1/' + this.pointage.codeSecret);
+          } else {
+            this.router.navigateByUrl('/pagefinal2/' + this.pointage.codeSecret);
+          }
+        }, 4000);
+      },
+      error: (err) => {
+        this.spinner.hide();
+
+        if (err.status === 429) {
+          this.toastr.error(
+            '⛔ Vous avez déjà pointé récemment avec ce téléphone.',
+            'Pointage refusé'
+          );
+        } else {
+          this.toastr.error(
+            '❌ Code employé invalide ou inexistant.',
+            'Erreur de pointage'
+          );
+        }
+      }
+    });
   }
 
+
+
+
   async testGPSMobile() {
-  try {
-    const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
       });
-    });
-    console.log('GPS OK', pos.coords);
-  } catch (err: any) {
-    console.error('Erreur GPS mobile', err.code, err.message);
+      console.log('GPS OK', pos.coords);
+    } catch (err: any) {
+      console.error('Erreur GPS mobile', err.code, err.message);
+    }
   }
-}
 
 
 

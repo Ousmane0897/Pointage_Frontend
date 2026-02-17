@@ -104,7 +104,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     codeProduit: '',
     description: '',
     categorie: '',
-    destination: '',
+    destination: [] as string[], // à revoir pour permettre la sélection de plusieurs destinations (vente et/ou agence)
     uniteDeMesure: '',
     conditionnement: '',
     prixDeVente: 0,
@@ -184,7 +184,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
       codeProduit: '',
       description: '',
       categorie: '',
-      destination: '',
+      destination: [] as string[], // à revoir pour permettre la sélection de plusieurs destinations (vente et/ou agence)
       uniteDeMesure: '',
       conditionnement: '',
       prixDeVente: 0,
@@ -254,6 +254,22 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     // Recharge la liste
     this.loadProduitParDestination(destination);
   }
+
+
+  onDestination(event: any) {
+    const value = event.target.value;
+    if (event.target.checked) { // si la case est cochée
+      // ajouter la destination au tableau
+      if (!this.modalData.destination.includes(value)) {
+        this.modalData.destination.push(value);
+      }
+    } else { // si la case est décochée 
+      // retirer la destination du tableau
+      this.modalData.destination = this.modalData.destination.filter(d => d !== value);
+    }
+  }
+
+
 
 
   loadProduitParDestination(destination: string): void {
