@@ -24,8 +24,22 @@ export class PointageService {
   }
 
   getDeviceId(): string {
-    return localStorage.getItem(this.deviceIdKey)!;
+  let id = localStorage.getItem('device_id');
+
+  if (!id || id.length < 10) {
+    id = crypto.randomUUID();
+    localStorage.setItem('device_id', id);
   }
+
+  return id;
+}
+
+
+  /*getDeviceId(): string {
+    return localStorage.getItem(this.deviceIdKey)!;
+  }*/
+
+
 
   /*pointer(codeSecret: string): Observable<Pointage> {
     const body = {

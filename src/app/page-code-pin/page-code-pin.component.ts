@@ -150,6 +150,7 @@ export class PageCodePinComponent implements OnInit {
       return; // ❌ STOP TOUT
     }
 
+
     // ✅ 2️⃣ SPINNER APRÈS GPS
     this.spinner.show();
 

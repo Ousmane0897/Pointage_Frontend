@@ -1,25 +1,72 @@
 import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {
+  HttpInterceptor,
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpErrorResponse
+} from '@angular/common/http';
+import { Observable, throwError, EMPTY } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { LoginService } from './services/login.service';
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private loginService: LoginService) {}
+  constructor(
+    private loginService: LoginService,
+    private router: Router,
+    private toastr: ToastrService
+  ) {}
 
-  intercept(req: HttpRequest<any>,next: HttpHandler): Observable<HttpEvent<any>> {
-    console.log('Interceptor intercepting:', req.url);
-     const token = this.loginService.getToken();
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
-    // Ne pas ajouter le token pour les routes publiques
-    if (token && !req.url.includes('/api/login') && !req.url.includes('/api/pointages')) {
-      const cloned = req.clone({
-        headers: req.headers.set('Authorization', `Bearer ${token}`) // Modifier la requête pour ajouter le token dans l'en-tete avant de l'envoyer
-      });
-      return next.handle(cloned);// Envoyer la requête clonée ou modifiée avec le token ajouté.
+    const token = this.loginService.getToken();
+
+    // ⛔ JWT expiré → STOP TOTAL
+    if (token && this.loginService.isTokenExpired(token)) {
+      this.toastr.error(
+        'Session expirée. Veuillez vous reconnecter.',
+        'Erreur d\'authentification'
+      );
+
+      this.loginService.logout();
+      this.router.navigate(['']);
+
+      return EMPTY; // ⛔⛔⛔ TRÈS IMPORTANT
     }
 
-    return next.handle(req);// Si pas de token ou requête publique, envoyer la requete au backend sans modification
+    let authReq = req;
+
+    if (
+      token &&
+      !req.url.includes('/api/login') &&
+      !req.url.includes('/api/pointages')
+    ) {
+      authReq = req.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
+      });
+    }
+
+    return next.handle(authReq).pipe(
+      catchError((error: HttpErrorResponse) => {
+
+        if (error.status === 401 || error.status === 403) {
+          this.toastr.error(
+            'Session expirée. Veuillez vous reconnecter.',
+            'Erreur d\'authentification'
+          );
+
+          this.loginService.logout();
+          this.router.navigate(['']);
+
+          return EMPTY; // ⛔ STOP ICI AUSSI
+        }
+
+        return throwError(() => error);
+      })
+    );
   }
 }

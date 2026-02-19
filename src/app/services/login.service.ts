@@ -104,6 +104,18 @@ export class LoginService {
   }
 
 
+  isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp < now;
+  } catch {
+    return true;
+  }
+}
+
+
+
   getUserRole(): string {
     const payload = this.decodeToken();
     if (!payload || !payload.role) return 'No role found';
@@ -129,9 +141,9 @@ export class LoginService {
     return `${prenom} ${nom}`.trim();
   }
 
-  logout() {
-    localStorage.removeItem('token');
-     this.router.navigateByUrl('/');
-  }
+ logout() {
+  localStorage.removeItem('token');
+}
+
 
 }
