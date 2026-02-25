@@ -11,11 +11,11 @@ export class DashboardParAgenceService {
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
   getDashboardData(): Observable<{ [site: string]: { total: number; present: number; absent: number } }> {
   return this.http.get<{ [site: string]: { total: number; present: number; absent: number } }>(
-    `${this.baseUrl}/api/dashboard_par_agence`
+    `${this.baseUrl}/dashboard_par_agence`
   );
 }
 

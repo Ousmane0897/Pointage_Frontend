@@ -117,7 +117,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   }
 
   showDetailsModal: boolean = false;
-  baseUrl: string = environment.apiUrlEmploye;
+  baseUrl: string = environment.apiUrl;
 
   constructor(private dialog: MatDialog,
     private employeService: EmployeCompletService,

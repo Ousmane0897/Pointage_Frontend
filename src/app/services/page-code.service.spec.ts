@@ -34,6 +34,7 @@ describe('PageCodeService', () => {
       date: '2025-01-01',
       heureArrive: '08:00',
       heureDepart: '17:00',
+      adresse: 'Dakar',
       duree: '9h',
       status: 'En cours',
       site: 'Agence A'
@@ -44,7 +45,7 @@ describe('PageCodeService', () => {
       expect(pointage).toEqual(mockPointage);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/pointages/ABC123`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/pointages/ABC123`);
     expect(req.request.method).toBe('GET');
 
     req.flush(mockPointage); // Simule la réponse du backend

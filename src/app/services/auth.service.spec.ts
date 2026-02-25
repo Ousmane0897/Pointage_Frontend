@@ -8,7 +8,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

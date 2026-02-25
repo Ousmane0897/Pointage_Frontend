@@ -9,7 +9,7 @@ describe('EmployeService', () => {
   let service: EmployeService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   // ===============================
   // 🔧 MOCKS

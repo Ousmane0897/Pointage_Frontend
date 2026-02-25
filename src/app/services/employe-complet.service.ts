@@ -12,44 +12,44 @@ export class EmployeCompletService {
   searchEmployes(query: string):  Observable<{content: EmployeComplet[], total?: number}> {
     
     let params = new HttpParams().set('q', query);
-    return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/api/employe-complet/search`, { params });
+    return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/employe-complet/search`, { params });
   }
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
 
   getEmployesComplet(page = 0, size = 10, q = ''): Observable<{content: EmployeComplet[], total?: number}> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (q) params = params.set('q', q);
-    return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/api/employe-complet/all`, { params });
+    return this.http.get<{content: EmployeComplet[], total?: number}>(`${this.baseUrl}/employe-complet/all`, { params });
   }
 
   getEmployeCompletByAgentId(agentId: string): Observable<EmployeComplet> {
-    return this.http.get<EmployeComplet>(`${this.baseUrl}/api/employe-complet/${agentId}`);
+    return this.http.get<EmployeComplet>(`${this.baseUrl}/employe-complet/${agentId}`);
   }
 
   getByPrenomNom(prenom: string, nom: string): Observable<EmployeComplet> {
     let params = new HttpParams().set('prenom', prenom).set('nom', nom);
-    return this.http.get<EmployeComplet>(`${this.baseUrl}/api/employe-complet/prenomNom`, { params });
+    return this.http.get<EmployeComplet>(`${this.baseUrl}/employe-complet/prenomNom`, { params });
   }
 
   createEmployeComplet(formData: FormData): Observable<any> {
-  return this.http.post<any>(`${this.baseUrl}/api/employe-complet/employe`, formData);
+  return this.http.post<any>(`${this.baseUrl}/employe-complet/employe`, formData);
 }
 
 
   getAllEmployesComplet(): Observable<EmployeComplet[]> {
-    return this.http.get<EmployeComplet[]>(`${this.baseUrl}/api/employe-complet/all`);
+    return this.http.get<EmployeComplet[]>(`${this.baseUrl}/employe-complet/all`);
   }
 
   updateEmployeComplet(agentId: string, formData: FormData): Observable<EmployeComplet> {
-    return this.http.put<EmployeComplet>(`${this.baseUrl}/api/employe-complet/complet/${agentId}`, formData);
+    return this.http.put<EmployeComplet>(`${this.baseUrl}/employe-complet/complet/${agentId}`, formData);
   }
 
   deleteEmploye(agentId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/employe-complet/by-agent/${agentId}`);
+    return this.http.delete<void>(`${this.baseUrl}/employe-complet/by-agent/${agentId}`);
   }
 
 
@@ -58,7 +58,7 @@ export class EmployeCompletService {
    */
   importEmployes(employes: EmployeComplet[]): Observable<ImportEmployeResponse> {
   return this.http.post<ImportEmployeResponse>(
-    `${this.baseUrl}/api/employe-complet/import-excel`,
+    `${this.baseUrl}/employe-complet/import-excel`,
     employes   // 👈 on envoie DIRECTEMENT la liste
   );
 }

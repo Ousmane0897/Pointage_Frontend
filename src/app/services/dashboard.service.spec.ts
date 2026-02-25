@@ -45,7 +45,7 @@ describe('DashboardService', () => {
 
     // 🔹 Vérification de la requête HTTP
     const req = httpMock.expectOne(
-      `${environment.apiUrlEmploye}/api/dashboard`
+      `${environment.apiUrl}/api/dashboard`
     );
 
     expect(req.request.method).toBe('GET');

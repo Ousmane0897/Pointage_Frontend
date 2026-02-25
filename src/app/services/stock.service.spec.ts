@@ -9,7 +9,7 @@ import { Produit } from '../models/produit.model';
 describe('StockService', () => {
   let service: StockService;
   let httpMock: HttpTestingController;
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

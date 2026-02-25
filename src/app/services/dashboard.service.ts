@@ -10,9 +10,9 @@ export class DashboardService {
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
   getDashboardData(): Observable<{ total: number; present: number; absent: number }> { 
-    return this.http.get<{ total: number; present: number; absent: number }>(`${this.baseUrl}/api/dashboard`); 
+    return this.http.get<{ total: number; present: number; absent: number }>(`${this.baseUrl}/dashboard`); 
   }
 }

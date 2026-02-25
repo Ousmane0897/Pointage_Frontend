@@ -24,7 +24,7 @@ export class PlanificationService {
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
   token = localStorage.getItem('token'); // ou autre méthode de stockage
   headers = new HttpHeaders({
@@ -32,61 +32,61 @@ export class PlanificationService {
   });
 
   getPlanifications(): Observable<Planification[]> {
-    return this.http.get<Planification[]>(`${this.baseUrl}/api/planification`);
+    return this.http.get<Planification[]>(`${this.baseUrl}/planification`);
   }
 
   getPlanificationByCodeEmploye(codeSecret: string): Observable<Planification> {
-    return this.http.get<Planification>(`${this.baseUrl}/api/planification/${codeSecret}`);
+    return this.http.get<Planification>(`${this.baseUrl}/planification/${codeSecret}`);
   }
 
   addPlanification(planification: Planification): Observable<Planification> {
-    return this.http.post<Planification>(`${this.baseUrl}/api/planification`, planification);
+    return this.http.post<Planification>(`${this.baseUrl}/planification`, planification);
   }
 
   updatePlanification(codeSecret: string, planification: Planification): Observable<Planification> {
-    return this.http.put<Planification>(`${this.baseUrl}/api/planification/${codeSecret}`, planification);
+    return this.http.put<Planification>(`${this.baseUrl}/planification/${codeSecret}`, planification);
   }
 
   getPlanificationsAVenir(codeSecret: string): Observable<Planification[]> {
-    return this.http.get<Planification[]>(`${this.baseUrl}/api/planification/AVenir/${codeSecret}`);
+    return this.http.get<Planification[]>(`${this.baseUrl}/planification/AVenir/${codeSecret}`);
   }
 
   getPlanificationsEnCours(codeSecret: string): Observable<Planification[]> {
-    return this.http.get<Planification[]>(`${this.baseUrl}/api/planification/EnCours/${codeSecret}`);
+    return this.http.get<Planification[]>(`${this.baseUrl}/planification/EnCours/${codeSecret}`);
   }
 
   getPlanificationById(id: string): Observable<Planification> {
-    return this.http.get<Planification>(`${this.baseUrl}/api/planification/${id}`);
+    return this.http.get<Planification>(`${this.baseUrl}/planification/${id}`);
   }
 
   getPlanificationsTerminees(codeSecret: string): Observable<Planification[]> {
-    return this.http.get<Planification[]>(`${this.baseUrl}/api/planification/Terminees/${codeSecret}`);
+    return this.http.get<Planification[]>(`${this.baseUrl}/planification/Terminees/${codeSecret}`);
 
   }
 
   cancelPlanification(planificationId: string, motif: string, requestedBy?: string): Observable<Planification> {
-    return this.http.post<Planification>('/api/planification/cancel', { planificationId, motif, requestedBy });
+    return this.http.post<Planification>('/planification/cancel', { planificationId, motif, requestedBy });
   }
 
 
 
   deletePlanification(codeSecret: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/planification/${codeSecret}`);
+    return this.http.delete<void>(`${this.baseUrl}/planification/${codeSecret}`);
   }
 
   demanderAnnulation(planificationId: string, motif: string, requestedBy?: string): Observable<CancelRequest> {
     const body = { planificationId, motif, requestedBy };
-    return this.http.post<CancelRequest>(`${this.baseUrl}/api/planification/demander`, body,   { headers: this.headers });
+    return this.http.post<CancelRequest>(`${this.baseUrl}/planification/demander`, body,   { headers: this.headers });
   }
   
   // Méthode pour valider ou refuser une demande d'annulation
   validerAnnulation(id: string, accepted: boolean, validatedBy?: string): Observable<Planification> {
     const body = { id, accepted, validatedBy };
-    return this.http.post<Planification>(`${this.baseUrl}/api/planification/valider`, body,   { headers: this.headers });
+    return this.http.post<Planification>(`${this.baseUrl}/planification/valider`, body,   { headers: this.headers });
   }
 
    // Récupère toutes les demandes en attente
   getPendingRequests(): Observable<AnnulationRequestMessage[]> {
-    return this.http.get<AnnulationRequestMessage[]>('/api/planification/pending');
+    return this.http.get<AnnulationRequestMessage[]>('/planification/pending');
   }
 }

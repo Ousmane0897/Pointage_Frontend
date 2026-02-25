@@ -8,7 +8,7 @@ describe('FerieService', () => {
   let service: FerieService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   // ✅ Mock Ferie (adapte les champs si ton modèle en a plus)
   const ferieMock: Ferie = {

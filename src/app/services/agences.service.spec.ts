@@ -10,7 +10,7 @@ describe('AgencesService', () => {
   let service: AgencesService;
   let httpMock: HttpTestingController;
 
-  const apiUrl = environment.apiUrlEmploye;
+  const apiUrl = environment.apiUrl;
 
   const mockAgence: Agence = {
     nom: 'Agence Dakar',

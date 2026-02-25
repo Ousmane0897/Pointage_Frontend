@@ -12,9 +12,9 @@ export class PageCodeService {
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
   getPointageById(codeSecret: string): Observable<Pointage> {
-      return this.http.get<Pointage>(`${this.baseUrl}/api/pointages/${codeSecret}`); 
+      return this.http.get<Pointage>(`${this.baseUrl}/pointages/${codeSecret}`); 
     }
 }

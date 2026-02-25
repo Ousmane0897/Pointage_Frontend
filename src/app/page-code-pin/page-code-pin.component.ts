@@ -111,50 +111,53 @@ export class PageCodePinComponent implements OnInit {
 
 
   async pointer() {
-    const codeSecret = String(this.form.get('number')?.value).trim();
-    if (!codeSecret) return;
 
-    console.log('Code secret avant GPS:', codeSecret); // 🔥 log mobile
+    const codeSecret = this.form.get('number')?.value
+      ?.toString()
+      .replace(/[^0-9]/g, '');
+
+    if (!codeSecret) {
+      this.toastr.error('Code invalide', 'Erreur');
+      return;
+    }
 
     let location;
 
-    // 🔥 1️⃣ GPS EN PREMIER (clic utilisateur)
+    // 🔵 1️⃣ GPS AVANT TOUT
     try {
       location = await this.getLocation();
+      console.log('📍 GPS FINAL:', location.lat, location.lng);
+
     } catch (err: any) {
 
       console.error('GPS ERROR', err);
 
-      if (err?.code === 1) {
+      if (err?.status === 429) {
         this.toastr.error(
-          '📍 Localisation refusée.\nActivez la localisation dans le navigateur puis rechargez la page.',
+          '⛔ Vous avez déjà pointé récemment avec ce téléphone.',
+          'Pointage refusé'
+        );
+
+      } else if (err?.message?.includes('GPS')) {
+        this.toastr.error(
+          'Impossible de récupérer votre position',
           'Erreur GPS'
         );
-      } else if (err?.code === 2) {
-        this.toastr.error(
-          '📍 Position indisponible.',
-          'Erreur GPS'
-        );
-      } else if (err?.code === 3) {
-        this.toastr.error(
-          '⏱️ Impossible d’obtenir la position. Réessayez.',
-          'Erreur GPS'
-        );
+
       } else {
         this.toastr.error(
-          '❌ Erreur GPS.',
-          'Erreur'
+          '❌ Code employé invalide ou inexistant.',
+          'Erreur de pointage'
         );
       }
 
-      return; // ❌ STOP TOUT
+      return; // ❌ STOP TOTAL
     }
-
 
     // ✅ 2️⃣ SPINNER APRÈS GPS
     this.spinner.show();
 
-    // ✅ 3️⃣ API (comme AVANT)
+    // ✅ 3️⃣ APPEL API
     this.pointageService.pointer({
       codeSecret,
       deviceId: this.pointageService.getDeviceId(),
@@ -176,8 +179,9 @@ export class PageCodePinComponent implements OnInit {
       },
       error: (err) => {
         this.spinner.hide();
+        console.error('❌ API ERROR:', err);
 
-        if (err.status === 429) {
+        if (err?.status === 429) {
           this.toastr.error(
             '⛔ Vous avez déjà pointé récemment avec ce téléphone.',
             'Pointage refusé'
@@ -191,7 +195,6 @@ export class PageCodePinComponent implements OnInit {
       }
     });
   }
-
 
 
 

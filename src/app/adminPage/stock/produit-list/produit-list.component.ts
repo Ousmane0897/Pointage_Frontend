@@ -114,7 +114,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     quantiteSnapshot: 0
 
   }
-  baseUrl: string = environment.apiUrlEmploye;
+  baseUrl: string = environment.apiUrl;
   isLoading = false;
 
 

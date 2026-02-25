@@ -50,7 +50,7 @@ describe('DashboardParAgenceService', () => {
 
     // 🔹 Vérification de la requête HTTP
     const req = httpMock.expectOne(
-      `${environment.apiUrlEmploye}/api/dashboard_par_agence`
+      `${environment.apiUrl}/api/dashboard_par_agence`
     );
 
     expect(req.request.method).toBe('GET');

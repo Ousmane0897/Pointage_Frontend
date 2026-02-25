@@ -9,7 +9,7 @@ describe('LoginService', () => {
   let httpMock: HttpTestingController;
   let routerSpy: jasmine.SpyObj<Router>;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   const fakePayload = {
     email: 'test@mail.com',

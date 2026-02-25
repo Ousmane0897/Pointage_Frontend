@@ -50,16 +50,17 @@ describe('PointageService', () => {
       date: '2025-12-25',
       heureArrive: '08:00',
       heureDepart: '17:00',
+      adresse: 'Dakar',
       duree: '9h',
       status: 'Présent',
       site: 'Agence A'
     };
 
-    service.pointer('ABC123').subscribe((res) => {
+    service.pointer({ codeSecret: 'ABC123' }).subscribe((res) => {
       expect(res).toEqual(mockPointage);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/pointages`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/pointages`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       codeSecret: 'ABC123',
@@ -77,6 +78,7 @@ describe('PointageService', () => {
         nom: 'Doe',
         date: '2025-12-25',
         heureArrive: '08:00',
+        adresse: 'Dakar',
         heureDepart: '17:00',
         duree: '9h',
         status: 'Présent',
@@ -89,6 +91,7 @@ describe('PointageService', () => {
         date: '2025-12-25',
         heureArrive: '09:00',
         heureDepart: '18:00',
+        adresse: 'Dakar',
         duree: '9h',
         status: 'Présent',
         site: 'Agence B'
@@ -99,7 +102,7 @@ describe('PointageService', () => {
       expect(res).toEqual(mockPointages);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/pointages`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/pointages`);
     expect(req.request.method).toBe('GET');
     req.flush(mockPointages);
   });

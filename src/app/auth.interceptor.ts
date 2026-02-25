@@ -19,7 +19,7 @@ export class AuthInterceptor implements HttpInterceptor {
     private loginService: LoginService,
     private router: Router,
     private toastr: ToastrService
-  ) {}
+  ) { }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
@@ -42,8 +42,9 @@ export class AuthInterceptor implements HttpInterceptor {
 
     if (
       token &&
-      !req.url.includes('/api/login') &&
-      !req.url.includes('/api/pointages')
+      req.url.startsWith('/api/') &&
+      !req.url.startsWith('/api/login') &&
+      !req.url.startsWith('/api/pointages')
     ) {
       authReq = req.clone({
         setHeaders: { Authorization: `Bearer ${token}` }
@@ -53,7 +54,7 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
 
-        if (error.status === 401 || error.status === 403) {
+        if (error.status === 401 && token && this.loginService.isTokenExpired(token)) {
           this.toastr.error(
             'Session expirée. Veuillez vous reconnecter.',
             'Erreur d\'authentification'

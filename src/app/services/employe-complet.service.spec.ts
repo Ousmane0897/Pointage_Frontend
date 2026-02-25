@@ -66,7 +66,7 @@ describe('EmployeCompletService', () => {
       expect(res).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/employe-complet/search?q=John`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employe-complet/search?q=John`);
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
   });
@@ -78,7 +78,7 @@ describe('EmployeCompletService', () => {
       expect(res).toEqual(MOCK_EMPLOYE);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/employe-complet/1`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employe-complet/1`);
     expect(req.request.method).toBe('GET');
     req.flush(MOCK_EMPLOYE);
   });
@@ -94,7 +94,7 @@ describe('EmployeCompletService', () => {
       expect(res).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/employe-complet/employe`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employe-complet/employe`);
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
   });
@@ -107,7 +107,7 @@ describe('EmployeCompletService', () => {
       expect(res).toEqual(MOCK_EMPLOYE);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/employe-complet/complet/1`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employe-complet/complet/1`);
     expect(req.request.method).toBe('PUT');
     req.flush(MOCK_EMPLOYE);
   });
@@ -117,7 +117,7 @@ describe('EmployeCompletService', () => {
       expect(res).toBeNull();
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/employe-complet/by-agent/1`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employe-complet/by-agent/1`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
   });
@@ -130,7 +130,7 @@ describe('EmployeCompletService', () => {
       expect(res).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrlEmploye}/api/employe-complet/import-excel`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employe-complet/import-excel`);
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
   });

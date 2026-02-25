@@ -10,7 +10,7 @@ import { Pointage } from '../models/pointage.model';
 export class PointageService {
 
   private readonly deviceIdKey = 'device_id';
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {
     this.createDeviceId();
@@ -41,15 +41,6 @@ export class PointageService {
 
 
 
-  /*pointer(codeSecret: string): Observable<Pointage> {
-    const body = {
-      codeSecret,
-      deviceId: this.getDeviceId()
-    };
-    console.log("Données envoyées :", body);
-    return this.http.post<Pointage>(`${this.baseUrl}/api/pointages`, body);
-  }*/
-
  pointer(payload: {
   codeSecret: string;
   deviceId?: string;
@@ -67,7 +58,7 @@ export class PointageService {
   console.log('Données envoyées :', body);
 
   return this.http.post<Pointage>(
-    `${this.baseUrl}/api/pointages`,
+    `${this.baseUrl}/pointages`,
     body
   );
 }
@@ -75,6 +66,6 @@ export class PointageService {
 
 
   getPointages(): Observable<Pointage[]> {
-    return this.http.get<Pointage[]>(`${this.baseUrl}/api/pointages`);
+    return this.http.get<Pointage[]>(`${this.baseUrl}/pointages`);
   }
 }

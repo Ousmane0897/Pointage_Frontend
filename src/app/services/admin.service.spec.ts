@@ -9,7 +9,7 @@ describe('AdminService', () => {
   let service: AdminService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   const mockAdmin: Admin = {
     id: '1',
@@ -31,6 +31,7 @@ describe('AdminService', () => {
       Employes: true,
       Agences: true,
       Absences: false,
+      RH: true,
       Pointages: true
     },
     active: true

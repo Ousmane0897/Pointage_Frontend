@@ -13,37 +13,37 @@ export class EmployeService {
   constructor(private http: HttpClient) { }
 
 
-   private baseUrl = environment.apiUrlEmploye;
+   private baseUrl = environment.apiUrl;
 
   getEmployes(): Observable<Employe[]> {
-    return this.http.get<Employe[]>(`${this.baseUrl}/api/employe`);
+    return this.http.get<Employe[]>(`${this.baseUrl}/employe`);
   }
 
   getEmployeesDansUnSite(site: string): Observable<Employe[]> {
-    return this.http.get<Employe[]>(`${this.baseUrl}/api/employe/employeesDansUnSite?site=${encodeURIComponent(site)}`);
+    return this.http.get<Employe[]>(`${this.baseUrl}/employe/employeesDansUnSite?site=${encodeURIComponent(site)}`);
   }
   
   getEmployeByCodeEmploye(codeSecret: string): Observable<Employe> {
-    return this.http.get<Employe>(`${this.baseUrl}/api/employe/${codeSecret}`); 
+    return this.http.get<Employe>(`${this.baseUrl}/employe/${codeSecret}`); 
   }
 
   getEmployeEnDeplacement(): Observable<Employe[]> {
-    return this.http.get<Employe[]>(`${this.baseUrl}/api/employe/enDeplacement`);
+    return this.http.get<Employe[]>(`${this.baseUrl}/employe/enDeplacement`);
   }
 
   updateEmployeEnDeplacement(codeSecret: string, planfication: Planification): Observable<Employe> {
-    return this.http.put<Employe>(`${this.baseUrl}/api/employe/deplacement/${codeSecret}`, planfication);
+    return this.http.put<Employe>(`${this.baseUrl}/employe/deplacement/${codeSecret}`, planfication);
   }
 
   addEmploye(employe: Employe): Observable<Employe> {
-    return this.http.post<Employe>(`${this.baseUrl}/api/employe`, employe);
+    return this.http.post<Employe>(`${this.baseUrl}/employe`, employe);
   }
 
   updateEmploye(codeSecret: string, employe: Employe): Observable<Employe> {
-    return this.http.put<Employe>(`${this.baseUrl}/api/employe/${codeSecret}`, employe);
+    return this.http.put<Employe>(`${this.baseUrl}/employe/${codeSecret}`, employe);
   }
 
   deleteEmploye(codeSecret: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/employe/${codeSecret}`);
+    return this.http.delete<void>(`${this.baseUrl}/employe/${codeSecret}`);
   }
 }

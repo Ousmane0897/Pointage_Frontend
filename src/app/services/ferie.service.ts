@@ -11,21 +11,21 @@ export class FerieService {
 
   constructor(private http: HttpClient) { }
  
-  private baseUrl =  environment.apiUrlEmploye
+  private baseUrl =  environment.apiUrl
 
   getFeries(): Observable<Ferie[]> {
-    return this.http.get<Ferie[]>(`${this.baseUrl}/api/ferie`);
+    return this.http.get<Ferie[]>(`${this.baseUrl}/ferie`);
   }
 
   deleteFerie(date: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/ferie/${date}`);  
+    return this.http.delete<void>(`${this.baseUrl}/ferie/${date}`);  
   }
 
   postFerie(ferie: Ferie): Observable<Ferie> {
-    return this.http.post<Ferie>(`${this.baseUrl}/api/ferie`, ferie);
+    return this.http.post<Ferie>(`${this.baseUrl}/ferie`, ferie);
   }
 
   updateFerie(date: string, ferie: Ferie): Observable<Ferie> {
-    return this.http.put<Ferie>(`${this.baseUrl}/api/ferie/${date}`, ferie);
+    return this.http.put<Ferie>(`${this.baseUrl}/ferie/${date}`, ferie);
   }
 }

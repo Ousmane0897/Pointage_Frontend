@@ -11,18 +11,18 @@ export class AbsencesService {
 
   constructor(private http: HttpClient) { }
   
-  private baseUrl =  environment.apiUrlEmploye;
+  private baseUrl =  environment.apiUrl;
 
   updateAbsent(codeSecret: string, absent: Absent): Observable<Absent> {
-    return this.http.put<Absent>(`${this.baseUrl}/api/absences/${codeSecret}`, absent);
+    return this.http.put<Absent>(`${this.baseUrl}/absences/${codeSecret}`, absent);
   }
 
   AbsenceTempsReel(): Observable<Absent[]> {
-    return this.http.get<Absent[]>(`${this.baseUrl}/api/absences/temps-reel`);
+    return this.http.get<Absent[]>(`${this.baseUrl}/absences/temps-reel`);
   }
 
   AbsenceHistorique(): Observable<Absent[]> {
-    return this.http.get<Absent[]>(`${this.baseUrl}/api/absences`);
+    return this.http.get<Absent[]>(`${this.baseUrl}/absences`);
   }
 
 

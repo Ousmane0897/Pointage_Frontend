@@ -12,7 +12,7 @@ export class ProduitService {
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
 
   /**
@@ -21,7 +21,7 @@ export class ProduitService {
    * @param size Taille de la page (par défaut 20)
    * @param q terme de recherche facultatif (par défaut vide, donc pas de recherche)
    * 🧩 Ces valeurs sont souvent passées dans l’URL de ton backend, par ex. :
-      GET /api/products?page=0&size=20&q=chaise
+      GET /products?page=0&size=20&q=chaise
    * HttpParams est une classe Angular qui sert à construire proprement les paramètres d’URL.
    *set('page', page) → ajoute ?page=0
    *set('size', size) → ajoute &size=20
@@ -42,42 +42,42 @@ getProduits(
   if (q) params = params.set('q', q);
 
   return this.http.get<PageResponse<Produit>>(
-    `${this.baseUrl}/api/produits`,
+    `${this.baseUrl}/produits`,
     { params }
   );
 }
 
 
 getProduitById(id: string): Observable<Produit> {
-  return this.http.get<Produit>(`${this.baseUrl}/api/produits/${id}`);
+  return this.http.get<Produit>(`${this.baseUrl}/produits/${id}`);
 }
 
 getAllProduits(): Observable<Produit[]> {
-  return this.http.get<Produit[]>(`${this.baseUrl}/api/produits/all`);
+  return this.http.get<Produit[]>(`${this.baseUrl}/produits/all`);
 }
 
 createProduit(produit: any): Observable<any> {
-  return this.http.post<any>(`${this.baseUrl}/api/produits`, produit);
+  return this.http.post<any>(`${this.baseUrl}/produits`, produit);
 }
 
 filtrerProduitsByCategory(category: string): Observable<{content: Produit[], total?: number}> {
   let params = new HttpParams().set('category', category);
-  return this.http.get<{content: Produit[], total?: number}>(`${this.baseUrl}/api/produits/categorie`, { params });
+  return this.http.get<{content: Produit[], total?: number}>(`${this.baseUrl}/produits/categorie`, { params });
 }
 
 filtrerProduitsByDestination(destination: string): Observable<{content: Produit[], total?: number}> {
   let params = new HttpParams().set('destination', destination);
-  return this.http.get<{content: Produit[], total?: number}>(`${this.baseUrl}/api/produits/destination`, { params });
+  return this.http.get<{content: Produit[], total?: number}>(`${this.baseUrl}/produits/destination`, { params });
 }
 
 getProduitByCode(codeProduit: string): Observable<Produit> {
   let params = new HttpParams().set('codeProduit', codeProduit);
-  return this.http.get<Produit>(`${this.baseUrl}/api/produits/code`, { params });
+  return this.http.get<Produit>(`${this.baseUrl}/produits/code`, { params });
 }
 
 getProduitByName(nomProduit: string): Observable<Produit> {
   let params = new HttpParams().set('nomProduit', nomProduit);
-  return this.http.get<Produit>(`${this.baseUrl}/api/produits/nom`, { params });
+  return this.http.get<Produit>(`${this.baseUrl}/produits/nom`, { params });
 }
 
 /**
@@ -87,15 +87,15 @@ getProduitByName(nomProduit: string): Observable<Produit> {
  * Partial<Produit> signifie que tu peux fournir seulement les champs que tu veux mettre à jour.
  */
 updateProduit(id: string, payload: Partial<any>): Observable<any> {
-  return this.http.put<any>(`${this.baseUrl}/api/produits/${id}`, payload);
+  return this.http.put<any>(`${this.baseUrl}/produits/${id}`, payload);
 }
 
 getProduitImageUrl(id: string): Observable<{ imageUrl: string }> {
-  return this.http.get<{ imageUrl: string }>(`${this.baseUrl}/api/produits/image/${id}`);
+  return this.http.get<{ imageUrl: string }>(`${this.baseUrl}/produits/image/${id}`);
 }
 
 deleteProduit(id: string): Observable<void> {
-  return this.http.delete<void>(`${this.baseUrl}/api/produits/${id}`);
+  return this.http.delete<void>(`${this.baseUrl}/produits/${id}`);
 }
 
 }

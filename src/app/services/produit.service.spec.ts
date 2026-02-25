@@ -8,7 +8,7 @@ describe('ProduitService', () => {
   let service: ProduitService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   // ✅ Mock Produit complet (évite les erreurs TS)
   const produitMock: Produit = {
@@ -17,7 +17,7 @@ describe('ProduitService', () => {
     nomProduit: 'Savon',
     description: 'Savon liquide',
     categorie: 'Hygiène',
-    destination: 'Agence',
+    destination: ['Dakar'],
     uniteDeMesure: 'Litre',
     conditionnement: 'Bidon 5L',
     prixDeVente: 2500,

@@ -13,7 +13,7 @@ export class LoginService {
   private permissionsSubject = new BehaviorSubject<any>({});
   permissions$ = this.permissionsSubject.asObservable(); // Observable pour les modules autorisés
 
-  private baseUrl = environment.apiUrlEmploye
+  private baseUrl = environment.apiUrl
 
   constructor(private http: HttpClient, private router: Router) { }
 
@@ -35,7 +35,7 @@ export class LoginService {
   }
 
   changePassword(email: string, oldPassword: string, newPassword: string, confirmPassword: string, role: string | null) {
-    return this.http.post<{ message: string, token: string }>(`${this.baseUrl}/api/login/change-password`, { email, oldPassword, newPassword, confirmPassword, role }); // message est une confirmation du changement de mot de passe en provenance du backend
+    return this.http.post<{ message: string, token: string }>(`${this.baseUrl}/login/change-password`, { email, oldPassword, newPassword, confirmPassword, role }); // message est une confirmation du changement de mot de passe en provenance du backend
   }
 
   getUserEmail(): string | null {
@@ -54,11 +54,11 @@ export class LoginService {
 
 
   login(email: string, password: string) {
-    return this.http.post<{ token: string }>(`${this.baseUrl}/api/login`, { email, password }, {
-      withCredentials: true
-    });
+    return this.http.post<{ token: string }>(
+      `${this.baseUrl}/login`,
+      { email, password }
+    );
   }
-
 
   setToken(token: string): void {
     localStorage.setItem('token', token);
@@ -103,16 +103,15 @@ export class LoginService {
     return true;
   }
 
-
-  isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp < now;
-  } catch {
-    return true;
+  isTokenExpired(token: string): boolean { 
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp < now;
+    } catch {
+      return true;
+    }
   }
-}
 
 
 
@@ -141,9 +140,9 @@ export class LoginService {
     return `${prenom} ${nom}`.trim();
   }
 
- logout() {
-  localStorage.removeItem('token');
-}
+  logout() {
+    localStorage.removeItem('token');
+  }
 
 
 }

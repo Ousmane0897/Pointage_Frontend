@@ -13,31 +13,31 @@ export class StockService {
 
   constructor(private http: HttpClient) { }
 
-  private baseUrl = environment.apiUrlEmploye;
+  private baseUrl = environment.apiUrl;
 
   // Méthode pour récupérer les entrées de stock
   getEntrees(): Observable<MouvementEntreeStock[]> {
-    return this.http.get<MouvementEntreeStock[]>(`${this.baseUrl}/api/stock/entrees`);
+    return this.http.get<MouvementEntreeStock[]>(`${this.baseUrl}/stock/entrees`);
   }
 
   // Méthode pour ajouter une nouvelle entrée de stock
   ajouterEntree(entree: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/stock/mouvement`, entree);
+    return this.http.post<any>(`${this.baseUrl}/stock/mouvement`, entree);
   }
 
   // Récupérer la liste des produits
   getProduits(): Observable<Produit[]> {
-    return this.http.get<Produit[]>(`${this.baseUrl}/api/produits/all`);
+    return this.http.get<Produit[]>(`${this.baseUrl}/produits/all`);
   }
 
   // Récupérer le stock actuel d'un produit
   getStockProduit(produitId: string): Observable<number> {
-    return this.http.get<number>(`${this.baseUrl}/api/stock/produit/quantite/${produitId}`);
+    return this.http.get<number>(`${this.baseUrl}/stock/produit/quantite/${produitId}`);
   }
 
 
   sortieStock(mouvements: MouvementSortieStock[]): Observable<MouvementSortieStock[]> {
-    return this.http.post<MouvementSortieStock[]>(`${this.baseUrl}/api/stock/sortie`, mouvements);
+    return this.http.post<MouvementSortieStock[]>(`${this.baseUrl}/stock/sortie`, mouvements);
   }
 
 
@@ -50,28 +50,28 @@ export class StockService {
    * Sortie simple : un seul produit
    */
   creerSortieSimple(sortie: MouvementSortieStock): Observable<MouvementSortieStock> {
-    return this.http.post<MouvementSortieStock>(`${this.baseUrl}/api/stock/sortie/simple`, sortie);
+    return this.http.post<MouvementSortieStock>(`${this.baseUrl}/stock/sortie/simple`, sortie);
   }
 
   /**
    * Sortie multiple (batch) : plusieurs produits, une seule destination/motif etc....
    */
   creerSortieBatch(batch: SortieStockBatch): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/stock/sorties/batch`, batch);
+    return this.http.post(`${this.baseUrl}/stock/sorties/batch`, batch);
   }
 
   /**
    * Historique des sorties
    */
   getSorties(): Observable<MouvementSortieStock[]> {
-    return this.http.get<MouvementSortieStock[]>(`${this.baseUrl}/api/stock/sorties`);
+    return this.http.get<MouvementSortieStock[]>(`${this.baseUrl}/stock/sorties`);
   }
 
   // --------------------------
   // SUIVI DE STOCK
   // --------------------------
   getSuiviStock(): Observable<Map<string, Object>[]> {
-    return this.http.get<Map<string, Object>[]>(`${this.baseUrl}/api/stock/suivi`);
+    return this.http.get<Map<string, Object>[]>(`${this.baseUrl}/stock/suivi`);
   }
 
 }

@@ -15,7 +15,7 @@ describe('PlanificationService', () => {
   let service: PlanificationService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   // 🧪 Mock Planification minimal
   const planificationMock: Planification = {
