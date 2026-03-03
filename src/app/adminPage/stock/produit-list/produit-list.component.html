@@ -53,7 +53,7 @@
       <div *ngFor="let produit of produits"
         class="p-6 mt-10 border rounded-lg shadow-sm hover:shadow-md transition cursor-pointer">
 
-        <img [src]="baseUrl + '/api/produits/image/' + produit.codeProduit" alt="{{ produit.nomProduit }}"
+        <img [src]="baseUrl + '/produits/image/' + produit.codeProduit" alt="{{ produit.nomProduit }}"
           class="w-full h-50 object-cover mb-4 rounded" />
 
         <div>
@@ -328,8 +328,8 @@
       </button>
 
       <!-- Image -->
-      <img [src]="baseUrl + '/api/produits/image/' + produitSelectionne.codeProduit"
-        alt="{{ produitSelectionne.nomProduit }}" class="w-full h-50 object-cover mb-4 rounded" />
+      <!--<img [src]="baseUrl + '/produits/image/' + produitSelectionne.codeProduit"
+        alt="{{ produitSelectionne.nomProduit }}" class="w-full h-50 object-cover mb-4 rounded" />-->
 
       <!-- Détails -->
       <h2 class="text-xl font-semibold mb-2">

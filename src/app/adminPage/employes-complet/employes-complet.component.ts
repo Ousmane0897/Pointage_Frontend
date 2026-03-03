@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { AgencesService } from '../../services/agences.service';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-employes-complet',
@@ -121,10 +122,12 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   constructor(private dialog: MatDialog,
     private employeService: EmployeCompletService,
-    private toastr: ToastrService, private agenceService: AgencesService
+    private toastr: ToastrService, private agenceService: AgencesService, private spinner: NgxSpinnerService
   ) { }
 
   ngOnInit(): void {
+    
+   
     this.setupSearch();
     this.searchSubject.next(''); // chargement initial
     this.getAvailableSites();
@@ -139,6 +142,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   }
 
   setupSearch(): void {
+    this.spinner.show(); // Afficher le spinner de chargement pendant la recherche
     this.searchSubject.pipe(
       debounceTime(300),
       map(q => q.trim().toLowerCase()),
@@ -149,6 +153,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       catchError(() => EMPTY),
       takeUntil(this.destroy$)
     ).subscribe(res => {
+      this.spinner.hide(); // Cacher le spinner une fois les données chargées
       this.employeComplet = res.content;
       this.total = res.total ?? 0;
       this.totalPages = Math.ceil(this.total / this.size);

@@ -9,7 +9,7 @@ describe('AbsencesService', () => {
   let service: AbsencesService;
   let httpMock: HttpTestingController;
 
-  const baseUrl = environment.apiUrlEmploye;
+  const baseUrl = environment.apiUrl;
 
   // ✅ Mock Absent conforme au modèle
   const mockAbsent: Absent = {

@@ -37,7 +37,7 @@
                     <td class="p-3">{{ pointage.codeSecret }}</td>
                     <td class="p-3">{{ pointage.prenom }}</td>
                     <td class="p-3">{{ pointage.nom }}</td>
-                    <td class="p-3">{{ pointage.date }}</td>
+                    <td class="p-3">{{ pointage.date | date:'dd/MM/yyyy' }}</td>
                     <td class="p-3">{{ pointage.heureArrive }}</td>
                     <td class="p-3">{{ pointage.heureDepart || '-' }}</td>
                     <td class="p-3">{{ pointage.duree || '-' }}</td>

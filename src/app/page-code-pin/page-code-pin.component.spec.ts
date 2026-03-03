@@ -34,6 +34,7 @@ describe('PageCodePinComponent', () => {
       date: '2024-10-01',
       heureArrive: '08:00',
       heureDepart: '17:00',
+      adresse: '123 Main St',
       duree: '9h',
       status: 'En cours',
       site: 'Agence A'

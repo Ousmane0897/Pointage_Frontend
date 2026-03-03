@@ -279,20 +279,54 @@
             </li>
 
             <li *ngIf="hasPermission('Pointages') || role === 'SUPERADMIN'">
-              <a routerLink="/admin/pointages" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/pointages'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                  stroke="currentColor" class="size-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                </svg>
+              <!-- Bouton parent -->
+              <button (click)="toggleDropdownAbsent('Pointages')"
+                class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
+                [ngClass]="{
+      'bg-gray-700 font-bold': isActivePrefix('/admin/pointages'),
+      'text-center': !isOpen
+    }">
 
-                <span *ngIf="isOpen">Pointages</span>
-              </a>
+                <div class="flex items-center space-x-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                  </svg>
+                  <span *ngIf="isOpen">Pointages</span>
+                </div>
+
+                <!-- Flèche -->
+                <svg [ngClass]="{'rotate-180': openDropdownAbsent === 'Pointages'}"
+                  class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Sous-menu -->
+              <ul *ngIf="openDropdownAbsent === 'Pointages'" class="ml-8 mt-1 space-y-1 text-sm">
+
+                <li>
+                  <a routerLink="/admin/pointages/pointagesDuJour" routerLinkActive="bg-gray-700 font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                    <!--hover:bg-blue-50 hover:text-blue-700 transition-->
+                    <lucide-icon name="MapPinCheck" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                    <span>Pointages du jour</span>
+                  </a>
+                </li>
+                <li>
+                  <a routerLink="/admin/pointages/historique" routerLinkActive="bg-gray-700 font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                    <lucide-icon name="MapPinHouse" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
+                    <span>Historique des pointages</span>
+                  </a>
+                </li>
+
+
+              </ul>
             </li>
+
 
             <li *ngIf="hasPermission('Agences') || role === 'SUPERADMIN'">
               <a routerLink="/admin/operations/agences" [ngClass]="{

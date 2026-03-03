@@ -11,7 +11,7 @@ import { NgxMatTimepickerModule } from 'ngx-mat-timepicker';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { LucideAngularModule, ArrowUp, ArrowDown, Package, Activity, ChartBar, FileText, UserX, ArchiveX, FolderArchive, NotebookPen, TrendingUp } from 'lucide-angular';
+import { LucideAngularModule, ArrowUp, ArrowDown, Package, Activity, ChartBar, FileText, UserX, ArchiveX, FolderArchive, NotebookPen, TrendingUp, MapPinCheck, MapPinHouse } from 'lucide-angular';
 
 // ✅ Ajout pour activer le format français
 import { registerLocaleData } from '@angular/common';
@@ -52,7 +52,9 @@ export const appConfig: ApplicationConfig = {
         ArchiveX,
         FolderArchive,
         NotebookPen,
-        TrendingUp
+        TrendingUp,
+        MapPinCheck,
+        MapPinHouse
       })
     ),
     provideToastr({

@@ -36,10 +36,18 @@ export class ProduitService {
 getProduits(
   page = 0,
   size = 15,
-  q = ''
+  q = '',
+  categorie?: string,
+  destination?: string
 ): Observable<PageResponse<Produit>> {
-  let params = new HttpParams().set('page', page).set('size', size);
+
+  let params = new HttpParams()
+    .set('page', page)
+    .set('size', size);
+
   if (q) params = params.set('q', q);
+  if (categorie) params = params.set('categorie', categorie);
+  if (destination) params = params.set('destination', destination);
 
   return this.http.get<PageResponse<Produit>>(
     `${this.baseUrl}/produits`,

@@ -54,7 +54,8 @@ export const routes: Routes = [
             { path: 'stock/suivi', loadComponent: () => import('./adminPage/stock/suivi-stock/suivi-stock.component').then(m => m.SuiviStockComponent) }, // lazy loading de la page suivi
             { path: 'feries', loadComponent: () => import('./adminPage/ferie/ferie.component').then(m => m.FerieComponent) }, // lazy loading de la page feries
             { path: 'gestion-privilege', loadComponent: () => import('./adminPage/gestion-privilege/gestion-privilege.component').then(m => m.GestionPrivilegeComponent),}, // lazy loading de la page gestion privilege
-            { path: 'pointages', loadComponent: () => import('./adminPage/pointages/pointages.component').then(m => m.PointagesComponent) }, // lazy loading de la page pointages
+            { path: 'pointages/pointagesDuJour', loadComponent: () => import('./adminPage/pointages/pointages.component').then(m => m.PointagesComponent) }, // lazy loading de la page pointages
+            { path: 'pointages/historique', loadComponent: () => import('./adminPage/pointage-historique/pointage-historique.component').then(m => m.PointageHistoriqueComponent) }, // lazy loading de la page historique des pointages
             //{ path: 'ressources-humaines', loadComponent: () => import('./adminPage/agents-rh/agents-rh.component').then(m => m.AgentsRhComponent) }, // lazy loading de la page ressources humaines
             { path: 'operations/agences', loadComponent: () => import('./adminPage/agences/agences.component').then(m => m.AgencesComponent) }, // lazy loading de la page agences
             { path: 'absences/tempsreel', loadComponent: () => import('./adminPage/absences-temps-reel/absences-temps-reel.component').then(m => m.AbsencesTempsReelComponent) }, // lazy loading de la page absences

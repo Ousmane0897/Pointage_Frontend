@@ -14,6 +14,7 @@ import {
   tap,
   EMPTY,
   throwError,
+  startWith,
 } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -23,6 +24,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog.component';
 import { Activity, ArrowDownCircle, ArrowUpCircle, BarChart3, Package } from 'lucide-angular';
 import { PageResponse } from '../../../models/pageResponse.model';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 
 /**
@@ -136,47 +138,36 @@ export class ProduitListComponent implements OnInit, OnDestroy {
 
 
   constructor(private produitService: ProduitService,
-    private toastr: ToastrService, private dialog: MatDialog
+    private toastr: ToastrService, private dialog: MatDialog, private spinner: NgxSpinnerService
   ) { }
 
   ngOnInit(): void {
-    // 🟡 Déclenchement de recherche debounced
-    this.searchSubject
-      .pipe(
-        debounceTime(400), // 🕓 attend 400 ms après la dernière frappe
-        distinctUntilChanged(), // n'émet que si la valeur a changé. Évite les recherches redondantes, ignore si même texte que précédemment
-        tap(() => {
-          this.loading = true;
-          this.errorMessage = '';
-          this.page = 0; // on revient à la première page lors d'une nouvelle recherche
-        }),
-        switchMap((query) => // query correspond à la valeur émise par ton searchSubject dans la méthode onSearchChange(), qui correspond à la valeur du champ de recherche
-          // 🔄 switchMap annule les requêtes précédentes si une nouvelle arrive
-          // Parfait pour les recherches live où l'utilisateur peut taper rapidement
-          this.produitService.getProduits(this.page, this.size, query).pipe( // getProduits() va alors filtrer les produits côté backend en fonction du mot saisi.
-            catchError((err) => {
-              console.error('Erreur backend :', err);
-              this.errorMessage = 'Erreur lors du chargement des produits.';
-              this.toastr.error(this.errorMessage, 'Erreur');
-              return of({
-                content: [],
-                totalElements: 0
-              } as PageResponse<Produit>); // Retourne une page vide en cas d'erreur pour que le composant puisse continuer à fonctionner même en cas de problème avec le backend pour éviter que le composant ne soit bloqué par une erreur non gérée.
-            })
-          )
-        ),
-        takeUntil(this.destroy$) // 👈 auto-désabonnement à la destruction
+  
+  this.spinner.show(); // Afficher le spinner de chargement pendant l'initialisation
+  this.searchSubject.pipe(
+    startWith(''),   // Émet une valeur initiale pour déclencher la première recherche. Cela permet de charger les produits dès l'initialisation du composant, même si l'utilisateur n'a pas encore saisi de texte dans la barre de recherche.
+    debounceTime(400),
+    distinctUntilChanged(),
+    tap(() => this.page = 0),
+    switchMap(() =>
+      this.produitService.getProduits(
+        this.page,
+        this.size,
+        this.searchQuery,
+        this.selectedCategory,
+        this.selectedDestination
       )
-      .subscribe((res) => {
-        this.produits = res.content;
-        this.total = res.totalElements ?? 0;
-        this.totalPages = Math.ceil(this.total / this.size);
-        this.loading = false;
-      });
+    ),
+    takeUntil(this.destroy$)
+  ).subscribe(res => {
+    this.spinner.hide(); // Cacher le spinner une fois les données chargées
+    this.produits = res.content;
+    this.total = res.totalElements ?? 0;
+    this.totalPages = Math.ceil(this.total / this.size);
+  });
 
-    // 🔵 Chargement initial
-    this.loadProduits();
-  }
+}
+
   openAddModal(): void {
     this.isEditMode = false;
     this.modalData = {
@@ -196,6 +187,29 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.selectedId = null
   }
+
+  private fetchProduits(): void {
+    this.loading = true;
+
+    this.produitService
+      .getProduits(
+        this.page,
+        this.size,
+        this.searchQuery,
+        this.selectedCategory,
+        this.selectedDestination
+      )
+      .pipe(
+        catchError(() => of({ content: [], totalElements: 0 })),
+        finalize(() => (this.loading = false))
+      )
+      .subscribe(res => {
+        this.produits = res.content;
+        this.total = res.totalElements ?? 0;
+        this.totalPages = Math.ceil(this.total / this.size);
+      });
+  }
+
 
   loadProduitParCategorie(category: string): void {
     this.produitService.filtrerProduitsByCategory(category).subscribe({
@@ -240,19 +254,16 @@ export class ProduitListComponent implements OnInit, OnDestroy {
   }
 
 
-  onCategoryChange(category: string): void {
+  onCategoryChange(category: string) {
     this.selectedCategory = category;
-
-    // Recharge la liste
-    this.loadProduitParCategorie(category);
+    this.page = 0;
+    this.fetchProduits();
   }
 
-
-  onDestinationChange(destination: string): void {
+  onDestinationChange(destination: string) {
     this.selectedDestination = destination;
-
-    // Recharge la liste
-    this.loadProduitParDestination(destination);
+    this.page = 0;
+    this.fetchProduits();
   }
 
 
@@ -365,6 +376,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true; // Démarrer le loader 
+    this.spinner.show(); // Afficher le spinner de chargement
 
     const formData = new FormData();
     formData.append('produit', new Blob([JSON.stringify(this.modalData)], { type: 'application/json' }));
@@ -378,6 +390,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
         finalize(() => this.isLoading = false) // Toujours arrêter le loader à la fin
       ).subscribe({
         next: () => {
+          this.spinner.hide(); // Cacher le spinner de chargement
           this.loadProduits();
           this.closeModal();
           this.toastr.success('Produit mis à jour avec succès !', 'Succès');
@@ -420,6 +433,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (result) => {
         if (!result) return;
+        this.spinner.hide(); // Cacher le spinner de chargement
         this.loadProduits();
         this.closeModal();
         this.toastr.success('Produit ajouté avec succès !', 'Succès');
@@ -453,26 +467,27 @@ export class ProduitListComponent implements OnInit, OnDestroy {
   - pipe(...) (ailleurs)	Filtre, retarde, ou exécute la requête au bon moment
   */
 
-  // 🔍 Appelé à chaque frappe dans barre de recherche
+
+  // 
   onSearchChange(value: string): void {
     this.searchQuery = value;
-    this.searchSubject.next(value); // Ici, on émet la nouvelle valeur dans un Subject RxJS (souvent appelé searchSubject).
+    this.page = 0;
+    this.searchSubject.next(value);// Ici, on émet la nouvelle valeur dans un Subject RxJS (souvent appelé searchSubject).
     //Cela permet d’émettre la recherche vers un flux RxJS, d’utiliser les opérateurs réactifs (comme debounceTime, distinctUntilChanged, switchMap, etc.) ailleurs dans le code — souvent dans le ngOnInit().
   }
 
-  // ⏭️ Pagination suivante
-  nextPage(): void {
+
+  nextPage() {
     if (this.page + 1 < this.totalPages) {
       this.page++;
-      this.loadProduits();
+      this.fetchProduits(); // ✅ PAS loadProduits
     }
   }
 
-  // ⏮️ Pagination précédente
-  prevPage(): void {
+  prevPage() {
     if (this.page > 0) {
       this.page--;
-      this.loadProduits();
+      this.fetchProduits();
     }
   }
 
