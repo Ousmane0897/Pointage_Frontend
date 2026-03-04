@@ -138,15 +138,6 @@ export class CalendrierComponent implements OnInit {
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe(data => {
       this.employesDeplaces = data ?? [];
-
-      if (this.employesDeplaces.length === 0) {
-        console.log('Aucun employé en déplacement');
-        return;
-      }
-
-      const first = this.employesDeplaces[0];
-      console.log('site destination employé:', first.site);
-      console.log('site avant déplacement employé:', first.siteAvantDeplacement);
     });
 }
 
