@@ -134,13 +134,21 @@ export class CalendrierComponent implements OnInit {
   }
 
   getEmployesDeplaces() {
-    this.employesService.getEmployeEnDeplacement().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
-      this.employesDeplaces = data;
-      console.log('site destination employé:', this.employesDeplaces[0].site);
-      console.log('site avant déplacement employé:', this.employesDeplaces[0].siteAvantDeplacement);
-      console.log('Employés en déplacement:', this.employesDeplaces);
+  this.employesService.getEmployeEnDeplacement()
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(data => {
+      this.employesDeplaces = data ?? [];
+
+      if (this.employesDeplaces.length === 0) {
+        console.log('Aucun employé en déplacement');
+        return;
+      }
+
+      const first = this.employesDeplaces[0];
+      console.log('site destination employé:', first.site);
+      console.log('site avant déplacement employé:', first.siteAvantDeplacement);
     });
-  }
+}
 
   EmployeesDansUnSite() {
     const site = this.modalData.siteDestination?.[0];
