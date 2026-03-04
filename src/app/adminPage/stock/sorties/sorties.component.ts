@@ -405,5 +405,8 @@ export class SortiesComponent implements OnInit {
     }, 50);
   }
 
+  trackById(_: number, item: Produit): string {
+    return item.codeProduit; // Comme codeProduit est unique, on peut l’utiliser comme identifiant pour le suivi dans ngFor, même si l’ordre des produits change ou si des produits sont ajoutés/supprimés. Cela améliore les performances en évitant les rendus inutiles.
+  }
 
 }

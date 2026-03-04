@@ -109,7 +109,7 @@
               <label class="block text-sm text-gray-700 mb-1">Produit</label>
               <select formControlName="nomProduit" class="w-full border rounded-lg p-2">
                 <option value="">-- Choisir un produit --</option>
-                <option *ngFor="let prod of produits" [value]="prod.nomProduit">
+                <option *ngFor="let prod of produits; trackBy: trackById" [value]="prod.nomProduit">
                   {{ prod.nomProduit }}
                 </option>
               </select>
