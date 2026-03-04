@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -77,7 +77,7 @@ export class CalendrierComponent implements OnInit {
     motifAnnulation: null,
     dateCreation: null
   };
-  private destroyRef = Inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
 
   calendarOptions: any = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
