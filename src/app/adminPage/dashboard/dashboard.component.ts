@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { LoginService } from '../../services/login.service';
 import { SuperAdminComponent } from '../super-admin/super-admin.component';
+import { takeWhile } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'app-dashboard',
@@ -24,12 +26,16 @@ export class DashboardComponent implements OnInit {
 
   stats: { total: number; present: number; absent: number } | null = null;
 
+  private destroy$ = inject(DestroyRef); // Permet de gérer la durée de vie des abonnements et éviter les fuites de mémoire
+
   constructor(private dashboardService: DashboardService,
     private toastr: ToastrService, private loginService: LoginService
   ) {}
 
+
+
   ngOnInit(): void {
-    this.dashboardService.getDashboardData().subscribe(data => {
+    this.dashboardService.getDashboardData().pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
       this.stats = data;
     }, error => {
       this.toastr.error('Failed to load dashboard data', 'Error');

@@ -14,7 +14,7 @@ import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { AgencesService } from '../../services/agences.service';
-import { interval, Subscription, switchMap } from 'rxjs';
+import { interval, Subject, Subscription, switchMap, takeUntil } from 'rxjs';
 import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
 import { LoginService } from '../../services/login.service';
 
@@ -53,7 +53,7 @@ export class PlanificationComponent implements OnInit {
   modalVisible = false;   // contrôle de l’animation
   isEditMode = false;
   selectedId: string | null = null;
-  private refreshSub?: Subscription;
+  private refreshSub?: Subscription; // pour stocker l’abonnement à l’interval
   requestedBy: string | null = null;
   role: string | null = null;
   poste: string | null = null;
@@ -76,6 +76,7 @@ export class PlanificationComponent implements OnInit {
 
   };
 
+  private destroy$ = new Subject<void>(); // Pour gérer le cycle de vie des abonnements et éviter les fuites de mémoire
 
 
 
@@ -97,7 +98,7 @@ export class PlanificationComponent implements OnInit {
 
     // 2) rafraîchissement automatique toutes les 10s (utilise RxJS)
     this.refreshSub = interval(10000)
-      .pipe(switchMap(() => this.planfication.getPlanifications()))
+      .pipe(switchMap(() => this.planfication.getPlanifications()), takeUntil(this.destroy$))
       .subscribe(data => this.planifications = data);
 
     this.requestedBy = this.loginService.getFirstNameLastName();
@@ -111,10 +112,12 @@ export class PlanificationComponent implements OnInit {
   // Sert à nettoyer : désabonner les observables infinis (interval, WebSocket, etc.),arrêter des timers (setInterval, setTimeout),détacher des listeners (addEventListener),libérer des ressources (sockets, workers, etc.).
   ngOnDestroy(): void {
     if (this.refreshSub) this.refreshSub.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadData() {
-    this.planfication.getPlanifications().subscribe(data => {
+    this.planfication.getPlanifications().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.planifications = data;
     }, error => {
       this.toastr.error('Failed to load employes', 'Error');
@@ -142,7 +145,7 @@ export class PlanificationComponent implements OnInit {
       message: 'Veuillez indiquer le motif de l\'annulation :',
       confirmText: this.role === 'SUPERADMIN' ? 'Oui, annuler' : 'Demander l\'annulation à la directrice',
       cancelText: 'Non'
-    }).subscribe(motif => {
+    }).pipe(takeUntil(this.destroy$)).subscribe(motif => {
       if (!motif || motif.trim() === '') {
         this.toastr.error('Le motif d\'annulation est obligatoire.', 'Erreur');
         return; // Si le motif est vide ou nul, la fonction cancelTask s’arrête ici. Aucune autre ligne après ce return ne sera exécutée. Cela permet d’éviter d’envoyer une annulation ou une demande sans motif.
@@ -151,7 +154,7 @@ export class PlanificationComponent implements OnInit {
       const todayISO: string = new Date().toISOString();
 
       // Récupérer la planification via le service
-      this.planification.getPlanificationById(planificationId).subscribe({
+      this.planification.getPlanificationById(planificationId).pipe(takeUntil(this.destroy$)).subscribe({
         next: (planif) => {
           const dateDebut = new Date(planif.dateDebut!); // transforme la string ISO en Date
           if (this.diffInHours(todayISO, dateDebut.toISOString()) < 24 && this.role !== 'SUPERADMIN') {
@@ -164,7 +167,7 @@ export class PlanificationComponent implements OnInit {
 
           if (this.role === 'SUPERADMIN') {
             // Annulation directe
-            this.planification.cancelPlanification(planificationId, motif, this.requestedBy!).subscribe({
+            this.planification.cancelPlanification(planificationId, motif, this.requestedBy!).pipe(takeUntil(this.destroy$)).subscribe({
               next: (updatedPlanif) => {
                 this.modalData = { ...this.modalData, motifAnnulation: updatedPlanif.motifAnnulation };
                 this.cdr.detectChanges();
@@ -179,7 +182,7 @@ export class PlanificationComponent implements OnInit {
             });
           } else if (this.role!.toUpperCase() === 'ADMIN') {
             // Demande d'annulation pour les admins
-            this.planification.demanderAnnulation(planificationId, motif, this.requestedBy!).subscribe({
+            this.planification.demanderAnnulation(planificationId, motif, this.requestedBy!).pipe(takeUntil(this.destroy$)).subscribe({
               next: (updatedPlanif) => {
                 this.modalData = { ...this.modalData, motifAnnulation: updatedPlanif.motif };
                 this.cdr.detectChanges();
@@ -240,7 +243,7 @@ export class PlanificationComponent implements OnInit {
   }
 
   getAvailableSites() {
-    this.agence.getAllSites().subscribe(sites => {
+    this.agence.getAllSites().pipe(takeUntil(this.destroy$)).subscribe(sites => {
       this.availableSites = sites;
     });
   }
@@ -310,7 +313,7 @@ export class PlanificationComponent implements OnInit {
       const diffJours = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       console.log(`Il reste ${diffJours} jour(s)`);
       if (diffJours > 7) {
-        this.planification.updatePlanification(this.selectedId, this.modalData).subscribe(() => {
+        this.planification.updatePlanification(this.selectedId, this.modalData).pipe(takeUntil(this.destroy$)).subscribe(() => {
           this.closeModal2();
           this.toastr.success('Planning mis à jour avec succès!', 'Succès');
         });
@@ -332,7 +335,7 @@ export class PlanificationComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.planification.deletePlanification(codeSecret).subscribe({
+        this.planification.deletePlanification(codeSecret).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.loadData();
             this.toastr.success('Planning supprimé avec succès !', 'Succès');

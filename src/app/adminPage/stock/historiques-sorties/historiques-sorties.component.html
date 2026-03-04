@@ -43,7 +43,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let s of filteredSortiesByMonth" class="border-b hover:bg-gray-50">
+            <tr *ngFor="let s of filteredSortiesByMonth; trackBy: trackById" class="border-b hover:bg-gray-50">
                 <td class="p-3">{{ s.codeProduit }}</td>
                 <td class="p-3">{{ s.nomProduit }}</td>
                 <td class="p-3">{{ s.quantite }}</td>

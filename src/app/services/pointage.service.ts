@@ -70,7 +70,7 @@ export class PointageService {
   }
 
   searchHistorique(
-    search: string,
+    search: string = '', // 🔎 Terme de recherche (nom, prénom, code employé). La valeur par défaut est une chaîne vide.
     dateDebut: string,
     dateFin: string,
     page: number,

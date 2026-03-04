@@ -3,37 +3,18 @@
   <!-- Filtres -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
 
-    <input
-      type="text"
-      placeholder="Recherche nom, prénom, site..."
-      [(ngModel)]="search"
-      (input)="onSearchChange()"
-      class="border p-2 rounded w-full"
-    />
+    <input type="text" placeholder="Recherche nom, prénom, site..." [(ngModel)]="search" (input)="onSearchChange()"
+      class="border p-2 rounded w-full" />
 
-    <input
-      type="date"
-      [(ngModel)]="dateDebut"
-      (change)="loadData()"
-      class="border p-2 rounded w-full"
-    />
+    <input type="date" [(ngModel)]="dateDebut" (change)="onDateChange()" class="border p-2 rounded w-full" />
 
-    <input
-      type="date"
-      [(ngModel)]="dateFin"
-      (change)="loadData()"
-      class="border p-2 rounded w-full"
-    />
+    <input type="date" [(ngModel)]="dateFin" (change)="onDateChange()" class="border p-2 rounded w-full" />
 
     <div class="flex gap-2">
-      <button
-        (click)="exportExcel()"
-        class="bg-green-600 text-white px-3 py-2 rounded">
+      <button (click)="exportExcel()" class="bg-green-600 text-white px-3 py-2 rounded">
         Excel
       </button>
-      <button
-        (click)="exportPdf()"
-        class="bg-red-600 text-white px-3 py-2 rounded">
+      <button (click)="exportPdf()" class="bg-red-600 text-white px-3 py-2 rounded">
         PDF
       </button>
     </div>
@@ -53,8 +34,8 @@
         <th class="p-2">Localisation</th>
       </tr>
     </thead>
-    <tbody >
-      <tr *ngFor="let p of pointages" class="border-r text-center">
+    <tbody>
+      <tr *ngFor="let p of pointages; trackBy: trackById" class="border-r text-center">
         <td class="p-2">{{ p.date | date:'dd/MM/yyyy' }}</td>
         <td class="p-2">{{ p.nom }}</td>
         <td class="p-2">{{ p.prenom }}</td>
@@ -69,21 +50,21 @@
 
   <!-- Pagination -->
   <div class="flex justify-between items-center mt-4">
-    <button
-      (click)="changePage(page - 1)"
-      [disabled]="page === 0"
-      class="px-3 py-1 border rounded">
+    <button (click)="changePage(page - 1)" [disabled]="page === 0" class="px-3 py-1 border rounded">
       ◀
     </button>
 
     <span>Page {{ page + 1 }} / {{ totalPages }}</span>
 
-    <button
-      (click)="changePage(page + 1)"
-      [disabled]="page + 1 >= totalPages"
-      class="px-3 py-1 border rounded">
+    <button (click)="changePage(page + 1)" [disabled]="page + 1 >= totalPages" class="px-3 py-1 border rounded">
       ▶
     </button>
   </div>
+
+  <tr *ngIf="pointages.length === 0">
+    <td colspan="8" class="p-4 text-gray-500 text-center">
+      Aucun pointage trouvé
+    </td>
+  </tr>
 
 </div>

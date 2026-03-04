@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -20,6 +20,7 @@ import { StockService } from '../../../services/stock.service';
 import { ProduitService } from '../../../services/produit.service';
 import { AgencesService } from '../../../services/agences.service';
 import { LoginService } from '../../../services/login.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 
@@ -53,6 +54,17 @@ export class SortiesComponent implements OnInit {
   role: string | null = null;
   poste: string | null = null;
 
+  private destroy$ = inject(DestroyRef); // Permet de gérer la durée de vie des abonnements et éviter les fuites de mémoire
+
+   /*
+     takeUntil(this.destroy$) : C’est un opérateur RxJS qui permet de gérer la durée de vie des abonnements. Quand le composant est détruit, on émet une valeur dans destroy$, ce qui fait que tous les abonnements qui utilisent takeUntil(this.destroy$) sont automatiquement désabonnés. 
+      Avantages :
+      - Tu n’as pas à te soucier de désabonner manuellement chaque abonnement, ce qui réduit les risques de fuites de mémoire.
+      - Ton code est plus propre et plus facile à maintenir, car tu centralises la logique de nettoyage dans un seul endroit (ngOnDestroy).
+      - C’est une bonne pratique recommandée dans Angular pour éviter les problèmes de performance liés aux abonnements non nettoyés.
+      - En résumé, takeUntil(this.destroy$) est une technique efficace pour s’assurer que tous les abonnements sont correctement nettoyés lorsque le composant est détruit, ce qui améliore la performance et la stabilité de ton application Angular.
+   */
+
 
 
   constructor(
@@ -81,8 +93,8 @@ export class SortiesComponent implements OnInit {
     // 🔹 Filtrage dynamique des produits selon le motif de sortie de stock. Pour les sorties en stock
     const ctrl = this.sortieForm.get('motifSortieStock'); // Récupère le contrôle du formulaire pour le motif de sortie de stock.
     if (ctrl) {
-      ctrl.valueChanges.subscribe(motif => { // À chaque changement de motif de sortie de stock. valueChanges pour écouter les changements de valeur
-        this.produitService.getAllProduits().subscribe(allProduits => {
+      ctrl.valueChanges.pipe(takeUntilDestroyed(this.destroy$)).subscribe(motif => { // À chaque changement de motif de sortie de stock. valueChanges pour écouter les changements de valeur
+        this.produitService.getAllProduits().pipe(takeUntilDestroyed(this.destroy$)).subscribe(allProduits => {
           if (motif === 'VENTE') {
             this.produits = allProduits.filter(p => p.destination.includes('VENTE'));
           } else if (motif === 'DESTINATION_AGENCE') {
@@ -131,7 +143,7 @@ export class SortiesComponent implements OnInit {
   // 🧩 Chargement initial
   // ===========================================
   loadProduits() {
-    this.produitService.getProduits().subscribe({
+    this.produitService.getProduits().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (res) => (this.produits = res.content ?? res),
       error: () => this.toastr.error('Erreur lors du chargement des produits', 'Erreur'),
     });
@@ -172,7 +184,7 @@ export class SortiesComponent implements OnInit {
 
 
   getAvailableAgences() {
-    this.agencesService.getAllSites().subscribe({
+    this.agencesService.getAllSites().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (agences) => (this.agences = agences),
       error: () => this.toastr.error('Erreur lors du chargement des agences'),
     });
@@ -195,7 +207,7 @@ export class SortiesComponent implements OnInit {
         fg.get('codeProduit')?.setValue(produit.codeProduit, { emitEvent: true });
 
         // Charger le stock disponible
-        this.stockService.getStockProduit(produit.codeProduit).subscribe({
+        this.stockService.getStockProduit(produit.codeProduit).pipe(takeUntilDestroyed(this.destroy$)).subscribe({
           next: (stock) => {
             this.stockDisponible[produit.codeProduit] = stock;
 
@@ -213,7 +225,7 @@ export class SortiesComponent implements OnInit {
     });
 
     // 🔹 Vérifie le stock disponible à chaque changement de quantité
-    fg.get('quantite')?.valueChanges.pipe(debounceTime(300)).subscribe((val) => {
+    fg.get('quantite')?.valueChanges.pipe(debounceTime(300), takeUntilDestroyed(this.destroy$)).subscribe((val) => {
       const quantite = val ?? 0;
       const codeProduit = fg.get('codeProduit')?.value;
 
@@ -353,7 +365,7 @@ export class SortiesComponent implements OnInit {
         beneficaire: this.sortieForm.value.beneficaire ?? null,
         motifSortieStock: this.sortieForm.value.motifSortieStock,
         dateMouvement: this.sortieForm.value.dateMouvement
-      }).subscribe({
+      }).pipe(takeUntilDestroyed(this.destroy$)).subscribe({
         next: () => this.onSuccess(),
         error: (err) => this.toastr.error(err.error.message),
       });
@@ -392,5 +404,6 @@ export class SortiesComponent implements OnInit {
       this.isResetting = false;
     }, 50);
   }
+
 
 }

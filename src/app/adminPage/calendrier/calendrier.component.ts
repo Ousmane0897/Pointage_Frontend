@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -10,6 +10,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import frLocale from '@fullcalendar/core/locales/fr';
 import { Employe } from '../../models/employe.model';
 import { EmployeService } from '../../services/employe.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; 
 import { EventInput } from '@fullcalendar/core';
 import { AgencesService } from '../../services/agences.service';
 import { Planification } from '../../models/planification.model';
@@ -20,7 +21,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { PlanificationService } from '../../services/planification.service';
 import { ToastrService } from 'ngx-toastr';
-import { finalize } from 'rxjs';
+import { finalize, interval, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
@@ -76,6 +77,7 @@ export class CalendrierComponent implements OnInit {
     motifAnnulation: null,
     dateCreation: null
   };
+  private destroyRef = Inject(DestroyRef);
 
   calendarOptions: any = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -98,13 +100,14 @@ export class CalendrierComponent implements OnInit {
   };
   employes!: Employe[];
 
+
   constructor(private employesService: EmployeService, private agence: AgencesService,
     private planification: PlanificationService, private toastr: ToastrService,
     private http: HttpClient
   ) { }
 
   ngOnInit() {
-    this.employesService.getEmployes().subscribe((data: Employe[]) => {
+    this.employesService.getEmployes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data: Employe[]) => {
       const events = this.generateYearlyEvents(data);
       this.events = events;
       this.applyFilter();
@@ -115,20 +118,23 @@ export class CalendrierComponent implements OnInit {
 
     this.refreshEmployes();
 
-    setInterval(() => {
+    interval(10000)
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(() => {
       this.refreshEmployes();
-    }, 10000); // toutes les 10s  
+    });
+
   }
 
   getPlanificationByCodeEmploye(codeSecret: string) {
-    this.planification.getPlanificationByCodeEmploye(codeSecret).subscribe(data => {
+    this.planification.getPlanificationByCodeEmploye(codeSecret).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.getPlanification = data;
       console.log('Planification de l\'employé:', this.getPlanification);
     });
   }
 
   getEmployesDeplaces() {
-    this.employesService.getEmployeEnDeplacement().subscribe(data => {
+    this.employesService.getEmployeEnDeplacement().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.employesDeplaces = data;
       console.log('site destination employé:', this.employesDeplaces[0].site);
       console.log('site avant déplacement employé:', this.employesDeplaces[0].siteAvantDeplacement);
@@ -144,7 +150,7 @@ export class CalendrierComponent implements OnInit {
       return;
     }
 
-    this.employesService.getEmployeesDansUnSite(site).subscribe({
+    this.employesService.getEmployeesDansUnSite(site).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => this.employeesDansUnSite = data,
       error: () => {
         this.employeesDansUnSite = [];
@@ -177,7 +183,7 @@ export class CalendrierComponent implements OnInit {
 
 
   getAvailableSites() {
-    this.agence.getAllSites().subscribe(sites => {
+    this.agence.getAllSites().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(sites => {
       this.availableSites = sites;
     });
   }
@@ -193,7 +199,7 @@ export class CalendrierComponent implements OnInit {
       return;
     }
     if (this.isEditMode && this.selectedId) {
-      this.planification.updatePlanification(this.selectedId, this.modalData).subscribe(() => {
+      this.planification.updatePlanification(this.selectedId, this.modalData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         this.closeModal();
         this.toastr.success('Agence mis à jour avec succès !', 'Succès');
       });
@@ -216,6 +222,7 @@ export class CalendrierComponent implements OnInit {
       this.planification.addPlanification(payload).pipe(
         finalize(() => this.closeModal()) //   finalize est appelé une seule fois, à la fin de l’Observable, qu’il y ait eu succès ou erreur
         //Idéal pour faire des actions « propres » comme: fermer un modal, arrêter un loader/spinner, réinitialiser un formulaire
+        ,takeUntilDestroyed(this.destroyRef)
       ).subscribe({
         next: () => {
           console.log('site origine:', this.modalData.nomSite);
@@ -418,7 +425,7 @@ export class CalendrierComponent implements OnInit {
 
 
   refreshEmployes() {
-    this.employesService.getEmployes().subscribe(employes => {
+    this.employesService.getEmployes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(employes => {
       this.employes = employes;
 
       // 🔥 RECRÉATION DES EVENTS

@@ -21,7 +21,7 @@
       </tr> 
     </thead>
     <tbody>
-      <ng-container *ngFor="let d of demandes">
+      <ng-container *ngFor="let d of demandes; trackBy: trackById">
         <tr [ngClass]="getRowClass(d)">
 
           <td class="p-2 text-center">{{ d.destination }}</td>

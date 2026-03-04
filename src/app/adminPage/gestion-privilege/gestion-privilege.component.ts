@@ -10,6 +10,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { LoginService } from '../../services/login.service';
 import { Router, RouterOutlet } from '@angular/router';
 import { } from '@angular/common/http';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-gestion-privilege',
@@ -63,6 +64,7 @@ export class GestionPrivilegeComponent implements OnInit {
   isEditMode = false;
   selectedId: string | null = null;
   confirmPassword: string = "";
+  private destroy$ = new Subject<void>(); // Pour gérer le cycle de vie des abonnements et éviter les fuites de mémoire
 
 
   constructor(private adminService: AdminService,
@@ -76,7 +78,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
 
   loadData() {
-    this.adminService.getAdmins().subscribe(data => {
+    this.adminService.getAdmins().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.admins = data;
     });
   }
@@ -157,7 +159,7 @@ export class GestionPrivilegeComponent implements OnInit {
     }
 
     if (this.isEditMode && this.selectedId) {
-      this.adminService.updateAdmin(this.selectedId, this.modalData).subscribe(() => {
+      this.adminService.updateAdmin(this.selectedId, this.modalData).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.loadData();
         this.closeModal();
         this.toastr.success('Admin mis à jour avec succès !', 'Succès');
@@ -178,7 +180,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
       this.modalData.modulesAutorises = newModulesObj;
 
-      this.adminService.createAdmin(this.modalData).subscribe({
+      this.adminService.createAdmin(this.modalData).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.loadData();
           this.closeModal();
@@ -209,7 +211,7 @@ export class GestionPrivilegeComponent implements OnInit {
   }
   toggleStatus(admin: Admin): void {
     const updated = { ...admin, active: !admin.active };
-    this.adminService.updateAdmin(admin.id!, updated).subscribe({
+    this.adminService.updateAdmin(admin.id!, updated).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastr.success(`Admin ${updated.active ? 'activé' : 'désactivé'} avec succès !`, 'Succès');
         this.loadData();
@@ -238,7 +240,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.adminService.deleteAdmin(id!).subscribe({
+        this.adminService.deleteAdmin(id!).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.loadData();
             this.toastr.success('admin supprimé avec succès !', 'Succès');
@@ -250,6 +252,10 @@ export class GestionPrivilegeComponent implements OnInit {
         });
       }
     });
+  }
+
+  trackById(_: number, item: Admin): string {
+    return item.poste + item.email; // plus sûr si plusieurs pointages par jour
   }
 
 }

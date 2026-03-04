@@ -29,7 +29,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let absent of filteredAbsents">
+            <tr *ngFor="let absent of filteredAbsents; trackBy: trackById">
                 <td class="p-2">{{ absent.codeSecret }}</td>
                 <td class="p-2">{{ absent.prenom }}</td>
                 <td class="p-2">{{ absent.nom }}</td>

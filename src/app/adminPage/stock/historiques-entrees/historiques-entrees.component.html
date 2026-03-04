@@ -16,7 +16,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let e of entrees" class="border-b hover:bg-gray-50">
+            <tr *ngFor="let e of entrees; trackBy: trackById" class="border-b hover:bg-gray-50">
                 <td class="p-3">{{ e.codeProduit }}</td>
                 <td class="p-3">{{ e.nomProduit }}</td>
                 <td class="p-3">{{ e.quantite }}</td>

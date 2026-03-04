@@ -1,87 +1,107 @@
-import { Component, OnInit } from '@angular/core';
-import { debounceTime , Subject } from 'rxjs';
-import { PointageService } from '../../services/pointage.service';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { BehaviorSubject, Subject, debounceTime, startWith, switchMap, takeUntil } from 'rxjs';
+import { PointageService } from '../../services/pointage.service';
 import { Pointage } from '../../models/pointage.model';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-pointage-historique',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './pointage-historique.component.html',
-  styleUrl: './pointage-historique.component.scss'
+  styleUrl: './pointage-historique.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PointageHistoriqueComponent implements OnInit {
+export class PointageHistoriqueComponent implements OnInit, OnDestroy {
 
-
+  // 📊 Données
   pointages: Pointage[] = [];
-
-  page = 0;
-  size = 20;
   totalPages = 0;
 
+  // 📄 Pagination
+  page = 0;
+  size = 20;
+
+  // 🔎 Filtres
   search = '';
   dateDebut = '';
   dateFin = '';
 
-  searchSubject = new Subject<string>();
+  // 🔁 Flux RxJS
+  private trigger$ = new BehaviorSubject<void>(void 0); // Permet de déclencher la recherche à la fois au chargement et lors des changements de filtres/pagination. void 0 est utilisé pour indiquer que c'est un déclenchement initial sans données spécifiques à transmettre. Chaque fois que trigger$.next() est appelé, cela indique que les critères de recherche ont changé et que les données doivent être rechargées en fonction des nouveaux critères.
+  private destroy$ = new Subject<void>();
 
-  constructor(private pointageService: PointageService) { }
-  
+  constructor(private pointageService: PointageService, private spinner: NgxSpinnerService) {}
+
   ngOnInit(): void {
-    this.loadData();
 
-    this.searchSubject
-      .pipe(debounceTime(400))
-      .subscribe(() => {
-        this.page = 0;
-        this.loadData();
-      });
-  }
-
-  loadData() {
-    this.pointageService
-      .searchHistorique(
-        this.search,
-        this.dateDebut,
-        this.dateFin,
-        this.page,
-        this.size
+    this.spinner.show();
+    this.trigger$
+      .pipe(
+        debounceTime(400),        // ⏳ éviter les appels trop fréquents lors de la saisie
+        switchMap(() =>
+          this.pointageService.searchHistorique(
+            this.search,
+            this.dateDebut,
+            this.dateFin,
+            this.page,
+            this.size
+          )
+        ),
+        takeUntil(this.destroy$)
       )
       .subscribe(res => {
+        this.spinner.hide();
         this.pointages = res.content;
         this.totalPages = res.totalPages;
       });
   }
 
-  onSearchChange() {
-    this.searchSubject.next(this.search);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  changePage(newPage: number) {
+  // 🔎 Recherche
+  onSearchChange(): void {
+    this.page = 0;
+    this.trigger$.next();
+  }
+
+  // 📅 Changement de dates
+  onDateChange(): void {
+    this.page = 0;
+    this.trigger$.next();
+  }
+
+  // 📄 Pagination
+  changePage(newPage: number): void {
     if (newPage >= 0 && newPage < this.totalPages) {
       this.page = newPage;
-      this.loadData();
+      this.trigger$.next();
     }
   }
 
-  exportExcel() {
+  // 📤 Export Excel
+  exportExcel(): void {
     this.pointageService
       .exportExcel(this.search, this.dateDebut, this.dateFin)
-      .subscribe(blob => {
-        this.download(blob, 'pointages.xlsx');
-      });
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(blob => this.download(blob, 'pointages.xlsx'));
   }
 
-  exportPdf() {
+  // 📄 Export PDF
+  exportPdf(): void {
     this.pointageService
       .exportPdf(this.search, this.dateDebut, this.dateFin)
-      .subscribe(blob => {
-        this.download(blob, 'pointages.pdf');
-      });
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(blob => this.download(blob, 'pointages.pdf'));
   }
 
-  private download(blob: Blob, filename: string) {
+  // ⬇️ Téléchargement sécurisé
+  private download(blob: Blob, filename: string): void {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -90,4 +110,8 @@ export class PointageHistoriqueComponent implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 
+  // ⚡ Optimisation ngFor
+  trackById(_: number, item: Pointage): string {
+    return item.codeSecret; // ou un autre identifiant unique
+  }
 }

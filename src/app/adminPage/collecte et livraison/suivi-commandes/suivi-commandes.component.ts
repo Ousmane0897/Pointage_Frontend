@@ -223,4 +223,8 @@ some() → false
     });
   }
 
+  trackById(_: number, item: CollecteBesoins): string | undefined {
+  return item.id; // plus sûr si plusieurs pointages par jour
+}
+
 }

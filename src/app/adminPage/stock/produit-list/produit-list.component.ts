@@ -14,7 +14,7 @@ import {
   tap,
   EMPTY,
   throwError,
-  startWith,
+  BehaviorSubject,
 } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -122,7 +122,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
 
   // 🟢 Observables utilitaires
   private destroy$ = new Subject<void>();
-  private searchSubject = new Subject<string>();
+  private searchSubject = new BehaviorSubject<string>(''); // Permet de gérer les recherches en temps réel sans valeur initiale avec des opérateurs RxJS (debounceTime, distinctUntilChanged, switchMap, etc.)
 
   // ⚙️ États UI
   loading = false;
@@ -144,16 +144,15 @@ export class ProduitListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
   
   this.spinner.show(); // Afficher le spinner de chargement pendant l'initialisation
-  this.searchSubject.pipe(
-    startWith(''),   // Émet une valeur initiale pour déclencher la première recherche. Cela permet de charger les produits dès l'initialisation du composant, même si l'utilisateur n'a pas encore saisi de texte dans la barre de recherche.
-    debounceTime(400),
+  this.searchSubject // Écoute les changements de la barre de recherche et déclenche la recherche de produits
+  .pipe(
     distinctUntilChanged(),
-    tap(() => this.page = 0),
-    switchMap(() =>
+    tap(() => this.page = 0), // tap pour réinitialiser la page à 0 à chaque nouvelle recherche, afin de toujours afficher les résultats à partir de la première page.
+    switchMap(searchTerm => // switchMap annule les requêtes précédentes si une nouvelle est déclenchée, ce qui est parfait pour les champs de recherche live. Si l'utilisateur continue de taper, les anciennes requêtes sont annulées et seule la dernière est traitée.
       this.produitService.getProduits(
         this.page,
         this.size,
-        this.searchQuery,
+        searchTerm,
         this.selectedCategory,
         this.selectedDestination
       )
@@ -284,7 +283,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
 
 
   loadProduitParDestination(destination: string): void {
-    this.produitService.filtrerProduitsByDestination(destination).subscribe({
+    this.produitService.filtrerProduitsByDestination(destination).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.produits = response.content;
       },
@@ -387,6 +386,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
     // --- 🧩 MODE ÉDITION ---
     if (this.isEditMode && this.selectedId) {
       this.produitService.updateProduit(this.selectedId, formData).pipe(
+        takeUntil(this.destroy$),
         finalize(() => this.isLoading = false) // Toujours arrêter le loader à la fin
       ).subscribe({
         next: () => {
@@ -430,7 +430,7 @@ export class ProduitListComponent implements OnInit, OnDestroy {
       }),
 
       finalize(() => this.isLoading = false)
-    ).subscribe({
+    ).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         if (!result) return;
         this.spinner.hide(); // Cacher le spinner de chargement
@@ -471,7 +471,6 @@ export class ProduitListComponent implements OnInit, OnDestroy {
   // 
   onSearchChange(value: string): void {
     this.searchQuery = value;
-    this.page = 0;
     this.searchSubject.next(value);// Ici, on émet la nouvelle valeur dans un Subject RxJS (souvent appelé searchSubject).
     //Cela permet d’émettre la recherche vers un flux RxJS, d’utiliser les opérateurs réactifs (comme debounceTime, distinctUntilChanged, switchMap, etc.) ailleurs dans le code — souvent dans le ngOnInit().
   }
@@ -508,6 +507,10 @@ export class ProduitListComponent implements OnInit, OnDestroy {
      Toutes les souscriptions takeUntil(this.destroy$) sont automatiquement désabonnées.
      Tu évites toute fuite de mémoire quand le composant est détruit (par exemple, quand tu changes de page).
    */
+
+  TrackById(_: number, item: Produit): string {
+    return item.codeProduit;
+  }
 
 }
 

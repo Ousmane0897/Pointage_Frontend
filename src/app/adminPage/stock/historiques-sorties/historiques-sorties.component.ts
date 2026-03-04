@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { MouvementSortieStock } from '../../../models/MouvementSortieStock.model';
 import { ToastrService } from 'ngx-toastr';
 import { StockService } from '../../../services/stock.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-historiques-sorties',
@@ -19,6 +20,8 @@ export class HistoriquesSortiesComponent implements OnInit {
   searchText: string = '';
   searchText2: string = '';
 
+  private destroy$ = inject(DestroyRef);
+
   constructor(private stockService: StockService, private toastr: ToastrService) { }
 
   ngOnInit(): void {
@@ -30,12 +33,12 @@ export class HistoriquesSortiesComponent implements OnInit {
   }
 
   get filteredSorties() {
-  const term = (this.searchText ?? '').toLowerCase();
+    const term = (this.searchText ?? '').toLowerCase();
 
-  return this.sorties.filter(sortie =>
-    (sortie.destination ?? '').toLowerCase().includes(term)
-  );
-}
+    return this.sorties.filter(sortie =>
+      (sortie.destination ?? '').toLowerCase().includes(term)
+    );
+  }
 
 
   get filteredSortiesByMonth() {
@@ -48,7 +51,7 @@ export class HistoriquesSortiesComponent implements OnInit {
 
 
   loadSorties() {
-    this.stockService.getSorties().subscribe({
+    this.stockService.getSorties().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (data) => {
         this.sorties = data.map(sortie => ({
           ...sortie,
@@ -62,5 +65,7 @@ export class HistoriquesSortiesComponent implements OnInit {
     });
   }
 
-
+  trackById(_: number, item: MouvementSortieStock): string { // Optimisation Angular pour le rendu de listes. _ est un paramètre inutilisé, on utilise item.codeProduit comme identifiant unique pour chaque sortie de stock.
+    return item.codeProduit;
+  }
 }

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { WebsocketService } from '../../services/websocket.service';
 import { ToastrService } from 'ngx-toastr';
 import { PlanificationService } from '../../services/planification.service';
@@ -17,7 +17,7 @@ export class SuperAdminComponent implements OnInit, OnDestroy {
   public pendingRequests: any[] = [];
   public currentRequest: any | null = null;
   public showValidationModal = false;
-
+  private destroy$ = new Subject<void>(); // 🔔 Subject pour gérer les désabonnements
   // 🔔 Ajout de l'audio
   private audio = new Audio('assets/notification.wav');
 
@@ -29,13 +29,13 @@ export class SuperAdminComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // 1️⃣ Charger les demandes en attente depuis le backend
-    this.planifService.getPendingRequests().subscribe(requests => {
+    this.planifService.getPendingRequests().pipe(takeUntil(this.destroy$)).subscribe(requests => {
       this.pendingRequests = requests;
     });
 
     // 2️⃣ Écouter les notifications en temps réel via WebSocket
     this.subs.push(
-      this.ws.onAnnulationRequests().subscribe(req => {
+      this.ws.onAnnulationRequests().pipe(takeUntil(this.destroy$)).subscribe(req => {
         console.log('Nouvelle demande d\'annulation', req);
         this.pendingRequests.unshift(req); // ajouter en tête
         this.toastr.info(`${req.prenomNom} — ${req.motif}`, 'Nouvelle demande d\'annulation');
@@ -71,7 +71,7 @@ export class SuperAdminComponent implements OnInit, OnDestroy {
   }
 
   validate(accept: boolean, requestId: string) {
-    this.planifService.validerAnnulation(requestId, accept).subscribe({
+    this.planifService.validerAnnulation(requestId, accept).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastr.success(
           accept ? 'Annulation validée' : 'Annulation refusée',

@@ -7,15 +7,16 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { Employe } from '../../models/employe.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-    selector: 'app-agences',
-    imports: [
-        CommonModule,
-        FormsModule
-    ],
-    templateUrl: './agences.component.html',
-    styleUrl: './agences.component.scss'
+  selector: 'app-agences',
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
+  templateUrl: './agences.component.html',
+  styleUrl: './agences.component.scss'
 })
 export class AgencesComponent implements OnInit {
 
@@ -41,8 +42,9 @@ export class AgencesComponent implements OnInit {
   employeeDeplacee!: Employe;
   employeeRemplacee!: Employe;
   joursOuverture: string[] = ['Lundi-Vendredi', 'Lundi-Samedi', 'Lundi-Dimanche'];
-  heuresTravail: string[] = ['06:00-10:00','06:00-15:00','06:00-19:00','06:00-20:00', '06:00-23:00'];
-  nombreAgentsMaximum: number[] = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+  heuresTravail: string[] = ['06:00-10:00', '06:00-15:00', '06:00-19:00', '06:00-20:00', '06:00-23:00'];
+  nombreAgentsMaximum: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  private destroy$ = new Subject<void>();
 
 
 
@@ -58,7 +60,7 @@ export class AgencesComponent implements OnInit {
 
 
   loadData() {
-    this.agencesService.getAgences().subscribe(data => {
+    this.agencesService.getAgences().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.agences = data;
     });
   }
@@ -66,7 +68,7 @@ export class AgencesComponent implements OnInit {
 
   openAddModal() {
     this.isEditMode = false;
-    this.modalData = { nom: '', adresse: '' , joursOuverture: '', heuresTravail: '', nombreAgentsMaximum: 0, receptionEmploye: false, deplacementEmploye: false, deplacementInterne: false };
+    this.modalData = { nom: '', adresse: '', joursOuverture: '', heuresTravail: '', nombreAgentsMaximum: 0, receptionEmploye: false, deplacementEmploye: false, deplacementInterne: false };
     this.selectedId = null;
     this.showModal = true;
   }
@@ -85,16 +87,16 @@ export class AgencesComponent implements OnInit {
   closeModal2() {
     this.showModal2 = false;
   }
-  
+
 
   getEmployeeDeplacee(modalData: Agence) {
-    this.agencesService.getEmployeeDeplacee(modalData.nom).subscribe(data => {
+    this.agencesService.getEmployeeDeplacee(modalData.nom).pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.employeeDeplacee = data;
     });
   }
 
   getEmployeeRemplacee(modalData: Agence) {
-    this.agencesService.getEmployeeRemplacee(modalData.nom).subscribe(data => {
+    this.agencesService.getEmployeeRemplacee(modalData.nom).pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.employeeRemplacee = data;
     });
   }
@@ -110,14 +112,14 @@ export class AgencesComponent implements OnInit {
       return;
     }
     if (this.isEditMode && this.selectedId) {
-      this.agencesService.updateAgence(this.selectedId, this.modalData).subscribe(() => {
+      this.agencesService.updateAgence(this.selectedId, this.modalData).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.loadData();
         this.closeModal();
         this.toastr.success('Agence mis à jour avec succès !', 'Succès');
       });
     } else {
 
-      this.agencesService.createAgence(this.modalData).subscribe(() => {
+      this.agencesService.createAgence(this.modalData).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.loadData();
         this.closeModal();
         this.toastr.success('Agence ajoutée avec succès !', 'Succès');
@@ -143,7 +145,7 @@ export class AgencesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.agencesService.deleteAgence(nom).subscribe({
+        this.agencesService.deleteAgence(nom).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.loadData();
             this.toastr.success('agence supprimé avec succès !', 'Succès');
@@ -159,7 +161,7 @@ export class AgencesComponent implements OnInit {
 
   viewEmployeesByAgence(nom: string) {
     this.SelectedDepartment = nom;
-    this.agencesService.getEmployeesByAgence(nom).subscribe(data => {
+    this.agencesService.getEmployeesByAgence(nom).pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.employesByAgence = data;
       this.showModal2 = true;
     }, error => {
@@ -168,7 +170,14 @@ export class AgencesComponent implements OnInit {
     });
   }
 
-  
+  ngOnDestroy(): void {
+    this.destroy$.next(); // Émettre une valeur pour indiquer que le composant est en train d'être détruit
+    this.destroy$.complete();
+  }
+
+  trackById(_: number, item: Agence): string {
+    return item.nom;
+  }
 
 
 }

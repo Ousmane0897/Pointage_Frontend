@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -14,6 +14,7 @@ import { ProduitService } from '../../../services/produit.service';
 import { Produit } from '../../../models/produit.model';
 import { LoginService } from '../../../services/login.service';
 import { AgencesService } from '../../../services/agences.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 @Component({
@@ -42,6 +43,7 @@ export class CollecteDesBesoinsComponent {
   moisNomComplet: string = '';
   destinations: string[] = [];
 
+  private destroyRef = inject(DestroyRef); // Permet de gérer la durée de vie des abonnements et éviter les fuites de mémoire
   
 
 
@@ -80,7 +82,7 @@ export class CollecteDesBesoinsComponent {
   // ======================================
 
   setupAutoCodeProduit(group: FormGroup) {
-    group.get('nomProduit')?.valueChanges.subscribe((selectedProductName) => {
+    group.get('nomProduit')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((selectedProductName) => {
       if (selectedProductName) {
         const product = this.Lesproduits.find(p => p.nomProduit === selectedProductName);
         if (product) {
@@ -93,7 +95,7 @@ export class CollecteDesBesoinsComponent {
   }
 
    getAvailableAgences() {
-    this.agencesService.getAllSites().subscribe({
+    this.agencesService.getAllSites().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (agences) => (this.destinations = agences),
       error: () => this.toastr.error('Erreur lors du chargement des agences'),
     });
@@ -112,7 +114,7 @@ export class CollecteDesBesoinsComponent {
   // ======================================
 
   loadProduits() {
-    this.produitsService.getAllProduits().subscribe({
+    this.produitsService.getAllProduits().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.Lesproduits = data;
       }
@@ -179,7 +181,7 @@ export class CollecteDesBesoinsComponent {
 
     // 🟦 MODE CREATE
     console.log('Creating with payload:', payload);
-    this.besoinsService.createCollecteBesoins(payload, this.prenomNom! + ' (' + this.poste + ')').subscribe({
+    this.besoinsService.createCollecteBesoins(payload, this.prenomNom! + ' (' + this.poste + ')').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.toastr.success("Demande créée avec succès !");
         this.resetForm();
@@ -194,7 +196,7 @@ export class CollecteDesBesoinsComponent {
   changerStatut(statut: string) {
     if (!this.demandeId) return;
 
-    this.besoinsService.modifyStatutBesoins(this.demandeId, statut).subscribe({
+    this.besoinsService.modifyStatutBesoins(this.demandeId, statut).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.form.patchValue({ statut });
         this.toastr.success(`Statut changé : ${statut}`);

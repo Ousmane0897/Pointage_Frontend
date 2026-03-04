@@ -2,7 +2,7 @@
     <h1 class="text-2xl font-bold">Statistiques par agence - <span class="text-green-600">Point</span><span
             class="text-pink-600">IC</span></h1>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div *ngFor="let stat of stats | keyvalue" class="bg-white p-4 rounded-2xl shadow">
+        <div *ngFor="let stat of stats | keyvalue;" class="bg-white p-4 rounded-2xl shadow">
             <p class="text-xl text-pink-800 items-center justify-center">{{ stat.key }}</p>
             <div class="space-y-1">
                 <div class="bg-white p-4 rounded-2xl shadow">

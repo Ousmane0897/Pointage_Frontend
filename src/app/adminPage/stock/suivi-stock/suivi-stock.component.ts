@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { StockService } from '../../../services/stock.service';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'app-suivi-stock',
@@ -13,10 +14,12 @@ export class SuiviStockComponent {
   suivi: any[] = [];
   loading = true;
 
+  private destroy$ = inject(DestroyRef);
+
   constructor(private stockService: StockService) {}
 
   ngOnInit(): void {
-    this.stockService.getSuiviStock().subscribe({
+    this.stockService.getSuiviStock().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (data) => {
         this.suivi = data;
         this.loading = false; 

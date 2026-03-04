@@ -4,7 +4,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { MatDialog } from '@angular/material/dialog';
 import { EmployeCompletService } from '../../services/employe-complet.service';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, debounceTime, distinctUntilChanged, EMPTY, finalize, forkJoin, map, of, Subject, switchMap, takeUntil, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, debounceTime, distinctUntilChanged, EMPTY, finalize, forkJoin, map, of, Subject, switchMap, takeUntil, tap, throwError } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import * as XLSX from 'xlsx';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -59,7 +59,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   // 🟢 Observables utilitaires
   private destroy$ = new Subject<void>(); // Pour gérer le cycle de vie des abonnements
-  private searchSubject = new Subject<string>(); // Pour la recherche avec debounce 
+  private searchSubject = new BehaviorSubject<string>(''); // Permet de gérer les recherches en temps réel avec des opérateurs RxJS (debounceTime, distinctUntilChanged, switchMap, etc.)
 
 
   modalData: EmployeComplet = {
@@ -127,9 +127,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     
-   
     this.setupSearch();
-    this.searchSubject.next(''); // chargement initial
     this.getAvailableSites();
   }
 
@@ -142,25 +140,30 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   }
 
   setupSearch(): void {
-    this.spinner.show(); // Afficher le spinner de chargement pendant la recherche
-    this.searchSubject.pipe(
-      debounceTime(300),
-      map(q => q.trim().toLowerCase()),
-      distinctUntilChanged(),
-      switchMap(q =>
-        this.employeService.getEmployesComplet(this.page, this.size, q)
-      ),
-      catchError(() => EMPTY),
-      takeUntil(this.destroy$)
-    ).subscribe(res => {
-      this.spinner.hide(); // Cacher le spinner une fois les données chargées
-      this.employeComplet = res.content;
-      this.total = res.total ?? 0;
-      this.totalPages = Math.ceil(this.total / this.size);
-      this.loading = false;
-    });
-  }
-
+  this.spinner.show();
+  this.searchSubject.pipe(
+    debounceTime(300),
+    map(q => q.trim().toLowerCase()),
+    distinctUntilChanged(),
+    tap(() => {
+      this.loading = true;
+    }),
+    switchMap(q =>
+      this.employeService.getEmployesComplet(this.page, this.size, q).pipe(
+        catchError(() => EMPTY),
+        finalize(() => {
+          this.spinner.hide();
+          this.loading = false;
+        })
+      )
+    ),
+    takeUntil(this.destroy$)
+  ).subscribe(res => {
+    this.employeComplet = res.content;
+    this.total = res.total ?? 0;
+    this.totalPages = Math.ceil(this.total / this.size);
+  });
+}
   openAddModal(): void {
     this.isEditMode = false;
     this.modalData = {
@@ -915,4 +918,8 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
      Toutes les souscriptions takeUntil(this.destroy$) sont automatiquement désabonnées.
      Tu évites toute fuite de mémoire quand le composant est détruit (par exemple, quand tu changes de page).
    */
+
+  trackById(_: number, item: EmployeComplet): string { // _: number est l'index, mais on ne l'utilise pas, d'où le nom _ pour indiquer que c'est volontairement ignoré.
+    return item.agentId;
+  }
 }

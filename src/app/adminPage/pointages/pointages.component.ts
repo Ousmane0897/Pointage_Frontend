@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { PointageService } from '../../services/pointage.service';
 import { Pointage } from '../../models/pointage.model';
 import { Observable } from 'rxjs';
@@ -7,15 +7,17 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
-    selector: 'app-pointages',
-    imports: [
-        CommonModule,
-        FormsModule,
-    ],
-    templateUrl: './pointages.component.html',
-    styleUrl: './pointages.component.scss'
+  selector: 'app-pointages',
+  imports: [
+    CommonModule,
+    FormsModule,
+  ],
+  templateUrl: './pointages.component.html',
+  styleUrl: './pointages.component.scss'
 })
 export class PointagesComponent implements OnInit {
 
@@ -27,20 +29,24 @@ export class PointagesComponent implements OnInit {
   toastMessage: string | null = null;
   toastTimeout: any;
 
-  constructor(private pointageService: PointageService) { }
+  private destroy$ = inject(DestroyRef);
+
+  constructor(private pointageService: PointageService, private spinner: NgxSpinnerService) { }
 
   ngOnInit(): void {
     this.loadData();
   }
 
   loadData() {
+    this.spinner.show();
     this.pointages$ = this.pointageService.getPointages();
-    this.pointages$.subscribe(data => {
+    this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
       this.pointages = data;
+      this.spinner.hide();
     });
   }
-  
-   get filteredPointages() {
+
+  get filteredPointages() {
     const term = this.searchText.toLowerCase();
     return this.pointages.filter(pointage =>
       `${pointage.codeSecret} ${pointage.prenom} ${pointage.nom} ${pointage.date} 
@@ -50,25 +56,27 @@ export class PointagesComponent implements OnInit {
     );
   }
 
-   exportExcel() {
-      this.pointages$.subscribe(data => {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Pointages');
-        XLSX.writeFile(wb, 'pointages.xlsx');
-      });
-    }
-  
-    exportPdf() {
-      this.pointages$.subscribe(data => {
-        const doc = new jsPDF();
-        autoTable(doc, {
-          head: [['codeSecret', 'Prénom', 'Nom', 'Date', 'Heure arrivée', 'Heure départ', 'Durée', 'Status', 'Site']],
-          body: data.map(p => [p.codeSecret,p.prenom, p.nom, p.date, p.heureArrive, p.heureDepart, p.duree, p.status, p.site])
-        });
-        doc.save('pointages.pdf');
-      });
-    }
-  
+  exportExcel() {
+    this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Pointages');
+      XLSX.writeFile(wb, 'pointages.xlsx');
+    });
+  }
 
+  exportPdf() {
+    this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
+      const doc = new jsPDF();
+      autoTable(doc, {
+        head: [['codeSecret', 'Prénom', 'Nom', 'Date', 'Heure arrivée', 'Heure départ', 'Durée', 'Status', 'Site']],
+        body: data.map(p => [p.codeSecret, p.prenom, p.nom, p.date, p.heureArrive, p.heureDepart, p.duree, p.status, p.site])
+      });
+      doc.save('pointages.pdf');
+    });
+  }
+
+  trackById(_: number, item: Pointage): string {
+    return item.codeSecret;
+  }
 }

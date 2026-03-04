@@ -35,7 +35,7 @@
     </div>
     <!-- item-list.component.html -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
-        <div *ngFor="let agence of filteredAgences"
+        <div *ngFor="let agence of filteredAgences; trackBy: trackById"
             class="rounded-2xl shadow-md p-6 hover:shadow-xl transition duration-300 relative cursor-pointer group"
             [ngClass]="{
                              'bg-red-500': agence.deplacementEmploye, 

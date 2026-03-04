@@ -122,7 +122,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let e of employeComplet" class="border-b hover:bg-gray-50">
+                <tr *ngFor="let e of employeComplet; trackBy: trackById" class="border-b hover:bg-gray-50">
                     <!-- Photo -->
                     <td class="p-3">
                         <!-- Image -->

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { StockService } from '../../../services/stock.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
@@ -10,6 +10,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { Produit } from '../../../models/produit.model';
 import { ProduitService } from '../../../services/produit.service';
 import { MouvementEntreeStock } from '../../../models/MouvementEntreeStock.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'app-entrees',
@@ -45,6 +46,8 @@ export class EntreesComponent implements OnInit {
 
   }
 
+private destroy$ = inject(DestroyRef);
+
 
   constructor(private stockService: StockService,
     private toastr: ToastrService,
@@ -72,7 +75,7 @@ export class EntreesComponent implements OnInit {
 
 
   getProduits() {
-    this.produitService.getAllProduits().subscribe({
+    this.produitService.getAllProduits().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (data) => {
         this.produits = data;
       },
@@ -91,7 +94,7 @@ export class EntreesComponent implements OnInit {
       dateDePeremption: this.nouvelleEntree.dateDePeremption?.toISOString()
     };
 
-    this.stockService.ajouterEntree(payload).subscribe({
+    this.stockService.ajouterEntree(payload).pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (data) => {
         this.toastr.success('Entrée de stock ajoutée avec succès', 'Succès');
         this.nouvelleEntree = {

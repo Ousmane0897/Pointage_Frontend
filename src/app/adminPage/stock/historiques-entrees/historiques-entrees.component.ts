@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { MouvementEntreeStock } from '../../../models/MouvementEntreeStock.model';
 import { StockService } from '../../../services/stock.service';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-historiques-entrees',
@@ -15,6 +16,7 @@ export class HistoriquesEntreesComponent implements OnInit {
 
   entrees: MouvementEntreeStock[] = [];
   selectedProduit: any = null;
+  private destroy$ = inject(DestroyRef);
 
   constructor(private stockService: StockService, private toastr: ToastrService) { }
 
@@ -31,7 +33,7 @@ export class HistoriquesEntreesComponent implements OnInit {
   }
 
   loadEntrees() {
-    this.stockService.getEntrees().subscribe({
+    this.stockService.getEntrees().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (data) => {
         this.entrees = data.map(entree => ({
           ...entree,
@@ -44,6 +46,11 @@ export class HistoriquesEntreesComponent implements OnInit {
         this.toastr.error('Erreur lors du chargement des entrées de stock', 'Erreur');
       }
     });
+  }
+
+  trackById(_: number, item: MouvementEntreeStock): string { // Optimisation Angular pour le rendu de listes. _ est un paramètre inutilisé, on utilise item.codeProduit comme identifiant unique pour chaque entrée de stock.
+    return item.codeProduit;
+
   }
 
 
