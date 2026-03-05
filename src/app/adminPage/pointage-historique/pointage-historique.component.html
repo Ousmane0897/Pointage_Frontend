@@ -10,6 +10,10 @@
 
     <input type="date" [(ngModel)]="dateFin" (change)="onDateChange()" class="border p-2 rounded w-full" />
 
+    <button (click)="resetFilters()" class="bg-gray-500 text-white px-3 py-2 rounded">
+      Reset
+    </button>
+
     <div class="flex gap-2">
       <button (click)="exportExcel()" class="bg-green-600 text-white px-3 py-2 rounded">
         Excel
@@ -25,8 +29,8 @@
     <thead class="bg-gray-100">
       <tr>
         <th class="p-2">Date</th>
+         <th class="p-2">Prénom</th>
         <th class="p-2">Nom</th>
-        <th class="p-2">Prénom</th>
         <th class="p-2">Arrivée</th>
         <th class="p-2">Départ</th>
         <th class="p-2">Durée</th>
@@ -37,12 +41,12 @@
     <tbody>
       <tr *ngFor="let p of pointages; trackBy: trackById" class="border-r text-center">
         <td class="p-2">{{ p.date | date:'dd/MM/yyyy' }}</td>
+         <td class="p-2">{{ p.prenom }}</td>
         <td class="p-2">{{ p.nom }}</td>
-        <td class="p-2">{{ p.prenom }}</td>
         <td class="p-2">{{ p.heureArrive }}</td>
         <td class="p-2">{{ p.heureDepart }}</td>
         <td class="p-2">{{ p.duree }}</td>
-        <td class="p-2">{{ p.site }}</td>
+        <td class="p-2">{{ p.site.join(', ') }}</td>
         <td class="p-2">{{ p.adresse }}</td>
       </tr>
     </tbody>
@@ -60,11 +64,5 @@
       ▶
     </button>
   </div>
-
-  <tr *ngIf="pointages.length === 0">
-    <td colspan="8" class="p-4 text-gray-500 text-center">
-      Aucun pointage trouvé
-    </td>
-  </tr>
 
 </div>

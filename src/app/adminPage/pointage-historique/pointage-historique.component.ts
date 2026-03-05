@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, Subject, debounceTime, startWith, switchMap, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, debounceTime, switchMap, takeUntil } from 'rxjs';
 import { PointageService } from '../../services/pointage.service';
 import { Pointage } from '../../models/pointage.model';
 import { NgxSpinnerService } from 'ngx-spinner';
@@ -12,7 +12,6 @@ import { NgxSpinnerService } from 'ngx-spinner';
   imports: [CommonModule, FormsModule],
   templateUrl: './pointage-historique.component.html',
   styleUrl: './pointage-historique.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PointageHistoriqueComponent implements OnInit, OnDestroy {
 
@@ -33,7 +32,7 @@ export class PointageHistoriqueComponent implements OnInit, OnDestroy {
   private trigger$ = new BehaviorSubject<void>(void 0); // Permet de déclencher la recherche à la fois au chargement et lors des changements de filtres/pagination. void 0 est utilisé pour indiquer que c'est un déclenchement initial sans données spécifiques à transmettre. Chaque fois que trigger$.next() est appelé, cela indique que les critères de recherche ont changé et que les données doivent être rechargées en fonction des nouveaux critères.
   private destroy$ = new Subject<void>();
 
-  constructor(private pointageService: PointageService, private spinner: NgxSpinnerService) {}
+  constructor(private pointageService: PointageService, private spinner: NgxSpinnerService) { }
 
   ngOnInit(): void {
 
@@ -76,6 +75,14 @@ export class PointageHistoriqueComponent implements OnInit, OnDestroy {
     this.trigger$.next();
   }
 
+  resetFilters() {
+    this.search = '';
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.page = 0;
+    this.trigger$.next();
+  }
+
   // 📄 Pagination
   changePage(newPage: number): void {
     if (newPage >= 0 && newPage < this.totalPages) {
@@ -112,6 +119,6 @@ export class PointageHistoriqueComponent implements OnInit, OnDestroy {
 
   // ⚡ Optimisation ngFor
   trackById(_: number, item: Pointage): string {
-    return item.codeSecret; // ou un autre identifiant unique
+    return item.id; // ou un autre identifiant unique
   }
 }

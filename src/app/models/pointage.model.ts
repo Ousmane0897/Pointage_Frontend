@@ -1,4 +1,5 @@
 export interface Pointage {
+    id: string;
     codeSecret: string;
     prenom: string;
     nom: string;
@@ -7,6 +8,6 @@ export interface Pointage {
     heureDepart: string;
     duree: string;
     status: string;
-    site: string;
+    site: string[];
     adresse: string;
 }
