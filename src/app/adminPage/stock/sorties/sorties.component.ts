@@ -11,8 +11,6 @@ import { debounceTime } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import {
-  MotifMouvementSortieStock,
-  MouvementSortieStock,
   TypeMouvement,
 } from '../../../models/MouvementSortieStock.model';
 import { Produit } from '../../../models/produit.model';
@@ -49,6 +47,7 @@ export class SortiesComponent implements OnInit {
   isResetting = false;
   showSubMotifs = false;
   closing = false;
+  produitsNames: string[] = []; // Pour le sélecteur de produits
 
   prenomNom: string | null = null;
   role: string | null = null;
@@ -122,6 +121,7 @@ export class SortiesComponent implements OnInit {
     });
 
     this.loadProduits();
+    this.loadProduitsNames();
     this.getAvailableAgences();
     this.ajouterProduit(); // commence avec 1 ligne
 
@@ -145,6 +145,13 @@ export class SortiesComponent implements OnInit {
   loadProduits() {
     this.produitService.getProduits().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
       next: (res) => (this.produits = res.content ?? res),
+      error: () => this.toastr.error('Erreur lors du chargement des produits', 'Erreur'),
+    });
+  }
+
+  loadProduitsNames() {
+    this.produitService.getAllProduitsNames().pipe(takeUntilDestroyed(this.destroy$)).subscribe({
+      next: (res) => (this.produitsNames = res),
       error: () => this.toastr.error('Erreur lors du chargement des produits', 'Erreur'),
     });
   }

@@ -64,6 +64,10 @@ getAllProduits(): Observable<Produit[]> {
   return this.http.get<Produit[]>(`${this.baseUrl}/produits/all`);
 }
 
+getAllProduitsNames(): Observable<string[]> {
+  return this.http.get<string[]>(`${this.baseUrl}/produits/getAllNomProduits`);
+}
+
 createProduit(produit: any): Observable<any> {
   return this.http.post<any>(`${this.baseUrl}/produits`, produit);
 }
