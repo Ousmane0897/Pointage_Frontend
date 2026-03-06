@@ -10,7 +10,7 @@ import { Pointage } from '../models/pointage.model';
 export class PointageService {
 
   private readonly deviceIdKey = 'device_id';
- private baseUrl = '/api';
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {
     this.createDeviceId();
