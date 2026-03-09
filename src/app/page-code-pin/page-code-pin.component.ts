@@ -178,20 +178,34 @@ export class PageCodePinComponent implements OnInit {
         }, 4000);
       },
       error: (err) => {
-        this.spinner.hide();
-        console.error('❌ API ERROR:', err);
 
-        if (err?.status === 429) {
+        this.spinner.hide();
+
+        console.error('API ERROR:', err);
+
+        if (err.status === 404) {
+
           this.toastr.error(
-            '⛔ Vous avez déjà pointé récemment avec ce téléphone.',
-            'Pointage refusé'
-          );
-        } else {
-          this.toastr.error(
-            '❌ Code employé invalide ou inexistant.',
+            '❌ Code employé invalide.',
             'Erreur de pointage'
           );
+
+        } else if (err.status === 429) {
+
+          this.toastr.error(
+            '⛔ Vous avez déjà pointé récemment.',
+            'Pointage refusé'
+          );
+
+        } else {
+
+          this.toastr.error(
+            'Erreur ' + err.status,
+            'Erreur serveur'
+          );
+
         }
+
       }
     });
   }

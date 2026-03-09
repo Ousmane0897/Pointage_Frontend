@@ -39,7 +39,7 @@ export class PointagesComponent implements OnInit {
 
   loadData() {
     this.spinner.show();
-    this.pointages$ = this.pointageService.getPointages();
+    this.pointages$ = this.pointageService.getTodayPointages();
     this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
       this.pointages = data;
       this.spinner.hide();

@@ -23,6 +23,8 @@ import { PlanificationService } from '../../services/planification.service';
 import { ToastrService } from 'ngx-toastr';
 import { finalize, interval, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { NgxSpinnerService } from 'ngx-spinner';
+import { S } from '@angular/material/error-options.d-CGdTZUYk';
 
 @Component({
   selector: 'app-calendar-employes',
@@ -103,12 +105,14 @@ export class CalendrierComponent implements OnInit {
 
   constructor(private employesService: EmployeService, private agence: AgencesService,
     private planification: PlanificationService, private toastr: ToastrService,
-    private http: HttpClient
+    private spinner: NgxSpinnerService
   ) { }
 
   ngOnInit() {
+    this.spinner.show();
     this.employesService.getEmployes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data: Employe[]) => {
       const events = this.generateYearlyEvents(data);
+      this.spinner.hide();
       this.events = events;
       this.applyFilter();
       this.getAvailableSites();

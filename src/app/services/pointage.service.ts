@@ -69,6 +69,10 @@ export class PointageService {
     return this.http.get<Pointage[]>(`${this.baseUrl}/pointages`);
   }
 
+  getTodayPointages(): Observable<Pointage[]> {
+    return this.http.get<Pointage[]>(`${this.baseUrl}/pointages/today`);
+  }
+
   searchHistorique(
     search: string = '', // 🔎 Terme de recherche (nom, prénom, code employé). La valeur par défaut est une chaîne vide.
     dateDebut: string,

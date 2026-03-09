@@ -129,6 +129,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     
     this.setupSearch();
     this.getAvailableSites();
+    
   }
 
 
