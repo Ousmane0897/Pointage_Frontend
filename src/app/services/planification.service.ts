@@ -87,6 +87,6 @@ export class PlanificationService {
 
    // Récupère toutes les demandes en attente
   getPendingRequests(): Observable<AnnulationRequestMessage[]> {
-    return this.http.get<AnnulationRequestMessage[]>('/planification/pending');
+    return this.http.get<AnnulationRequestMessage[]>(`${this.baseUrl}/planification/pending`);
   }
 }

@@ -13,7 +13,7 @@ import { Pointage } from '../models/pointage.model';
 export class FinalPage1Component implements OnInit {
 
 
- pointage!: Pointage;
+ pointage: Pointage | null = null;
 
   constructor(private route: ActivatedRoute, private pagecodeService: PageCodeService) {}
 

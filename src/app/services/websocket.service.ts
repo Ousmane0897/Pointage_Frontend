@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import SockJS from 'sockjs-client';
 import { Client, IMessage } from '@stomp/stompjs';
 import { Subject, Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class WebsocketService {
@@ -11,11 +12,14 @@ export class WebsocketService {
   private annulationResponses$ = new Subject<any>();
 
   constructor() {
+    const token = localStorage.getItem('token'); // Récupère le JWT depuis le localStorage
     this.client = new Client({
-      // Utilise SockJS pour le navigateur
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(environment.wsUrl), // ton API en prod ou localhost
       reconnectDelay: 5000,
-      debug: (str: string) => console.log('STOMP: ', str)
+      debug: (str: string) => console.log('STOMP: ', str),
+      connectHeaders: {
+        Authorization: `Bearer ${token}` // ⚡ ici on passe le JWT
+      }
     });
 
     this.client.onConnect = (frame) => {

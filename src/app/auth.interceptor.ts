@@ -42,9 +42,9 @@ export class AuthInterceptor implements HttpInterceptor {
 
     if (
       token &&
-      req.url.startsWith('/api/') &&
-      !req.url.startsWith('/api/login') &&
-      !req.url.startsWith('/api/pointages')
+      req.url.includes('/api/') &&
+      !req.url.includes('/api/login') &&
+      !req.url.includes('/api/pointages')
     ) {
       authReq = req.clone({
         setHeaders: { Authorization: `Bearer ${token}` }

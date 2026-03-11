@@ -34,7 +34,7 @@
                 <td class="p-2">{{ absent.prenom }}</td>
                 <td class="p-2">{{ absent.nom }}</td>
                 <td class="p-2">{{ absent.numero }}</td>
-                <td class="p-2">{{ absent.dateAbsence }}</td>
+                <td class="p-2">{{ absent.dateAbsence | date:'dd/MM/yyyy' }}</td>
                 <td class="p-2">{{ absent.motif }}</td>
                 <td class="p-2">{{ absent.justification }}</td>
                 <td class="p-2">{{ absent.site }}</td>
