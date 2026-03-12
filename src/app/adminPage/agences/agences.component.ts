@@ -42,7 +42,7 @@ export class AgencesComponent implements OnInit {
   employeeDeplacee!: Employe;
   employeeRemplacee!: Employe;
   joursOuverture: string[] = ['Lundi-Vendredi', 'Lundi-Samedi', 'Lundi-Dimanche'];
-  heuresTravail: string[] = ['06:00-10:00', '06:00-15:00', '06:00-19:00', '06:00-20:00', '06:00-23:00'];
+  heuresTravail: string[] = ['06:00-10:00', '06:00-15:00', '06:00-19:00', '06:00-20:00', '06:00-23:00', '09:00-18:00', '08:30-16:30'];
   nombreAgentsMaximum: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
   private destroy$ = new Subject<void>();
 
