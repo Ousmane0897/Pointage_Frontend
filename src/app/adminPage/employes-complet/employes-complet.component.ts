@@ -122,14 +122,15 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   constructor(private dialog: MatDialog,
     private employeService: EmployeCompletService,
-    private toastr: ToastrService, private agenceService: AgencesService, private spinner: NgxSpinnerService
+    private toastr: ToastrService, private agenceService: AgencesService, private spinner: NgxSpinnerService,
+
   ) { }
 
   ngOnInit(): void {
-    
+
     this.setupSearch();
     this.getAvailableSites();
-    
+
   }
 
 
@@ -141,30 +142,30 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   }
 
   setupSearch(): void {
-  this.spinner.show();
-  this.searchSubject.pipe(
-    debounceTime(300),
-    map(q => q.trim().toLowerCase()),
-    distinctUntilChanged(),
-    tap(() => {
-      this.loading = true;
-    }),
-    switchMap(q =>
-      this.employeService.getEmployesComplet(this.page, this.size, q).pipe(
-        catchError(() => EMPTY),
-        finalize(() => {
-          this.spinner.hide();
-          this.loading = false;
-        })
-      )
-    ),
-    takeUntil(this.destroy$)
-  ).subscribe(res => {
-    this.employeComplet = res.content;
-    this.total = res.total ?? 0;
-    this.totalPages = Math.ceil(this.total / this.size);
-  });
-}
+    this.spinner.show();
+    this.searchSubject.pipe(
+      debounceTime(300),
+      map(q => q.trim().toLowerCase()),
+      distinctUntilChanged(),
+      tap(() => {
+        this.loading = true;
+      }),
+      switchMap(q =>
+        this.employeService.getEmployesComplet(this.page, this.size, q).pipe(
+          catchError(() => EMPTY),
+          finalize(() => {
+            this.spinner.hide();
+            this.loading = false;
+          })
+        )
+      ),
+      takeUntil(this.destroy$)
+    ).subscribe(res => {
+      this.employeComplet = res.content;
+      this.total = res.total ?? 0;
+      this.totalPages = Math.ceil(this.total / this.size);
+    });
+  }
   openAddModal(): void {
     this.isEditMode = false;
     this.modalData = {
@@ -758,38 +759,45 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
 
   importerDepuisExcel() {
-    if (this.preview.length === 0) {
-      this.toastr.error('Aucune donnée à importer.', 'Erreur');
-      return;
-    }
+    this.spinner.show();
 
-    this.isLoading = true;
+    setTimeout(() => {
+      if (this.preview.length === 0) {
+        this.spinner.hide();
+        this.toastr.error('Aucune donnée à importer.', 'Erreur');
+        return;
+      }
 
-    const payload = this.preview.map(emp => this.preparePayloadForBackend(emp));
 
 
-    this.employeService.importEmployes(payload)
-      .pipe(finalize(() => this.isLoading = false))
-      .subscribe({
-        next: res => {
-          this.toastr.success(`${res.success.length} employés importés avec succès`, 'Succès');
+      this.isLoading = true;
 
-          if (res?.errors?.length > 0) {
-            this.toastr.warning(
-              `${res.errors.length} lignes ont échoué`,
-              'Avertissement'
-            );
-            console.table(res.errors);
+      const payload = this.preview.map(emp => this.preparePayloadForBackend(emp));
+
+
+      this.employeService.importEmployes(payload)
+        .pipe(finalize(() => this.isLoading = false))
+        .subscribe({
+          next: res => {
+            this.spinner.hide();
+            this.toastr.success(`${res.success.length} employés importés avec succès`, 'Succès');
+            if (res?.errors?.length > 0) {
+              this.toastr.warning(
+                `${res.errors.length} lignes ont échoué`,
+                'Avertissement'
+              );
+              console.table(res.errors);
+            }
+
+            this.preview = [];
+            this.loadEmployes();
+          },
+          error: err => {
+            console.error(err);
+            this.toastr.error("Erreur lors de l'import", 'Erreur');
           }
-
-          this.preview = [];
-          this.loadEmployes();
-        },
-        error: err => {
-          console.error(err);
-          this.toastr.error("Erreur lors de l'import", 'Erreur');
-        }
-      });
+        });
+    }, 0);
   }
 
 
@@ -851,6 +859,12 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     if (typeof value === 'string') {
       if (value.includes('/')) {
         const [d, m, y] = value.split('/');
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+
+      // 🟣 Cas 4: Excel fournit une string (12.03.1990)
+      if (value.includes('.')) {
+        const [d, m, y] = value.split('.');
         return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
       }
 

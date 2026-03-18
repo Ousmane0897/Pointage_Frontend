@@ -10,7 +10,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import frLocale from '@fullcalendar/core/locales/fr';
 import { Employe } from '../../models/employe.model';
 import { EmployeService } from '../../services/employe.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; 
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EventInput } from '@fullcalendar/core';
 import { AgencesService } from '../../services/agences.service';
 import { Planification } from '../../models/planification.model';
@@ -123,10 +123,10 @@ export class CalendrierComponent implements OnInit {
     this.refreshEmployes();
 
     interval(10000)
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(() => {
-      this.refreshEmployes();
-    });
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.refreshEmployes();
+      });
 
   }
 
@@ -138,12 +138,12 @@ export class CalendrierComponent implements OnInit {
   }
 
   getEmployesDeplaces() {
-  this.employesService.getEmployeEnDeplacement()
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(data => {
-      this.employesDeplaces = data ?? [];
-    });
-}
+    this.employesService.getEmployeEnDeplacement()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(data => {
+        this.employesDeplaces = data ?? [];
+      });
+  }
 
   EmployeesDansUnSite() {
     const site = this.modalData.siteDestination?.[0];
@@ -225,7 +225,7 @@ export class CalendrierComponent implements OnInit {
       this.planification.addPlanification(payload).pipe(
         finalize(() => this.closeModal()) //   finalize est appelé une seule fois, à la fin de l’Observable, qu’il y ait eu succès ou erreur
         //Idéal pour faire des actions « propres » comme: fermer un modal, arrêter un loader/spinner, réinitialiser un formulaire
-        ,takeUntilDestroyed(this.destroyRef)
+        , takeUntilDestroyed(this.destroyRef)
       ).subscribe({
         next: () => {
           console.log('site origine:', this.modalData.nomSite);
@@ -296,11 +296,52 @@ export class CalendrierComponent implements OnInit {
     return new Date(date.setDate(diff));
   }
 
-  combineDateAndTime(date: Date, time: string) {
-    const [hours, minutes] = time.split(':').map(Number);
-    const newDate = new Date(date);
-    newDate.setHours(hours, minutes, 0, 0);
-    return newDate.toISOString();
+  combineDateAndTime(date: any, time: string): string | null {
+    if (!date || !time) return null;
+
+    let parsedDate: Date;
+
+    // 🟢 Cas 1 : déjà une Date
+    if (date instanceof Date) {
+      parsedDate = date;
+    }
+    // 🟡 Cas 2 : format "dd.MM.yyyy"
+    else if (typeof date === 'string' && date.includes('.')) {
+      const parts = date.split('.');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        parsedDate = new Date(`${year}-${month}-${day}`);
+      } else {
+        console.error("Format date invalide :", date);
+        return null;
+      }
+    }
+    // 🔵 Cas 3 : fallback
+    else {
+      parsedDate = new Date(date);
+    }
+
+    // ❌ Vérification critique de la date
+    if (isNaN(parsedDate.getTime())) {
+      console.error("Date invalide :", date);
+      return null;
+    }
+
+    // 🔧 Nettoyage du format de l'heure : transformer "06H00" en "06:00"
+    const cleanTime = time.includes('H') ? time.replace('H', ':') : time;
+
+    // ⏰ Extraction heures et minutes
+    const timeParts = cleanTime.split(':').map(Number);
+    if (timeParts.length < 2 || timeParts.some(isNaN)) {
+      console.error("Heure invalide :", time);
+      return null;
+    }
+
+    const [hours, minutes] = timeParts;
+
+    parsedDate.setHours(hours, minutes, 0, 0);
+
+    return parsedDate.toISOString();
   }
 
   handleEventClick(clickInfo: any) {
@@ -371,8 +412,8 @@ export class CalendrierComponent implements OnInit {
           events.push({
             id: `${emp.codeSecret}-${month + 1}-${day}-1`,
             title: `${emp.prenom} ${emp.nom}`,
-            start: this.combineDateAndTime(currentDay, emp.heureDebut),
-            end: this.combineDateAndTime(currentDay, emp.heureFin),
+            start: this.combineDateAndTime(currentDay, emp.heureDebut) ?? undefined,
+            end: this.combineDateAndTime(currentDay, emp.heureFin) ?? undefined,
             extendedProps: {
               codeEmploye: emp.codeSecret,
               intervention: emp.intervention,
@@ -402,8 +443,8 @@ export class CalendrierComponent implements OnInit {
             events.push({
               id: `${emp.codeSecret}-${month + 1}-${day}-2`,
               title: `${emp.prenom} ${emp.nom}`,
-              start: this.combineDateAndTime(currentDay, emp.heureDebut2),
-              end: this.combineDateAndTime(currentDay, emp.heureFin2),
+              start: this.combineDateAndTime(currentDay, emp.heureDebut2) ?? undefined,
+              end: this.combineDateAndTime(currentDay, emp.heureFin2) ?? undefined,
               extendedProps: {
                 codeEmploye: emp.codeSecret,
                 intervention: emp.intervention,

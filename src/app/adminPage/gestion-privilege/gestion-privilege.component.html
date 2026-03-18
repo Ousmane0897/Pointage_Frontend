@@ -19,7 +19,7 @@
       <span>Ajouter</span></button>
 
   </div>
-  
+
   <!-- 📋 Tableau -->
   <div class="overflow-x-auto">
     <table class="min-w-[1200px] w-full border text-sm">
@@ -94,11 +94,8 @@
   </div>
 
   <!-- Modal d'ajout/modification -->
-  <div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center 
-            ease-in-out bg-black bg-opacity-50 z-50">
-
-    <div class="bg-white p-6 rounded-lg w-full max-w-md 
-              max-h-[90vh] overflow-y-auto">
+  <div *ngIf="showModal" class="fixed inset-0 flex items-center justify-center ease-in-out bg-black bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
 
       <h2 class="text-xl font-semibold mb-4">
         {{ isEditMode ? 'Modifier' : 'Ajouter' }} un utilisateur
@@ -106,6 +103,7 @@
 
       <form (ngSubmit)="saveModal(form)" #form="ngForm" novalidate>
 
+        <!-- Prénom -->
         <div class="mb-2">
           <input type="text" class="w-full p-2 border rounded" #prenom="ngModel" name="prenom"
             [(ngModel)]="modalData.prenom" placeholder="Prénom" required />
@@ -114,28 +112,28 @@
           </p>
         </div>
 
+        <!-- Nom -->
         <div class="mb-2">
           <input type="text" class="w-full p-2 border rounded" #nom="ngModel" name="nom" [(ngModel)]="modalData.nom"
             placeholder="Nom" required />
-          <p class="text-red-500 text-sm" *ngIf="form.submitted && !nom.valid">Nom requis</p>
+          <p class="text-red-500 text-sm" *ngIf="form.submitted && !nom.valid">
+            Nom requis
+          </p>
         </div>
 
+        <!-- Email -->
         <div class="mb-2">
           <input type="email" class="w-full p-2 border rounded" #email="ngModel" name="email"
             [(ngModel)]="modalData.email" placeholder="Email" pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$" required email />
-
-          <!-- Erreur si email vide OU format incorrect -->
           <p class="text-red-500 text-sm" *ngIf="form.submitted && email.errors">
-            <!-- email invalide -->
             <span *ngIf="email.errors['required']">Email requis.</span>
             <span *ngIf="email.errors['email'] || email.errors['pattern']">Format d’email invalide.</span>
           </p>
-
         </div>
 
-
+        <!-- Mot de passe -->
         <div class="mb-2 relative">
-          <input [type]=" showPassword ? 'text' : 'password' " class="w-full p-2 border rounded" #motDePasse="ngModel"
+          <input [type]="showPassword ? 'text' : 'password'" class="w-full p-2 border rounded" #motDePasse="ngModel"
             name="motDePasse" [(ngModel)]="modalData.password" placeholder="Entrez le mot de passe" required />
           <button type="button" (click)="togglePasswordVisibility()"
             class="absolute right-3 top-2 text-gray-500 hover:text-gray-800">
@@ -145,20 +143,24 @@
             Mot de passe requis
           </p>
         </div>
+
+        <!-- Confirmer mot de passe -->
         <div class="mb-2 relative">
           <input [type]="showPassword ? 'text' : 'password'" class="w-full p-2 border rounded" name="confirmPassword"
             [(ngModel)]="confirmPassword" placeholder="Confirmez le mot de passe" required />
-
           <p class="text-red-500 text-sm" *ngIf="form.submitted && modalData.password !== confirmPassword">
             Les mots de passe ne correspondent pas.
           </p>
         </div>
 
+        <!-- Poste -->
         <div class="mb-2">
           <input type="text" class="w-full p-2 border rounded" #poste="ngModel" name="poste"
             [(ngModel)]="modalData.poste" placeholder="Poste" required />
           <p class="text-red-500 text-sm" *ngIf="form.submitted && !poste.valid">Poste requis</p>
         </div>
+
+        <!-- Rôle -->
         <div class="mb-2">
           <select class="w-full p-2 border rounded" name="role" [(ngModel)]="modalData.role" required>
             <option value="" disabled selected>Choisir le rôle</option>
@@ -167,96 +169,158 @@
           <p class="text-red-500 text-sm" *ngIf="form.submitted && !form.controls['role']?.valid">Rôle requis</p>
         </div>
 
+        <!-- Modules autorisés -->
         <div class="mb-2">
           <label class="font-semibold">Module(s) autorisé(s) :</label>
 
+          <!-- Modules principaux -->
           <div class="grid grid-cols-2 gap-2 mt-2">
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Dashboard" [(ngModel)]="modalData.modulesAutorises.Dashboard" />
+              <input type="checkbox" name="Dashboard" [(ngModel)]="modalData.modulesAutorises.dashboard" />
               <span>Dashboard</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Admin" [(ngModel)]="modalData.modulesAutorises.Admin" />
+              <input type="checkbox" name="Admin" [(ngModel)]="modalData.modulesAutorises.admin" />
               <span>Gestion des utilisateurs</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="StatistiquesAgences" [(ngModel)]="modalData.modulesAutorises.StatistiquesAgences" />
+              <input type="checkbox" name="StatistiquesAgences"
+                [(ngModel)]="modalData.modulesAutorises.statistiquesAgences" />
               <span>Statistiques des agences</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Planifications" [(ngModel)]="modalData.modulesAutorises.Planifications" />
+              <input type="checkbox" name="Planifications" [(ngModel)]="modalData.modulesAutorises.planifications" />
               <span>Planifications</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Calendrier" [(ngModel)]="modalData.modulesAutorises.Calendrier" />
+              <input type="checkbox" name="Calendrier" [(ngModel)]="modalData.modulesAutorises.calendrier" />
               <span>Calendrier</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Stock" [(ngModel)]="modalData.modulesAutorises.Stock" />
-              <span>Gestion du stock</span>
-            </label>
-
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="CollecteLivraison" [(ngModel)]="modalData.modulesAutorises.CollecteLivraison" />
-              <span>Collecte et livraison</span>
-            </label>
-
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="JourFeries" [(ngModel)]="modalData.modulesAutorises.JourFeries" />
+              <input type="checkbox" name="JourFeries" [(ngModel)]="modalData.modulesAutorises.jourFeries" />
               <span>Jours fériés</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Employes" [(ngModel)]="modalData.modulesAutorises.Employes" />
+              <input type="checkbox" name="Employes" [(ngModel)]="modalData.modulesAutorises.employes" />
               <span>Gestion des employés</span>
             </label>
-
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Agences" [(ngModel)]="modalData.modulesAutorises.Agences" />
+              <input type="checkbox" name="Agences" [(ngModel)]="modalData.modulesAutorises.agences" />
               <span>Agences</span>
             </label>
+          </div>
 
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Absences" [(ngModel)]="modalData.modulesAutorises.Absences" />
-              <span>Absences</span>
-            </label>
+          <!-- Stock -->
+          <div class="mb-2 mt-2">
+            <label class="font-semibold">Stock :</label>
+            <div class="ml-4 mt-2 space-y-1">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="stockProduits" [(ngModel)]="modalData.modulesAutorises.stock.produits">
+                <span>Produits</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="stockEntrees" [(ngModel)]="modalData.modulesAutorises.stock.entrees">
+                <span>Entrées</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="stockSorties" [(ngModel)]="modalData.modulesAutorises.stock.sorties">
+                <span>Sorties</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="stockSuivis" [(ngModel)]="modalData.modulesAutorises.stock.suivis">
+                <span>Suivis</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="stockHistoriquesEntrees"
+                  [(ngModel)]="modalData.modulesAutorises.stock.historiquesEntrees">
+                <span>Historiques des entrées</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="stockHistoriquesSorties"
+                  [(ngModel)]="modalData.modulesAutorises.stock.historiquesSorties">
+                <span>Historiques des sorties</span>
+              </label>
+            </div>
+          </div>
 
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Pointages" [(ngModel)]="modalData.modulesAutorises.Pointages" />
-              <span>Pointage des agents</span>
+          <!-- Collecte & Livraison -->
+          <div class="mb-2 mt-2">
+            <label class="font-semibold">Collecte & Livraison :</label>
+            <div class="ml-4 mt-2 space-y-1">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="collecteBesoins"
+                  [(ngModel)]="modalData.modulesAutorises.collecteLivraison.collecteBesoins">
+                <span>Collecte des besoins</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="suiviLivraison"
+                  [(ngModel)]="modalData.modulesAutorises.collecteLivraison.suiviLivraison">
+                <span>Suivi de la livraison</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Absences -->
+          <div class="mb-2 mt-2">
+            <label class="font-semibold">Absences :</label>
+            <div class="ml-4 mt-2 space-y-1">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="absencesTempsReel"
+                  [(ngModel)]="modalData.modulesAutorises.absences.tempsReel">
+                <span>Absences temps réel</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="absencesHistorique"
+                  [(ngModel)]="modalData.modulesAutorises.absences.historiqueAbsences">
+                <span>Historique des absences</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Pointages -->
+          <div class="mb-2 mt-2">
+            <label class="font-semibold">Pointages :</label>
+            <div class="ml-4 mt-2 space-y-1">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="pointagesDuJour"
+                  [(ngModel)]="modalData.modulesAutorises.pointages.pointagesDuJour">
+                <span>Pointages du jour</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="pointagesHistorique"
+                  [(ngModel)]="modalData.modulesAutorises.pointages.historiquePointages">
+                <span>Historique des pointages</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Motif désactivation -->
+          <div class="mb-2">
+            <input type="text" class="w-full p-2 border rounded" name="motifDesactivation"
+              [(ngModel)]="modalData.motifDesactivation" placeholder="Laissez ce champ vide si l'admin est actif" />
+            <p class="text-red-500 text-sm"
+              *ngIf="!modalData.active && form.submitted && !form.controls['motifDesactivation']?.valid">
+              Motif de désactivation requis
+            </p>
+          </div>
+
+          <!-- Active -->
+          <div class="mb-4">
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="active" [(ngModel)]="modalData.active"
+                class="form-checkbox h-5 w-5 text-blue-600" />
+              <span class="ml-2">Activer cet admin</span>
             </label>
           </div>
-        </div>
 
-        <div class="mb-2">
-          <input type="text" class="w-full p-2 border rounded" name="motifDesactivation"
-            [(ngModel)]="modalData.motifDesactivation" placeholder="Laissez ce champ vide si l'admin est active!" />
-          <p class="text-red-500 text-sm"
-            *ngIf="!modalData.active && form.submitted && !form.controls['motifDesactivation']?.valid">
-            Motif de désactivation requis
-          </p>
-        </div>
-
-        <div class="mb-4">
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="active" [(ngModel)]="modalData.active"
-              class="form-checkbox h-5 w-5 text-blue-600" />
-            <span class="ml-2">Activer cet admin</span>
-          </label>
-        </div>
-
-        <div class="flex justify-end">
-          <button type="button" (click)="closeModal()"
-            class="mr-2 px-4 py-2 bg-gray-400 text-white rounded">Annuler</button>
-          <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-green-600 text-white rounded">
-            {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
-          </button>
+          <!-- Boutons -->
+          <div class="flex justify-end">
+            <button type="button" (click)="closeModal()"
+              class="mr-2 px-4 py-2 bg-gray-400 text-white rounded">Annuler</button>
+            <button type="submit" [disabled]="form.invalid" class="px-4 py-2 bg-green-600 text-white rounded">
+              {{ isEditMode ? 'Mettre à jour' : 'Ajouter' }}
+            </button>
+          </div>
         </div>
       </form>
     </div>

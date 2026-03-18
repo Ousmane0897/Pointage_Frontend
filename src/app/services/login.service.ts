@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { Router } from '@angular/router';
+import { ModulesAutorises } from '../models/admin.model';
 
 
 @Injectable({
@@ -10,8 +11,8 @@ import { Router } from '@angular/router';
 })
 export class LoginService {
 
-  private permissionsSubject = new BehaviorSubject<any>({});
-  permissions$ = this.permissionsSubject.asObservable(); // Observable pour les modules autorisés
+  
+  permissions$ = new BehaviorSubject<ModulesAutorises>({} as ModulesAutorises); // Observable pour les modules autorisés de l'utilisateur
 
   private baseUrl = environment.apiUrl
 
@@ -20,19 +21,17 @@ export class LoginService {
   permissionsChanged = new Subject<void>();
 
 
-  notifyPermissionsChanged() {
-    const payload = this.decodeToken();
-    const modules = payload?.modules || {};
-    this.permissionsSubject.next(modules);
+  setUserPermissions(permissions: ModulesAutorises) {
+    localStorage.setItem('modulesAutorises', JSON.stringify(permissions));
+    this.permissions$.next(permissions); // Met à jour l'observable avec les nouvelles permissions
   }
 
-  getUserPermissions(): any {
-    const fromStorage = localStorage.getItem("modulesAutorises");
-    if (fromStorage) return JSON.parse(fromStorage);
-
-    const payload = this.decodeToken();
-    return payload?.modules || {};
+  getUserPermissions(): ModulesAutorises {
+    const data = localStorage.getItem('modulesAutorises');
+    return data ? JSON.parse(data) : {} as ModulesAutorises;
   }
+
+
 
   changePassword(email: string, oldPassword: string, newPassword: string, confirmPassword: string, role: string | null) {
     return this.http.post<{ message: string, token: string }>(`${this.baseUrl}/login/change-password`, { email, oldPassword, newPassword, confirmPassword, role }); // message est une confirmation du changement de mot de passe en provenance du backend
@@ -103,7 +102,7 @@ export class LoginService {
     return true;
   }
 
-  isTokenExpired(token: string): boolean { 
+  isTokenExpired(token: string): boolean {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const now = Math.floor(Date.now() / 1000);

@@ -16,7 +16,7 @@ import { ToastrService } from 'ngx-toastr';
     MatIconModule,
     ReactiveFormsModule,
     RouterLinkWithHref
-],
+  ],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
@@ -60,56 +60,55 @@ export class HomePageComponent {
 
 
   login() {
-  const email = this.contactForm.get('email')?.value;
-  const password = this.contactForm.get('password')?.value;
+    const email = this.contactForm.get('email')?.value;
+    const password = this.contactForm.get('password')?.value;
 
-  this.loginService.login(email, password).subscribe({
-    next: (res) => {
+    this.loginService.login(email, password).subscribe({
+      next: (res) => {
 
-      // 1️⃣ Stocker le token
-      this.loginService.setToken(res.token);
+        // 1️⃣ Stocker le token
+        this.loginService.setToken(res.token);
 
-      // 2️⃣ Décoder le token JWT
-      const decoded = this.loginService.decodeToken();
-      console.log("TOKEN DECODED :", decoded);
+        // 2️⃣ Décoder le token JWT
+        const decoded = this.loginService.decodeToken();
+        console.log("TOKEN DECODED :", decoded);
 
-      // 2.1️⃣ Vérifier si l'utilisateur doit changer son mot de passe
-      const mustChangePassword = decoded.mustChangePassword === true;
+        // 2.1️⃣ Vérifier si l'utilisateur doit changer son mot de passe
+        const mustChangePassword = decoded.mustChangePassword === true;
 
-      // 3️⃣ Récupérer les permissions depuis le JWT (si tu les utilises)
-      const permissions = decoded.modules || {};
-      localStorage.setItem("modulesAutorises", JSON.stringify(permissions));
+        // 3️⃣ Récupérer les permissions depuis le JWT (si tu les utilises)
+        const permissions = decoded.modules || {};
 
-      // 4️⃣ Notifier le frontend des changements de permissions
-      this.loginService.notifyPermissionsChanged();
+        // ✅ UNE SEULE SOURCE
+        this.loginService.setUserPermissions(permissions);
 
-      this.closeForm();
-      if(decoded.mustChangePassword) {
-        this.toastr.info('Veuillez changer votre mot de passe lors de votre première connexion.', 'Information');
-      } else {
-        this.toastr.success('Connexion réussie !', 'Bienvenue');
-      }
-
-      // 5️⃣ Redirection basée sur mustChangePassword
-      setTimeout(() => {
-
-        if (mustChangePassword) {
-          console.log("Première connexion → redirection vers change-password");
-          this.router.navigateByUrl('/change-password'); 
+        this.closeForm();
+        if (decoded.mustChangePassword) {
+          this.toastr.info('Veuillez changer votre mot de passe lors de votre première connexion.', 'Information');
         } else {
-          console.log('Connexion normale → dashboard');
-          this.router.navigateByUrl('/admin/dashboard');
+          this.toastr.success('Connexion réussie !', 'Bienvenue');
         }
 
-      }, 200);
-    },
+        // 5️⃣ Redirection basée sur mustChangePassword
+        setTimeout(() => {
 
-    error: (err) => {
-      const errorMessage = err.error?.message || 'Email ou mot de passe incorrect';
-      this.toastr.error(errorMessage, 'Erreur de connexion');
-    }
-  });
-}
+          if (mustChangePassword) {
+            console.log("Première connexion → redirection vers change-password");
+            this.router.navigateByUrl('/change-password');
+          } else {
+            console.log('Connexion normale → dashboard');
+            this.router.navigateByUrl('/admin/dashboard');
+          }
+
+        }, 200);
+      },
+
+      error: (err) => {
+        const errorMessage = err.error?.message || 'Email ou mot de passe incorrect';
+        this.toastr.error(errorMessage, 'Erreur de connexion');
+      }
+    });
+  }
 
 
 

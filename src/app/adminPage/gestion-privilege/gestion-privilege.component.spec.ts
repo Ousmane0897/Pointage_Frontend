@@ -19,7 +19,7 @@ describe('GestionPrivilegeComponent', () => {
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let routerSpy: jasmine.SpyObj<Router>;
 
-  const mockAdmins  = [
+  const mockAdmins = [
     {
       id: '1',
       prenom: 'Ousmane',
@@ -29,19 +29,38 @@ describe('GestionPrivilegeComponent', () => {
       poste: 'IT',
       role: 'RESPONSABLE_IT',
       modulesAutorises: {
-        Dashboard: true,
-        Admin: false,
-        StatistiquesAgences: false,
-        Planifications: false,
-        Calendrier: false,
-        Stock: false,
-        CollecteLivraison: false,
-        JourFeries: false,
-        Employes: false,
-        Agences: false,
-        Absences: false,
-        Pointages: false,
-        RH: false
+        dashboard: true,
+        admin: false,
+        statistiquesAgences: false,
+        planifications: false,
+        calendrier: false,
+        jourFeries: false,
+        employes: false,
+        agences: false,
+
+        collecteLivraison: {
+          collecteBesoins: false,
+          suiviLivraison: false
+        },
+
+        absences: {
+          tempsReel: false,
+          historiqueAbsences: false
+        },
+
+        pointages: {
+          pointagesDuJour: false,
+          historiquePointages: false,
+        },
+
+        stock: {
+          produits: false,
+          entrees: false,
+          sorties: false,
+          suivis: false,
+          historiquesEntrees: false,
+          historiquesSorties: false
+        }
       },
       motifDesactivation: '',
       active: true,

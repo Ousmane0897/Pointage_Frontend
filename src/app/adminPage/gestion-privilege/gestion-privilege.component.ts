@@ -11,6 +11,7 @@ import { LoginService } from '../../services/login.service';
 import { Router, RouterOutlet } from '@angular/router';
 import { } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-gestion-privilege',
@@ -43,24 +44,42 @@ export class GestionPrivilegeComponent implements OnInit {
     poste: '',
     role: '',
     modulesAutorises: {
-      Dashboard: false,
-      Admin: false,
-      StatistiquesAgences: false,
-      Planifications: false,
-      Calendrier: false,
-      Stock: false,
-      CollecteLivraison: false,
-      JourFeries: false,
-      Employes: false,
-      Agences: false,
-      Absences: false,
-      Pointages: false,
-      RH: false
+      dashboard: false,
+      admin: false,
+      statistiquesAgences: false,
+      planifications: false,
+      calendrier: false,
+      jourFeries: false,
+      employes: false,
+      agences: false,
+
+      stock: {
+        produits: false,
+        entrees: false,
+        sorties: false,
+        suivis: false,
+        historiquesEntrees: false,
+        historiquesSorties: false
+      },
+      collecteLivraison: {
+        collecteBesoins: false,
+        suiviLivraison: false
+      },
+      absences: {
+        tempsReel: false,
+        historiqueAbsences: false
+      },
+      pointages: {
+        pointagesDuJour: false,
+        historiquePointages: false
+      }
+
     },
     motifDesactivation: '',
     active: true,
 
   }
+
   isEditMode = false;
   selectedId: string | null = null;
   confirmPassword: string = "";
@@ -69,7 +88,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
   constructor(private adminService: AdminService,
     private dialog: MatDialog, private toastr: ToastrService,
-    private loginService: LoginService, private router: Router
+    private loginService: LoginService, private router: Router, private spinner: NgxSpinnerService
   ) { }
 
   ngOnInit(): void {
@@ -89,19 +108,35 @@ export class GestionPrivilegeComponent implements OnInit {
     this.isEditMode = false;
     this.modalData = {
       prenom: '', nom: '', email: '', password: '', poste: '', role: '', modulesAutorises: {
-        Dashboard: false,
-        Admin: false,
-        StatistiquesAgences: false,
-        Planifications: false,
-        Calendrier: false,
-        Stock: false,
-        CollecteLivraison: false,
-        JourFeries: false,
-        Employes: false,
-        Agences: false,
-        Absences: false,
-        Pointages: false,
-        RH: false
+        dashboard: false,
+        admin: false,
+        statistiquesAgences: false,
+        planifications: false,
+        calendrier: false,
+        stock: {
+          produits: false,
+          entrees: false,
+          sorties: false,
+          suivis: false,
+          historiquesEntrees: false,
+          historiquesSorties: false
+        },
+        collecteLivraison: {
+          collecteBesoins: false,
+          suiviLivraison: false
+        },
+        jourFeries: false,
+        employes: false,
+        agences: false,
+        absences: {
+          tempsReel: false,
+          historiqueAbsences: false
+        },
+        pointages: {
+          pointagesDuJour: false,
+          historiquePointages: false
+        },
+
       }, motifDesactivation: '', active: true
     };
     this.confirmPassword = "";
@@ -115,19 +150,34 @@ export class GestionPrivilegeComponent implements OnInit {
     this.modalData = {
       ...admin,
       modulesAutorises: {
-        Dashboard: !!admin.modulesAutorises?.Dashboard,
-        Admin: !!admin.modulesAutorises?.Admin,
-        StatistiquesAgences: !!admin.modulesAutorises?.StatistiquesAgences,
-        Planifications: !!admin.modulesAutorises?.Planifications,
-        Calendrier: !!admin.modulesAutorises?.Calendrier,
-        Stock: !!admin.modulesAutorises?.Stock,
-        CollecteLivraison: !!admin.modulesAutorises?.CollecteLivraison,
-        JourFeries: !!admin.modulesAutorises?.JourFeries,
-        Employes: !!admin.modulesAutorises?.Employes,
-        Agences: !!admin.modulesAutorises?.Agences,
-        Absences: !!admin.modulesAutorises?.Absences,
-        Pointages: !!admin.modulesAutorises?.Pointages,
-        RH: !!admin.modulesAutorises?.RH
+        dashboard: !!admin.modulesAutorises?.dashboard,
+        admin: !!admin.modulesAutorises?.admin,
+        statistiquesAgences: !!admin.modulesAutorises?.statistiquesAgences,
+        planifications: !!admin.modulesAutorises?.planifications,
+        calendrier: !!admin.modulesAutorises?.calendrier,
+        stock: {
+          produits: !!admin.modulesAutorises?.stock?.produits,
+          entrees: !!admin.modulesAutorises?.stock?.entrees,
+          sorties: !!admin.modulesAutorises?.stock?.sorties,
+          suivis: !!admin.modulesAutorises?.stock?.suivis,
+          historiquesEntrees: !!admin.modulesAutorises?.stock?.historiquesEntrees,
+          historiquesSorties: !!admin.modulesAutorises?.stock?.historiquesSorties
+        },
+        collecteLivraison: {
+          collecteBesoins: !!admin.modulesAutorises?.collecteLivraison?.collecteBesoins,
+          suiviLivraison: !!admin.modulesAutorises?.collecteLivraison?.suiviLivraison
+        },
+        jourFeries: !!admin.modulesAutorises?.jourFeries,
+        employes: !!admin.modulesAutorises?.employes,
+        agences: !!admin.modulesAutorises?.agences,
+        absences: {
+          tempsReel: !!admin.modulesAutorises?.absences?.tempsReel,
+          historiqueAbsences: !!admin.modulesAutorises?.absences?.historiqueAbsences
+        },
+        pointages: {
+          pointagesDuJour: !!admin.modulesAutorises?.pointages?.pointagesDuJour,
+          historiquePointages: !!admin.modulesAutorises?.pointages?.historiquePointages
+        }
       }
     };
 
@@ -143,61 +193,73 @@ export class GestionPrivilegeComponent implements OnInit {
   }
 
   saveModal(form: NgForm) {
-    if (form.invalid) {
-      // Marquer tous les champs comme touchés pour afficher les erreurs
-      Object.values(form.controls).forEach(control => {
-        control.markAsTouched();
-      });
 
+    this.spinner.show();
+
+    if (form.invalid) {
+      Object.values(form.controls).forEach(control => control.markAsTouched());
       this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
+      this.spinner.hide();
       return;
     }
-    // Vérification de la correspondance des mots de passe
+
     if (this.modalData.password !== this.confirmPassword) {
       this.toastr.error('Les mots de passe ne correspondent pas.', 'Erreur');
+      this.spinner.hide();
       return;
     }
 
+    // Fonction récursive pour transformer toutes les propriétés boolean
+    const transformModules = (obj: any): any => {
+      const newObj: any = Array.isArray(obj) ? [] : {};
+      for (const key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+
+        const value = obj[key];
+        if (typeof value === 'boolean') {
+          newObj[key] = value; // boolean direct
+        } else if (typeof value === 'object' && value !== null) {
+          newObj[key] = transformModules(value); // récursion pour sous-objets
+        } else {
+          newObj[key] = value; // autres types si besoin
+        }
+      }
+      return newObj;
+    };
+
+    this.modalData.modulesAutorises = transformModules(this.modalData.modulesAutorises);
+
     if (this.isEditMode && this.selectedId) {
-      this.adminService.updateAdmin(this.selectedId, this.modalData).pipe(takeUntil(this.destroy$)).subscribe(() => {
-        this.loadData();
-        this.closeModal();
-        this.toastr.success('Admin mis à jour avec succès !', 'Succès');
-      });
-    } else {
-      // Transformation de modulesAutorises en tableau de chaînes
-      const modulesAutorisesArray = Object.keys(this.modalData.modulesAutorises)
-        .filter(key => this.modalData.modulesAutorises[key as keyof typeof this.modalData.modulesAutorises] === true);
-
-      type ModuleKey = keyof typeof this.modalData.modulesAutorises;
-      // Reconstruction de l'objet modulesAutorises
-      const newModulesObj = Object.keys(this.modalData.modulesAutorises)
-        .reduce((acc, key) => {
-          const k = key as ModuleKey; // 🔥 La ligne qui supprime ton erreur
-          acc[k] = modulesAutorisesArray.includes(k);
-          return acc;
-        }, {} as typeof this.modalData.modulesAutorises);
-
-      this.modalData.modulesAutorises = newModulesObj;
-
-      this.adminService.createAdmin(this.modalData).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
+      // Mise à jour
+      this.adminService.updateAdmin(this.selectedId, this.modalData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
           this.loadData();
           this.closeModal();
-          this.toastr.success('Admin créé avec succès !', 'Succès');
-        },
-        error: (err) => {
-          console.error('Erreur création admin :', err);
-
-          // SI LE BACK RENVOIE LE MESSAGE :
-          if (err.status === 409) {
-            this.toastr.error(err.error.message, 'Erreur');
-          } else {
-            this.toastr.error('Erreur lors de la création de l\'admin', 'Erreur');
+          this.toastr.success('Admin mis à jour avec succès !', 'Succès');
+          this.spinner.hide();
+        });
+    } else {
+      // Création
+      this.adminService.createAdmin(this.modalData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.loadData();
+            this.closeModal();
+            this.toastr.success('Admin créé avec succès !', 'Succès');
+            this.spinner.hide();
+          },
+          error: (err) => {
+            console.error('Erreur création admin :', err);
+            this.spinner.hide();
+            if (err.status === 409) {
+              this.toastr.error(err.error.message, 'Erreur');
+            } else {
+              this.toastr.error('Erreur lors de la création de l\'admin', 'Erreur');
+            }
           }
-        }
-      });
-
+        });
     }
   }
 

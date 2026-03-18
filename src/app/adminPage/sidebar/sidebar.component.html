@@ -17,7 +17,7 @@
     <!-- Nav Links -->
     <nav class="flex-1 space-y-2 mt-2 mb-1 overflow-y-scroll scrollbar-hidden">
       <ul>
-        <li *ngIf="hasPermission('Dashboard') || role === 'SUPERADMIN'">
+        <li *ngIf="hasAccess('dashboard')">
           <a routerLink="/admin/dashboard" [ngClass]="{
           'bg-gray-700 font-bold': isActive('/admin/dashboard'),
           'text-center': !isOpen
@@ -32,7 +32,8 @@
             <span *ngIf="isOpen">Tableau de bord</span>
           </a>
         </li>
-        <li *ngIf="hasPermission('Admin') || role === 'SUPERADMIN'">
+        
+        <li *ngIf="hasAccess('admin')">
           <a routerLink="/admin/gestion-privilege" [ngClass]="{ 
       'bg-gray-700 font-bold': isActive('/admin/gestion-privilege'),
       'text-center': !isOpen
@@ -61,9 +62,9 @@
         </li>-->
 
         <!--Opération avec sous menue Agences, Agents et Planification-->
-        <li *ngIf="hasAnyOperationPermission()">
+        <li *ngIf="hasOperationsAccess()">
           <!-- Bouton parent -->
-          <button (click)="toggleDropdownOperations('operations')"
+          <button (click)="toggleDropdown('operations')"
             class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
             [ngClass]="{
       'bg-gray-700 font-bold': isActivePrefix('/admin/operations'),
@@ -80,17 +81,17 @@
             </div>
 
             <!-- Flèche -->
-            <svg [ngClass]="{'rotate-180': openDropdownOperations === 'operations'}"
+            <svg [ngClass]="{'rotate-180': openDropdown === 'operations'}"
               class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
           <!-- Sous-menu -->
-          <ul *ngIf="openDropdownOperations === 'operations'" class="ml-8 mt-1 space-y-1 text-sm">
+          <ul *ngIf="openDropdown === 'operations'" class="ml-8 mt-1 space-y-1 text-sm">
 
 
-            <li *ngIf="hasPermission('Calendrier') || role === 'SUPERADMIN'">
+            <li *ngIf="hasAccess('calendrier')">
               <a routerLink="/admin/calendrier" [ngClass]="{
       'bg-gray-700 font-bold': isActive('/admin/calendrier'),
       'text-center': !isOpen
@@ -111,7 +112,7 @@
 
             <!-- Collecte et livraison -->
 
-            <li *ngIf="hasPermission('CollecteLivraison') || role === 'SUPERADMIN'">
+            <li *ngIf="accessCollecte()">
               <!-- Bouton parent -->
               <button (click)="toggleDropdownCollecte('collecte')"
                 class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
@@ -136,9 +137,9 @@
               </button>
 
               <!-- Sous-menu -->
-              <ul *ngIf=" openDropdownCollecte === 'collecte'" class="ml-8 mt-1 space-y-1 text-sm">
+              <ul *ngIf="openDropdownCollecte === 'collecte'" class="ml-8 mt-1 space-y-1 text-sm">
 
-                <li>
+                <li *ngIf="hasAccess('collecteLivraison.collecteDesBesoins')">
                   <a routerLink="/admin/collecte-et-livraison/collecte-des-besoins" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/collecte-et-livraison/collecte-des-besoins'),
         'text-center': !isOpen
@@ -148,7 +149,7 @@
                   </a>
                 </li>
 
-                <li>
+                <li *ngIf="hasAccess('collecteLivraison.suiviLivraison')">
                   <a routerLink="/admin/collecte-et-livraison/suivi-livraison" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/collecte-et-livraison/suivi-livraison'),
         'text-center': !isOpen
@@ -162,7 +163,7 @@
             </li>
 
 
-            <li *ngIf="hasPermission('JourFeries') || role === 'SUPERADMIN'">
+            <li *ngIf="hasAccess('jourFeries')">
               <a routerLink="/admin/feries" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/feries'),
         'text-center': !isOpen
@@ -230,9 +231,9 @@
 
 
 
-            <li *ngIf="hasPermission('Absences') || role === 'SUPERADMIN'">
+            <li *ngIf="accessAbsences()">
               <!-- Bouton parent -->
-              <button (click)="toggleDropdownAbsent('absences')"
+              <button (click)="toggleDropdownAbsences('absences')"
                 class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
                 [ngClass]="{
       'bg-gray-700 font-bold': isActivePrefix('/admin/absences'),
@@ -249,16 +250,16 @@
                 </div>
 
                 <!-- Flèche -->
-                <svg [ngClass]="{'rotate-180': openDropdownAbsent === 'absences'}"
+                <svg [ngClass]="{'rotate-180': openDropdownAbsences === 'absences'}"
                   class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               <!-- Sous-menu -->
-              <ul *ngIf="openDropdownAbsent === 'absences'" class="ml-8 mt-1 space-y-1 text-sm">
+              <ul *ngIf="openDropdownAbsences === 'absences'" class="ml-8 mt-1 space-y-1 text-sm">
 
-                <li>
+                <li *ngIf="hasAccess('absences.tempsReel')">
                   <a routerLink="/admin/absences/tempsreel" routerLinkActive="bg-gray-700 font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                     <!--hover:bg-blue-50 hover:text-blue-700 transition-->
@@ -266,7 +267,7 @@
                     <span>Absences en temps réel</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="hasAccess('absences.historiqueAbsences')">
                   <a routerLink="/admin/absences/historique" routerLinkActive="bg-gray-700 font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                     <lucide-icon name="ArchiveX" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
@@ -278,9 +279,9 @@
               </ul>
             </li>
 
-            <li *ngIf="hasPermission('Pointages') || role === 'SUPERADMIN'">
+            <li *ngIf="accessPointages()">
               <!-- Bouton parent -->
-              <button (click)="toggleDropdownAbsent('Pointages')"
+              <button (click)="toggleDropdownPointages('pointages')"
                 class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
                 [ngClass]="{
       'bg-gray-700 font-bold': isActivePrefix('/admin/pointages'),
@@ -298,16 +299,16 @@
                 </div>
 
                 <!-- Flèche -->
-                <svg [ngClass]="{'rotate-180': openDropdownAbsent === 'Pointages'}"
+                <svg [ngClass]="{'rotate-180': openDropdownPointages === 'pointages'}"
                   class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               <!-- Sous-menu -->
-              <ul *ngIf="openDropdownAbsent === 'Pointages'" class="ml-8 mt-1 space-y-1 text-sm">
+              <ul *ngIf="openDropdownPointages === 'pointages'" class="ml-8 mt-1 space-y-1 text-sm">
 
-                <li>
+                <li *ngIf="hasAccess('pointages.pointagesDuJour')">
                   <a routerLink="/admin/pointages/pointagesDuJour" routerLinkActive="bg-gray-700 font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                     <!--hover:bg-blue-50 hover:text-blue-700 transition-->
@@ -315,7 +316,7 @@
                     <span>Pointages du jour</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="hasAccess('pointages.historiquePointages')">
                   <a routerLink="/admin/pointages/historique" routerLinkActive="bg-gray-700 font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                     <lucide-icon name="MapPinHouse" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
@@ -328,7 +329,7 @@
             </li>
 
 
-            <li *ngIf="hasPermission('Agences') || role === 'SUPERADMIN'">
+            <li *ngIf="hasAccess('agences')">
               <a routerLink="/admin/operations/agences" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/operations/agences'),
         'text-center': !isOpen
@@ -346,7 +347,7 @@
               </a>
             </li>
 
-            <li *ngIf="hasPermission('Employes') || role === 'SUPERADMIN'">
+            <li *ngIf="hasAccess('employes')">
               <a routerLink="/admin/operations/agents" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/operations/agents'),
         'text-center': !isOpen
@@ -363,7 +364,7 @@
               </a>
             </li>
 
-            <li *ngIf="hasPermission('Planifications') || role === 'SUPERADMIN'">
+            <li *ngIf="hasAccess('planifications')">
               <a routerLink="/admin/operations/planification" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/operations/planification'),
         'text-center': !isOpen
@@ -378,7 +379,7 @@
             </li>
 
             <!-- statistiques par agence groupe -->
-            <li *ngIf="hasPermission('StatistiquesAgences') || role === 'SUPERADMIN'">
+            <li *ngIf="hasAccess('statistiquesAgences')">
               <a routerLink="/admin/operations/statistique-par-agence-groupe" [ngClass]="{
         'bg-gray-700 font-bold': isActive('/admin/operations/statistique-par-agence-groupe'),
         'text-center': !isOpen
@@ -411,9 +412,9 @@
         </li>
 
         <!-- Stock -->
-        <li *ngIf="hasPermission('Stock') || role === 'SUPERADMIN'">
+        <li *ngIf="accesStock()">
           <!-- Bouton parent -->
-          <button (click)="toggleDropdown('stock')"
+          <button (click)="toggleDropdownStock('stock')"
             class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
             [ngClass]="{
       'bg-gray-700 font-bold': isActivePrefix('/admin/stock'),
@@ -430,18 +431,18 @@
             </div>
 
             <!-- Flèche -->
-            <svg [ngClass]="{'rotate-180': openDropdown === 'stock'}" class="w-4 h-4 transform transition-transform"
+            <svg [ngClass]="{'rotate-180': openDropdownStock === 'stock'}" class="w-4 h-4 transform transition-transform"
               fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
           <!-- Sous-menu -->
-          <ul *ngIf="openDropdown === 'stock'" class="ml-8 mt-1 space-y-1 text-sm">
+          <ul *ngIf="openDropdownStock === 'stock'" class="ml-8 mt-1 space-y-1 text-sm">
 
             <!-- Articles & Produits -->
 
-            <li>
+            <li *ngIf="hasAccess('stock.produits')">
               <a routerLink="/admin/stock/produits" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <!--hover:bg-blue-50 hover:text-blue-700 transition-->
@@ -452,7 +453,7 @@
 
             <!-- Réceptions (Entrées) -->
 
-            <li>
+            <li *ngIf="hasAccess('stock.entrees')">
               <a routerLink="/admin/stock/entrees" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="ArrowUp" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
@@ -462,14 +463,14 @@
 
             <!-- Sorties / Livraisons -->
 
-            <li>
+            <li *ngIf="hasAccess('stock.sorties')">
               <a routerLink="/admin/stock/sorties" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="ArrowDown" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
                 <span>Sorties / Livraisons</span>
               </a>
             </li>
-            <li>
+            <li *ngIf="hasAccess('stock.suivis')">
               <a routerLink="/admin/stock/suivi" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="Activity" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
@@ -487,7 +488,7 @@
             </li> -->
 
             <!-- Historiques des entrées -->
-            <li>
+            <li *ngIf="hasAccess('stock.historiquesEntrees')">
               <a routerLink="/admin/stock/historiques-entrees" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="FolderArchive" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
@@ -496,7 +497,7 @@
             </li>
 
             <!-- Historiques des sorties -->
-            <li>
+            <li *ngIf="hasAccess('stock.historiquesSorties')">
               <a routerLink="/admin/stock/historiques-sorties" routerLinkActive="bg-gray-700 font-semibold"
                 [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
                 <lucide-icon name="FolderArchive" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>

@@ -1,3 +1,12 @@
+export type DropdownMenu =
+  | 'operations'
+  | 'stock'
+  | 'collecte'
+  | 'absences'
+  | 'pointages'
+  | null;
+
+
 export interface Admin {
   id?: string;
   prenom: string;
@@ -15,17 +24,37 @@ export interface Admin {
 }
 
 export interface ModulesAutorises {
-  Dashboard: boolean;
-  Admin: boolean;
-  StatistiquesAgences: boolean;
-  Planifications: boolean;
-  Calendrier: boolean;
-  Stock: boolean;
-  CollecteLivraison: boolean;
-  JourFeries: boolean;
-  Employes: boolean;
-  Agences: boolean;
-  Absences: boolean;
-  Pointages: boolean;
-  RH: boolean;
+
+  dashboard: boolean;
+  admin: boolean;
+  statistiquesAgences: boolean;
+  planifications: boolean;
+  calendrier: boolean;
+  jourFeries: boolean;
+  employes: boolean;
+  agences: boolean;
+
+  collecteLivraison: {
+    collecteBesoins: boolean;
+    suiviLivraison: boolean;
+  };
+
+  absences: {
+    tempsReel: boolean;
+    historiqueAbsences: boolean;
+  };
+
+  pointages: {
+    pointagesDuJour: boolean;
+    historiquePointages: boolean;
+  };
+
+  stock: {
+    produits: boolean;
+    entrees: boolean;
+    sorties: boolean;
+    suivis: boolean;
+    historiquesEntrees: boolean;
+    historiquesSorties: boolean;
+  };
 }
