@@ -33,6 +33,9 @@ export interface ModulesAutorises {
   jourFeries: boolean;
   employes: boolean;
   agences: boolean;
+  ressourcesHumaines: {
+    agentsRh: boolean;
+  }
 
   collecteLivraison: {
     collecteBesoins: boolean;

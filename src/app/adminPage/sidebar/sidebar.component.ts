@@ -27,7 +27,7 @@ export class SidebarComponent implements OnInit {
   openDropdownPointages: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Pointages
   openDropdownStock: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Stock
   openDropdownCollecte: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Collecte
-
+  openDropdownRessourcesHumaines: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Ressources Humaines
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -124,6 +124,13 @@ export class SidebarComponent implements OnInit {
       m.collecteLivraison?.collecteBesoins ||
       m.collecteLivraison?.suiviLivraison
     );
+  }
+
+  accessRessourcesHumaines(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m) return false;
+    return m.ressourcesHumaines?.agentsRh;
   }
 
   hasOperationsAccess(): boolean {
@@ -236,6 +243,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownPointages(menu: string) {
     this.openDropdownPointages = this.openDropdownPointages === menu ? null : menu;
+  }
+
+  toggleDropdownRessourcesHumaines(menu: string) {
+    this.openDropdownRessourcesHumaines = this.openDropdownRessourcesHumaines === menu ? null : menu;
   }
 
   toggleDropdownStock(menu: string) {

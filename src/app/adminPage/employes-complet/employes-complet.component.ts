@@ -43,6 +43,8 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
   selectedId: string | null = null;
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
+  photoFile!: File;
+  contratFile!: File;
   isLoading = false;
   preview: EmployeComplet[] = [];
 
@@ -96,6 +98,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     managerOps2: '',
     poste: '',
     typeContrat: '',
+    contratNom: null,
     dateEmbauche: null,
     dateFinContrat: null,
     tempsDeTravail: '',
@@ -198,6 +201,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       managerOps: '',
       poste: '',
       typeContrat: '',
+      contratNom: null,
       dateEmbauche: null,
       dateFinContrat: null,
       tempsDeTravail: '',
@@ -371,7 +375,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       nom: row.nom?.trim() ?? '',
       sexe: row.sexe ?? '',
 
-      dateNaissance: this.parseDateFromExcel(row.dateNaissance),
+      dateNaissance: row.dateNaissance ?? '',
       lieuNaissance: row.lieuNaissance ?? '',
       nationalite: row.nationalite ?? '',
       etatCivil: row.etatCivil ?? '',
@@ -411,6 +415,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
       poste: row.poste ?? '',
       typeContrat: row.typeContrat ?? '',
+      contratNom: row.contratNom ?? null,
 
       dateEmbauche: this.parseDateFromExcel(row.dateEmbauche),
       dateFinContrat: this.parseDateFromExcel(row.dateFinContrat),
@@ -462,19 +467,28 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
 
   // 🟢 Sélection de l’image
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
+  onFileSelected(event: Event, type: string) {
+  const input = event.target as HTMLInputElement;
 
-      // 🖼️ Générer la prévisualisation
+  if (input.files && input.files.length > 0) {
+    const file = input.files[0];
+
+    if (type === 'photo') {
+      this.photoFile = file;
+
+      // 🖼️ Preview uniquement pour la photo
       const reader = new FileReader();
       reader.onload = () => {
         this.previewUrl = reader.result;
       };
-      reader.readAsDataURL(this.selectedFile);
+      reader.readAsDataURL(file);
+    }
+
+    if (type === 'contrat') {
+      this.contratFile = file;
     }
   }
+}
 
 
   /** 🔍 Ouvrir modal de détails */
@@ -497,6 +511,8 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
   saveModal(form: NgForm) {
 
+    this.spinner.show();
+
     if (form.invalid) {
       Object.values(form.controls).forEach(control => control.markAsTouched());
       this.toastr.error('Veuillez remplir tous les champs obligatoires.', 'Erreur');
@@ -507,7 +523,15 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
     // --- Préparation du FormData
     const formData = new FormData();
-    const formatDate = (d?: Date | null) => d ? d.toISOString().split('T')[0] : null;
+    const formatDate = (d?: Date | null) => {
+      if (!d) return null;
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
+    };
 
     const payload = {
       ...this.modalData,
@@ -520,8 +544,13 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
 
     formData.append('employe', JSON.stringify(payload));
-    if (this.selectedFile) {
-      formData.append('photo', this.selectedFile);
+    
+    if (this.photoFile) {
+      formData.append('photo', this.photoFile);
+    }
+
+    if (this.contratFile) {
+      formData.append('contrat', this.contratFile);
     }
 
     // ======================================================================
@@ -529,7 +558,9 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
     // ======================================================================
     if (this.isEditMode && this.selectedId) {
       this.employeService.updateEmployeComplet(this.selectedId, formData).pipe(
-        finalize(() => this.isLoading = false)
+        finalize(() => {
+          this.spinner.hide();
+        })
       ).subscribe({
         next: () => {
           this.loadEmployes();
@@ -673,7 +704,7 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
         return EMPTY;
       }),
 
-      finalize(() => this.isLoading = false)
+      finalize(() => this.spinner.hide()) // Toujours cacher le spinner à la fin, que ça réussisse ou que ça échoue. finalize() permet d’exécuter du code à la fin de l’Observable, peu importe le résultat succès ou échec
 
     ).subscribe({
       next: result => {
@@ -773,7 +804,9 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
       this.isLoading = true;
 
       const payload = this.preview.map(emp => this.preparePayloadForBackend(emp));
-
+      
+      // Afficher le payload préparé dans la console pour vérification
+      console.log(payload);
 
       this.employeService.importEmployes(payload)
         .pipe(finalize(() => this.isLoading = false))
@@ -843,39 +876,47 @@ export class EmployesCompletComponent implements OnInit, OnDestroy {
 
     if (!value) return null;
 
-    // 🟢 Cas 1 : Excel fournit déjà une vraie date
+    // 🟢 Cas 1 : vraie date
     if (value instanceof Date) {
-      return value.toISOString().split('T')[0];
+      return this.formatLocalDate(value);
     }
 
-    // 🟡 Cas 2 : Excel fournit un nombre (format Excel)
+    // 🟡 Cas 2 : nombre Excel
     if (typeof value === 'number') {
       const excelEpoch = new Date(1899, 11, 30);
       const date = new Date(excelEpoch.getTime() + value * 86400000);
-      return date.toISOString().split('T')[0];
+      return this.formatLocalDate(date);
     }
 
-    // 🔵 Cas 3 : Excel fournit une string (12/03/1990)
+    // 🔵 Cas 3 : string
     if (typeof value === 'string') {
-      if (value.includes('/')) {
-        const [d, m, y] = value.split('/');
-        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+
+      const cleaned = value.trim(); // 🔥 IMPORTANT
+
+      if (cleaned.includes('/')) {
+        const [d, m, y] = cleaned.split('/');
+        return `${y.trim()}-${m.trim().padStart(2, '0')}-${d.trim().padStart(2, '0')}`;
       }
 
-      // 🟣 Cas 4: Excel fournit une string (12.03.1990)
-      if (value.includes('.')) {
-        const [d, m, y] = value.split('.');
-        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      if (cleaned.includes('.')) {
+        const [d, m, y] = cleaned.split('.');
+        return `${y.trim()}-${m.trim().padStart(2, '0')}-${d.trim().padStart(2, '0')}`;
       }
 
-      // Déjà en format ISO ?
-      if (value.includes('-')) {
-        return value;
+      if (cleaned.includes('-')) {
+        return cleaned;
       }
     }
 
     console.warn('Format de date non reconnu :', value);
     return null;
+  }
+
+  formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
 

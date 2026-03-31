@@ -32,7 +32,7 @@
             <span *ngIf="isOpen">Tableau de bord</span>
           </a>
         </li>
-        
+
         <li *ngIf="hasAccess('admin')">
           <a routerLink="/admin/gestion-privilege" [ngClass]="{ 
       'bg-gray-700 font-bold': isActive('/admin/gestion-privilege'),
@@ -394,20 +394,44 @@
             </li>
 
             <!-- ressources humaines -->
-            <!--<li *ngIf="hasPermission('RH') || role === 'SUPERADMIN'">
-              <a routerLink="/admin/ressources-humaines" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/ressources-humaines'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                  fill="#FFFFFF">
-                  <path
-                    d="M40-160v-160q0-29 20.5-49.5T110-390h141q17 0 32.5 8.5T310-358q29 42 74 65t96 23q51 0 96-23t75-65q11-15 26-23.5t32-8.5h141q29 0 49.5 20.5T920-320v160H660v-119q-36 33-82.5 51T480-210q-51 0-97-18t-83-51v119H40Zm440-170q-35 0-67.5-16.5T360-392q-16-23-38.5-37T273-448q29-30 91-46t116-16q54 0 116.5 16t91.5 46q-26 5-48.5 19T601-392q-20 29-52.5 45.5T480-330ZM160-460q-45 0-77.5-32.5T50-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T160-460Zm640 0q-45 0-77.5-32.5T690-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T800-460ZM480-580q-45 0-77.5-32.5T370-690q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T480-580Z" />
-                </svg>
-                <span *ngIf="isOpen">Ressources humaines</span>
-              </a>
-            </li>-->
+            <!--Bouton 'Ressources humaines' avec un bouton 'Agents' comme sous-menu-->
+            <li *ngIf="accessRessourcesHumaines()">
+              <!-- Bouton parent -->
+              <button (click)="toggleDropdownRessourcesHumaines('ressourcesHumaines')"
+                class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
+                [ngClass]="{
+      'bg-gray-700 font-bold': isActivePrefix('/admin/rh'),
+      'text-center': !isOpen
+    }">
 
+                <div class="flex items-center space-x-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                    fill="#FFFFFF">
+                    <path
+                      d="M40-160v-160q0-29 20.5-49.5T110-390h141q17 0 32.5 8.5T310-358q29 42 74 65t96 23q51 0 96-23t75-65q11-15 26-23.5t32-8.5h141q29 0 49.5 20.5T920-320v160H660v-119q-36 33-82.5 51T480-210q-51 0-97-18t-83-51v119H40Zm440-170q-35 0-67.5-16.5T360-392q-16-23-38.5-37T273-448q29-30 91-46t116-16q54 0 116.5 16t91.5 46q-26 5-48.5 19T601-392q-20 29-52.5 45.5T480-330ZM160-460q-45 0-77.5-32.5T50-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T160-460Zm640 0q-45 0-77.5-32.5T690-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T800-460ZM480-580q-45 0-77.5-32.5T370-690q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T480-580Z" />
+                  </svg>
+                  <span *ngIf="isOpen">Ressources humaines</span>
+                </div>
+
+                <!-- Flèche -->
+                <svg [ngClass]="{'rotate-180': openDropdownRessourcesHumaines === 'ressourcesHumaines'}"
+                  class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Sous-menu -->
+              <ul *ngIf="openDropdownRessourcesHumaines === 'ressourcesHumaines'" class="ml-8 mt-1 space-y-1 text-sm">
+                <!-- Agents -->
+                <li *ngIf="hasAccess('ressourcesHumaines.agentsRh')">
+                  <a routerLink="/admin/rh/agentsRh" routerLinkActive="bg-gray-700 font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
+                    <lucide-icon name="User" class="w-5 h-5 text-blue-500 mr-3"></lucide-icon>
+                    <span>Agents RH</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
           </ul>
         </li>
 
@@ -431,8 +455,8 @@
             </div>
 
             <!-- Flèche -->
-            <svg [ngClass]="{'rotate-180': openDropdownStock === 'stock'}" class="w-4 h-4 transform transition-transform"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg [ngClass]="{'rotate-180': openDropdownStock === 'stock'}"
+              class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
