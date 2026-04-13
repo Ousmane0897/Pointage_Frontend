@@ -1,556 +1,560 @@
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-full overflow-hidden bg-slate-100">
 
-  <!-- Sidebar (desktop) -->
-  <div [ngClass]="{
-      'w-64': isOpen,
-      'w-16': !isOpen
-    }"
-    class="shadow-lg z-20 text-white mb-20  bg-slate-500 transition-all duration-300 ease-in-out flex flex-col rounded-3xl">
-    <!-- Toggle Button -->
-    <button (click)="toggleSidebar()" class="p-4 focus:outline-none ">
-      <span *ngIf="isOpen">⏴</span>
-      <span *ngIf="!isOpen">⏵</span>
+  <!-- ============================================================ -->
+  <!-- Sidebar                                                       -->
+  <!-- ============================================================ -->
+  <aside
+    class="relative z-20 flex flex-col flex-shrink-0 my-3 ml-3 rounded-2xl text-slate-200
+           bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900
+           shadow-[0_10px_30px_-10px_rgba(15,23,42,0.45)]
+           ring-1 ring-white/5
+           transition-[width] duration-300 ease-in-out"
+    [ngClass]="isOpen ? 'w-[17rem]' : 'w-[4.75rem]'">
+
+    <!-- Floating toggle -->
+    <button (click)="toggleSidebar()" aria-label="Basculer la barre latérale"
+      class="absolute top-5 -right-3 z-30 w-7 h-7 inline-flex items-center justify-center rounded-full
+             bg-indigo-500 text-white shadow-[0_6px_14px_-4px_rgba(99,102,241,0.6)]
+             ring-4 ring-slate-900 hover:bg-indigo-400 hover:scale-110
+             transition-all duration-200">
+      <svg *ngIf="isOpen" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+        viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+      </svg>
+      <svg *ngIf="!isOpen" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+        viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+      </svg>
     </button>
 
-    <img src="assets/pointic5.png" alt="logo" class=" mx-auto w-24 h-24">
+    <!-- Brand -->
+    <div class="flex items-center gap-3 px-4 pt-5 pb-4"
+      [ngClass]="{ 'justify-center px-0': !isOpen }">
+      <img src="assets/pointic5.png" alt="logo"
+        class="w-10 h-10 rounded-xl object-cover bg-white/5 p-1 flex-shrink-0
+               shadow-[0_4px_12px_-4px_rgba(99,102,241,0.5)]">
+      <div *ngIf="isOpen" class="flex flex-col leading-tight overflow-hidden whitespace-nowrap">
+        <span class="text-base font-bold text-white tracking-wide">PointIC</span>
+        <span class="text-[0.7rem] text-slate-400 mt-0.5">Workforce admin</span>
+      </div>
+    </div>
 
-    <!-- Nav Links -->
-    <nav class="flex-1 space-y-2 mt-2 mb-1 overflow-y-scroll scrollbar-hidden">
-      <ul>
+    <!-- Navigation -->
+    <nav class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 pb-4 scrollbar-hidden">
+      <ul class="flex flex-col gap-1">
+
+        <li *ngIf="isOpen"
+          class="px-3 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-slate-500">
+          Général
+        </li>
+
+        <!-- Dashboard -->
         <li *ngIf="hasAccess('dashboard')">
-          <a routerLink="/admin/dashboard" [ngClass]="{
-          'bg-gray-700 font-bold': isActive('/admin/dashboard'),
-          'text-center': !isOpen
-        }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-              <path fill-rule="evenodd"
-                d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm4.5 7.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0v-2.25a.75.75 0 0 1 .75-.75Zm3.75-1.5a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0V12Zm2.25-3a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.75A.75.75 0 0 1 13.5 9Zm3.75-1.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z"
-                clip-rule="evenodd" />
-            </svg>
-
-
-            <span *ngIf="isOpen">Tableau de bord</span>
-          </a>
-        </li>
-
-        <li *ngIf="hasAccess('admin')">
-          <a routerLink="/admin/gestion-privilege" [ngClass]="{ 
-      'bg-gray-700 font-bold': isActive('/admin/gestion-privilege'),
-      'text-center': !isOpen
-    }" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 px-2 transition-all duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
-              <path
-                d="M160-240v-480 480Zm0 80q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v132q-19-8-39.5-10.5t-40.5.5v-122H447l-80-80H160v480h324l-4 4v76H160Zm400 80v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T903-300L683-80H560Zm300-263-37-37 37 37ZM620-140h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
-            </svg>
-            <span *ngIf="isOpen">Gestion des utilisateurs</span>
-          </a>
-        </li>
-
-        <!--Superviseurs-->
-        <!--<li *ngIf="hasPermission('Controlleurs')">
-          <a routerLink="/admin/gestion-superviseurs" [ngClass]="{ 
-      'bg-gray-700 font-bold': isActive('/admin/gestion-superviseurs'),
-      'text-center': !isOpen
-    }" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 px-2 transition-all duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-              <path fill-rule="evenodd"
-                d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-3.084 5.25a3.084 3.084 0 1 1 6.168 0 3.084 3.084 0 0 1-6.168 0ZM12 17.25c-2.485 0-4.662-1.426-5.812-3.5a5.978 5.978 0 0 1 11.624 0c-1.15 2.074-3.327 3.5-5.812 3.5Z"
-                clip-rule="evenodd" />
-            </svg>
-            <span *ngIf="isOpen">Gestion des controleurs</span>
-          </a>
-        </li>-->
-
-        <!--Opération avec sous menue Agences, Agents et Planification-->
-        <li *ngIf="hasOperationsAccess()">
-          <!-- Bouton parent -->
-          <button (click)="toggleDropdown('operations')"
-            class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
+          <a routerLink="/admin/dashboard"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
             [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/operations'),
-      'text-center': !isOpen
-    }">
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/dashboard'),
+              'justify-center px-0': !isOpen
+            }">
+            <span *ngIf="isActive('/admin/dashboard')"
+              class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-[3px] h-[60%] rounded-full bg-gradient-to-b from-indigo-300 to-indigo-500 shadow-[0_0_12px_rgba(129,140,248,0.7)]"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActive('/admin/dashboard') }">
+              <path fill-rule="evenodd" d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm4.5 7.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0v-2.25a.75.75 0 0 1 .75-.75Zm3.75-1.5a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0V12Zm2.25-3a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.75A.75.75 0 0 1 13.5 9Zm3.75-1.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z" clip-rule="evenodd" />
+            </svg>
+            <span *ngIf="isOpen" class="flex-1 truncate">Tableau de bord</span>
+          </a>
+        </li>
 
-            <div class="flex items-center space-x-2">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                fill="#FFFFFF">
-                <path
-                  d="M160-120q-50 0-85-35t-35-85q0-50 35-85t85-35q11.42 0 22.21 2 10.79 2 21.79 6l160-219q-20-22-32-49.5T320-680q0-66 47-113t113-47q66 0 113 47t47 113q0 32-11.89 59.42Q616.22-593.15 596-571l160 220q11-5 21.5-7t22.5-2q50 0 85 35t35 85q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-22 7.5-41t20.5-35L548-535q-9 5-18.5 7.5t-19.5 4.44V-356q39 10 64.5 42t25.5 74q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-42 25.5-74t64.5-42v-167.06q-10-1.94-19.5-4.44Q421-530 412-535L252-316q13 16 20.5 35t7.5 41q0 50-35 85t-85 35Zm0-60q25.5 0 42.75-17.25T220-240q0-25.5-17.25-42.75T160-300q-25.5 0-42.75 17.25T100-240q0 25.5 17.25 42.75T160-180Zm320-500Zm0 500q25.5 0 42.75-17.25T540-240q0-25.5-17.25-42.75T480-300q-25.5 0-42.75 17.25T420-240q0 25.5 17.25 42.75T480-180Zm320 0q25.5 0 42.75-17.25T860-240q0-25.5-17.25-42.75T800-300q-25.5 0-42.75 17.25T740-240q0 25.5 17.25 42.75T800-180Zm-640-60Zm320 0Zm320 0ZM480-580q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Z" />
-              </svg>
-              <span *ngIf="isOpen">Opérations</span>
-            </div>
+        <!-- Gestion des utilisateurs -->
+        <li *ngIf="hasAccess('admin')">
+          <a routerLink="/admin/gestion-privilege"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/gestion-privilege'),
+              'justify-center px-0': !isOpen
+            }">
+            <span *ngIf="isActive('/admin/gestion-privilege')"
+              class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-[3px] h-[60%] rounded-full bg-gradient-to-b from-indigo-300 to-indigo-500 shadow-[0_0_12px_rgba(129,140,248,0.7)]"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActive('/admin/gestion-privilege') }">
+              <path d="M160-240v-480 480Zm0 80q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v132q-19-8-39.5-10.5t-40.5.5v-122H447l-80-80H160v480h324l-4 4v76H160Zm400 80v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T903-300L683-80H560Zm300-263-37-37 37 37ZM620-140h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+            </svg>
+            <span *ngIf="isOpen" class="flex-1 truncate">Gestion des utilisateurs</span>
+          </a>
+        </li>
 
-            <!-- Flèche -->
-            <svg [ngClass]="{'rotate-180': openDropdown === 'operations'}"
-              class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <li *ngIf="isOpen && hasOperationsAccess()"
+          class="px-3 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-slate-500">
+          Opérations
+        </li>
+
+        <!-- Opérations dropdown -->
+        <li *ngIf="hasOperationsAccess()">
+          <button (click)="toggleDropdown('operations')"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/operations'),
+              'justify-center px-0': !isOpen
+            }">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/operations') }">
+              <path d="M160-120q-50 0-85-35t-35-85q0-50 35-85t85-35q11.42 0 22.21 2 10.79 2 21.79 6l160-219q-20-22-32-49.5T320-680q0-66 47-113t113-47q66 0 113 47t47 113q0 32-11.89 59.42Q616.22-593.15 596-571l160 220q11-5 21.5-7t22.5-2q50 0 85 35t35 85q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-22 7.5-41t20.5-35L548-535q-9 5-18.5 7.5t-19.5 4.44V-356q39 10 64.5 42t25.5 74q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-42 25.5-74t64.5-42v-167.06q-10-1.94-19.5-4.44Q421-530 412-535L252-316q13 16 20.5 35t7.5 41q0 50-35 85t-85 35Zm0-60q25.5 0 42.75-17.25T220-240q0-25.5-17.25-42.75T160-300q-25.5 0-42.75 17.25T100-240q0 25.5 17.25 42.75T160-180Zm320-500Zm0 500q25.5 0 42.75-17.25T540-240q0-25.5-17.25-42.75T480-300q-25.5 0-42.75 17.25T420-240q0 25.5 17.25 42.75T480-180Zm320 0q25.5 0 42.75-17.25T860-240q0-25.5-17.25-42.75T800-300q-25.5 0-42.75 17.25T740-240q0 25.5 17.25 42.75T800-180Zm-640-60Zm320 0Zm320 0ZM480-580q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Z" />
+            </svg>
+            <span *ngIf="isOpen" class="flex-1 truncate">Opérations</span>
+            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
+              [ngClass]="{ 'rotate-180': openDropdown === 'operations' }"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          <!-- Sous-menu -->
-          <ul *ngIf="openDropdown === 'operations'" class="ml-8 mt-1 space-y-1 text-sm">
+          <ul *ngIf="openDropdown === 'operations' && isOpen"
+            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5
+                   animate-[fadeIn_0.22s_ease]">
 
-
+            <!-- Calendrier -->
             <li *ngIf="hasAccess('calendrier')">
-              <a routerLink="/admin/calendrier" [ngClass]="{
-      'bg-gray-700 font-bold': isActive('/admin/calendrier'),
-      'text-center': !isOpen
-    }" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 px-2 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                  <path
-                    d="M12.75 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM7.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM8.25 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM9.75 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM10.5 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM12.75 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM14.25 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM15 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM16.5 15.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM15 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM16.5 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" />
-                  <path fill-rule="evenodd"
-                    d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z"
-                    clip-rule="evenodd" />
+              <a routerLink="/admin/calendrier"
+                class="group relative flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/calendrier') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clip-rule="evenodd" />
                 </svg>
-
-                <span *ngIf="isOpen">Calendrier</span>
+                <span class="flex-1 truncate">Calendrier</span>
               </a>
             </li>
 
-
-
-            <!-- Collecte et livraison -->
-
+            <!-- Collecte et livraison (nested) -->
             <li *ngIf="accessCollecte()">
-              <!-- Bouton parent -->
               <button (click)="toggleDropdownCollecte('collecte')"
-                class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
-                [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/collecte-et-livraison'),
-      'text-center': !isOpen
-    }">
-
-                <div class="flex items-center space-x-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 -960 960 960" fill="#FFFFFF">
-                    <path
-                      d="M286-289h60l255-255-59-61-256 256v60Zm333-273 39-39q7-7 7.5-15.5T658-633l-29-28q-8-8-16-7.5t-15 7.5l-38 38 59 61ZM180-120q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h205q5-35 32-57.5t63-22.5q36 0 63 22.5t32 57.5h205q24.75 0 42.38 17.62Q840-804.75 840-780v600q0 24.75-17.62 42.37Q804.75-120 780-120H180Zm0-60h600v-600H180v600Zm300-617q14 0 24.5-10.5T515-832q0-14-10.5-24.5T480-867q-14 0-24.5 10.5T445-832q0 14 10.5 24.5T480-797ZM180-180v-600 600Z" />
-                  </svg>
-                  <span *ngIf="isOpen">Collecte et livraison</span>
-                </div>
-
-                <!-- Flèche -->
-                <svg [ngClass]="{'rotate-180': openDropdownCollecte === 'collecte'}"
-                  class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/collecte-et-livraison') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path d="M286-289h60l255-255-59-61-256 256v60Zm333-273 39-39q7-7 7.5-15.5T658-633l-29-28q-8-8-16-7.5t-15 7.5l-38 38 59 61ZM180-120q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h205q5-35 32-57.5t63-22.5q36 0 63 22.5t32 57.5h205q24.75 0 42.38 17.62Q840-804.75 840-780v600q0 24.75-17.62 42.37Q804.75-120 780-120H180Zm0-60h600v-600H180v600Zm300-617q14 0 24.5-10.5T515-832q0-14-10.5-24.5T480-867q-14 0-24.5 10.5T445-832q0 14 10.5 24.5T480-797ZM180-180v-600 600Z" />
+                </svg>
+                <span class="flex-1 truncate">Collecte & livraison</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownCollecte === 'collecte' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              <!-- Sous-menu -->
-              <ul *ngIf="openDropdownCollecte === 'collecte'" class="ml-8 mt-1 space-y-1 text-sm">
-
+              <ul *ngIf="openDropdownCollecte === 'collecte'"
+                class="ml-3.5 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
                 <li *ngIf="hasAccess('collecteLivraison.collecteDesBesoins')">
-                  <a routerLink="/admin/collecte-et-livraison/collecte-des-besoins" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/collecte-et-livraison/collecte-des-besoins'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                    <lucide-icon name="NotebookPen" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                    <span *ngIf="isOpen">Collecte des besoins</span>
+                  <a routerLink="/admin/collecte-et-livraison/collecte-des-besoins"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                    [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold': isActive('/admin/collecte-et-livraison/collecte-des-besoins') }">
+                    <lucide-icon name="NotebookPen" class="w-4 h-4 text-indigo-300"></lucide-icon>
+                    <span class="flex-1 truncate">Collecte des besoins</span>
                   </a>
                 </li>
-
                 <li *ngIf="hasAccess('collecteLivraison.suiviLivraison')">
-                  <a routerLink="/admin/collecte-et-livraison/suivi-livraison" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/collecte-et-livraison/suivi-livraison'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                    <lucide-icon name="TrendingUp" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                    <span *ngIf="isOpen">Suivi des commandes</span>
+                  <a routerLink="/admin/collecte-et-livraison/suivi-livraison"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                    [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold': isActive('/admin/collecte-et-livraison/suivi-livraison') }">
+                    <lucide-icon name="TrendingUp" class="w-4 h-4 text-indigo-300"></lucide-icon>
+                    <span class="flex-1 truncate">Suivi des commandes</span>
                   </a>
                 </li>
-
               </ul>
             </li>
 
-
+            <!-- Jours fériés -->
             <li *ngIf="hasAccess('jourFeries')">
-              <a routerLink="/admin/feries" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/feries'),
-        'text-center': !isOpen
-      }" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 px-2 transition-all duration-200">
-
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                  <path fill-rule="evenodd"
-                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z"
-                    clip-rule="evenodd" />
+              <a routerLink="/admin/feries"
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/feries') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd" />
                 </svg>
-                <span *ngIf="isOpen">Jours fériés</span>
+                <span class="flex-1 truncate">Jours fériés</span>
               </a>
             </li>
 
-            <!-- 
-        <li *ngIf="hasPermission('Employes') || role === 'SUPERADMIN'">
-        
-          <button (click)="toggleDropdownEmploye('employe')"
-            class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
-            [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/employes'),
-      'text-center': !isOpen
-    }">
-
-            <div class="flex items-center space-x-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                <path fill-rule="evenodd"
-                  d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
-                  clip-rule="evenodd" />
-                <path
-                  d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
-              </svg>
-              <span *ngIf="isOpen">Employés</span>
-            </div>
-
-            
-            <svg [ngClass]="{'rotate-180': openDropdownEmploye === 'employe'}"
-              class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-        
-          <ul *ngIf=" openDropdownEmploye === 'employe'" class="ml-8 mt-1 space-y-1 text-sm">
-
-            <li>
-              <a routerLink="/admin/employes/donnees-partiel" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/employes/donnees-partiel'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                  <path fill-rule="evenodd"
-                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
-                    clip-rule="evenodd" />
-                  <path
-                    d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
-                </svg>
-
-                <span *ngIf="isOpen">Données partielles</span>
-              </a>
-            </li>
-
-          </ul>
-        </li> -->
-
-
-
+            <!-- Absences (nested) -->
             <li *ngIf="accessAbsences()">
-              <!-- Bouton parent -->
               <button (click)="toggleDropdownAbsences('absences')"
-                class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
-                [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/absences'),
-      'text-center': !isOpen
-    }">
-
-                <div class="flex items-center space-x-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                    <path fill-rule="evenodd"
-                      d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z"
-                      clip-rule="evenodd" />
-                  </svg>
-                  <span *ngIf="isOpen">Absences</span>
-                </div>
-
-                <!-- Flèche -->
-                <svg [ngClass]="{'rotate-180': openDropdownAbsences === 'absences'}"
-                  class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/absences') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z" clip-rule="evenodd" />
+                </svg>
+                <span class="flex-1 truncate">Absences</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownAbsences === 'absences' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              <!-- Sous-menu -->
-              <ul *ngIf="openDropdownAbsences === 'absences'" class="ml-8 mt-1 space-y-1 text-sm">
-
+              <ul *ngIf="openDropdownAbsences === 'absences'"
+                class="ml-3.5 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
                 <li *ngIf="hasAccess('absences.tempsReel')">
-                  <a routerLink="/admin/absences/tempsreel" routerLinkActive="bg-gray-700 font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                    <!--hover:bg-blue-50 hover:text-blue-700 transition-->
-                    <lucide-icon name="UserX" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                    <span>Absences en temps réel</span>
+                  <a routerLink="/admin/absences/tempsreel"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="UserX" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Absences en temps réel</span>
                   </a>
                 </li>
                 <li *ngIf="hasAccess('absences.historiqueAbsences')">
-                  <a routerLink="/admin/absences/historique" routerLinkActive="bg-gray-700 font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                    <lucide-icon name="ArchiveX" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                    <span>Historique des absences</span>
+                  <a routerLink="/admin/absences/historique"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ArchiveX" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Historique des absences</span>
                   </a>
                 </li>
-
-
               </ul>
             </li>
 
+            <!-- Pointages (nested) -->
             <li *ngIf="accessPointages()">
-              <!-- Bouton parent -->
               <button (click)="toggleDropdownPointages('pointages')"
-                class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
-                [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/pointages'),
-      'text-center': !isOpen
-    }">
-
-                <div class="flex items-center space-x-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                  </svg>
-                  <span *ngIf="isOpen">Pointages</span>
-                </div>
-
-                <!-- Flèche -->
-                <svg [ngClass]="{'rotate-180': openDropdownPointages === 'pointages'}"
-                  class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/pointages') }">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                </svg>
+                <span class="flex-1 truncate">Pointages</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownPointages === 'pointages' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              <!-- Sous-menu -->
-              <ul *ngIf="openDropdownPointages === 'pointages'" class="ml-8 mt-1 space-y-1 text-sm">
-
+              <ul *ngIf="openDropdownPointages === 'pointages'"
+                class="ml-3.5 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
                 <li *ngIf="hasAccess('pointages.pointagesDuJour')">
-                  <a routerLink="/admin/pointages/pointagesDuJour" routerLinkActive="bg-gray-700 font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                    <!--hover:bg-blue-50 hover:text-blue-700 transition-->
-                    <lucide-icon name="MapPinCheck" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                    <span>Pointages du jour</span>
+                  <a routerLink="/admin/pointages/pointagesDuJour"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="MapPinCheck" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Pointages du jour</span>
                   </a>
                 </li>
                 <li *ngIf="hasAccess('pointages.historiquePointages')">
-                  <a routerLink="/admin/pointages/historique" routerLinkActive="bg-gray-700 font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                    <lucide-icon name="MapPinHouse" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                    <span>Historique des pointages</span>
+                  <a routerLink="/admin/pointages/historique"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="MapPinHouse" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Historique des pointages</span>
                   </a>
                 </li>
-
-
               </ul>
             </li>
 
-
+            <!-- Agences -->
             <li *ngIf="hasAccess('agences')">
-              <a routerLink="/admin/operations/agences" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/operations/agences'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                  <path
-                    d="M11.584 2.376a.75.75 0 0 1 .832 0l9 6a.75.75 0 1 1-.832 1.248L12 3.901 3.416 9.624a.75.75 0 0 1-.832-1.248l9-6Z" />
-                  <path fill-rule="evenodd"
-                    d="M20.25 10.332v9.918H21a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1 0-1.5h.75v-9.918a.75.75 0 0 1 .634-.74A49.109 49.109 0 0 1 12 9c2.59 0 5.134.202 7.616.592a.75.75 0 0 1 .634.74Zm-7.5 2.418a.75.75 0 0 0-1.5 0v6.75a.75.75 0 0 0 1.5 0v-6.75Zm3-.75a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0v-6.75a.75.75 0 0 1 .75-.75ZM9 12.75a.75.75 0 0 0-1.5 0v6.75a.75.75 0 0 0 1.5 0v-6.75Z"
-                    clip-rule="evenodd" />
+              <a routerLink="/admin/operations/agences"
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/operations/agences') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path d="M11.584 2.376a.75.75 0 0 1 .832 0l9 6a.75.75 0 1 1-.832 1.248L12 3.901 3.416 9.624a.75.75 0 0 1-.832-1.248l9-6Z" />
+                  <path fill-rule="evenodd" d="M20.25 10.332v9.918H21a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1 0-1.5h.75v-9.918a.75.75 0 0 1 .634-.74A49.109 49.109 0 0 1 12 9c2.59 0 5.134.202 7.616.592a.75.75 0 0 1 .634.74Zm-7.5 2.418a.75.75 0 0 0-1.5 0v6.75a.75.75 0 0 0 1.5 0v-6.75Zm3-.75a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0v-6.75a.75.75 0 0 1 .75-.75ZM9 12.75a.75.75 0 0 0-1.5 0v6.75a.75.75 0 0 0 1.5 0v-6.75Z" clip-rule="evenodd" />
                   <path d="M12 7.875a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" />
                 </svg>
-
-                <span *ngIf="isOpen">Agences</span>
+                <span class="flex-1 truncate">Agences</span>
               </a>
             </li>
 
+            <!-- Agents -->
             <li *ngIf="hasAccess('employes')">
-              <a routerLink="/admin/operations/agents" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/operations/agents'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-                  <path fill-rule="evenodd"
-                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
-                    clip-rule="evenodd" />
-                  <path
-                    d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+              <a routerLink="/admin/operations/agents"
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/operations/agents') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path fill-rule="evenodd" d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z" clip-rule="evenodd" />
+                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
                 </svg>
-
-                <span *ngIf="isOpen">Agents</span>
+                <span class="flex-1 truncate">Agents</span>
               </a>
             </li>
 
+            <!-- Planifications -->
             <li *ngIf="hasAccess('planifications')">
-              <a routerLink="/admin/operations/planification" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/operations/planification'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                  stroke="currentColor" class="size-6">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+              <a routerLink="/admin/operations/planification"
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/operations/planification') }">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
                 </svg>
-                <span *ngIf="isOpen">Planifications</span>
+                <span class="flex-1 truncate">Planifications</span>
               </a>
             </li>
 
-            <!-- statistiques par agence groupe -->
+            <!-- Statistiques par agence -->
             <li *ngIf="hasAccess('statistiquesAgences')">
-              <a routerLink="/admin/operations/statistique-par-agence-groupe" [ngClass]="{
-        'bg-gray-700 font-bold': isActive('/admin/operations/statistique-par-agence-groupe'),
-        'text-center': !isOpen
-      }" class="p-2 flex items-center space-x-2 rounded  hover:bg-gray-700 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                  stroke="currentColor" class="size-6">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Zm7.875-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625Zm7.875 2.25c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-9.75Z" />
+              <a routerLink="/admin/operations/statistique-par-agence-groupe"
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActive('/admin/operations/statistique-par-agence-groupe') }">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Zm7.875-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625Zm7.875 2.25c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-9.75Z" />
                 </svg>
-                <span *ngIf="isOpen">Statistiques par agence</span>
+                <span class="flex-1 truncate">Statistiques par agence</span>
               </a>
             </li>
 
-            <!-- ressources humaines -->
-            <!--Bouton 'Ressources humaines' avec un bouton 'Agents' comme sous-menu-->
+            <!-- Ressources humaines (nested) -->
             <li *ngIf="accessRessourcesHumaines()">
-              <!-- Bouton parent -->
               <button (click)="toggleDropdownRessourcesHumaines('ressourcesHumaines')"
-                class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
-                [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/rh'),
-      'text-center': !isOpen
-    }">
-
-                <div class="flex items-center space-x-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                    fill="#FFFFFF">
-                    <path
-                      d="M40-160v-160q0-29 20.5-49.5T110-390h141q17 0 32.5 8.5T310-358q29 42 74 65t96 23q51 0 96-23t75-65q11-15 26-23.5t32-8.5h141q29 0 49.5 20.5T920-320v160H660v-119q-36 33-82.5 51T480-210q-51 0-97-18t-83-51v119H40Zm440-170q-35 0-67.5-16.5T360-392q-16-23-38.5-37T273-448q29-30 91-46t116-16q54 0 116.5 16t91.5 46q-26 5-48.5 19T601-392q-20 29-52.5 45.5T480-330ZM160-460q-45 0-77.5-32.5T50-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T160-460Zm640 0q-45 0-77.5-32.5T690-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T800-460ZM480-580q-45 0-77.5-32.5T370-690q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T480-580Z" />
-                  </svg>
-                  <span *ngIf="isOpen">Ressources humaines</span>
-                </div>
-
-                <!-- Flèche -->
-                <svg [ngClass]="{'rotate-180': openDropdownRessourcesHumaines === 'ressourcesHumaines'}"
-                  class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/rh') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path d="M40-160v-160q0-29 20.5-49.5T110-390h141q17 0 32.5 8.5T310-358q29 42 74 65t96 23q51 0 96-23t75-65q11-15 26-23.5t32-8.5h141q29 0 49.5 20.5T920-320v160H660v-119q-36 33-82.5 51T480-210q-51 0-97-18t-83-51v119H40Zm440-170q-35 0-67.5-16.5T360-392q-16-23-38.5-37T273-448q29-30 91-46t116-16q54 0 116.5 16t91.5 46q-26 5-48.5 19T601-392q-20 29-52.5 45.5T480-330ZM160-460q-45 0-77.5-32.5T50-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T160-460Zm640 0q-45 0-77.5-32.5T690-570q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T800-460ZM480-580q-45 0-77.5-32.5T370-690q0-46 32.5-78t77.5-32q46 0 78 32t32 78q0 45-32 77.5T480-580Z" />
+                </svg>
+                <span class="flex-1 truncate">Ressources humaines</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownRessourcesHumaines === 'ressourcesHumaines' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              <!-- Sous-menu -->
-              <ul *ngIf="openDropdownRessourcesHumaines === 'ressourcesHumaines'" class="ml-8 mt-1 space-y-1 text-sm">
-                <!-- Agents -->
+              <ul *ngIf="openDropdownRessourcesHumaines === 'ressourcesHumaines'"
+                class="ml-3.5 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
                 <li *ngIf="hasAccess('ressourcesHumaines.agentsRh')">
-                  <a routerLink="/admin/rh/agentsRh" routerLinkActive="bg-gray-700 font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                    <lucide-icon name="User" class="w-5 h-5 text-blue-500 mr-3"></lucide-icon>
-                    <span>Agents RH</span>
+                  <a routerLink="/admin/rh/agentsRh"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="User" class="w-4 h-4 text-sky-400"></lucide-icon>
+                    <span class="flex-1 truncate">Agents RH</span>
+                  </a>
+                </li>
+
+                <!-- Gestion du Personnel (sous-menu) -->
+                <li>
+                  <button (click)="toggleDropdownGestionPersonnel('gestionPersonnel')"
+                    class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.8rem] font-medium text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                    [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/rh/gestion-du-personnel') }">
+                    <lucide-icon name="FolderOpen" class="w-4 h-4 text-emerald-400"></lucide-icon>
+                    <span class="flex-1 truncate">Gestion du Personnel</span>
+                    <svg class="w-3 h-3 text-slate-500 transition-transform duration-300"
+                      [ngClass]="{ 'rotate-180': openDropdownGestionPersonnel === 'gestionPersonnel' }"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <ul *ngIf="openDropdownGestionPersonnel === 'gestionPersonnel'"
+                    class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
+                    <li>
+                      <a routerLink="/admin/rh/gestion-du-personnel/dossier-employe"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="Users" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
+                        <span class="flex-1 truncate">Dossiers employés</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/gestion-du-personnel/contrats"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="FileText" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
+                        <span class="flex-1 truncate">Contrats de travail</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/gestion-du-personnel/organigramme"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="GitBranch" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
+                        <span class="flex-1 truncate">Organigramme</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/gestion-du-personnel/periode-essai"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="Clock" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
+                        <span class="flex-1 truncate">Périodes d'essai</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/gestion-du-personnel/periode-essai/validation"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="CheckCircle" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
+                        <span class="flex-1 truncate">Titularisations</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/gestion-du-personnel/documents"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="FolderArchive" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
+                        <span class="flex-1 truncate">Documents</span>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Stock (nested) -->
+            <li *ngIf="accesStock()">
+              <button (click)="toggleDropdownStock('stock')"
+                class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/stock') }">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"
+                  class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-indigo-200">
+                  <path d="M120-40v-880h80v80h560v-80h80v880h-80v-80H200v80h-80Zm80-480h80v-160h240v160h240v-240H200v240Zm0 320h240v-160h240v160h80v-240H200v240Zm160-320h80v-80h-80v80Zm160 320h80v-80h-80v80ZM360-520h80-80Zm160 320h80-80Z" />
+                </svg>
+                <span class="flex-1 truncate">Gestion du stock</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownStock === 'stock' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <ul *ngIf="openDropdownStock === 'stock'"
+                class="ml-3.5 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
+                <li *ngIf="hasAccess('stock.produits')">
+                  <a routerLink="/admin/stock/produits"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Package" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Catalogue de produits</span>
+                  </a>
+                </li>
+                <li *ngIf="hasAccess('stock.entrees')">
+                  <a routerLink="/admin/stock/entrees"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ArrowUp" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Réceptions / Entrées</span>
+                  </a>
+                </li>
+                <li *ngIf="hasAccess('stock.sorties')">
+                  <a routerLink="/admin/stock/sorties"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ArrowDown" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Sorties / Livraisons</span>
+                  </a>
+                </li>
+                <li *ngIf="hasAccess('stock.suivis')">
+                  <a routerLink="/admin/stock/suivi"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Activity" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Suivi du stock</span>
+                  </a>
+                </li>
+                <li *ngIf="hasAccess('stock.historiquesEntrees')">
+                  <a routerLink="/admin/stock/historiques-entrees"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="FolderArchive" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Historiques des entrées</span>
+                  </a>
+                </li>
+                <li *ngIf="hasAccess('stock.historiquesSorties')">
+                  <a routerLink="/admin/stock/historiques-sorties"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-[0.8rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="FolderArchive" class="w-4 h-4 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Historiques des sorties</span>
                   </a>
                 </li>
               </ul>
             </li>
+
           </ul>
         </li>
-
-        <!-- Stock -->
-        <li *ngIf="accesStock()">
-          <!-- Bouton parent -->
-          <button (click)="toggleDropdownStock('stock')"
-            class="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700 transition-all duration-200"
-            [ngClass]="{
-      'bg-gray-700 font-bold': isActivePrefix('/admin/stock'),
-      'text-center': !isOpen
-    }">
-
-            <div class="flex items-center space-x-2">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                fill="#FFFFFF">
-                <path
-                  d="M120-40v-880h80v80h560v-80h80v880h-80v-80H200v80h-80Zm80-480h80v-160h240v160h240v-240H200v240Zm0 320h240v-160h240v160h80v-240H200v240Zm160-320h80v-80h-80v80Zm160 320h80v-80h-80v80ZM360-520h80-80Zm160 320h80-80Z" />
-              </svg>
-              <span *ngIf="isOpen">Gestion du stock</span>
-            </div>
-
-            <!-- Flèche -->
-            <svg [ngClass]="{'rotate-180': openDropdownStock === 'stock'}"
-              class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          <!-- Sous-menu -->
-          <ul *ngIf="openDropdownStock === 'stock'" class="ml-8 mt-1 space-y-1 text-sm">
-
-            <!-- Articles & Produits -->
-
-            <li *ngIf="hasAccess('stock.produits')">
-              <a routerLink="/admin/stock/produits" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <!--hover:bg-blue-50 hover:text-blue-700 transition-->
-                <lucide-icon name="Package" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Catalogue de produits</span>
-              </a>
-            </li>
-
-            <!-- Réceptions (Entrées) -->
-
-            <li *ngIf="hasAccess('stock.entrees')">
-              <a routerLink="/admin/stock/entrees" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <lucide-icon name="ArrowUp" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Réceptions / Entrées</span>
-              </a>
-            </li>
-
-            <!-- Sorties / Livraisons -->
-
-            <li *ngIf="hasAccess('stock.sorties')">
-              <a routerLink="/admin/stock/sorties" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <lucide-icon name="ArrowDown" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Sorties / Livraisons</span>
-              </a>
-            </li>
-            <li *ngIf="hasAccess('stock.suivis')">
-              <a routerLink="/admin/stock/suivi" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <lucide-icon name="Activity" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Suivi du Stock</span>
-              </a>
-            </li>
-
-            <!-- Rapports mensuels -->
-            <!--<li>
-              <a routerLink="/admin/stock/rapports-mensuels" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <lucide-icon name="FileText" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Rapports Mensuels</span>
-              </a>
-            </li> -->
-
-            <!-- Historiques des entrées -->
-            <li *ngIf="hasAccess('stock.historiquesEntrees')">
-              <a routerLink="/admin/stock/historiques-entrees" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <lucide-icon name="FolderArchive" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Historiques des entrées</span>
-              </a>
-            </li>
-
-            <!-- Historiques des sorties -->
-            <li *ngIf="hasAccess('stock.historiquesSorties')">
-              <a routerLink="/admin/stock/historiques-sorties" routerLinkActive="bg-gray-700 font-semibold"
-                [routerLinkActiveOptions]="{ exact: true }" class="block px-4 py-2 rounded hover:bg-gray-700">
-                <lucide-icon name="FolderArchive" class="w-5 h-5 text-yellow-500 mr-3"></lucide-icon>
-                <span>Historiques des sorties</span>
-              </a>
-            </li>
-          </ul>
-        </li>
-
-        <!-- Logout Button -->
-        <div class="ml-1">
-          <button class="bg-red-600 flex w-15 items-center space-x-2 mt-5  text-white px-2  py-2
-         hover:bg-red-700 transition-all duration-200 rounded-2xl shadow-lg" (click)="logout()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
-              <path fill-rule="evenodd"
-                d="M12 2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM6.166 5.106a.75.75 0 0 1 0 1.06 8.25 8.25 0 1 0 11.668 0 .75.75 0 1 1 1.06-1.06c3.808 3.807 3.808 9.98 0 13.788-3.807 3.808-9.98 3.808-13.788 0-3.808-3.807-3.808-9.98 0-13.788a.75.75 0 0 1 1.06 0Z"
-                clip-rule="evenodd" />
-            </svg>
-            <span *ngIf="isOpen">Déconnexion</span></button>
-        </div>
-
 
       </ul>
-
     </nav>
-  </div>
 
-  <!-- Content Area -->
-  <div class="flex-1 p-4 overflow-auto bg-gray-100 rounded-3xl mb-20">
+    <!-- Footer / Logout -->
+    <div class="px-2.5 py-3 border-t border-white/5">
+      <button (click)="logout()"
+        class="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold text-white
+               bg-gradient-to-br from-red-500 to-red-600 shadow-[0_6px_16px_-6px_rgba(220,38,38,0.6)]
+               hover:brightness-110 hover:-translate-y-px hover:shadow-[0_10px_22px_-8px_rgba(220,38,38,0.7)]
+               transition-all duration-200">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 flex-shrink-0">
+          <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM6.166 5.106a.75.75 0 0 1 0 1.06 8.25 8.25 0 1 0 11.668 0 .75.75 0 1 1 1.06-1.06c3.808 3.807 3.808 9.98 0 13.788-3.807 3.808-9.98 3.808-13.788 0-3.808-3.807-3.808-9.98 0-13.788a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+        </svg>
+        <span *ngIf="isOpen">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- Content area                                                  -->
+  <!-- ============================================================ -->
+  <main class="flex-1 overflow-auto p-4 my-3 mx-3 bg-white rounded-2xl shadow-[0_10px_30px_-15px_rgba(15,23,42,0.15)]">
     <router-outlet></router-outlet>
-  </div>
+  </main>
 </div>

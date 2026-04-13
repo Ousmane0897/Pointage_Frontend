@@ -1,0 +1,748 @@
+<!-- ════════════════════════════════════════════════════════════
+     Formulaire Employé – Création / Modification multi-étapes
+     ════════════════════════════════════════════════════════════ -->
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+
+  <!-- En-tête de page -->
+  <div class="max-w-3xl mx-auto mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">{{ titreFormulaire }}</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Étape {{ etapeActuelle }} sur {{ etapes.length }} — {{ etapes[etapeActuelle - 1] }}
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="annuler()"
+      class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+    >
+      <lucide-icon name="x" [size]="16"></lucide-icon>
+      Annuler
+    </button>
+  </div>
+
+  <!-- Chargement initial -->
+  <div *ngIf="loading" class="max-w-3xl mx-auto flex justify-center py-20">
+    <div class="flex flex-col items-center gap-3 text-gray-500">
+      <lucide-icon name="loader-2" [size]="32" class="animate-spin text-indigo-600"></lucide-icon>
+      <span class="text-sm">Chargement des données…</span>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div *ngIf="!loading" class="max-w-3xl mx-auto">
+
+    <!-- ── Indicateur d'étapes ── -->
+    <div class="flex items-center mb-8">
+      <ng-container *ngFor="let etape of etapes; let i = index; let last = last">
+        <!-- Cercle numéroté -->
+        <div class="flex flex-col items-center">
+          <div
+            class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-300"
+            [ngClass]="{
+              'bg-indigo-600 border-indigo-600 text-white': etapeActuelle === i + 1,
+              'bg-green-500 border-green-500 text-white': etapeActuelle > i + 1,
+              'bg-white border-gray-300 text-gray-400': etapeActuelle < i + 1
+            }"
+          >
+            <lucide-icon *ngIf="etapeActuelle > i + 1" name="check" [size]="16"></lucide-icon>
+            <span *ngIf="etapeActuelle <= i + 1">{{ i + 1 }}</span>
+          </div>
+          <span
+            class="mt-1.5 text-xs font-medium whitespace-nowrap hidden sm:block"
+            [ngClass]="{
+              'text-indigo-600': etapeActuelle === i + 1,
+              'text-green-600': etapeActuelle > i + 1,
+              'text-gray-400': etapeActuelle < i + 1
+            }"
+          >{{ etape }}</span>
+        </div>
+        <!-- Ligne de connexion -->
+        <div
+          *ngIf="!last"
+          class="flex-1 h-0.5 mx-2 transition-all duration-300"
+          [ngClass]="etapeActuelle > i + 1 ? 'bg-green-400' : 'bg-gray-200'"
+        ></div>
+      </ng-container>
+    </div>
+
+    <!-- ── Formulaire global ── -->
+    <form #employeForm="ngForm" (ngSubmit)="sauvegarder(employeForm)" novalidate>
+
+      <!-- ══════════════════════════════════════════════════════
+           ÉTAPE 1 — Identité
+           ══════════════════════════════════════════════════════ -->
+      <div *ngIf="etapeActuelle === 1">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
+            <lucide-icon name="user" [size]="20" class="text-indigo-500"></lucide-icon>
+            Identité
+          </h2>
+
+          <!-- Photo de profil -->
+          <div class="flex flex-col items-center mb-6">
+            <div class="relative">
+              <!-- Cercle photo -->
+              <div
+                class="w-28 h-28 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden"
+                [ngClass]="{ 'border-indigo-400': previewUrl }"
+              >
+                <img
+                  *ngIf="previewUrl"
+                  [src]="previewUrl"
+                  alt="Aperçu photo"
+                  class="w-full h-full object-cover"
+                />
+                <lucide-icon
+                  *ngIf="!previewUrl"
+                  name="camera"
+                  [size]="32"
+                  class="text-gray-400"
+                ></lucide-icon>
+              </div>
+              <!-- Bouton supprimer photo -->
+              <button
+                *ngIf="previewUrl"
+                type="button"
+                (click)="supprimerPhoto()"
+                class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition"
+                title="Supprimer la photo"
+              >
+                <lucide-icon name="x" [size]="12"></lucide-icon>
+              </button>
+            </div>
+            <!-- Input fichier caché -->
+            <label
+              for="photoInput"
+              class="mt-3 cursor-pointer inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              <lucide-icon name="upload" [size]="14"></lucide-icon>
+              {{ previewUrl ? 'Changer la photo' : 'Ajouter une photo' }}
+            </label>
+            <input
+              id="photoInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              class="hidden"
+              (change)="onPhotoSelected($event)"
+            />
+            <p class="text-xs text-gray-400 mt-1">JPG, PNG, WebP — max 5 Mo</p>
+          </div>
+
+          <!-- Champs identité -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- Nom -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Nom <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nom"
+                [(ngModel)]="employeData.nom"
+                required
+                #nom="ngModel"
+                placeholder="Ex. Diallo"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': nom.invalid && nom.touched }"
+              />
+              <p *ngIf="nom.invalid && nom.touched" class="text-xs text-red-500 mt-1">
+                Le nom est obligatoire.
+              </p>
+            </div>
+
+            <!-- Prénom -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Prénom <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="prenom"
+                [(ngModel)]="employeData.prenom"
+                required
+                #prenom="ngModel"
+                placeholder="Ex. Mamadou"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': prenom.invalid && prenom.touched }"
+              />
+              <p *ngIf="prenom.invalid && prenom.touched" class="text-xs text-red-500 mt-1">
+                Le prénom est obligatoire.
+              </p>
+            </div>
+
+            <!-- Date de naissance -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Date de naissance <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="dateNaissance"
+                [(ngModel)]="employeData.dateNaissance"
+                required
+                #dateNaissance="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': dateNaissance.invalid && dateNaissance.touched }"
+              />
+              <p *ngIf="dateNaissance.invalid && dateNaissance.touched" class="text-xs text-red-500 mt-1">
+                La date de naissance est obligatoire.
+              </p>
+            </div>
+
+            <!-- Genre -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Genre <span class="text-red-500">*</span>
+              </label>
+              <select
+                name="genre"
+                [(ngModel)]="employeData.genre"
+                required
+                #genre="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
+                [ngClass]="{ 'border-red-400 bg-red-50': genre.invalid && genre.touched }"
+              >
+                <option value="">— Sélectionner —</option>
+                <option value="HOMME">Homme</option>
+                <option value="FEMME">Femme</option>
+              </select>
+              <p *ngIf="genre.invalid && genre.touched" class="text-xs text-red-500 mt-1">
+                Le genre est obligatoire.
+              </p>
+            </div>
+
+            <!-- Nationalité -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Nationalité <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nationalite"
+                [(ngModel)]="employeData.nationalite"
+                required
+                #nationalite="ngModel"
+                placeholder="Ex. Sénégalaise"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': nationalite.invalid && nationalite.touched }"
+              />
+              <p *ngIf="nationalite.invalid && nationalite.touched" class="text-xs text-red-500 mt-1">
+                La nationalité est obligatoire.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           ÉTAPE 2 — Poste & Affectation
+           ══════════════════════════════════════════════════════ -->
+      <div *ngIf="etapeActuelle === 2">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
+            <lucide-icon name="briefcase" [size]="20" class="text-indigo-500"></lucide-icon>
+            Poste &amp; Affectation
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- Poste -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Poste <span class="text-red-500">*</span>
+              </label>
+              <input
+                *ngIf="postes.length === 0"
+                type="text"
+                name="poste"
+                [(ngModel)]="employeData.poste"
+                required
+                #poste="ngModel"
+                placeholder="Ex. Technicien"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['poste']?.invalid && employeForm.controls['poste']?.touched }"
+              />
+              <select
+                *ngIf="postes.length > 0"
+                name="poste"
+                [(ngModel)]="employeData.poste"
+                required
+                #poste="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
+                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['poste']?.invalid && employeForm.controls['poste']?.touched }"
+              >
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let p of postes" [value]="p">{{ p }}</option>
+              </select>
+              <p *ngIf="employeForm.controls['poste']?.invalid && employeForm.controls['poste']?.touched" class="text-xs text-red-500 mt-1">
+                Le poste est obligatoire.
+              </p>
+            </div>
+
+            <!-- Département -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Département <span class="text-red-500">*</span>
+              </label>
+              <input
+                *ngIf="departements.length === 0"
+                type="text"
+                name="departement"
+                [(ngModel)]="employeData.departement"
+                required
+                #departement="ngModel"
+                placeholder="Ex. Informatique"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['departement']?.invalid && employeForm.controls['departement']?.touched }"
+              />
+              <select
+                *ngIf="departements.length > 0"
+                name="departement"
+                [(ngModel)]="employeData.departement"
+                required
+                #departement="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
+                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['departement']?.invalid && employeForm.controls['departement']?.touched }"
+              >
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
+              </select>
+              <p *ngIf="employeForm.controls['departement']?.invalid && employeForm.controls['departement']?.touched" class="text-xs text-red-500 mt-1">
+                Le département est obligatoire.
+              </p>
+            </div>
+
+            <!-- Site affecté -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Site affecté <span class="text-red-500">*</span>
+              </label>
+              <input
+                *ngIf="sites.length === 0"
+                type="text"
+                name="siteAffecte"
+                [(ngModel)]="employeData.siteAffecte"
+                required
+                #siteAffecte="ngModel"
+                placeholder="Ex. Siège Dakar"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['siteAffecte']?.invalid && employeForm.controls['siteAffecte']?.touched }"
+              />
+              <select
+                *ngIf="sites.length > 0"
+                name="siteAffecte"
+                [(ngModel)]="employeData.siteAffecte"
+                required
+                #siteAffecte="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
+                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['siteAffecte']?.invalid && employeForm.controls['siteAffecte']?.touched }"
+              >
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let s of sites" [value]="s">{{ s }}</option>
+              </select>
+              <p *ngIf="employeForm.controls['siteAffecte']?.invalid && employeForm.controls['siteAffecte']?.touched" class="text-xs text-red-500 mt-1">
+                Le site est obligatoire.
+              </p>
+            </div>
+
+            <!-- Date d'entrée -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Date d'entrée <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="dateEntree"
+                [(ngModel)]="employeData.dateEntree"
+                required
+                #dateEntree="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': dateEntree.invalid && dateEntree.touched }"
+              />
+              <p *ngIf="dateEntree.invalid && dateEntree.touched" class="text-xs text-red-500 mt-1">
+                La date d'entrée est obligatoire.
+              </p>
+            </div>
+
+            <!-- Statut -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Statut <span class="text-red-500">*</span>
+              </label>
+              <select
+                name="statut"
+                [(ngModel)]="employeData.statut"
+                required
+                #statut="ngModel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
+                [ngClass]="{ 'border-red-400 bg-red-50': statut.invalid && statut.touched }"
+              >
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let s of statutOptions" [value]="s.valeur">{{ s.libelle }}</option>
+              </select>
+              <p *ngIf="statut.invalid && statut.touched" class="text-xs text-red-500 mt-1">
+                Le statut est obligatoire.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           ÉTAPE 3 — Contacts
+           ══════════════════════════════════════════════════════ -->
+      <div *ngIf="etapeActuelle === 3">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
+            <lucide-icon name="phone" [size]="20" class="text-indigo-500"></lucide-icon>
+            Contacts
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+
+            <!-- Téléphone -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Téléphone <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="telephone"
+                [(ngModel)]="employeData.telephone"
+                required
+                #telephone="ngModel"
+                placeholder="Ex. +221 77 000 00 00"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': telephone.invalid && telephone.touched }"
+              />
+              <p *ngIf="telephone.invalid && telephone.touched" class="text-xs text-red-500 mt-1">
+                Le téléphone est obligatoire.
+              </p>
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Adresse e-mail <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="employeData.email"
+                required
+                email
+                #emailCtrl="ngModel"
+                placeholder="Ex. employe@entreprise.com"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                [ngClass]="{ 'border-red-400 bg-red-50': emailCtrl.invalid && emailCtrl.touched }"
+              />
+              <p *ngIf="emailCtrl.errors?.['required'] && emailCtrl.touched" class="text-xs text-red-500 mt-1">
+                L'e-mail est obligatoire.
+              </p>
+              <p *ngIf="emailCtrl.errors?.['email'] && emailCtrl.touched" class="text-xs text-red-500 mt-1">
+                Veuillez saisir un e-mail valide.
+              </p>
+            </div>
+
+            <!-- Adresse -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Adresse <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="adresse"
+                [(ngModel)]="employeData.adresse"
+                required
+                #adresse="ngModel"
+                rows="3"
+                placeholder="Ex. Rue 10, Quartier Médina, Dakar"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
+                [ngClass]="{ 'border-red-400 bg-red-50': adresse.invalid && adresse.touched }"
+              ></textarea>
+              <p *ngIf="adresse.invalid && adresse.touched" class="text-xs text-red-500 mt-1">
+                L'adresse est obligatoire.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Contact d'urgence -->
+          <div class="border-t border-gray-100 pt-5">
+            <h3 class="text-base font-semibold text-gray-600 mb-4 flex items-center gap-2">
+              <lucide-icon name="alert-circle" [size]="16" class="text-orange-400"></lucide-icon>
+              Contact d'urgence
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <!-- Nom du contact -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Nom complet
+                </label>
+                <input
+                  type="text"
+                  name="contactUrgenceNom"
+                  [(ngModel)]="employeData.contactUrgence.nom"
+                  placeholder="Ex. Fatou Diallo"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
+                />
+              </div>
+
+              <!-- Lien de parenté -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Lien de parenté
+                </label>
+                <input
+                  type="text"
+                  name="contactUrgenceLien"
+                  [(ngModel)]="employeData.contactUrgence.lienParente"
+                  placeholder="Ex. Épouse, Mère, Frère"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
+                />
+              </div>
+
+              <!-- Téléphone du contact -->
+              <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  name="contactUrgenceTel"
+                  [(ngModel)]="employeData.contactUrgence.telephone"
+                  placeholder="Ex. +221 76 000 00 00"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
+                />
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           ÉTAPE 4 — Récapitulatif
+           ══════════════════════════════════════════════════════ -->
+      <div *ngIf="etapeActuelle === 4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
+            <lucide-icon name="clipboard-list" [size]="20" class="text-indigo-500"></lucide-icon>
+            Récapitulatif
+          </h2>
+
+          <p class="text-sm text-gray-500 mb-6">
+            Vérifiez les informations avant d'enregistrer. Utilisez le bouton
+            <strong>Précédent</strong> pour corriger une donnée.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <!-- Carte : Identité -->
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <div class="flex items-center gap-3 mb-4">
+                <!-- Photo miniature -->
+                <div class="w-14 h-14 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                  <img
+                    *ngIf="previewUrl"
+                    [src]="previewUrl"
+                    alt="Photo"
+                    class="w-full h-full object-cover"
+                  />
+                  <lucide-icon
+                    *ngIf="!previewUrl"
+                    name="user"
+                    [size]="24"
+                    class="text-gray-400"
+                  ></lucide-icon>
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-800">
+                    {{ employeData.prenom }} {{ employeData.nom }}
+                  </p>
+                  <p class="text-xs text-gray-500">{{ libelleGenre }}</p>
+                </div>
+              </div>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Date de naissance</span>
+                  <span class="font-medium text-gray-700">
+                    {{ employeData.dateNaissance | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Nationalité</span>
+                  <span class="font-medium text-gray-700">{{ employeData.nationalite }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte : Poste & Affectation -->
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <h4 class="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-3">
+                Poste &amp; Affectation
+              </h4>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Poste</span>
+                  <span class="font-medium text-gray-700">{{ employeData.poste }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Département</span>
+                  <span class="font-medium text-gray-700">{{ employeData.departement }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Site</span>
+                  <span class="font-medium text-gray-700">{{ employeData.siteAffecte }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Date d'entrée</span>
+                  <span class="font-medium text-gray-700">
+                    {{ employeData.dateEntree | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Statut</span>
+                  <span
+                    class="px-2 py-0.5 rounded-full text-xs font-semibold"
+                    [ngClass]="{
+                      'bg-green-100 text-green-700': employeData.statut === 'ACTIF',
+                      'bg-yellow-100 text-yellow-700': employeData.statut === 'EN_PERIODE_ESSAI',
+                      'bg-orange-100 text-orange-700': employeData.statut === 'SUSPENDU',
+                      'bg-gray-100 text-gray-600': employeData.statut === 'SORTI'
+                    }"
+                  >
+                    {{ libelleStatut }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte : Contacts -->
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <h4 class="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-3">
+                Contacts
+              </h4>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Téléphone</span>
+                  <span class="font-medium text-gray-700">{{ employeData.telephone }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">E-mail</span>
+                  <span class="font-medium text-gray-700 truncate max-w-[160px]">{{ employeData.email }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Adresse</span>
+                  <span class="font-medium text-gray-700 text-right max-w-[160px]">{{ employeData.adresse }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte : Contact d'urgence -->
+            <div class="rounded-xl border border-orange-100 bg-orange-50 p-4">
+              <h4 class="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-3 flex items-center gap-1">
+                <lucide-icon name="alert-circle" [size]="13"></lucide-icon>
+                Contact d'urgence
+              </h4>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Nom</span>
+                  <span class="font-medium text-gray-700">
+                    {{ employeData.contactUrgence.nom || '—' }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Lien</span>
+                  <span class="font-medium text-gray-700">
+                    {{ employeData.contactUrgence.lienParente || '—' }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Téléphone</span>
+                  <span class="font-medium text-gray-700">
+                    {{ employeData.contactUrgence.telephone || '—' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Message d'erreur d'étape ── -->
+      <div
+        *ngIf="erreurEtape"
+        class="mt-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3"
+      >
+        <lucide-icon name="alert-triangle" [size]="16" class="shrink-0"></lucide-icon>
+        {{ erreurEtape }}
+      </div>
+
+      <!-- ── Boutons de navigation ── -->
+      <div class="flex items-center justify-between mt-6">
+
+        <!-- Précédent -->
+        <button
+          type="button"
+          (click)="etapePrecedente()"
+          [disabled]="etapeActuelle === 1"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <lucide-icon name="chevron-left" [size]="16"></lucide-icon>
+          Précédent
+        </button>
+
+        <div class="flex items-center gap-3">
+          <!-- Annuler -->
+          <button
+            type="button"
+            (click)="annuler()"
+            class="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+          >
+            Annuler
+          </button>
+
+          <!-- Suivant / Enregistrer -->
+          <button
+            *ngIf="etapeActuelle < etapes.length"
+            type="button"
+            (click)="etapeSuivante(employeForm)"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition shadow-sm"
+          >
+            Suivant
+            <lucide-icon name="chevron-right" [size]="16"></lucide-icon>
+          </button>
+
+          <button
+            *ngIf="etapeActuelle === etapes.length"
+            type="submit"
+            [disabled]="enregistrement"
+            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <lucide-icon
+              *ngIf="enregistrement"
+              name="loader-2"
+              [size]="16"
+              class="animate-spin"
+            ></lucide-icon>
+            <lucide-icon
+              *ngIf="!enregistrement"
+              name="save"
+              [size]="16"
+            ></lucide-icon>
+            {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+        </div>
+
+      </div>
+
+    </form>
+  </div>
+</div>

@@ -61,8 +61,22 @@ export const routes: Routes = [
             { path: 'operations/agences', loadComponent: () => import('./adminPage/agences/agences.component').then(m => m.AgencesComponent) }, // lazy loading de la page agences
             { path: 'absences/tempsreel', loadComponent: () => import('./adminPage/absences-temps-reel/absences-temps-reel.component').then(m => m.AbsencesTempsReelComponent) }, // lazy loading de la page absences
             { path: 'absences/historique', loadComponent: () => import('./adminPage/absences-historique/absences-historique.component').then(m => m.AbsencesHistoriqueComponent) }, // lazy loading de la page absences
-            //{ path: 'absences', loadComponent: () => import('./adminPage/absences/absences.component').then(m => m.AbsencesComponent) }, // lazy loading de la page absences
-            
+
+            // ─── Gestion du Personnel ────────────────────────────────────
+            { path: 'rh/gestion-du-personnel/dossier-employe', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/liste-employes/liste-employes.component').then(m => m.ListeEmployesComponent) },
+            { path: 'rh/gestion-du-personnel/dossier-employe/nouveau', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/formulaire-employe.component').then(m => m.FormulaireEmployeComponent) },
+            { path: 'rh/gestion-du-personnel/dossier-employe/fiche/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/fiche-employe/fiche-employe.component').then(m => m.FicheEmployeComponent) },
+            { path: 'rh/gestion-du-personnel/dossier-employe/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/formulaire-employe.component').then(m => m.FormulaireEmployeComponent) },
+            { path: 'rh/gestion-du-personnel/contrats', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/liste-contrats/liste-contrats.component').then(m => m.ListeContratsComponent) },
+            { path: 'rh/gestion-du-personnel/contrats/nouveau', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },
+            { path: 'rh/gestion-du-personnel/contrats/nouveau/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },
+            { path: 'rh/gestion-du-personnel/contrats/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },
+            { path: 'rh/gestion-du-personnel/contrats/:id/avenants', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/avenants/avenants.component').then(m => m.AvenantsComponent) },
+            { path: 'rh/gestion-du-personnel/organigramme', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/organigramme/organigramme.component').then(m => m.OrganigrammeComponent) },
+            { path: 'rh/gestion-du-personnel/periode-essai', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/periode-essai/suivi-periodes/suivi-periodes.component').then(m => m.SuiviPeriodesComponent) },
+            { path: 'rh/gestion-du-personnel/periode-essai/validation', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/periode-essai/validation-titularisation/validation-titularisation.component').then(m => m.ValidationTitularisationComponent) },
+            { path: 'rh/gestion-du-personnel/documents', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/documents/liste-documents/liste-documents.component').then(m => m.ListeDocumentsComponent) },
+            { path: 'rh/gestion-du-personnel/documents/visualiser/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/documents/visualisation-document/visualisation-document.component').then(m => m.VisualisationDocumentComponent) },
 
         ]
     }

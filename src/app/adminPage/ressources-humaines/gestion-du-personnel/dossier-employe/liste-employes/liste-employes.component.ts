@@ -1,0 +1,260 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ToastrService } from 'ngx-toastr';
+import {
+  Subject,
+  BehaviorSubject,
+  takeUntil,
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  catchError,
+  of,
+  finalize,
+  forkJoin,
+} from 'rxjs';
+import { LucideAngularModule } from 'lucide-angular';
+
+import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
+import { DossierEmploye, FiltreEmploye } from '../../../../../models/dossier-employe.model';
+import { PageResponse } from '../../../../../models/pageResponse.model';
+import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
+
+@Component({
+  selector: 'app-liste-employes',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    LucideAngularModule,
+  ],
+  templateUrl: './liste-employes.component.html',
+  styleUrl: './liste-employes.component.scss',
+})
+export class ListeEmployesComponent implements OnInit, OnDestroy {
+
+  // ─── Données ─────────────────────────────────────────────────────────────
+  employes: DossierEmploye[] = [];
+  total = 0;
+  totalPages = 0;
+
+  // ─── Pagination ───────────────────────────────────────────────────────────
+  page = 0;
+  size = 10;
+
+  // ─── Recherche ────────────────────────────────────────────────────────────
+  searchQuery = '';
+  private searchSubject = new BehaviorSubject<string>('');
+
+  // ─── Filtres ──────────────────────────────────────────────────────────────
+  filtres: FiltreEmploye = {};
+  departements: string[] = [];
+  sites: string[] = [];
+  postes: string[] = [];
+
+  // ─── États UI ─────────────────────────────────────────────────────────────
+  loading = false;
+  errorMessage = '';
+
+  // ─── Cycle de vie ─────────────────────────────────────────────────────────
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private dossierEmployeService: DossierEmployeService,
+    private router: Router,
+    private toastr: ToastrService,
+    private dialog: MatDialog,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadFilterOptions();
+    this.setupSearch();
+  }
+
+  // ─── Chargement des options de filtres ────────────────────────────────────
+  private loadFilterOptions(): void {
+    forkJoin({
+      departements: this.dossierEmployeService.getDepartements().pipe(catchError(() => of([]))),
+      sites: this.dossierEmployeService.getSites().pipe(catchError(() => of([]))),
+      postes: this.dossierEmployeService.getPostes().pipe(catchError(() => of([]))),
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ departements, sites, postes }) => {
+        this.departements = departements;
+        this.sites = sites;
+        this.postes = postes;
+      });
+  }
+
+  // ─── Initialisation de la recherche réactive ──────────────────────────────
+  private setupSearch(): void {
+    this.searchSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          this.page = 0;
+          this.loading = true;
+          this.errorMessage = '';
+          const filtresCombines: FiltreEmploye = { ...this.filtres, q };
+          return this.dossierEmployeService.getEmployes(this.page, this.size, filtresCombines).pipe(
+            catchError(err => {
+              this.handleError(err);
+              return of({ content: [], totalElements: 0 } as PageResponse<DossierEmploye>);
+            }),
+            finalize(() => (this.loading = false)),
+          );
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(res => {
+        this.employes = res.content;
+        this.total = res.totalElements ?? 0;
+        this.totalPages = Math.ceil(this.total / this.size);
+      });
+  }
+
+  // ─── Chargement paginé direct ─────────────────────────────────────────────
+  loadEmployes(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    const filtresCombines: FiltreEmploye = { ...this.filtres, q: this.searchQuery };
+
+    this.dossierEmployeService
+      .getEmployes(this.page, this.size, filtresCombines)
+      .pipe(
+        catchError(err => {
+          this.handleError(err);
+          return of({ content: [], totalElements: 0 } as PageResponse<DossierEmploye>);
+        }),
+        finalize(() => (this.loading = false)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(res => {
+        this.employes = res.content;
+        this.total = res.totalElements ?? 0;
+        this.totalPages = Math.ceil(this.total / this.size);
+      });
+  }
+
+  // ─── Recherche ────────────────────────────────────────────────────────────
+  onSearchChange(value: string): void {
+    this.searchQuery = value;
+    this.searchSubject.next(value);
+  }
+
+  // ─── Filtres ──────────────────────────────────────────────────────────────
+  applyFilters(): void {
+    this.page = 0;
+    this.loadEmployes();
+  }
+
+  resetFilters(): void {
+    this.filtres = {};
+    this.searchQuery = '';
+    this.page = 0;
+    this.searchSubject.next('');
+  }
+
+  // ─── Pagination ───────────────────────────────────────────────────────────
+  nextPage(): void {
+    if (this.page + 1 < this.totalPages) {
+      this.page++;
+      this.loadEmployes();
+    }
+  }
+
+  prevPage(): void {
+    if (this.page > 0) {
+      this.page--;
+      this.loadEmployes();
+    }
+  }
+
+  goToPage(p: number): void {
+    if (p >= 0 && p < this.totalPages) {
+      this.page = p;
+      this.loadEmployes();
+    }
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i);
+  }
+
+  // ─── Navigation ───────────────────────────────────────────────────────────
+  navigateToFiche(id: string): void {
+    this.router.navigate(['/admin/rh/gestion-du-personnel/dossier-employe/fiche', id]);
+  }
+
+  navigateToCreation(): void {
+    this.router.navigate(['/admin/rh/gestion-du-personnel/dossier-employe/nouveau']);
+  }
+
+  navigateToModification(id: string): void {
+    this.router.navigate(['/admin/rh/gestion-du-personnel/dossier-employe/modifier', id]);
+  }
+
+  // ─── Suppression ──────────────────────────────────────────────────────────
+  supprimerEmploye(id: string, nomComplet: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: { message: `Êtes-vous sûr de vouloir supprimer le dossier de ${nomComplet} ? Cette action est irréversible.` },
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
+      if (confirmed) {
+        this.dossierEmployeService
+          .supprimerEmploye(id)
+          .pipe(
+            catchError(err => {
+              console.error('Erreur suppression :', err);
+              this.toastr.error('Erreur lors de la suppression du dossier employé.', 'Erreur');
+              return of(null);
+            }),
+            takeUntil(this.destroy$),
+          )
+          .subscribe(res => {
+            if (res !== null) {
+              this.toastr.success(`Le dossier de ${nomComplet} a été supprimé avec succès.`, 'Succès');
+              this.loadEmployes();
+            }
+          });
+      }
+    });
+  }
+
+  // ─── Gestion des erreurs HTTP ─────────────────────────────────────────────
+  private handleError(err: any): void {
+    console.error('Erreur backend :', err);
+    if (err.status === 0) {
+      this.errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+    } else if (err.status === 401) {
+      this.errorMessage = 'Non autorisé. Veuillez vous reconnecter.';
+    } else if (err.status === 403) {
+      this.errorMessage = "Accès refusé. Vous n'avez pas les droits nécessaires.";
+    } else if (err.status === 404) {
+      this.errorMessage = 'Ressource introuvable.';
+    } else if (err.status === 500) {
+      this.errorMessage = 'Erreur interne du serveur. Veuillez réessayer plus tard.';
+    } else {
+      this.errorMessage = `Erreur inattendue (${err.status}).`;
+    }
+    this.toastr.error(this.errorMessage, 'Erreur');
+  }
+
+  // ─── Utilitaires ──────────────────────────────────────────────────────────
+  trackById(_: number, item: DossierEmploye): string {
+    return item.id ?? item.matricule;
+  }
+
+  // ─── Nettoyage ────────────────────────────────────────────────────────────
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
