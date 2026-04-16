@@ -5,7 +5,7 @@
   ══════════════════════════════════════════════ -->
   <div class="flex items-center gap-3 mb-6">
     <button
-      (click)="retourListe()"
+      (click)="retourListe()"f
       class="p-2 rounded-lg text-gray-500 hover:bg-gray-200 transition-colors duration-150">
       <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
     </button>
@@ -105,21 +105,18 @@
         <div *ngIf="showAvenantForm"
           class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
           <h4 class="text-sm font-semibold text-indigo-800 mb-3">Renseigner l'avenant</h4>
-          <form #avenantForm="ngForm" (ngSubmit)="creerAvenant(avenantForm)" novalidate class="space-y-3">
+          <form [formGroup]="avenantForm" (ngSubmit)="creerAvenant()" novalidate class="space-y-3">
 
             <!-- Objet -->
             <div class="flex flex-col gap-1">
               <label class="text-xs font-medium text-gray-700">Objet <span class="text-red-500">*</span></label>
               <input
                 type="text"
-                [(ngModel)]="newAvenant.objet"
-                name="objet"
-                required
-                #objetCtrl="ngModel"
+                formControlName="objet"
                 placeholder="Ex : Augmentation de salaire, Changement de poste…"
                 class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                [ngClass]="{'border-red-400': objetCtrl.invalid && objetCtrl.touched}" />
-              <span *ngIf="objetCtrl.invalid && objetCtrl.touched" class="text-xs text-red-500">L'objet est obligatoire.</span>
+                [ngClass]="{'border-red-400': avenantForm.get('objet')?.invalid && avenantForm.get('objet')?.touched}" />
+              <span *ngIf="avenantForm.get('objet')?.invalid && avenantForm.get('objet')?.touched" class="text-xs text-red-500">L'objet est obligatoire.</span>
             </div>
 
             <!-- Date d'effet -->
@@ -127,21 +124,17 @@
               <label class="text-xs font-medium text-gray-700">Date d'effet <span class="text-red-500">*</span></label>
               <input
                 type="date"
-                [(ngModel)]="newAvenant.dateEffet"
-                name="dateEffet"
-                required
-                #dateEffetCtrl="ngModel"
+                formControlName="dateEffet"
                 class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                [ngClass]="{'border-red-400': dateEffetCtrl.invalid && dateEffetCtrl.touched}" />
-              <span *ngIf="dateEffetCtrl.invalid && dateEffetCtrl.touched" class="text-xs text-red-500">La date d'effet est obligatoire.</span>
+                [ngClass]="{'border-red-400': avenantForm.get('dateEffet')?.invalid && avenantForm.get('dateEffet')?.touched}" />
+              <span *ngIf="avenantForm.get('dateEffet')?.invalid && avenantForm.get('dateEffet')?.touched" class="text-xs text-red-500">La date d'effet est obligatoire.</span>
             </div>
 
             <!-- Description -->
             <div class="flex flex-col gap-1">
               <label class="text-xs font-medium text-gray-700">Description</label>
               <textarea
-                [(ngModel)]="newAvenant.description"
-                name="description"
+                formControlName="description"
                 rows="3"
                 placeholder="Détails de l'avenant…"
                 class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-y placeholder-gray-400">
@@ -255,23 +248,20 @@
           <div *ngIf="contrat?.dateFin"
             class="flex items-center gap-2 mb-3 text-sm text-gray-600 bg-white rounded-lg px-3 py-2 border border-teal-100">
             <lucide-icon name="CalendarX" class="w-4 h-4 text-red-400 shrink-0"></lucide-icon>
-            Date de fin actuelle : <span class="font-medium text-gray-800">{{ contrat?.dateFin | date:'dd/MM/yyyy' }}</span>
+            Date de fin actuelle : <span class="font-medium text-gray-800">{{ contrat.dateFin | date:'dd/MM/yyyy' }}</span>
           </div>
 
-          <form #renouvForm="ngForm" (ngSubmit)="renouvelerContrat(renouvForm)" novalidate class="space-y-3">
+          <form [formGroup]="renouvellementForm" (ngSubmit)="renouvelerContrat()" novalidate class="space-y-3">
 
             <!-- Nouvelle date de fin -->
             <div class="flex flex-col gap-1">
               <label class="text-xs font-medium text-gray-700">Nouvelle date de fin <span class="text-red-500">*</span></label>
               <input
                 type="date"
-                [(ngModel)]="newRenouvellement.nouvelleDateFin"
-                name="nouvelleDateFin"
-                required
-                #nouvelleDateFinCtrl="ngModel"
+                formControlName="nouvelleDateFin"
                 class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                [ngClass]="{'border-red-400': nouvelleDateFinCtrl.invalid && nouvelleDateFinCtrl.touched}" />
-              <span *ngIf="nouvelleDateFinCtrl.invalid && nouvelleDateFinCtrl.touched"
+                [ngClass]="{'border-red-400': renouvellementForm.get('nouvelleDateFin')?.invalid && renouvellementForm.get('nouvelleDateFin')?.touched}" />
+              <span *ngIf="renouvellementForm.get('nouvelleDateFin')?.invalid && renouvellementForm.get('nouvelleDateFin')?.touched"
                 class="text-xs text-red-500">La nouvelle date de fin est obligatoire.</span>
             </div>
 
@@ -280,14 +270,11 @@
               <label class="text-xs font-medium text-gray-700">Motif <span class="text-red-500">*</span></label>
               <input
                 type="text"
-                [(ngModel)]="newRenouvellement.motif"
-                name="motif"
-                required
-                #motifCtrl="ngModel"
+                formControlName="motif"
                 placeholder="Ex : Prolongation de mission, Accord des deux parties…"
                 class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white placeholder-gray-400"
-                [ngClass]="{'border-red-400': motifCtrl.invalid && motifCtrl.touched}" />
-              <span *ngIf="motifCtrl.invalid && motifCtrl.touched" class="text-xs text-red-500">Le motif est obligatoire.</span>
+                [ngClass]="{'border-red-400': renouvellementForm.get('motif')?.invalid && renouvellementForm.get('motif')?.touched}" />
+              <span *ngIf="renouvellementForm.get('motif')?.invalid && renouvellementForm.get('motif')?.touched" class="text-xs text-red-500">Le motif est obligatoire.</span>
             </div>
 
             <div class="flex justify-end gap-2 pt-1">

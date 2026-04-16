@@ -33,7 +33,7 @@
        FORMULAIRE
   ══════════════════════════════════════════════ -->
   <div *ngIf="!loading">
-    <form #contratForm="ngForm" (ngSubmit)="sauvegarder(contratForm)" novalidate>
+    <form [formGroup]="contratForm" (ngSubmit)="sauvegarder()" novalidate>
 
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
 
@@ -49,7 +49,7 @@
             <div class="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
               <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
                 <span class="text-indigo-600 font-bold text-sm">
-                  {{ employeSelectionne.prenom?.charAt(0) | uppercase }}{{ employeSelectionne.nom?.charAt(0) | uppercase }}
+                  {{ employeSelectionne.prenom.charAt(0) | uppercase }}{{ employeSelectionne.nom.charAt(0) | uppercase }}
                 </span>
               </div>
               <div>
@@ -58,7 +58,7 @@
               </div>
               <lucide-icon name="Lock" class="w-4 h-4 text-gray-400 ml-auto"></lucide-icon>
             </div>
-            <input type="hidden" [(ngModel)]="contratData.employeId" name="employeId" />
+            <input type="hidden" formControlName="employeId" />
           </div>
 
           <!-- Sélection depuis la liste -->
@@ -68,18 +68,15 @@
                 Sélectionner un employé <span class="text-red-500">*</span>
               </label>
               <select
-                [(ngModel)]="contratData.employeId"
-                name="employeId"
-                required
-                #employeIdCtrl="ngModel"
+                formControlName="employeId"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                [ngClass]="{'border-red-400 focus:ring-red-400': employeIdCtrl.invalid && employeIdCtrl.touched}">
+                [ngClass]="{'border-red-400 focus:ring-red-400': contratForm.get('employeId')?.invalid && contratForm.get('employeId')?.touched}">
                 <option value="">-- Choisir un employé --</option>
                 <option *ngFor="let emp of employes" [value]="emp.id">
                   {{ emp.prenom }} {{ emp.nom }} &ndash; {{ emp.poste }}
                 </option>
               </select>
-              <span *ngIf="employeIdCtrl.invalid && employeIdCtrl.touched"
+              <span *ngIf="contratForm.get('employeId')?.invalid && contratForm.get('employeId')?.touched"
                 class="text-xs text-red-500 mt-0.5">L'employé est obligatoire.</span>
             </div>
           </ng-template>
@@ -98,48 +95,44 @@
 
             <!-- CDI -->
             <label
-              [class]="contratData.typeContrat === 'CDI'
+              [class]="contratForm.get('typeContrat')?.value === 'CDI'
                 ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-300'
                 : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'"
               class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
-              <input type="radio" name="typeContrat" [(ngModel)]="contratData.typeContrat"
-                (ngModelChange)="onTypeContratChange()" value="CDI" class="hidden" />
+              <input type="radio" formControlName="typeContrat" value="CDI" class="hidden" />
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">CDI</span>
               <span class="text-xs text-gray-500 text-center">Durée indéterminée</span>
             </label>
 
             <!-- CDD -->
             <label
-              [class]="contratData.typeContrat === 'CDD'
+              [class]="contratForm.get('typeContrat')?.value === 'CDD'
                 ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-300'
                 : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50'"
               class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
-              <input type="radio" name="typeContrat" [(ngModel)]="contratData.typeContrat"
-                (ngModelChange)="onTypeContratChange()" value="CDD" class="hidden" />
+              <input type="radio" formControlName="typeContrat" value="CDD" class="hidden" />
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">CDD</span>
               <span class="text-xs text-gray-500 text-center">Durée déterminée</span>
             </label>
 
             <!-- STAGE -->
             <label
-              [class]="contratData.typeContrat === 'STAGE'
+              [class]="contratForm.get('typeContrat')?.value === 'STAGE'
                 ? 'ring-2 ring-purple-500 bg-purple-50 border-purple-300'
                 : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'"
               class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
-              <input type="radio" name="typeContrat" [(ngModel)]="contratData.typeContrat"
-                (ngModelChange)="onTypeContratChange()" value="STAGE" class="hidden" />
+              <input type="radio" formControlName="typeContrat" value="STAGE" class="hidden" />
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Stage</span>
               <span class="text-xs text-gray-500 text-center">Convention de stage</span>
             </label>
 
             <!-- ALTERNANCE -->
             <label
-              [class]="contratData.typeContrat === 'ALTERNANCE'
+              [class]="contratForm.get('typeContrat')?.value === 'ALTERNANCE'
                 ? 'ring-2 ring-teal-500 bg-teal-50 border-teal-300'
                 : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50/50'"
               class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
-              <input type="radio" name="typeContrat" [(ngModel)]="contratData.typeContrat"
-                (ngModelChange)="onTypeContratChange()" value="ALTERNANCE" class="hidden" />
+              <input type="radio" formControlName="typeContrat" value="ALTERNANCE" class="hidden" />
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Alternance</span>
               <span class="text-xs text-gray-500 text-center">Apprentissage</span>
             </label>
@@ -165,35 +158,29 @@
               </label>
               <input
                 type="date"
-                [(ngModel)]="contratData.dateDebut"
-                name="dateDebut"
-                required
-                #dateDebutCtrl="ngModel"
+                formControlName="dateDebut"
                 class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                [ngClass]="{'border-red-400 focus:ring-red-400': dateDebutCtrl.invalid && dateDebutCtrl.touched}" />
-              <span *ngIf="dateDebutCtrl.invalid && dateDebutCtrl.touched"
+                [ngClass]="{'border-red-400 focus:ring-red-400': contratForm.get('dateDebut')?.invalid && contratForm.get('dateDebut')?.touched}" />
+              <span *ngIf="contratForm.get('dateDebut')?.invalid && contratForm.get('dateDebut')?.touched"
                 class="text-xs text-red-500 mt-0.5">La date de début est obligatoire.</span>
             </div>
 
             <!-- Date de fin (masquée pour CDI) -->
-            <div *ngIf="contratData.typeContrat !== 'CDI'" class="flex flex-col gap-1">
+            <div *ngIf="contratForm.get('typeContrat')?.value !== 'CDI'" class="flex flex-col gap-1">
               <label class="text-sm font-medium text-gray-700">
                 Date de fin <span class="text-red-500">*</span>
               </label>
               <input
                 type="date"
-                [(ngModel)]="contratData.dateFin"
-                name="dateFin"
-                [required]="isDateFinRequired"
-                #dateFinCtrl="ngModel"
+                formControlName="dateFin"
                 class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                [ngClass]="{'border-red-400 focus:ring-red-400': dateFinCtrl.invalid && dateFinCtrl.touched}" />
-              <span *ngIf="dateFinCtrl.invalid && dateFinCtrl.touched"
+                [ngClass]="{'border-red-400 focus:ring-red-400': contratForm.get('dateFin')?.invalid && contratForm.get('dateFin')?.touched}" />
+              <span *ngIf="contratForm.get('dateFin')?.invalid && contratForm.get('dateFin')?.touched"
                 class="text-xs text-red-500 mt-0.5">La date de fin est obligatoire pour ce type de contrat.</span>
             </div>
 
             <!-- Indéterminé (CDI) -->
-            <div *ngIf="contratData.typeContrat === 'CDI'" class="flex flex-col gap-1">
+            <div *ngIf="contratForm.get('typeContrat')?.value === 'CDI'" class="flex flex-col gap-1">
               <label class="text-sm font-medium text-gray-700">Date de fin</label>
               <div class="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50 text-sm text-gray-400 italic">
                 <lucide-icon name="Infinity" class="w-4 h-4"></lucide-icon>
@@ -214,14 +201,12 @@
             </label>
             <input
               type="number"
-              [(ngModel)]="contratData.joursAvantAlerte"
-              name="joursAvantAlerte"
+              formControlName="joursAvantAlerte"
               min="1"
               max="365"
-              #joursAlerteCtrl="ngModel"
               class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" />
             <p class="text-xs text-gray-400 mt-0.5">
-              Une alerte sera déclenchée {{ contratData.joursAvantAlerte }} jours avant la date de fin.
+              Une alerte sera déclenchée {{ contratForm.get('joursAvantAlerte')?.value }} jours avant la date de fin.
             </p>
           </div>
         </div>
@@ -238,8 +223,7 @@
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-gray-700">Clauses du contrat</label>
             <textarea
-              [(ngModel)]="contratData.clauses"
-              name="clauses"
+              formControlName="clauses"
               rows="5"
               placeholder="Renseignez ici les clauses particulières du contrat (période d'essai, non-concurrence, télétravail, avantages…)"
               class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y placeholder-gray-400">

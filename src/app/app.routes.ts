@@ -78,6 +78,18 @@ export const routes: Routes = [
             { path: 'rh/gestion-du-personnel/documents', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/documents/liste-documents/liste-documents.component').then(m => m.ListeDocumentsComponent) },
             { path: 'rh/gestion-du-personnel/documents/visualiser/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/documents/visualisation-document/visualisation-document.component').then(m => m.VisualisationDocumentComponent) },
 
+            // ─── Temps & Présences ───────────────────────────────────────
+            { path: 'rh/temps-et-presences/pointage-centralise', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/pointage-centralise/pointage-centralise.component').then(m => m.PointageCentraliseComponent) },
+            { path: 'rh/temps-et-presences/absences', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/gestion-absences/liste-absences/liste-absences.component').then(m => m.ListeAbsencesComponent) },
+            { path: 'rh/temps-et-presences/absences/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/gestion-absences/formulaire-absence/formulaire-absence.component').then(m => m.FormulaireAbsenceComponent) },
+            { path: 'rh/temps-et-presences/absences/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/gestion-absences/formulaire-absence/formulaire-absence.component').then(m => m.FormulaireAbsenceComponent) },
+            { path: 'rh/temps-et-presences/conges', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/calendrier-conges.component').then(m => m.CalendrierCongesComponent) },
+            { path: 'rh/temps-et-presences/conges/demande', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/demande-conge/demande-conge.component').then(m => m.DemandeCongeComponent) },
+            { path: 'rh/temps-et-presences/conges/validation', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/validation-conges/validation-conges.component').then(m => m.ValidationCongesComponent) },
+            { path: 'rh/temps-et-presences/heures-supplementaires', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/liste-heures-sup/liste-heures-sup.component').then(m => m.ListeHeuresSupComponent) },
+            { path: 'rh/temps-et-presences/heures-supplementaires/declaration', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/declaration-heures-sup/declaration-heures-sup.component').then(m => m.DeclarationHeuresSupComponent) },
+            { path: 'rh/temps-et-presences/recapitulatif', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/recapitulatif-mensuel/recapitulatif-mensuel.component').then(m => m.RecapitulatifMensuelComponent) },
+
         ]
     }
 ];

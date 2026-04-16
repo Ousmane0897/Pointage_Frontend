@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, catchError, finalize, of, takeUntil } from 'rxjs';
@@ -16,6 +17,7 @@ import { PageResponse } from '../../../../../models/pageResponse.model';
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
   ],
@@ -41,11 +43,10 @@ export class SuiviPeriodesComponent implements OnInit, OnDestroy {
   loading = false;
   alertesDismissed = false;
 
-  // ─── Prolongation modal ───────────────────────────────────────────────────
+  // ─── Prolongation modal (Reactive Form) ───────────────────────────────────
   showProlongationModal = false;
   selectedPeriode: PeriodeEssai | null = null;
-  nouvelleDateFin = '';
-  commentaireProlongation = '';
+  prolongationForm!: FormGroup;
   prolongationLoading = false;
 
   // ─── Stats cards ──────────────────────────────────────────────────────────
@@ -61,12 +62,22 @@ export class SuiviPeriodesComponent implements OnInit, OnDestroy {
     private periodeEssaiService: PeriodeEssaiService,
     private router: Router,
     private toastr: ToastrService,
+    private fb: FormBuilder,
   ) {}
 
   ngOnInit(): void {
+    this.initProlongationForm();
     this.loadPeriodesEssai();
     this.getAlertes();
     this.loadStats();
+  }
+
+  /** Initialise le FormGroup de la modal de prolongation. */
+  private initProlongationForm(): void {
+    this.prolongationForm = this.fb.group({
+      nouvelleDateFin: ['', Validators.required],
+      commentaireProlongation: [''],
+    });
   }
 
   // ─── Chargement principal ─────────────────────────────────────────────────
@@ -128,21 +139,22 @@ export class SuiviPeriodesComponent implements OnInit, OnDestroy {
   // ─── Prolongation ─────────────────────────────────────────────────────────
   prolonger(periode: PeriodeEssai): void {
     this.selectedPeriode = periode;
-    this.nouvelleDateFin = '';
-    this.commentaireProlongation = '';
+    this.prolongationForm.reset({ nouvelleDateFin: '', commentaireProlongation: '' });
     this.showProlongationModal = true;
   }
 
   confirmProlonger(): void {
-    if (!this.selectedPeriode?.id || !this.nouvelleDateFin) {
+    if (!this.selectedPeriode?.id || this.prolongationForm.invalid) {
+      this.prolongationForm.markAllAsTouched();
       this.toastr.warning('Veuillez renseigner la nouvelle date de fin.', 'Champs manquants');
       return;
     }
 
+    const v = this.prolongationForm.value;
     this.prolongationLoading = true;
 
     this.periodeEssaiService
-      .prolongerPeriodeEssai(this.selectedPeriode.id, this.nouvelleDateFin, this.commentaireProlongation)
+      .prolongerPeriodeEssai(this.selectedPeriode.id, v.nouvelleDateFin, v.commentaireProlongation ?? '')
       .pipe(
         catchError(err => {
           this.handleError(err);
@@ -164,8 +176,7 @@ export class SuiviPeriodesComponent implements OnInit, OnDestroy {
   closeProlongationModal(): void {
     this.showProlongationModal = false;
     this.selectedPeriode = null;
-    this.nouvelleDateFin = '';
-    this.commentaireProlongation = '';
+    this.prolongationForm.reset({ nouvelleDateFin: '', commentaireProlongation: '' });
   }
 
   // ─── Demande de validation (titularisation) ───────────────────────────────

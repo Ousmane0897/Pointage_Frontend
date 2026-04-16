@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
@@ -21,6 +22,7 @@ import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialo
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
   ],
@@ -46,19 +48,9 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
   // ─── Rôle courant ─────────────────────────────────────────────────────────
   currentRole = '';
 
-  // ─── Formulaire d'upload ──────────────────────────────────────────────────
+  // ─── Formulaire d'upload (Reactive Form) ──────────────────────────────────
   showUploadForm = false;
-  newDocument: {
-    employeId: string;
-    nom: string;
-    categorie: CategorieDocument | '';
-    dateExpiration: string;
-  } = {
-    employeId: '',
-    nom: '',
-    categorie: '',
-    dateExpiration: '',
-  };
+  uploadForm!: FormGroup;
   selectedFile: File | null = null;
   dragOver = false;
   uploading = false;
@@ -76,12 +68,24 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private dialog: MatDialog,
     private loginService: LoginService,
+    private fb: FormBuilder,
   ) {}
 
   ngOnInit(): void {
     this.currentRole = this.loginService.getUserRole();
+    this.initUploadForm();
     this.loadEmployes();
     this.loadDocuments();
+  }
+
+  /** Initialise le formulaire d'upload avec les mêmes validations qu'avant. */
+  private initUploadForm(): void {
+    this.uploadForm = this.fb.group({
+      employeId: ['', Validators.required],
+      nom: ['', Validators.required],
+      categorie: ['', Validators.required],
+      dateExpiration: [''],
+    });
   }
 
   // ─── Chargement des employés (pour les selects) ───────────────────────────
@@ -168,19 +172,21 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
     }
   }
 
-  uploadDocument(form: NgForm): void {
-    if (form.invalid || !this.selectedFile || !this.newDocument.categorie) {
+  uploadDocument(): void {
+    if (this.uploadForm.invalid || !this.selectedFile) {
+      this.uploadForm.markAllAsTouched();
       this.toastr.warning('Veuillez remplir tous les champs obligatoires et sélectionner un fichier.', 'Formulaire incomplet');
       return;
     }
 
+    const v = this.uploadForm.value;
     this.uploading = true;
     const formData = new FormData();
-    formData.append('employeId', this.newDocument.employeId);
-    formData.append('nom', this.newDocument.nom);
-    formData.append('categorie', this.newDocument.categorie);
-    if (this.newDocument.dateExpiration) {
-      formData.append('dateExpiration', this.newDocument.dateExpiration);
+    formData.append('employeId', v.employeId);
+    formData.append('nom', v.nom);
+    formData.append('categorie', v.categorie);
+    if (v.dateExpiration) {
+      formData.append('dateExpiration', v.dateExpiration);
     }
     formData.append('fichier', this.selectedFile);
 
@@ -206,7 +212,7 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
   }
 
   private resetUploadForm(): void {
-    this.newDocument = { employeId: '', nom: '', categorie: '', dateExpiration: '' };
+    this.uploadForm.reset({ employeId: '', nom: '', categorie: '', dateExpiration: '' });
     this.selectedFile = null;
   }
 

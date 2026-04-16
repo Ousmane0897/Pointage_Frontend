@@ -67,7 +67,7 @@
     </div>
 
     <!-- ── Formulaire global ── -->
-    <form #employeForm="ngForm" (ngSubmit)="sauvegarder(employeForm)" novalidate>
+    <form [formGroup]="employeForm" (ngSubmit)="sauvegarder()" novalidate>
 
       <!-- ══════════════════════════════════════════════════════
            ÉTAPE 1 — Identité
@@ -130,7 +130,7 @@
           </div>
 
           <!-- Champs identité -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" formGroupName="identite">
 
             <!-- Nom -->
             <div>
@@ -139,15 +139,12 @@
               </label>
               <input
                 type="text"
-                name="nom"
-                [(ngModel)]="employeData.nom"
-                required
-                #nom="ngModel"
+                formControlName="nom"
                 placeholder="Ex. Diallo"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': nom.invalid && nom.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': identiteGroup.get('nom')?.invalid && identiteGroup.get('nom')?.touched }"
               />
-              <p *ngIf="nom.invalid && nom.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="identiteGroup.get('nom')?.invalid && identiteGroup.get('nom')?.touched" class="text-xs text-red-500 mt-1">
                 Le nom est obligatoire.
               </p>
             </div>
@@ -159,15 +156,12 @@
               </label>
               <input
                 type="text"
-                name="prenom"
-                [(ngModel)]="employeData.prenom"
-                required
-                #prenom="ngModel"
+                formControlName="prenom"
                 placeholder="Ex. Mamadou"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': prenom.invalid && prenom.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': identiteGroup.get('prenom')?.invalid && identiteGroup.get('prenom')?.touched }"
               />
-              <p *ngIf="prenom.invalid && prenom.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="identiteGroup.get('prenom')?.invalid && identiteGroup.get('prenom')?.touched" class="text-xs text-red-500 mt-1">
                 Le prénom est obligatoire.
               </p>
             </div>
@@ -179,14 +173,11 @@
               </label>
               <input
                 type="date"
-                name="dateNaissance"
-                [(ngModel)]="employeData.dateNaissance"
-                required
-                #dateNaissance="ngModel"
+                formControlName="dateNaissance"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': dateNaissance.invalid && dateNaissance.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': identiteGroup.get('dateNaissance')?.invalid && identiteGroup.get('dateNaissance')?.touched }"
               />
-              <p *ngIf="dateNaissance.invalid && dateNaissance.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="identiteGroup.get('dateNaissance')?.invalid && identiteGroup.get('dateNaissance')?.touched" class="text-xs text-red-500 mt-1">
                 La date de naissance est obligatoire.
               </p>
             </div>
@@ -197,18 +188,15 @@
                 Genre <span class="text-red-500">*</span>
               </label>
               <select
-                name="genre"
-                [(ngModel)]="employeData.genre"
-                required
-                #genre="ngModel"
+                formControlName="genre"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': genre.invalid && genre.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': identiteGroup.get('genre')?.invalid && identiteGroup.get('genre')?.touched }"
               >
                 <option value="">— Sélectionner —</option>
                 <option value="HOMME">Homme</option>
                 <option value="FEMME">Femme</option>
               </select>
-              <p *ngIf="genre.invalid && genre.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="identiteGroup.get('genre')?.invalid && identiteGroup.get('genre')?.touched" class="text-xs text-red-500 mt-1">
                 Le genre est obligatoire.
               </p>
             </div>
@@ -220,15 +208,12 @@
               </label>
               <input
                 type="text"
-                name="nationalite"
-                [(ngModel)]="employeData.nationalite"
-                required
-                #nationalite="ngModel"
+                formControlName="nationalite"
                 placeholder="Ex. Sénégalaise"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': nationalite.invalid && nationalite.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': identiteGroup.get('nationalite')?.invalid && identiteGroup.get('nationalite')?.touched }"
               />
-              <p *ngIf="nationalite.invalid && nationalite.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="identiteGroup.get('nationalite')?.invalid && identiteGroup.get('nationalite')?.touched" class="text-xs text-red-500 mt-1">
                 La nationalité est obligatoire.
               </p>
             </div>
@@ -247,7 +232,7 @@
             Poste &amp; Affectation
           </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" formGroupName="poste">
 
             <!-- Poste -->
             <div>
@@ -257,27 +242,21 @@
               <input
                 *ngIf="postes.length === 0"
                 type="text"
-                name="poste"
-                [(ngModel)]="employeData.poste"
-                required
-                #poste="ngModel"
+                formControlName="poste"
                 placeholder="Ex. Technicien"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['poste']?.invalid && employeForm.controls['poste']?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('poste')?.invalid && posteGroup.get('poste')?.touched }"
               />
               <select
                 *ngIf="postes.length > 0"
-                name="poste"
-                [(ngModel)]="employeData.poste"
-                required
-                #poste="ngModel"
+                formControlName="poste"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['poste']?.invalid && employeForm.controls['poste']?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('poste')?.invalid && posteGroup.get('poste')?.touched }"
               >
                 <option value="">— Sélectionner —</option>
                 <option *ngFor="let p of postes" [value]="p">{{ p }}</option>
               </select>
-              <p *ngIf="employeForm.controls['poste']?.invalid && employeForm.controls['poste']?.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="posteGroup.get('poste')?.invalid && posteGroup.get('poste')?.touched" class="text-xs text-red-500 mt-1">
                 Le poste est obligatoire.
               </p>
             </div>
@@ -290,27 +269,21 @@
               <input
                 *ngIf="departements.length === 0"
                 type="text"
-                name="departement"
-                [(ngModel)]="employeData.departement"
-                required
-                #departement="ngModel"
+                formControlName="departement"
                 placeholder="Ex. Informatique"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['departement']?.invalid && employeForm.controls['departement']?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('departement')?.invalid && posteGroup.get('departement')?.touched }"
               />
               <select
                 *ngIf="departements.length > 0"
-                name="departement"
-                [(ngModel)]="employeData.departement"
-                required
-                #departement="ngModel"
+                formControlName="departement"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['departement']?.invalid && employeForm.controls['departement']?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('departement')?.invalid && posteGroup.get('departement')?.touched }"
               >
                 <option value="">— Sélectionner —</option>
                 <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
               </select>
-              <p *ngIf="employeForm.controls['departement']?.invalid && employeForm.controls['departement']?.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="posteGroup.get('departement')?.invalid && posteGroup.get('departement')?.touched" class="text-xs text-red-500 mt-1">
                 Le département est obligatoire.
               </p>
             </div>
@@ -323,27 +296,21 @@
               <input
                 *ngIf="sites.length === 0"
                 type="text"
-                name="siteAffecte"
-                [(ngModel)]="employeData.siteAffecte"
-                required
-                #siteAffecte="ngModel"
+                formControlName="siteAffecte"
                 placeholder="Ex. Siège Dakar"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['siteAffecte']?.invalid && employeForm.controls['siteAffecte']?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('siteAffecte')?.invalid && posteGroup.get('siteAffecte')?.touched }"
               />
               <select
                 *ngIf="sites.length > 0"
-                name="siteAffecte"
-                [(ngModel)]="employeData.siteAffecte"
-                required
-                #siteAffecte="ngModel"
+                formControlName="siteAffecte"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': employeForm.controls['siteAffecte']?.invalid && employeForm.controls['siteAffecte']?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('siteAffecte')?.invalid && posteGroup.get('siteAffecte')?.touched }"
               >
                 <option value="">— Sélectionner —</option>
                 <option *ngFor="let s of sites" [value]="s">{{ s }}</option>
               </select>
-              <p *ngIf="employeForm.controls['siteAffecte']?.invalid && employeForm.controls['siteAffecte']?.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="posteGroup.get('siteAffecte')?.invalid && posteGroup.get('siteAffecte')?.touched" class="text-xs text-red-500 mt-1">
                 Le site est obligatoire.
               </p>
             </div>
@@ -355,14 +322,11 @@
               </label>
               <input
                 type="date"
-                name="dateEntree"
-                [(ngModel)]="employeData.dateEntree"
-                required
-                #dateEntree="ngModel"
+                formControlName="dateEntree"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': dateEntree.invalid && dateEntree.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('dateEntree')?.invalid && posteGroup.get('dateEntree')?.touched }"
               />
-              <p *ngIf="dateEntree.invalid && dateEntree.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="posteGroup.get('dateEntree')?.invalid && posteGroup.get('dateEntree')?.touched" class="text-xs text-red-500 mt-1">
                 La date d'entrée est obligatoire.
               </p>
             </div>
@@ -373,17 +337,14 @@
                 Statut <span class="text-red-500">*</span>
               </label>
               <select
-                name="statut"
-                [(ngModel)]="employeData.statut"
-                required
-                #statut="ngModel"
+                formControlName="statut"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': statut.invalid && statut.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('statut')?.invalid && posteGroup.get('statut')?.touched }"
               >
                 <option value="">— Sélectionner —</option>
                 <option *ngFor="let s of statutOptions" [value]="s.valeur">{{ s.libelle }}</option>
               </select>
-              <p *ngIf="statut.invalid && statut.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="posteGroup.get('statut')?.invalid && posteGroup.get('statut')?.touched" class="text-xs text-red-500 mt-1">
                 Le statut est obligatoire.
               </p>
             </div>
@@ -395,7 +356,7 @@
       <!-- ══════════════════════════════════════════════════════
            ÉTAPE 3 — Contacts
            ══════════════════════════════════════════════════════ -->
-      <div *ngIf="etapeActuelle === 3">
+      <div *ngIf="etapeActuelle === 3" formGroupName="contacts">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
             <lucide-icon name="phone" [size]="20" class="text-indigo-500"></lucide-icon>
@@ -411,15 +372,12 @@
               </label>
               <input
                 type="tel"
-                name="telephone"
-                [(ngModel)]="employeData.telephone"
-                required
-                #telephone="ngModel"
+                formControlName="telephone"
                 placeholder="Ex. +221 77 000 00 00"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': telephone.invalid && telephone.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': contactsGroup.get('telephone')?.invalid && contactsGroup.get('telephone')?.touched }"
               />
-              <p *ngIf="telephone.invalid && telephone.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="contactsGroup.get('telephone')?.invalid && contactsGroup.get('telephone')?.touched" class="text-xs text-red-500 mt-1">
                 Le téléphone est obligatoire.
               </p>
             </div>
@@ -431,19 +389,15 @@
               </label>
               <input
                 type="email"
-                name="email"
-                [(ngModel)]="employeData.email"
-                required
-                email
-                #emailCtrl="ngModel"
+                formControlName="email"
                 placeholder="Ex. employe@entreprise.com"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': emailCtrl.invalid && emailCtrl.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': contactsGroup.get('email')?.invalid && contactsGroup.get('email')?.touched }"
               />
-              <p *ngIf="emailCtrl.errors?.['required'] && emailCtrl.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="contactsGroup.get('email')?.errors?.['required'] && contactsGroup.get('email')?.touched" class="text-xs text-red-500 mt-1">
                 L'e-mail est obligatoire.
               </p>
-              <p *ngIf="emailCtrl.errors?.['email'] && emailCtrl.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="contactsGroup.get('email')?.errors?.['email'] && contactsGroup.get('email')?.touched" class="text-xs text-red-500 mt-1">
                 Veuillez saisir un e-mail valide.
               </p>
             </div>
@@ -454,24 +408,21 @@
                 Adresse <span class="text-red-500">*</span>
               </label>
               <textarea
-                name="adresse"
-                [(ngModel)]="employeData.adresse"
-                required
-                #adresse="ngModel"
+                formControlName="adresse"
                 rows="3"
                 placeholder="Ex. Rue 10, Quartier Médina, Dakar"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
-                [ngClass]="{ 'border-red-400 bg-red-50': adresse.invalid && adresse.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': contactsGroup.get('adresse')?.invalid && contactsGroup.get('adresse')?.touched }"
               ></textarea>
-              <p *ngIf="adresse.invalid && adresse.touched" class="text-xs text-red-500 mt-1">
+              <p *ngIf="contactsGroup.get('adresse')?.invalid && contactsGroup.get('adresse')?.touched" class="text-xs text-red-500 mt-1">
                 L'adresse est obligatoire.
               </p>
             </div>
 
           </div>
 
-          <!-- Contact d'urgence -->
-          <div class="border-t border-gray-100 pt-5">
+          <!-- Contact d'urgence (sous-FormGroup imbriqué) -->
+          <div class="border-t border-gray-100 pt-5" formGroupName="contactUrgence">
             <h3 class="text-base font-semibold text-gray-600 mb-4 flex items-center gap-2">
               <lucide-icon name="alert-circle" [size]="16" class="text-orange-400"></lucide-icon>
               Contact d'urgence
@@ -486,8 +437,7 @@
                 </label>
                 <input
                   type="text"
-                  name="contactUrgenceNom"
-                  [(ngModel)]="employeData.contactUrgence.nom"
+                  formControlName="nom"
                   placeholder="Ex. Fatou Diallo"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
                 />
@@ -500,8 +450,7 @@
                 </label>
                 <input
                   type="text"
-                  name="contactUrgenceLien"
-                  [(ngModel)]="employeData.contactUrgence.lienParente"
+                  formControlName="lienParente"
                   placeholder="Ex. Épouse, Mère, Frère"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
                 />
@@ -514,8 +463,7 @@
                 </label>
                 <input
                   type="tel"
-                  name="contactUrgenceTel"
-                  [(ngModel)]="employeData.contactUrgence.telephone"
+                  formControlName="telephone"
                   placeholder="Ex. +221 76 000 00 00"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
                 />
@@ -563,7 +511,7 @@
                 </div>
                 <div>
                   <p class="font-semibold text-gray-800">
-                    {{ employeData.prenom }} {{ employeData.nom }}
+                    {{ identiteGroup.get('prenom')?.value }} {{ identiteGroup.get('nom')?.value }}
                   </p>
                   <p class="text-xs text-gray-500">{{ libelleGenre }}</p>
                 </div>
@@ -572,12 +520,12 @@
                 <div class="flex justify-between">
                   <span class="text-gray-500">Date de naissance</span>
                   <span class="font-medium text-gray-700">
-                    {{ employeData.dateNaissance | date:'dd/MM/yyyy' }}
+                    {{ identiteGroup.get('dateNaissance')?.value | date:'dd/MM/yyyy' }}
                   </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Nationalité</span>
-                  <span class="font-medium text-gray-700">{{ employeData.nationalite }}</span>
+                  <span class="font-medium text-gray-700">{{ identiteGroup.get('nationalite')?.value }}</span>
                 </div>
               </div>
             </div>
@@ -590,20 +538,20 @@
               <div class="space-y-1.5 text-sm">
                 <div class="flex justify-between">
                   <span class="text-gray-500">Poste</span>
-                  <span class="font-medium text-gray-700">{{ employeData.poste }}</span>
+                  <span class="font-medium text-gray-700">{{ posteGroup.get('poste')?.value }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Département</span>
-                  <span class="font-medium text-gray-700">{{ employeData.departement }}</span>
+                  <span class="font-medium text-gray-700">{{ posteGroup.get('departement')?.value }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Site</span>
-                  <span class="font-medium text-gray-700">{{ employeData.siteAffecte }}</span>
+                  <span class="font-medium text-gray-700">{{ posteGroup.get('siteAffecte')?.value }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Date d'entrée</span>
                   <span class="font-medium text-gray-700">
-                    {{ employeData.dateEntree | date:'dd/MM/yyyy' }}
+                    {{ posteGroup.get('dateEntree')?.value | date:'dd/MM/yyyy' }}
                   </span>
                 </div>
                 <div class="flex justify-between">
@@ -611,10 +559,10 @@
                   <span
                     class="px-2 py-0.5 rounded-full text-xs font-semibold"
                     [ngClass]="{
-                      'bg-green-100 text-green-700': employeData.statut === 'ACTIF',
-                      'bg-yellow-100 text-yellow-700': employeData.statut === 'EN_PERIODE_ESSAI',
-                      'bg-orange-100 text-orange-700': employeData.statut === 'SUSPENDU',
-                      'bg-gray-100 text-gray-600': employeData.statut === 'SORTI'
+                      'bg-green-100 text-green-700': posteGroup.get('statut')?.value === 'ACTIF',
+                      'bg-yellow-100 text-yellow-700': posteGroup.get('statut')?.value === 'EN_PERIODE_ESSAI',
+                      'bg-orange-100 text-orange-700': posteGroup.get('statut')?.value === 'SUSPENDU',
+                      'bg-gray-100 text-gray-600': posteGroup.get('statut')?.value === 'SORTI'
                     }"
                   >
                     {{ libelleStatut }}
@@ -631,15 +579,15 @@
               <div class="space-y-1.5 text-sm">
                 <div class="flex justify-between">
                   <span class="text-gray-500">Téléphone</span>
-                  <span class="font-medium text-gray-700">{{ employeData.telephone }}</span>
+                  <span class="font-medium text-gray-700">{{ contactsGroup.get('telephone')?.value }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">E-mail</span>
-                  <span class="font-medium text-gray-700 truncate max-w-[160px]">{{ employeData.email }}</span>
+                  <span class="font-medium text-gray-700 truncate max-w-[160px]">{{ contactsGroup.get('email')?.value }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Adresse</span>
-                  <span class="font-medium text-gray-700 text-right max-w-[160px]">{{ employeData.adresse }}</span>
+                  <span class="font-medium text-gray-700 text-right max-w-[160px]">{{ contactsGroup.get('adresse')?.value }}</span>
                 </div>
               </div>
             </div>
@@ -654,19 +602,19 @@
                 <div class="flex justify-between">
                   <span class="text-gray-500">Nom</span>
                   <span class="font-medium text-gray-700">
-                    {{ employeData.contactUrgence.nom || '—' }}
+                    {{ contactUrgenceGroup.get('nom')?.value || '—' }}
                   </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Lien</span>
                   <span class="font-medium text-gray-700">
-                    {{ employeData.contactUrgence.lienParente || '—' }}
+                    {{ contactUrgenceGroup.get('lienParente')?.value || '—' }}
                   </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Téléphone</span>
                   <span class="font-medium text-gray-700">
-                    {{ employeData.contactUrgence.telephone || '—' }}
+                    {{ contactUrgenceGroup.get('telephone')?.value || '—' }}
                   </span>
                 </div>
               </div>
@@ -713,7 +661,7 @@
           <button
             *ngIf="etapeActuelle < etapes.length"
             type="button"
-            (click)="etapeSuivante(employeForm)"
+            (click)="etapeSuivante()"
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition shadow-sm"
           >
             Suivant

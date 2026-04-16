@@ -26,7 +26,7 @@
       Nouveau document
     </h2>
 
-    <form #uploadForm="ngForm" (ngSubmit)="uploadDocument(uploadForm)" novalidate>
+    <form [formGroup]="uploadForm" (ngSubmit)="uploadDocument()" novalidate>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
 
         <!-- Sélection employé -->
@@ -35,9 +35,7 @@
             Employé <span class="text-red-500">*</span>
           </label>
           <select
-            name="employeId"
-            [(ngModel)]="newDocument.employeId"
-            required
+            formControlName="employeId"
             class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
             <option value="">-- Sélectionner un employé --</option>
             <option *ngFor="let emp of employes" [value]="emp.id">
@@ -53,9 +51,7 @@
           </label>
           <input
             type="text"
-            name="nom"
-            [(ngModel)]="newDocument.nom"
-            required
+            formControlName="nom"
             placeholder="Ex: CNI Moussa Diallo"
             class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400" />
         </div>
@@ -66,9 +62,7 @@
             Catégorie <span class="text-red-500">*</span>
           </label>
           <select
-            name="categorie"
-            [(ngModel)]="newDocument.categorie"
-            required
+            formControlName="categorie"
             class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
             <option value="">-- Choisir une catégorie --</option>
             <option value="CNI">Carte d'identité (CNI)</option>
@@ -88,8 +82,7 @@
           </label>
           <input
             type="date"
-            name="dateExpiration"
-            [(ngModel)]="newDocument.dateExpiration"
+            formControlName="dateExpiration"
             class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
       </div>

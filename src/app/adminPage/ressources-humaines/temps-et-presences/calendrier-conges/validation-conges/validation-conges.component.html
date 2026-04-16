@@ -1,0 +1,74 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="retour()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+      <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Validation des demandes de congé</h1>
+      <p class="text-sm text-gray-500 mt-1">Demandes en attente d'approbation</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && demandes.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="CheckCircle2" class="w-10 h-10 inline text-green-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune demande en attente.</p>
+    </div>
+
+    <div *ngIf="!loading && demandes.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Du</th>
+            <th class="px-4 py-3">Au</th>
+            <th class="px-4 py-3">Jours</th>
+            <th class="px-4 py-3">Motif</th>
+            <th class="px-4 py-3 text-right">Décision</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let d of demandes; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ d.prenom }} {{ d.nom }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ d.matricule }} · {{ d.departement }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ getTypeLabel(d.type) }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.dateDebut | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.dateFin | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 font-medium">{{ d.nombreJours ?? '—' }}</td>
+            <td class="px-4 py-3 text-gray-600 text-xs max-w-xs truncate">{{ d.motif || '—' }}</td>
+            <td class="px-4 py-3 text-right">
+              <div class="inline-flex gap-2">
+                <button (click)="approuver(d)"
+                  class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                  <lucide-icon name="Check" class="w-3.5 h-3.5"></lucide-icon> Approuver
+                </button>
+                <button (click)="refuser(d)"
+                  class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                  <lucide-icon name="X" class="w-3.5 h-3.5"></lucide-icon> Refuser
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} demande(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>

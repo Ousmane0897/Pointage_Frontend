@@ -231,7 +231,7 @@
 
             <!-- Commentaire -->
             <textarea
-              [(ngModel)]="commentaires[demande.id!]"
+              [formControl]="getCommentaireControl(demande.id!)"
               rows="2"
               placeholder="Ajoutez un commentaire (facultatif)…"
               class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none placeholder-gray-400">

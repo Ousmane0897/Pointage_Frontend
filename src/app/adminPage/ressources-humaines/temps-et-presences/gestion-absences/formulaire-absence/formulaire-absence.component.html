@@ -1,0 +1,119 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="annuler()"
+      class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+      <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">
+        {{ isEdit ? 'Modifier une absence' : 'Déclarer une absence' }}
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">Catégorisation et justificatif</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="soumettre()" novalidate
+    class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-3xl">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Employé <span class="text-red-500">*</span>
+        </label>
+        <select formControlName="employeId"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
+          <option value="">-- Sélectionner un employé --</option>
+          <option *ngFor="let e of employes" [value]="e.id">
+            {{ e.matricule }} — {{ e.prenom }} {{ e.nom }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Type d'absence <span class="text-red-500">*</span>
+        </label>
+        <select formControlName="type"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
+          <option value="">-- Choisir --</option>
+          <option value="CONGE_PAYE">Congé payé</option>
+          <option value="MALADIE">Maladie</option>
+          <option value="PERMISSION">Permission</option>
+          <option value="INJUSTIFIEE">Absence injustifiée</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </div>
+
+      <div></div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Du <span class="text-red-500">*</span>
+        </label>
+        <input type="date" formControlName="dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Au <span class="text-red-500">*</span>
+        </label>
+        <input type="date" formControlName="dateFin"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Motif</label>
+        <textarea formControlName="motif" rows="3"
+          placeholder="Précisions sur le motif de l'absence..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></textarea>
+      </div>
+    </div>
+
+    <!-- Zone de dépôt de pièce justificative -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-600 uppercase mb-2">Pièce justificative</label>
+      <div
+        class="border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer"
+        [ngClass]="dragOver ? 'border-indigo-500 bg-indigo-50'
+                    : selectedFile ? 'border-green-400 bg-green-50'
+                    : 'border-gray-300 bg-gray-50 hover:border-indigo-400'"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()">
+        <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+        <div *ngIf="!selectedFile" class="flex flex-col items-center gap-1.5">
+          <lucide-icon name="UploadCloud" class="w-8 h-8 text-gray-400"></lucide-icon>
+          <p class="text-sm text-gray-600">Glissez un fichier ou cliquez</p>
+          <p class="text-xs text-gray-400">PDF, JPG, PNG, DOC</p>
+        </div>
+        <div *ngIf="selectedFile" class="flex flex-col items-center gap-1.5">
+          <lucide-icon name="FileCheck2" class="w-8 h-8 text-green-500"></lucide-icon>
+          <p class="text-sm font-semibold text-green-700">{{ selectedFile.name }}</p>
+          <p class="text-xs text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+          <button type="button" (click)="retirerFichier(); $event.stopPropagation()"
+            class="text-xs text-red-600 underline mt-1">Retirer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 justify-end pt-4 border-t border-gray-100">
+      <button type="button" (click)="annuler()"
+        class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium">
+        Annuler
+      </button>
+      <button type="submit" [disabled]="submitting"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-60">
+        <lucide-icon [name]="submitting ? 'Loader' : 'Save'" [class.animate-spin]="submitting" class="w-4 h-4"></lucide-icon>
+        {{ isEdit ? 'Enregistrer' : 'Déclarer' }}
+      </button>
+    </div>
+  </form>
+</div>

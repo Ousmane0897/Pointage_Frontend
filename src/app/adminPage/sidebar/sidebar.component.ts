@@ -29,6 +29,7 @@ export class SidebarComponent implements OnInit {
   openDropdownCollecte: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Collecte
   openDropdownRessourcesHumaines: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Ressources Humaines
   openDropdownGestionPersonnel: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Gestion du Personnel
+  openDropdownTempsPresences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Temps & Présences
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -260,6 +261,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownGestionPersonnel(menu: string) {
     this.openDropdownGestionPersonnel = this.openDropdownGestionPersonnel === menu ? null : menu;
+  }
+
+  toggleDropdownTempsPresences(menu: string) {
+    this.openDropdownTempsPresences = this.openDropdownTempsPresences === menu ? null : menu;
   }
 
 

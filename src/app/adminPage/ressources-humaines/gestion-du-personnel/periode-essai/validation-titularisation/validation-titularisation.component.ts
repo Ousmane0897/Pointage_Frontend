@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormRecord } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, catchError, finalize, of, takeUntil } from 'rxjs';
@@ -15,7 +15,7 @@ import { LoginService } from '../../../../../services/login.service';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
   ],
@@ -36,8 +36,8 @@ export class ValidationTitularisationComponent implements OnInit, OnDestroy {
   // ─── Rôle utilisateur courant ─────────────────────────────────────────────
   currentRole = '';
 
-  // ─── Commentaires de validation par demande ───────────────────────────────
-  commentaires: Record<string, string> = {};
+  // ─── Commentaires de validation par demande (FormRecord dynamique) ───────
+  commentairesForm: FormRecord<FormControl<string>> = new FormRecord<FormControl<string>>({});
 
   // ─── Validation en cours (par demande) ───────────────────────────────────
   validationLoading: Record<string, boolean> = {};
@@ -90,13 +90,26 @@ export class ValidationTitularisationComponent implements OnInit, OnDestroy {
       )
       .subscribe(demandes => {
         this.demandes = demandes;
-        // Initialise les commentaires pour chaque demande
+        // Initialise un FormControl par demande s'il n'existe pas déjà
         demandes.forEach(d => {
-          if (d.id && this.commentaires[d.id] === undefined) {
-            this.commentaires[d.id] = '';
+          if (d.id && !this.commentairesForm.contains(d.id)) {
+            this.commentairesForm.addControl(d.id, new FormControl('', { nonNullable: true }));
           }
         });
       });
+  }
+
+  /**
+   * Récupère (ou crée) le FormControl du commentaire associé à une demande.
+   * Indispensable car la liste de demandes est dynamique.
+   */
+  getCommentaireControl(id: string): FormControl<string> {
+    let ctrl = this.commentairesForm.get(id) as FormControl<string> | null;
+    if (!ctrl) {
+      ctrl = new FormControl('', { nonNullable: true });
+      this.commentairesForm.addControl(id, ctrl);
+    }
+    return ctrl;
   }
 
   // ─── Filtre ───────────────────────────────────────────────────────────────
@@ -112,7 +125,7 @@ export class ValidationTitularisationComponent implements OnInit, OnDestroy {
   ): void {
     if (!demande.id) return;
 
-    const commentaire = this.commentaires[demande.id] ?? '';
+    const commentaire = this.commentairesForm.get(demande.id)?.value ?? '';
     this.validationLoading[demande.id] = true;
 
     this.periodeEssaiService

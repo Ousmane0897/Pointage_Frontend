@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
@@ -23,7 +23,7 @@ import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialo
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
   ],
@@ -38,14 +38,14 @@ export class AvenantsComponent implements OnInit, OnDestroy {
   renouvellements: Renouvellement[] = [];
   contratId = '';
 
-  // ─── Formulaire avenant ───────────────────────────────────────────────────
+  // ─── Formulaire avenant (Reactive) ────────────────────────────────────────
   showAvenantForm = false;
-  newAvenant: Partial<Avenant> = this.getEmptyAvenant();
+  avenantForm!: FormGroup;
   savingAvenant = false;
 
-  // ─── Formulaire renouvellement ────────────────────────────────────────────
+  // ─── Formulaire renouvellement (Reactive) ─────────────────────────────────
   showRenouvellementForm = false;
-  newRenouvellement: Partial<Renouvellement> = this.getEmptyRenouvellement();
+  renouvellementForm!: FormGroup;
   savingRenouvellement = false;
 
   // ─── États UI ─────────────────────────────────────────────────────────────
@@ -60,14 +60,34 @@ export class AvenantsComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
+    private fb: FormBuilder,
   ) {}
 
   ngOnInit(): void {
+    this.initAvenantForm();
+    this.initRenouvellementForm();
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.contratId = params['id'];
       if (this.contratId) {
         this.loadAll();
       }
+    });
+  }
+
+  /** Initialise le FormGroup de création d'avenant. */
+  private initAvenantForm(): void {
+    this.avenantForm = this.fb.group({
+      objet: ['', Validators.required],
+      dateEffet: [null, Validators.required],
+      description: [''],
+    });
+  }
+
+  /** Initialise le FormGroup de renouvellement de contrat. */
+  private initRenouvellementForm(): void {
+    this.renouvellementForm = this.fb.group({
+      nouvelleDateFin: [null, Validators.required],
+      motif: ['', Validators.required],
     });
   }
 
@@ -100,24 +120,25 @@ export class AvenantsComponent implements OnInit, OnDestroy {
   toggleAvenantForm(): void {
     this.showAvenantForm = !this.showAvenantForm;
     if (!this.showAvenantForm) {
-      this.newAvenant = this.getEmptyAvenant();
+      this.avenantForm.reset({ objet: '', dateEffet: null, description: '' });
     }
   }
 
-  creerAvenant(form: NgForm): void {
-    if (form.invalid) {
-      Object.values(form.controls).forEach(c => c.markAsTouched());
+  creerAvenant(): void {
+    if (this.avenantForm.invalid) {
+      this.avenantForm.markAllAsTouched();
       this.toastr.warning('Veuillez remplir tous les champs requis.', 'Formulaire invalide');
       return;
     }
 
+    const v = this.avenantForm.value;
     this.savingAvenant = true;
     const payload: Avenant = {
       contratId: this.contratId,
-      objet: this.newAvenant.objet ?? '',
-      description: this.newAvenant.description ?? '',
+      objet: v.objet ?? '',
+      description: v.description ?? '',
       dateCreation: new Date(),
-      dateEffet: this.newAvenant.dateEffet ?? null,
+      dateEffet: v.dateEffet ?? null,
     };
 
     this.contratService
@@ -135,9 +156,8 @@ export class AvenantsComponent implements OnInit, OnDestroy {
         if (res) {
           this.toastr.success('Avenant créé avec succès.', 'Succès');
           this.avenants = [...this.avenants, res];
-          this.newAvenant = this.getEmptyAvenant();
+          this.avenantForm.reset({ objet: '', dateEffet: null, description: '' });
           this.showAvenantForm = false;
-          form.resetForm();
         }
       });
   }
@@ -179,24 +199,25 @@ export class AvenantsComponent implements OnInit, OnDestroy {
   toggleRenouvellementForm(): void {
     this.showRenouvellementForm = !this.showRenouvellementForm;
     if (!this.showRenouvellementForm) {
-      this.newRenouvellement = this.getEmptyRenouvellement();
+      this.renouvellementForm.reset({ nouvelleDateFin: null, motif: '' });
     }
   }
 
-  renouvelerContrat(form: NgForm): void {
-    if (form.invalid) {
-      Object.values(form.controls).forEach(c => c.markAsTouched());
+  renouvelerContrat(): void {
+    if (this.renouvellementForm.invalid) {
+      this.renouvellementForm.markAllAsTouched();
       this.toastr.warning('Veuillez remplir tous les champs requis.', 'Formulaire invalide');
       return;
     }
 
+    const v = this.renouvellementForm.value;
     this.savingRenouvellement = true;
     const payload: Renouvellement = {
       contratId: this.contratId,
       ancienneDateFin: this.contrat?.dateFin ?? null,
-      nouvelleDateFin: this.newRenouvellement.nouvelleDateFin ?? null,
+      nouvelleDateFin: v.nouvelleDateFin ?? null,
       dateRenouvellement: new Date(),
-      motif: this.newRenouvellement.motif ?? '',
+      motif: v.motif ?? '',
     };
 
     this.contratService
@@ -218,9 +239,8 @@ export class AvenantsComponent implements OnInit, OnDestroy {
           if (this.contrat) {
             this.contrat = { ...this.contrat, dateFin: res.nouvelleDateFin, statut: 'RENOUVELE' };
           }
-          this.newRenouvellement = this.getEmptyRenouvellement();
+          this.renouvellementForm.reset({ nouvelleDateFin: null, motif: '' });
           this.showRenouvellementForm = false;
-          form.resetForm();
         }
       });
   }
@@ -262,21 +282,6 @@ export class AvenantsComponent implements OnInit, OnDestroy {
 
   retourListe(): void {
     this.router.navigate(['/admin/rh/gestion-du-personnel/contrats']);
-  }
-
-  private getEmptyAvenant(): Partial<Avenant> {
-    return {
-      objet: '',
-      description: '',
-      dateEffet: null,
-    };
-  }
-
-  private getEmptyRenouvellement(): Partial<Renouvellement> {
-    return {
-      nouvelleDateFin: null,
-      motif: '',
-    };
   }
 
   // ─── Nettoyage ────────────────────────────────────────────────────────────

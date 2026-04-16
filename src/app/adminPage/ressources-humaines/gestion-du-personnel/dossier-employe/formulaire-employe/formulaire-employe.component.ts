@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { DossierEmploye } from '../../../../../models/dossier-employe.model';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
   ],
@@ -49,29 +49,11 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   photoFile: File | null = null;
   previewUrl: string | null = null;
 
-  // ─── Données employé ──────────────────────────────────────────────────────
-  employeData: DossierEmploye = {
-    matricule: '',
-    nom: '',
-    prenom: '',
-    dateNaissance: null,
-    genre: 'HOMME',
-    nationalite: '',
-    photoUrl: '',
-    poste: '',
-    departement: '',
-    siteAffecte: '',
-    dateEntree: null,
-    statut: 'ACTIF',
-    telephone: '',
-    email: '',
-    adresse: '',
-    contactUrgence: {
-      nom: '',
-      lienParente: '',
-      telephone: '',
-    },
-  };
+  // ─── Formulaire réactif (multi-étapes via sous-FormGroup) ─────────────────
+  employeForm!: FormGroup;
+  // photoUrl & matricule sont gérés hors du FormGroup pour rester silencieux
+  matricule = '';
+  photoUrl = '';
 
   // ─── Listes de référence ──────────────────────────────────────────────────
   departements: string[] = [];
@@ -90,10 +72,12 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
+    private fb: FormBuilder,
   ) {}
 
   // ─── Initialisation ───────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.initEmployeForm();
     this.employeId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.employeId;
 
@@ -103,6 +87,49 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       this.chargerEmploye(this.employeId);
     }
   }
+
+  /**
+   * Initialise le formulaire réactif organisé en 3 sous-FormGroup
+   * (un par étape de saisie). Le 4ᵉ étape n'est qu'un récapitulatif.
+   * Reproduit fidèlement les validations existantes (required + email).
+   */
+  private initEmployeForm(): void {
+    this.employeForm = this.fb.group({
+      // Étape 1
+      identite: this.fb.group({
+        nom: ['', Validators.required],
+        prenom: ['', Validators.required],
+        dateNaissance: [null, Validators.required],
+        genre: ['HOMME', Validators.required],
+        nationalite: ['', Validators.required],
+      }),
+      // Étape 2
+      poste: this.fb.group({
+        poste: ['', Validators.required],
+        departement: ['', Validators.required],
+        siteAffecte: ['', Validators.required],
+        dateEntree: [null, Validators.required],
+        statut: ['ACTIF', Validators.required],
+      }),
+      // Étape 3
+      contacts: this.fb.group({
+        telephone: ['', Validators.required],
+        email: ['', [Validators.required, Validators.email]],
+        adresse: ['', Validators.required],
+        contactUrgence: this.fb.group({
+          nom: [''],
+          lienParente: [''],
+          telephone: [''],
+        }),
+      }),
+    });
+  }
+
+  /** Raccourcis vers les sous-groupes pour le template. */
+  get identiteGroup(): FormGroup { return this.employeForm.get('identite') as FormGroup; }
+  get posteGroup(): FormGroup { return this.employeForm.get('poste') as FormGroup; }
+  get contactsGroup(): FormGroup { return this.employeForm.get('contacts') as FormGroup; }
+  get contactUrgenceGroup(): FormGroup { return this.contactsGroup.get('contactUrgence') as FormGroup; }
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -130,10 +157,37 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (employe) => {
-          this.employeData = { ...employe };
+          // Champs hors form (matricule, photoUrl)
+          this.matricule = employe.matricule ?? '';
+          this.photoUrl = employe.photoUrl ?? '';
           if (employe.photoUrl) {
             this.previewUrl = employe.photoUrl;
           }
+
+          // Hydrate les sous-FormGroup
+          this.employeForm.patchValue({
+            identite: {
+              nom: employe.nom,
+              prenom: employe.prenom,
+              dateNaissance: employe.dateNaissance,
+              genre: employe.genre,
+              nationalite: employe.nationalite,
+            },
+            poste: {
+              poste: employe.poste,
+              departement: employe.departement,
+              siteAffecte: employe.siteAffecte,
+              dateEntree: employe.dateEntree,
+              statut: employe.statut,
+            },
+            contacts: {
+              telephone: employe.telephone,
+              email: employe.email,
+              adresse: employe.adresse,
+              contactUrgence: employe.contactUrgence ?? { nom: '', lienParente: '', telephone: '' },
+            },
+          });
+
           this.loading = false;
         },
         error: () => {
@@ -145,10 +199,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   }
 
   // ─── Navigation entre étapes ──────────────────────────────────────────────
-  etapeSuivante(form: NgForm): void {
+  etapeSuivante(): void {
     this.erreurEtape = null;
 
-    if (!this.validerEtape(form)) {
+    if (!this.validerEtape()) {
       return;
     }
 
@@ -164,41 +218,37 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     }
   }
 
-  private validerEtape(form: NgForm): boolean {
-    // Marquer tous les champs comme touchés pour afficher les erreurs
-    Object.values(form.controls).forEach((ctrl) => ctrl.markAsTouched());
+  /**
+   * Valide uniquement le sous-FormGroup correspondant à l'étape courante.
+   * Reproduit la logique d'origine étape par étape.
+   */
+  private validerEtape(): boolean {
+    let groupe: FormGroup | null = null;
+    let messageErreur = '';
 
     switch (this.etapeActuelle) {
-      case 1: {
-        const champIdentite = ['nom', 'prenom', 'dateNaissance', 'genre', 'nationalite'];
-        const invalide = champIdentite.some((c) => form.controls[c]?.invalid);
-        if (invalide) {
-          this.erreurEtape = 'Veuillez remplir tous les champs obligatoires de l\'identité.';
-          return false;
-        }
-        return true;
-      }
-      case 2: {
-        const champPoste = ['poste', 'departement', 'siteAffecte', 'dateEntree', 'statut'];
-        const invalide = champPoste.some((c) => form.controls[c]?.invalid);
-        if (invalide) {
-          this.erreurEtape = 'Veuillez remplir tous les champs obligatoires du poste.';
-          return false;
-        }
-        return true;
-      }
-      case 3: {
-        const champContacts = ['telephone', 'email', 'adresse'];
-        const invalide = champContacts.some((c) => form.controls[c]?.invalid);
-        if (invalide) {
-          this.erreurEtape = 'Veuillez remplir tous les champs obligatoires des contacts.';
-          return false;
-        }
-        return true;
-      }
+      case 1:
+        groupe = this.identiteGroup;
+        messageErreur = 'Veuillez remplir tous les champs obligatoires de l\'identité.';
+        break;
+      case 2:
+        groupe = this.posteGroup;
+        messageErreur = 'Veuillez remplir tous les champs obligatoires du poste.';
+        break;
+      case 3:
+        groupe = this.contactsGroup;
+        messageErreur = 'Veuillez remplir tous les champs obligatoires des contacts.';
+        break;
       default:
         return true;
     }
+
+    groupe.markAllAsTouched();
+    if (groupe.invalid) {
+      this.erreurEtape = messageErreur;
+      return false;
+    }
+    return true;
   }
 
   // ─── Gestion de la photo ──────────────────────────────────────────────────
@@ -233,21 +283,31 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   supprimerPhoto(): void {
     this.photoFile = null;
     this.previewUrl = null;
-    this.employeData.photoUrl = '';
+    this.photoUrl = '';
   }
 
   // ─── Sauvegarde ───────────────────────────────────────────────────────────
-  sauvegarder(form: NgForm): void {
-    if (form.invalid) {
-      Object.values(form.controls).forEach((ctrl) => ctrl.markAsTouched());
+  sauvegarder(): void {
+    if (this.employeForm.invalid) {
+      this.employeForm.markAllAsTouched();
       this.toastr.warning('Veuillez corriger les erreurs du formulaire.', 'Formulaire incomplet');
       return;
     }
 
     this.enregistrement = true;
 
+    // Reconstitue l'objet DossierEmploye à partir des sous-FormGroup
+    const v = this.employeForm.value;
+    const employePayload = {
+      matricule: this.matricule,
+      photoUrl: this.photoUrl,
+      ...v.identite,
+      ...v.poste,
+      ...v.contacts,
+    };
+
     const formData = new FormData();
-    const employeJson = JSON.stringify(this.employeData);
+    const employeJson = JSON.stringify(employePayload);
     formData.append('employe', new Blob([employeJson], { type: 'application/json' }));
 
     if (this.photoFile) {
@@ -298,10 +358,11 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   }
 
   get libelleStatut(): string {
-    return this.statutOptions.find((s) => s.valeur === this.employeData.statut)?.libelle ?? '';
+    const statut = this.posteGroup?.get('statut')?.value;
+    return this.statutOptions.find((s) => s.valeur === statut)?.libelle ?? '';
   }
 
   get libelleGenre(): string {
-    return this.employeData.genre === 'HOMME' ? 'Homme' : 'Femme';
+    return this.identiteGroup?.get('genre')?.value === 'HOMME' ? 'Homme' : 'Femme';
   }
 }

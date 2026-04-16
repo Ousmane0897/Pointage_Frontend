@@ -1,3 +1,4 @@
+/// <reference types="jasmine" />
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PageCodePinComponent } from './page-code-pin.component';
 import { PointageService } from '../services/pointage.service';
@@ -28,6 +29,7 @@ describe('PageCodePinComponent', () => {
     toastrSpy = jasmine.createSpyObj('ToastrService', ['error', 'success']);
 
     const pointage: Pointage = {
+      id: '1',
       codeSecret: '1234',
       prenom: 'John',
       nom: 'Doe',
@@ -37,8 +39,7 @@ describe('PageCodePinComponent', () => {
       adresse: '123 Main St',
       duree: '9h',
       status: 'En cours',
-      site: 'Agence A'
-      
+      site: ['Agence A']
     };
 
     pageCodeServiceSpy.getPointageById.and.returnValue(of(pointage));

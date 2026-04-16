@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import {
@@ -23,7 +23,7 @@ import { DossierEmploye } from '../../../../../models/dossier-employe.model';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
   ],
@@ -37,16 +37,8 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
   contratId: string | null = null;
   routeEmployeId: string | null = null;
 
-  // ─── Modèle du formulaire ─────────────────────────────────────────────────
-  contratData: Contrat = {
-    employeId: '',
-    typeContrat: 'CDI',
-    dateDebut: null,
-    dateFin: null,
-    statut: 'ACTIF',
-    clauses: '',
-    joursAvantAlerte: 30,
-  };
+  // ─── Formulaire réactif ───────────────────────────────────────────────────
+  contratForm!: FormGroup;
 
   // ─── Employés (pour la sélection) ────────────────────────────────────────
   employes: DossierEmploye[] = [];
@@ -66,9 +58,11 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
+    private fb: FormBuilder,
   ) {}
 
   ngOnInit(): void {
+    this.initContratForm();
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
         // Mode édition
@@ -79,13 +73,44 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
         // Mode création
         this.routeEmployeId = params['employeId'] ?? null;
         if (this.routeEmployeId) {
-          this.contratData.employeId = this.routeEmployeId;
+          this.contratForm.patchValue({ employeId: this.routeEmployeId });
           this.loadEmployeById(this.routeEmployeId);
         } else {
           this.loadEmployesList();
         }
       }
     });
+  }
+
+  /**
+   * Initialise le formulaire réactif avec les mêmes validations qu'avant.
+   * La validation conditionnelle de dateFin est gérée via valueChanges sur typeContrat.
+   */
+  private initContratForm(): void {
+    this.contratForm = this.fb.group({
+      employeId: ['', Validators.required],
+      typeContrat: ['CDI' as TypeContrat, Validators.required],
+      dateDebut: [null, Validators.required],
+      // dateFin est requis si pas CDI — géré dynamiquement plus bas
+      dateFin: [null],
+      statut: ['ACTIF', Validators.required],
+      clauses: [''],
+      joursAvantAlerte: [30],
+    });
+
+    // Validation conditionnelle : dateFin requise si typeContrat ≠ CDI
+    this.contratForm.get('typeContrat')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((type: TypeContrat) => {
+        const dateFinCtrl = this.contratForm.get('dateFin')!;
+        if (type === 'CDI') {
+          dateFinCtrl.clearValidators();
+          dateFinCtrl.setValue(null);
+        } else {
+          dateFinCtrl.setValidators(Validators.required);
+        }
+        dateFinCtrl.updateValueAndValidity();
+      });
   }
 
   // ─── Chargement contrat (édition) ─────────────────────────────────────────
@@ -102,7 +127,7 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
       .subscribe(({ contrat, employes }) => {
         this.employes = employes.content;
         if (contrat) {
-          this.contratData = { ...contrat };
+          this.contratForm.patchValue(contrat);
         } else {
           this.toastr.error('Contrat introuvable.', 'Erreur');
           this.router.navigate(['/admin/rh/gestion-du-personnel/contrats']);
@@ -146,28 +171,31 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
 
   // ─── Helpers type contrat ─────────────────────────────────────────────────
   get isDateFinRequired(): boolean {
-    return this.contratData.typeContrat !== 'CDI';
+    return this.contratForm?.get('typeContrat')?.value !== 'CDI';
   }
 
   get showJoursAlerte(): boolean {
-    return this.contratData.typeContrat === 'CDD' || this.contratData.typeContrat === 'STAGE';
+    const t = this.contratForm?.get('typeContrat')?.value;
+    return t === 'CDD' || t === 'STAGE';
   }
 
+  // Plus utilisé : la validation conditionnelle est gérée dans initContratForm()
+  // via valueChanges sur typeContrat. Méthode conservée pour compat HTML.
   onTypeContratChange(): void {
-    if (this.contratData.typeContrat === 'CDI') {
-      this.contratData.dateFin = null;
-    }
+    // no-op
   }
 
   // ─── Sauvegarde ───────────────────────────────────────────────────────────
-  sauvegarder(form: NgForm): void {
-    if (form.invalid) {
-      Object.values(form.controls).forEach(ctrl => ctrl.markAsTouched());
+  sauvegarder(): void {
+    if (this.contratForm.invalid) {
+      this.contratForm.markAllAsTouched();
       this.toastr.warning('Veuillez corriger les erreurs dans le formulaire.', 'Formulaire invalide');
       return;
     }
 
-    if (this.isDateFinRequired && !this.contratData.dateFin) {
+    const payload = this.contratForm.value as Contrat;
+
+    if (this.isDateFinRequired && !payload.dateFin) {
       this.toastr.warning('La date de fin est obligatoire pour ce type de contrat.', 'Champ requis');
       return;
     }
@@ -175,8 +203,8 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
     this.saving = true;
 
     const operation$ = this.isEditMode && this.contratId
-      ? this.contratService.modifierContrat(this.contratId, this.contratData)
-      : this.contratService.creerContrat(this.contratData);
+      ? this.contratService.modifierContrat(this.contratId, payload)
+      : this.contratService.creerContrat(payload);
 
     operation$
       .pipe(

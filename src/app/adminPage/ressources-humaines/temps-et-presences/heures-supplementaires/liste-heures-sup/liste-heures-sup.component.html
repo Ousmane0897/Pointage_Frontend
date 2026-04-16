@@ -1,0 +1,141 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Heures supplémentaires</h1>
+      <p class="text-sm text-gray-500 mt-1">Déclarations, majorations et validation</p>
+    </div>
+    <button (click)="declarer()"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+      <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon>
+      Déclarer des HS
+    </button>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="VALIDEE">Validée</option>
+          <option value="REFUSEE">Refusée</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Majoration</label>
+        <select [(ngModel)]="filtres.typeMajoration" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Toutes</option>
+          <option value="T_15">+15 %</option>
+          <option value="T_40">+40 %</option>
+          <option value="T_60">+60 %</option>
+          <option value="T_100">+100 %</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <input type="text" [(ngModel)]="filtres.departement" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Du</label>
+        <input type="date" [(ngModel)]="filtres.dateDebut" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Au</label>
+        <input type="date" [(ngModel)]="filtres.dateFin" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, matricule..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button (click)="applyFilters()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+      </button>
+      <button (click)="resetFilters()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && heures.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune déclaration trouvée.</p>
+    </div>
+
+    <div *ngIf="!loading && heures.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Horaires</th>
+            <th class="px-4 py-3">Heures</th>
+            <th class="px-4 py-3">Majoration</th>
+            <th class="px-4 py-3">Équiv. maj.</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let h of heures; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ h.prenom }} {{ h.nom }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ h.matricule }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ h.date | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ h.heureDebut }} → {{ h.heureFin }}</td>
+            <td class="px-4 py-3 font-medium">{{ h.nombreHeures }} h</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                +{{ getTauxMajoration(h.typeMajoration) }} %
+              </span>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ h.heuresMajoreesEquivalent ?? '—' }} h</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(h.statut)">{{ getStatutLabel(h.statut) }}</span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="inline-flex gap-1" *ngIf="h.statut === 'EN_ATTENTE'">
+                <button (click)="valider(h)" title="Valider"
+                  class="text-green-600 hover:text-green-800 p-1">
+                  <lucide-icon name="Check" class="w-4 h-4"></lucide-icon>
+                </button>
+                <button (click)="refuser(h)" title="Refuser"
+                  class="text-red-600 hover:text-red-800 p-1">
+                  <lucide-icon name="X" class="w-4 h-4"></lucide-icon>
+                </button>
+              </div>
+              <button (click)="supprimer(h)" title="Supprimer"
+                class="text-gray-500 hover:text-gray-700 p-1 ml-1">
+                <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} déclaration(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>

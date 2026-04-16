@@ -1,0 +1,149 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Gestion des absences</h1>
+      <p class="text-sm text-gray-500 mt-1">Saisie, catégorisation et suivi des absences</p>
+    </div>
+    <button (click)="nouvelle()"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+      <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon>
+      Déclarer une absence
+    </button>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Employé</label>
+        <select [(ngModel)]="filtres.employeId"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let e of employes" [value]="e.id">{{ e.prenom }} {{ e.nom }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Type</label>
+        <select [(ngModel)]="filtres.type"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="CONGE_PAYE">Congé payé</option>
+          <option value="MALADIE">Maladie</option>
+          <option value="PERMISSION">Permission</option>
+          <option value="INJUSTIFIEE">Injustifiée</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="DECLAREE">Déclarée</option>
+          <option value="JUSTIFIEE">Justifiée</option>
+          <option value="REFUSEE">Refusée</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Du</label>
+        <input type="date" [(ngModel)]="filtres.dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Au</label>
+        <input type="date" [(ngModel)]="filtres.dateFin"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, motif..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button (click)="applyFilters()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+      </button>
+      <button (click)="resetFilters()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && absences.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune absence trouvée.</p>
+    </div>
+
+    <div *ngIf="!loading && absences.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Du</th>
+            <th class="px-4 py-3">Au</th>
+            <th class="px-4 py-3">Jours</th>
+            <th class="px-4 py-3">Justificatif</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let a of absences; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ a.prenom }} {{ a.nom }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ a.matricule }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getTypeClasses(a.type)">{{ getTypeLabel(a.type) }}</span>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ a.dateDebut | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ a.nombreJours ?? '—' }}</td>
+            <td class="px-4 py-3">
+              <span *ngIf="a.pieceJustificative" class="inline-flex items-center gap-1 text-green-700 text-xs">
+                <lucide-icon name="Paperclip" class="w-3.5 h-3.5"></lucide-icon>
+                {{ a.pieceJustificative.nom }}
+              </span>
+              <span *ngIf="!a.pieceJustificative" class="text-gray-400 text-xs">Aucun</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(a.statut)">{{ getStatutLabel(a.statut) }}</span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button (click)="modifier(a)" class="text-indigo-600 hover:text-indigo-800 p-1" title="Modifier">
+                <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button (click)="supprimer(a)" class="text-red-600 hover:text-red-800 p-1 ml-1" title="Supprimer">
+                <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} absence(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+</div>
