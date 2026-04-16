@@ -90,6 +90,17 @@ export const routes: Routes = [
             { path: 'rh/temps-et-presences/heures-supplementaires/declaration', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/declaration-heures-sup/declaration-heures-sup.component').then(m => m.DeclarationHeuresSupComponent) },
             { path: 'rh/temps-et-presences/recapitulatif', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/recapitulatif-mensuel/recapitulatif-mensuel.component').then(m => m.RecapitulatifMensuelComponent) },
 
+            // ─── Paie ────────────────────────────────────────────────
+            { path: 'rh/paie/grille-salariale', loadComponent: () => import('./adminPage/ressources-humaines/paie/grille-salariale/liste-categories/liste-categories.component').then(m => m.ListeCategoriesComponent) },
+            { path: 'rh/paie/grille-salariale/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/paie/grille-salariale/formulaire-categorie/formulaire-categorie.component').then(m => m.FormulaireCategorieComponent) },
+            { path: 'rh/paie/grille-salariale/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/paie/grille-salariale/formulaire-categorie/formulaire-categorie.component').then(m => m.FormulaireCategorieComponent) },
+            { path: 'rh/paie/calcul-bulletin', loadComponent: () => import('./adminPage/ressources-humaines/paie/calcul-bulletin/calcul-bulletin.component').then(m => m.CalculBulletinComponent) },
+            { path: 'rh/paie/bulletins-pdf/:id', loadComponent: () => import('./adminPage/ressources-humaines/paie/bulletins-pdf/generation-bulletin.component').then(m => m.GenerationBulletinComponent) },
+            { path: 'rh/paie/historique', loadComponent: () => import('./adminPage/ressources-humaines/paie/historique-paies/liste-bulletins/liste-bulletins.component').then(m => m.ListeBulletinsComponent) },
+            { path: 'rh/paie/historique/:id', loadComponent: () => import('./adminPage/ressources-humaines/paie/historique-paies/fiche-bulletin/fiche-bulletin.component').then(m => m.FicheBulletinComponent) },
+            { path: 'rh/paie/declarations', loadComponent: () => import('./adminPage/ressources-humaines/paie/declarations-sociales/liste-declarations/liste-declarations.component').then(m => m.ListeDeclarationsComponent) },
+            { path: 'rh/paie/declarations/generer', loadComponent: () => import('./adminPage/ressources-humaines/paie/declarations-sociales/generation-declaration/generation-declaration.component').then(m => m.GenerationDeclarationComponent) },
+
         ]
     }
 ];

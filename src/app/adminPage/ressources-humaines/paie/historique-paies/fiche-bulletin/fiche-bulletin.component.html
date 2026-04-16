@@ -1,0 +1,100 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button
+      type="button"
+      (click)="retour()"
+      class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm">
+      <lucide-icon name="ArrowLeft" class="w-4 h-4"></lucide-icon>
+      Retour à l'historique
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="flex items-center justify-center py-16">
+    <lucide-icon name="LoaderCircle" class="w-8 h-8 text-indigo-500 animate-spin"></lucide-icon>
+  </div>
+
+  <div *ngIf="!loading && errorMessage"
+       class="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-4 mb-4 flex items-center gap-3">
+    <lucide-icon name="TriangleAlert" class="w-5 h-5"></lucide-icon>
+    <span class="text-sm">{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="!loading && bulletin">
+
+    <!-- Actions en-tête -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Bulletin détaillé</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          {{ bulletin.nom }} {{ bulletin.prenom }} — {{ bulletin.matricule }}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="inline-flex rounded-lg border border-gray-300 bg-white overflow-hidden">
+          <button *ngFor="let s of STATUTS"
+                  type="button"
+                  [disabled]="changingStatut || bulletin.statut === s"
+                  (click)="changerStatut(s)"
+                  class="px-3 py-2 text-xs font-medium transition-colors border-r last:border-r-0 border-gray-200"
+                  [class.bg-indigo-50]="bulletin.statut === s"
+                  [class.text-indigo-700]="bulletin.statut === s"
+                  [class.hover:bg-gray-50]="bulletin.statut !== s"
+                  [class.text-gray-600]="bulletin.statut !== s"
+                  [class.opacity-60]="bulletin.statut === s">
+            {{ LIBELLES_STATUT[s] }}
+          </button>
+        </div>
+
+        <button type="button" (click)="telecharger()"
+                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2.5 rounded-lg shadow">
+          <lucide-icon name="FileDown" class="w-5 h-5"></lucide-icon>
+          Télécharger PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Cumuls annuels -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Cumul brut {{ bulletin.periode.annee }}</div>
+        <div class="text-2xl font-bold text-gray-800 mt-1">{{ formaterFCFA(cumulBrut) }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Cumul net {{ bulletin.periode.annee }}</div>
+        <div class="text-2xl font-bold text-indigo-700 mt-1">{{ formaterFCFA(cumulNet) }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Cumul IR {{ bulletin.periode.annee }}</div>
+        <div class="text-2xl font-bold text-rose-600 mt-1">{{ formaterFCFA(cumulIR) }}</div>
+      </div>
+    </div>
+
+    <!-- Détail du bulletin (composant réutilisable) -->
+    <app-preview-bulletin [bulletin]="bulletin"></app-preview-bulletin>
+
+    <!-- Évolution salariale -->
+    <div *ngIf="historiqueEmploye.length > 1"
+         class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+        Évolution du net à payer
+      </h2>
+      <div class="flex items-end gap-2 overflow-x-auto pb-2" [style.height.px]="BAR_HEIGHT_PX + 32">
+        <div *ngFor="let b of historiqueEmploye; trackBy: trackByPeriode"
+             class="flex flex-col items-center justify-end gap-1 min-w-[48px]">
+          <div class="text-[0.6rem] text-gray-500 font-medium whitespace-nowrap">
+            {{ (b.netAPayer / 1000) | number:'1.0-0':'fr-FR' }}k
+          </div>
+          <div
+            class="w-6 rounded-t bg-gradient-to-t from-indigo-600 to-indigo-400 transition-all"
+            [style.height.px]="hauteurBarre(b.netAPayer)">
+          </div>
+          <div class="text-[0.6rem] text-gray-500 whitespace-nowrap">
+            {{ nomMoisCourt(b.periode.mois) }} {{ b.periode.annee % 100 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

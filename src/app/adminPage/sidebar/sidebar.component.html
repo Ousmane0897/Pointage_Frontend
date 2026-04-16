@@ -514,6 +514,66 @@
                     </li>
                   </ul>
                 </li>
+
+                <!-- Paie (sous-menu) -->
+                <li>
+                  <button (click)="toggleDropdownPaie('paie')"
+                    class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.8rem] font-medium text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                    [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/rh/paie') }">
+                    <lucide-icon name="Banknote" class="w-4 h-4 text-lime-400"></lucide-icon>
+                    <span class="flex-1 truncate">Paie</span>
+                    <svg class="w-3 h-3 text-slate-500 transition-transform duration-300"
+                      [ngClass]="{ 'rotate-180': openDropdownPaie === 'paie' }"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <ul *ngIf="openDropdownPaie === 'paie'"
+                    class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
+                    <li>
+                      <a routerLink="/admin/rh/paie/grille-salariale"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="Table" class="w-3.5 h-3.5 text-lime-400"></lucide-icon>
+                        <span class="flex-1 truncate">Grille salariale</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/paie/calcul-bulletin"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="Calculator" class="w-3.5 h-3.5 text-lime-400"></lucide-icon>
+                        <span class="flex-1 truncate">Calcul bulletin</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/paie/historique"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="Archive" class="w-3.5 h-3.5 text-lime-400"></lucide-icon>
+                        <span class="flex-1 truncate">Historique des paies</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/paie/declarations"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="FileBarChart" class="w-3.5 h-3.5 text-lime-400"></lucide-icon>
+                        <span class="flex-1 truncate">Déclarations sociales</span>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
               </ul>
             </li>
 

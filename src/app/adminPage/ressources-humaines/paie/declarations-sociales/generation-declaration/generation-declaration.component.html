@@ -1,0 +1,147 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button type="button" (click)="retour()"
+            class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm">
+      <lucide-icon name="ArrowLeft" class="w-4 h-4"></lucide-icon>
+      Retour aux déclarations
+    </button>
+  </div>
+
+  <h1 class="text-2xl font-bold text-gray-800 mb-1">Générer une déclaration sociale</h1>
+  <p class="text-sm text-gray-500 mb-6">
+    Agrège les bulletins validés de la période pour produire la déclaration réglementaire.
+  </p>
+
+  <!-- Sélecteur -->
+  <form [formGroup]="form" (ngSubmit)="genererApercu()" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+      <div class="md:col-span-2">
+        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Type de déclaration *</label>
+        <select formControlName="type"
+                class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+          <option *ngFor="let t of TYPES" [value]="t">{{ LIBELLES_TYPE[t] }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Mois</label>
+        <select formControlName="mois" [attr.disabled]="estAnnuelle ? true : null"
+                class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white disabled:bg-gray-50 disabled:text-gray-400">
+          <option *ngFor="let m of MOIS" [value]="m.v">{{ m.l }}</option>
+        </select>
+        <p class="text-xs text-gray-400 mt-1" *ngIf="estAnnuelle">Non applicable pour une déclaration annuelle.</p>
+      </div>
+
+      <div>
+        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Année *</label>
+        <select formControlName="annee"
+                class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+          <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button type="submit" [disabled]="loading"
+              class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-indigo-300 text-white font-medium px-5 py-2.5 rounded-lg shadow transition-colors">
+        <lucide-icon [name]="loading ? 'LoaderCircle' : 'Play'" [class.animate-spin]="loading" class="w-5 h-5"></lucide-icon>
+        Générer l'aperçu
+      </button>
+    </div>
+  </form>
+
+  <!-- Aperçu -->
+  <div *ngIf="preview" class="space-y-6">
+
+    <!-- Synthèse -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Effectif</div>
+        <div class="text-xl font-bold text-gray-800 mt-1">{{ preview.effectif }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Masse brute</div>
+        <div class="text-xl font-bold text-gray-800 mt-1">{{ formaterFCFA(preview.totalBrut) }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Charges patronales</div>
+        <div class="text-xl font-bold text-sky-700 mt-1">
+          {{ formaterFCFA(preview.totalIpresEmployeur + preview.totalCssEmployeur) }}
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Total à verser</div>
+        <div class="text-xl font-bold text-indigo-700 mt-1">{{ formaterFCFA(preview.totalPayable) }}</div>
+      </div>
+    </div>
+
+    <!-- Détails -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="font-semibold text-gray-800">{{ preview.libelle }}</h2>
+        <div class="flex items-center gap-2">
+          <button type="button" (click)="exporterExcel()"
+                  class="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+            <lucide-icon name="Sheet" class="w-4 h-4"></lucide-icon>
+            Excel
+          </button>
+          <button type="button" (click)="exporterPdf()"
+                  class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+            <lucide-icon name="FileDown" class="w-4 h-4"></lucide-icon>
+            PDF
+          </button>
+          <button type="button" (click)="enregistrer()" [disabled]="saving"
+                  class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-medium px-4 py-1.5 rounded-lg">
+            <lucide-icon [name]="saving ? 'LoaderCircle' : 'Save'" [class.animate-spin]="saving" class="w-4 h-4"></lucide-icon>
+            Enregistrer
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left px-3 py-2 font-medium text-gray-600 uppercase text-xs">Matricule</th>
+              <th class="text-left px-3 py-2 font-medium text-gray-600 uppercase text-xs">Employé</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">Brut</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">IPRES sal.</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">IPRES emp.</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">CSS sal.</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">CSS emp.</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">IR</th>
+              <th class="text-right px-3 py-2 font-medium text-gray-600 uppercase text-xs">TRIMF</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr *ngFor="let l of preview.lignes" class="hover:bg-gray-50">
+              <td class="px-3 py-2 font-mono text-xs text-gray-700">{{ l.matricule }}</td>
+              <td class="px-3 py-2 text-gray-800">{{ l.nom }} {{ l.prenom }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.brutImposable) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.cotisationIpresSalarie) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.cotisationIpresEmployeur) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.cotisationCssSalarie) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.cotisationCssEmployeur) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.impotRevenu) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ formaterFCFA(l.trimf) }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="bg-gray-50 border-t border-gray-200 font-semibold">
+            <tr>
+              <td class="px-3 py-2 text-xs text-gray-600 uppercase" colspan="2">Totaux</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalBrut) }}</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalIpresSalarie) }}</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalIpresEmployeur) }}</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalCssSalarie) }}</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalCssEmployeur) }}</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalIr) }}</td>
+              <td class="px-3 py-2 text-right text-gray-900">{{ formaterFCFA(preview.totalTrimf) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

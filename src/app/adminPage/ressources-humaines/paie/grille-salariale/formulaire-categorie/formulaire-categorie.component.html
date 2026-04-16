@@ -1,0 +1,220 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button
+      type="button"
+      (click)="annuler()"
+      class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm">
+      <lucide-icon name="ArrowLeft" class="w-4 h-4"></lucide-icon>
+      Retour à la grille
+    </button>
+  </div>
+
+  <h1 class="text-2xl font-bold text-gray-800 mb-1">
+    {{ editingId ? 'Modifier une catégorie professionnelle' : 'Nouvelle catégorie professionnelle' }}
+  </h1>
+  <p class="text-sm text-gray-500 mb-6">Configure le salaire de base, les primes et les indemnités pour cette catégorie.</p>
+
+  <div *ngIf="loading" class="flex items-center justify-center py-16">
+    <lucide-icon name="LoaderCircle" class="w-8 h-8 text-indigo-500 animate-spin"></lucide-icon>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="soumettre()" class="space-y-6">
+
+    <!-- Informations générales -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">Informations générales</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Code *</label>
+          <input
+            type="text"
+            formControlName="code"
+            placeholder="ex : CADRE"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            [class.border-rose-400]="champInvalide('code')" />
+          <p class="text-xs text-rose-600 mt-1" *ngIf="champInvalide('code')">Code obligatoire.</p>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Libellé *</label>
+          <input
+            type="text"
+            formControlName="libelle"
+            placeholder="ex : Cadre supérieur"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            [class.border-rose-400]="champInvalide('libelle')" />
+          <p class="text-xs text-rose-600 mt-1" *ngIf="champInvalide('libelle')">Libellé obligatoire.</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Description</label>
+          <textarea
+            formControlName="description"
+            rows="2"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Salaire de base (FCFA) *</label>
+          <input
+            type="number"
+            formControlName="salaireBase"
+            min="0"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            [class.border-rose-400]="champInvalide('salaireBase')" />
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Régime IPRES *</label>
+          <select
+            formControlName="regimeIpres"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="REGIME_GENERAL">Régime général (tous)</option>
+            <option value="REGIME_COMPLEMENTAIRE">Régime complémentaire (cadres)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Taux CSS AT/MP (override)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="1"
+            formControlName="tauxAtMp"
+            placeholder="ex : 0.05 pour 5 %"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <p class="text-xs text-gray-400 mt-1">Laisser vide pour utiliser le taux par défaut (3 %).</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="inline-flex items-center gap-2 mt-6">
+            <input type="checkbox" formControlName="actif" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            <span class="text-sm text-gray-700">Catégorie active</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Primes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Primes</h2>
+        <button
+          type="button"
+          (click)="ajouterPrime()"
+          class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+          <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+          Ajouter une prime
+        </button>
+      </div>
+
+      <div *ngIf="primes.length === 0" class="text-sm text-gray-400 text-center py-4">
+        Aucune prime configurée pour cette catégorie.
+      </div>
+
+      <div formArrayName="primes" class="space-y-3">
+        <div *ngFor="let p of primes.controls; let i = index"
+             [formGroupName]="i"
+             class="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="col-span-4">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Libellé</label>
+            <input type="text" formControlName="libelle"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div class="col-span-2">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant</label>
+            <input type="number" formControlName="montant" min="0"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right" />
+          </div>
+          <div class="col-span-5 flex flex-wrap gap-3 text-xs text-gray-700">
+            <label class="inline-flex items-center gap-1.5">
+              <input type="checkbox" formControlName="imposable" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+              Imposable
+            </label>
+            <label class="inline-flex items-center gap-1.5">
+              <input type="checkbox" formControlName="soumiseIpres" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+              Soumise IPRES
+            </label>
+            <label class="inline-flex items-center gap-1.5">
+              <input type="checkbox" formControlName="soumiseCss" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+              Soumise CSS
+            </label>
+          </div>
+          <div class="col-span-1 flex justify-end">
+            <button type="button" (click)="retirerPrime(i)"
+                    class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded">
+              <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indemnités -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Indemnités</h2>
+        <button
+          type="button"
+          (click)="ajouterIndemnite()"
+          class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+          <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+          Ajouter une indemnité
+        </button>
+      </div>
+
+      <div *ngIf="indemnites.length === 0" class="text-sm text-gray-400 text-center py-4">
+        Aucune indemnité configurée.
+      </div>
+
+      <div formArrayName="indemnites" class="space-y-3">
+        <div *ngFor="let ind of indemnites.controls; let i = index"
+             [formGroupName]="i"
+             class="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="col-span-6">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Libellé</label>
+            <input type="text" formControlName="libelle"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant</label>
+            <input type="number" formControlName="montant" min="0"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right" />
+          </div>
+          <div class="col-span-2 flex items-center">
+            <label class="inline-flex items-center gap-1.5 text-xs text-gray-700">
+              <input type="checkbox" formControlName="imposable" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+              Imposable
+            </label>
+          </div>
+          <div class="col-span-1 flex justify-end">
+            <button type="button" (click)="retirerIndemnite(i)"
+                    class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded">
+              <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end gap-3">
+      <button
+        type="button"
+        (click)="annuler()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-5 py-2.5 rounded-lg transition-colors">
+        Annuler
+      </button>
+      <button
+        type="submit"
+        [disabled]="saving"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-indigo-300 text-white font-medium px-5 py-2.5 rounded-lg shadow transition-colors">
+        <lucide-icon [name]="saving ? 'LoaderCircle' : 'Save'" [class.animate-spin]="saving" class="w-5 h-5"></lucide-icon>
+        {{ editingId ? 'Enregistrer les modifications' : 'Créer la catégorie' }}
+      </button>
+    </div>
+  </form>
+</div>

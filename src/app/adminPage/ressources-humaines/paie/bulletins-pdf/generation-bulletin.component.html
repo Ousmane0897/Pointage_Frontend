@@ -1,0 +1,67 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button
+      type="button"
+      (click)="retour()"
+      class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm">
+      <lucide-icon name="ArrowLeft" class="w-4 h-4"></lucide-icon>
+      Retour à l'historique
+    </button>
+  </div>
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Bulletin PDF</h1>
+      <p class="text-sm text-gray-500 mt-1" *ngIf="bulletin">
+        {{ bulletin.nom }} {{ bulletin.prenom }} — {{ bulletin.matricule }}
+      </p>
+    </div>
+    <div class="flex items-center gap-2" *ngIf="bulletin">
+      <button
+        type="button"
+        (click)="imprimer()"
+        class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:border-gray-400 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-colors">
+        <lucide-icon name="Printer" class="w-5 h-5"></lucide-icon>
+        Imprimer
+      </button>
+      <button
+        type="button"
+        (click)="telecharger()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium px-5 py-2.5 rounded-lg shadow transition-colors">
+        <lucide-icon name="FileDown" class="w-5 h-5"></lucide-icon>
+        Télécharger PDF
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="flex items-center justify-center py-16">
+    <lucide-icon name="LoaderCircle" class="w-8 h-8 text-indigo-500 animate-spin"></lucide-icon>
+  </div>
+
+  <div *ngIf="!loading && errorMessage"
+       class="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-4 mb-4 flex items-center gap-3">
+    <lucide-icon name="TriangleAlert" class="w-5 h-5"></lucide-icon>
+    <span class="text-sm">{{ errorMessage }}</span>
+  </div>
+
+  <!-- Grille 2 colonnes : aperçu structuré (gauche) + iframe PDF (droite) -->
+  <div *ngIf="bulletin" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div>
+      <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Données calculées</h2>
+      <app-preview-bulletin [bulletin]="bulletin"></app-preview-bulletin>
+    </div>
+
+    <div>
+      <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Aperçu PDF</h2>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="height: 820px;">
+        <iframe
+          *ngIf="pdfUrl"
+          [src]="pdfUrl"
+          class="w-full h-full border-0"
+          title="Aperçu du bulletin">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</div>

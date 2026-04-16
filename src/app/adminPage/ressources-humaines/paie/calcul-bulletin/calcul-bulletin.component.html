@@ -1,0 +1,98 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Calcul d'un bulletin de paie</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Sélectionne un employé et une période pour générer un aperçu automatique du bulletin.
+      </p>
+    </div>
+  </div>
+
+  <!-- Sélecteur -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6" [formGroup]="form">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+      <div class="md:col-span-2">
+        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Employé *</label>
+        <select
+          formControlName="employeId"
+          class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+          <option value="" disabled>Choisir un employé…</option>
+          <option *ngFor="let e of employes" [value]="e.id ?? e.agentId">
+            {{ employeLabel(e) }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Catégorie</label>
+        <select
+          formControlName="categorieId"
+          class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+          <option value="">Aucune (valeurs employé)</option>
+          <option *ngFor="let c of categories" [value]="c.id">
+            {{ c.libelle }}
+          </option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Mois *</label>
+          <select
+            formControlName="mois"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option *ngFor="let m of MOIS" [value]="m.v">{{ m.l }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Année *</label>
+          <select
+            formControlName="annee"
+            class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+      <span *ngIf="loadingData" class="inline-flex items-center gap-2">
+        <lucide-icon name="LoaderCircle" class="w-4 h-4 animate-spin"></lucide-icon>
+        Chargement des référentiels…
+      </span>
+      <span *ngIf="!loadingData && calculating" class="inline-flex items-center gap-2 text-indigo-600">
+        <lucide-icon name="LoaderCircle" class="w-4 h-4 animate-spin"></lucide-icon>
+        Calcul en cours…
+      </span>
+      <span *ngIf="!loadingData && !calculating && bulletin && !recap" class="inline-flex items-center gap-2 text-amber-600">
+        <lucide-icon name="TriangleAlert" class="w-4 h-4"></lucide-icon>
+        Aucun récapitulatif mensuel trouvé pour cette période — calcul basé sur le salaire de base uniquement.
+      </span>
+    </div>
+  </div>
+
+  <!-- Aperçu -->
+  <app-preview-bulletin [bulletin]="bulletin"></app-preview-bulletin>
+
+  <!-- Actions -->
+  <div *ngIf="bulletin" class="mt-6 flex flex-wrap items-center justify-end gap-3">
+    <button
+      type="button"
+      (click)="genererPdf()"
+      class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:border-gray-400 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-colors">
+      <lucide-icon name="FileDown" class="w-5 h-5"></lucide-icon>
+      Aperçu PDF
+    </button>
+    <button
+      type="button"
+      (click)="enregistrer()"
+      [disabled]="saving"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-indigo-300 text-white font-medium px-5 py-2.5 rounded-lg shadow transition-colors">
+      <lucide-icon [name]="saving ? 'LoaderCircle' : 'Save'" [class.animate-spin]="saving" class="w-5 h-5"></lucide-icon>
+      Enregistrer en brouillon
+    </button>
+  </div>
+</div>
