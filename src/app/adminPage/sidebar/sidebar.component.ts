@@ -27,7 +27,9 @@ export class SidebarComponent implements OnInit {
   openDropdownPointages: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Pointages
   openDropdownStock: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Stock
   openDropdownCollecte: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Collecte
-
+  openDropdownRessourcesHumaines: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Ressources Humaines
+  openDropdownGestionPersonnel: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Gestion du Personnel
+  openDropdownTempsPresences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Temps & Présences
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -124,6 +126,13 @@ export class SidebarComponent implements OnInit {
       m.collecteLivraison?.collecteBesoins ||
       m.collecteLivraison?.suiviLivraison
     );
+  }
+
+  accessRessourcesHumaines(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m) return false;
+    return m.ressourcesHumaines?.agentsRh;
   }
 
   hasOperationsAccess(): boolean {
@@ -238,12 +247,24 @@ export class SidebarComponent implements OnInit {
     this.openDropdownPointages = this.openDropdownPointages === menu ? null : menu;
   }
 
+  toggleDropdownRessourcesHumaines(menu: string) {
+    this.openDropdownRessourcesHumaines = this.openDropdownRessourcesHumaines === menu ? null : menu;
+  }
+
   toggleDropdownStock(menu: string) {
     this.openDropdownStock = this.openDropdownStock === menu ? null : menu;
   }
 
   toggleDropdownCollecte(menu: string) {
     this.openDropdownCollecte = this.openDropdownCollecte === menu ? null : menu;
+  }
+
+  toggleDropdownGestionPersonnel(menu: string) {
+    this.openDropdownGestionPersonnel = this.openDropdownGestionPersonnel === menu ? null : menu;
+  }
+
+  toggleDropdownTempsPresences(menu: string) {
+    this.openDropdownTempsPresences = this.openDropdownTempsPresences === menu ? null : menu;
   }
 
 

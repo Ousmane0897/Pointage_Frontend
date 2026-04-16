@@ -21,10 +21,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { PlanificationService } from '../../services/planification.service';
 import { ToastrService } from 'ngx-toastr';
-import { finalize, interval, takeUntil } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { finalize, interval } from 'rxjs';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { S } from '@angular/material/error-options.d-CGdTZUYk';
+
 
 @Component({
   selector: 'app-calendar-employes',

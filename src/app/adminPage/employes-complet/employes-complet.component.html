@@ -67,12 +67,12 @@
                     <td class="p-3">{{ e.matricule }}</td>
                     <td class="p-3">{{ e.prenom }} {{ e.nom }}</td>
                     <td class="p-3">{{ e.sexe }}</td>
-                    <td class="p-3">{{ e.dateNaissance | date:'dd/MM/yyyy' }}</td>
+                    <td class="p-3">{{ e.dateNaissance }}</td>
                     <td class="p-3">{{ e.ville }}</td>
                     <td class="p-3">{{ e.telephone1 }}</td>
                     <td class="p-3">{{ e.email }}</td>
                     <td class="p-3">{{ e.poste }}</td>
-    
+
 
                     <td class="p-3 font-semibold" [ngClass]="{
                   'text-green-600': e.statut === 'ACTIF',
@@ -170,15 +170,16 @@
                     </td>
 
                     <!-- Heure de début et fin -->
-                    <td class="p-3"><div
-                        class="flex flex-col bg-orange-100 text-orange-800 py-1 px-2 rounded-full text-sm items-center justify-center">
-                        {{ e.heureDebut }} - {{ e.heureFin }}
-                        <span *ngIf="e.heureDebut2 && e.heureFin2">
-                            {{ e.heureDebut2 }} - {{ e.heureFin2 }}
-                        </span>
-                    </div>
-                </td>
-                    
+                    <td class="p-3">
+                        <div
+                            class="flex flex-col bg-orange-100 text-orange-800 py-1 px-2 rounded-full text-sm items-center justify-center">
+                            {{ e.heureDebut }} - {{ e.heureFin }}
+                            <span *ngIf="e.heureDebut2 && e.heureFin2">
+                                {{ e.heureDebut2 }} - {{ e.heureFin2 }}
+                            </span>
+                        </div>
+                    </td>
+
 
                     <!-- Actions -->
                     <td class="p-3 space-x-2 flex-row flex justify-center items-center mt-10">
@@ -560,6 +561,11 @@
                     <div *ngIf="salaireDeBase.invalid && salaireDeBase.touched" class="text-red-500 text-sm">
                         Le salaire de base est requis.
                     </div>
+                    <!-- Contrat à téléverser -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mt-3">Contrat de travail (PDF)</label>
+                        <input type="file" class="input" (change)="onFileSelected($event, 'contrat')">
+                    </div>
                 </div>
             </section>
 
@@ -654,7 +660,7 @@
             <!-- PHOTO -->
             <section>
                 <h3 class="section-title">🖼 Photo</h3>
-                <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'photo')" />
                 <img *ngIf="previewUrl" [src]="previewUrl" class="h-32 w-32 rounded-lg object-cover shadow mt-3">
             </section>
 
@@ -665,7 +671,7 @@
                     name="observations" #observations="ngModel"></textarea>
             </section>
 
-            <!-- Boutons d'action -->
+
             <div class="flex justify-end space-x-4 mt-6">
                 <button type="submit" class="btn-primary w-full md:w-auto px-4 py-2" [disabled]="form.invalid">
                     <span *ngIf="isEditMode">✏️ Modifier</span>

@@ -1,0 +1,21 @@
+/* Sidebar styles are handled with Tailwind utilities directly in the template. */
+
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Hide scrollbar for the nav while keeping it scrollable */
+.scrollbar-hidden {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+.scrollbar-hidden::-webkit-scrollbar { width: 6px; }
+.scrollbar-hidden::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+}
+.scrollbar-hidden::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}

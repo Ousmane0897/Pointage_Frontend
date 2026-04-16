@@ -35,6 +35,12 @@ export class EmployeCompletService {
     return this.http.get<EmployeComplet>(`${this.baseUrl}/employe-complet/prenomNom`, { params });
   }
 
+  // supprimer contrat
+  deleteContrat(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/employe-complet/${id}/contrat`);
+  }
+
+
   createEmployeComplet(formData: FormData): Observable<any> {
   return this.http.post<any>(`${this.baseUrl}/employe-complet/employe`, formData);
 }

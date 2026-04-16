@@ -1,0 +1,394 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- ══════════════════════════════════════════════
+       EN-TÊTE
+  ══════════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+
+    <!-- Titre -->
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+        <lucide-icon name="Network" class="w-5 h-5 text-indigo-600"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Organigramme</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Structure hiérarchique de l'organisation</p>
+      </div>
+    </div>
+
+    <!-- Contrôles : toggle vue + expand/collapse -->
+    <div class="flex flex-wrap items-center gap-2">
+
+      <!-- Expand / Collapse -->
+      <button
+        (click)="expandAll()"
+        title="Développer tout"
+        class="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg shadow-sm transition-colors duration-200">
+        <lucide-icon name="ChevronsDownUp" class="w-4 h-4"></lucide-icon>
+        Tout développer
+      </button>
+      <button
+        (click)="collapseAll()"
+        title="Réduire tout"
+        class="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-3 py-2 rounded-lg shadow-sm transition-colors duration-200">
+        <lucide-icon name="ChevronsUpDown" class="w-4 h-4"></lucide-icon>
+        Tout réduire
+      </button>
+
+      <!-- Toggle Arbre / Départements -->
+      <div class="flex rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <button
+          (click)="setVueMode('arbre')"
+          [ngClass]="vueMode === 'arbre'
+            ? 'bg-indigo-600 text-white'
+            : 'text-gray-600 hover:bg-gray-50'"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors duration-200">
+          <lucide-icon name="GitBranch" class="w-4 h-4"></lucide-icon>
+          Arbre
+        </button>
+        <button
+          (click)="setVueMode('departements')"
+          [ngClass]="vueMode === 'departements'
+            ? 'bg-indigo-600 text-white'
+            : 'text-gray-600 hover:bg-gray-50'"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-l border-gray-200 transition-colors duration-200">
+          <lucide-icon name="LayoutGrid" class="w-4 h-4"></lucide-icon>
+          Départements
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       FILTRE PAR DÉPARTEMENT (Vue Arbre)
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="vueMode === 'arbre' && departements.length > 0"
+    class="flex flex-wrap gap-2 mb-6">
+
+    <!-- Puce "Tous" -->
+    <button
+      (click)="selectDepartement(null)"
+      [ngClass]="departementSelectionne === null
+        ? 'bg-indigo-600 text-white border-indigo-600'
+        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+      class="inline-flex items-center gap-1.5 border text-sm font-medium px-3 py-1.5 rounded-full transition-colors duration-200">
+      <lucide-icon name="Users" class="w-3.5 h-3.5"></lucide-icon>
+      Tous
+    </button>
+
+    <button
+      *ngFor="let dept of departements; trackBy: trackByNom"
+      (click)="selectDepartement(dept.id ?? dept.nom)"
+      [ngClass]="departementSelectionne === (dept.id ?? dept.nom)
+        ? 'bg-indigo-600 text-white border-indigo-600'
+        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+      class="inline-flex items-center gap-1.5 border text-sm font-medium px-3 py-1.5 rounded-full transition-colors duration-200">
+      <lucide-icon name="Building2" class="w-3.5 h-3.5"></lucide-icon>
+      {{ dept.nom }}
+      <span class="text-xs opacity-75">({{ dept.effectif }})</span>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       ÉTAT DE CHARGEMENT
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="loading" class="flex items-center justify-center py-24">
+    <div class="flex flex-col items-center gap-3">
+      <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      <span class="text-sm text-gray-500 font-medium">Chargement de l'organigramme…</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       ÉTAT VIDE
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="!loading && arbre.length === 0 && vueMode === 'arbre'"
+    class="flex flex-col items-center justify-center py-24 text-center">
+    <lucide-icon name="Network" class="w-16 h-16 text-gray-200 mb-4"></lucide-icon>
+    <h3 class="text-base font-semibold text-gray-500 mb-1">Aucune donnée disponible</h3>
+    <p class="text-sm text-gray-400">L'organigramme n'a pas encore été configuré.</p>
+  </div>
+
+  <div *ngIf="!loading && departements.length === 0 && vueMode === 'departements'"
+    class="flex flex-col items-center justify-center py-24 text-center">
+    <lucide-icon name="LayoutGrid" class="w-16 h-16 text-gray-200 mb-4"></lucide-icon>
+    <h3 class="text-base font-semibold text-gray-500 mb-1">Aucun département disponible</h3>
+    <p class="text-sm text-gray-400">Aucun département n'a encore été configuré.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       VUE ARBRE
+  ══════════════════════════════════════════════ -->
+  <ng-container *ngIf="!loading && vueMode === 'arbre' && arbre.length > 0">
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-x-auto">
+
+      <!-- Légende -->
+      <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+        <div class="flex items-center gap-1.5 text-xs text-gray-500">
+          <span class="w-3 h-3 rounded-full bg-indigo-500 shrink-0"></span>
+          Responsable hiérarchique
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-gray-500">
+          <span class="w-3 h-3 rounded-full bg-teal-400 shrink-0"></span>
+          Membre d'équipe
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-gray-500">
+          <lucide-icon name="ChevronRight" class="w-3.5 h-3.5 text-gray-400"></lucide-icon>
+          Cliquez pour développer / réduire
+        </div>
+      </div>
+
+      <!-- Arbre récursif -->
+      <ng-container
+        *ngTemplateOutlet="noeudTemplate; context: { noeuds: arbre, niveau: 0 }">
+      </ng-container>
+
+    </div>
+
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════════
+       VUE DÉPARTEMENTS
+  ══════════════════════════════════════════════ -->
+  <ng-container *ngIf="!loading && vueMode === 'departements' && departements.length > 0">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <div
+        *ngFor="let dept of departements; trackBy: trackByNom"
+        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+
+        <!-- En-tête département -->
+        <div class="p-5 border-b border-gray-100">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                <lucide-icon name="Building2" class="w-5 h-5 text-indigo-600"></lucide-icon>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-800">{{ dept.nom }}</h3>
+                <p class="text-xs text-gray-500 mt-0.5" *ngIf="dept.responsableNom">
+                  Resp. : {{ dept.responsableNom }}
+                </p>
+                <p class="text-xs text-gray-400 mt-0.5" *ngIf="!dept.responsableNom">
+                  Aucun responsable désigné
+                </p>
+              </div>
+            </div>
+            <!-- Badge effectif -->
+            <span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold px-2.5 py-1 rounded-full shrink-0">
+              <lucide-icon name="Users" class="w-3 h-3"></lucide-icon>
+              {{ dept.effectif }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Sous-équipes -->
+        <div *ngIf="dept.sousEquipes && dept.sousEquipes.length > 0"
+          class="px-5 py-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            Sous-équipes
+          </p>
+          <div class="space-y-2">
+            <div
+              *ngFor="let sousEquipe of dept.sousEquipes; trackBy: trackByNom"
+              class="flex items-center justify-between gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full bg-teal-400 shrink-0"></span>
+                <span class="text-sm text-gray-700 font-medium truncate">{{ sousEquipe.nom }}</span>
+              </div>
+              <span class="text-xs text-gray-400 shrink-0">{{ sousEquipe.effectif }} pers.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action : voir dans l'arbre -->
+        <div class="px-5 py-3 bg-gray-50 border-t border-gray-100">
+          <button
+            (click)="selectDepartement(dept.id ?? dept.nom); setVueMode('arbre')"
+            class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors duration-150">
+            <lucide-icon name="GitBranch" class="w-3.5 h-3.5"></lucide-icon>
+            Voir dans l'arbre
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════════
+       PANNEAU DÉTAIL NOEUD SÉLECTIONNÉ
+  ══════════════════════════════════════════════ -->
+  <div
+    *ngIf="noeudSelectionne"
+    class="fixed bottom-6 right-6 w-72 bg-white rounded-xl shadow-xl border border-indigo-200 overflow-hidden z-50 animate-fade-in">
+
+    <!-- En-tête panneau -->
+    <div class="flex items-center justify-between px-4 py-3 bg-indigo-600">
+      <span class="text-sm font-semibold text-white">Détail employé</span>
+      <button
+        (click)="noeudSelectionne = null"
+        class="text-indigo-200 hover:text-white transition-colors duration-150">
+        <lucide-icon name="X" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Corps panneau -->
+    <div class="p-4">
+      <!-- Avatar + nom -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 rounded-full overflow-hidden bg-indigo-100 flex items-center justify-center border-2 border-indigo-200 shrink-0">
+          <img
+            *ngIf="noeudSelectionne.photoUrl; else avatarPanneauTpl"
+            [src]="noeudSelectionne.photoUrl"
+            [alt]="noeudSelectionne.prenom + ' ' + noeudSelectionne.nom"
+            class="w-full h-full object-cover" />
+          <ng-template #avatarPanneauTpl>
+            <span class="text-lg font-bold text-indigo-600">{{ getInitiales(noeudSelectionne) }}</span>
+          </ng-template>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">
+            {{ noeudSelectionne.prenom }} {{ noeudSelectionne.nom }}
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ noeudSelectionne.poste || '—' }}</p>
+        </div>
+      </div>
+
+      <!-- Infos -->
+      <dl class="space-y-2 mb-4">
+        <div class="flex items-center gap-2">
+          <lucide-icon name="Building2" class="w-3.5 h-3.5 text-gray-400 shrink-0"></lucide-icon>
+          <dt class="text-xs text-gray-500 shrink-0">Département :</dt>
+          <dd class="text-xs font-medium text-gray-700 truncate">
+            {{ noeudSelectionne.departement || '—' }}
+          </dd>
+        </div>
+        <div class="flex items-center gap-2" *ngIf="noeudSelectionne.enfants?.length">
+          <lucide-icon name="Users" class="w-3.5 h-3.5 text-gray-400 shrink-0"></lucide-icon>
+          <dt class="text-xs text-gray-500 shrink-0">Subordonnés directs :</dt>
+          <dd class="text-xs font-medium text-gray-700">{{ noeudSelectionne.enfants!.length }}</dd>
+        </div>
+      </dl>
+
+      <!-- Action -->
+      <button
+        (click)="navigateToFiche(noeudSelectionne.id)"
+        class="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-200">
+        <lucide-icon name="ExternalLink" class="w-4 h-4"></lucide-icon>
+        Voir la fiche
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     TEMPLATE RÉCURSIF : NOEUD D'ORGANIGRAMME
+══════════════════════════════════════════════════════════════════════ -->
+<ng-template #noeudTemplate let-noeuds="noeuds" let-niveau="niveau">
+  <ul [ngClass]="niveau > 0 ? 'ml-8 border-l-2 border-indigo-100 pl-4 space-y-3 mt-3' : 'space-y-3'">
+
+    <li
+      *ngFor="let noeud of noeuds; trackBy: trackById"
+      class="relative">
+
+      <!-- Trait de connexion horizontal -->
+      <div
+        *ngIf="niveau > 0"
+        class="absolute -left-4 top-6 w-4 border-t-2 border-indigo-100">
+      </div>
+
+      <!-- Carte noeud -->
+      <div
+        class="group flex items-start gap-3 bg-white rounded-xl border px-4 py-3 shadow-sm cursor-pointer transition-all duration-200"
+        [ngClass]="{
+          'border-indigo-400 ring-2 ring-indigo-100 shadow-md': isNoeudSelectionne(noeud),
+          'border-gray-200 hover:border-indigo-200 hover:shadow-md': !isNoeudSelectionne(noeud)
+        }"
+        (click)="selectionnerNoeud(noeud)">
+
+        <!-- Avatar -->
+        <div
+          class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 shrink-0"
+          [ngClass]="niveau === 0
+            ? 'bg-indigo-100 border-indigo-300'
+            : 'bg-teal-50 border-teal-200'">
+          <img
+            *ngIf="noeud.photoUrl; else avatarInitialesTpl"
+            [src]="noeud.photoUrl"
+            [alt]="noeud.prenom + ' ' + noeud.nom"
+            class="w-full h-full object-cover" />
+          <ng-template #avatarInitialesTpl>
+            <span
+              class="text-sm font-bold"
+              [ngClass]="niveau === 0 ? 'text-indigo-600' : 'text-teal-600'">
+              {{ getInitiales(noeud) }}
+            </span>
+          </ng-template>
+        </div>
+
+        <!-- Informations -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Nom cliquable -->
+            <button
+              (click)="$event.stopPropagation(); navigateToFiche(noeud.id)"
+              class="text-sm font-semibold text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-150 text-left">
+              {{ noeud.prenom }} {{ noeud.nom }}
+            </button>
+            <!-- Badge niveau 0 = chef -->
+            <span
+              *ngIf="niveau === 0"
+              class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-100 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+              <lucide-icon name="Crown" class="w-3 h-3"></lucide-icon>
+              Responsable
+            </span>
+          </div>
+          <p class="text-xs text-gray-600 mt-0.5">{{ noeud.poste || '—' }}</p>
+          <div class="flex items-center gap-1.5 mt-1">
+            <lucide-icon name="Building2" class="w-3 h-3 text-gray-400 shrink-0"></lucide-icon>
+            <span class="text-xs text-gray-400">{{ noeud.departement || '—' }}</span>
+            <span *ngIf="noeud.enfants?.length" class="text-xs text-gray-300 mx-1">·</span>
+            <span *ngIf="noeud.enfants?.length" class="text-xs text-gray-400">
+              {{ noeud.enfants!.length }} subordonné{{ noeud.enfants!.length > 1 ? 's' : '' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Bouton expand/collapse -->
+        <button
+          *ngIf="noeud.enfants && noeud.enfants.length > 0"
+          (click)="$event.stopPropagation(); toggleNoeud(noeud.id)"
+          title="{{ isExpanded(noeud.id) ? 'Réduire' : 'Développer' }}"
+          class="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-200 text-gray-400 hover:text-indigo-600 transition-all duration-200">
+          <lucide-icon
+            [name]="isExpanded(noeud.id) ? 'ChevronDown' : 'ChevronRight'"
+            class="w-4 h-4 transition-transform duration-200">
+          </lucide-icon>
+        </button>
+
+        <!-- Icône feuille (pas d'enfants) -->
+        <div
+          *ngIf="!noeud.enfants || noeud.enfants.length === 0"
+          class="shrink-0 w-7 h-7 flex items-center justify-center">
+          <lucide-icon name="User" class="w-3.5 h-3.5 text-gray-300"></lucide-icon>
+        </div>
+
+      </div>
+
+      <!-- Enfants récursifs -->
+      <ng-container
+        *ngIf="noeud.enfants && noeud.enfants.length > 0 && isExpanded(noeud.id)">
+        <ng-container
+          *ngTemplateOutlet="noeudTemplate; context: { noeuds: noeud.enfants, niveau: niveau + 1 }">
+        </ng-container>
+      </ng-container>
+
+    </li>
+  </ul>
+</ng-template>

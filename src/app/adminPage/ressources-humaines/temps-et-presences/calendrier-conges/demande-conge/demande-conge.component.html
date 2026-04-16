@@ -1,0 +1,105 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="annuler()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+      <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Nouvelle demande de congé</h1>
+      <p class="text-sm text-gray-500 mt-1">La demande sera soumise à l'approbation du responsable</p>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="soumettre()" novalidate
+    class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-3xl">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Employé <span class="text-red-500">*</span>
+        </label>
+        <select formControlName="employeId"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
+          <option value="">-- Sélectionner --</option>
+          <option *ngFor="let e of employes" [value]="e.id">
+            {{ e.matricule }} — {{ e.prenom }} {{ e.nom }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="soldeEmployeSelectionne" class="sm:col-span-2 bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex flex-wrap gap-6 text-sm">
+        <div>
+          <div class="text-xs text-gray-500 uppercase">Solde disponible</div>
+          <div class="font-bold text-lg"
+            [ngClass]="soldeEmployeSelectionne.solde > 0 ? 'text-green-700' : 'text-red-700'">
+            {{ soldeEmployeSelectionne.solde }} j
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase">Acquis</div>
+          <div class="font-medium">{{ soldeEmployeSelectionne.acquis }} j</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase">Pris</div>
+          <div class="font-medium">{{ soldeEmployeSelectionne.pris }} j</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 uppercase">En cours</div>
+          <div class="font-medium text-amber-700">{{ soldeEmployeSelectionne.enCours }} j</div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Type <span class="text-red-500">*</span>
+        </label>
+        <select formControlName="type"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
+          <option value="ANNUEL">Annuel</option>
+          <option value="MATERNITE">Maternité</option>
+          <option value="PATERNITE">Paternité</option>
+          <option value="SANS_SOLDE">Sans solde</option>
+          <option value="EXCEPTIONNEL">Exceptionnel</option>
+        </select>
+      </div>
+
+      <div></div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Du <span class="text-red-500">*</span>
+        </label>
+        <input type="date" formControlName="dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Au <span class="text-red-500">*</span>
+        </label>
+        <input type="date" formControlName="dateFin"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Motif</label>
+        <textarea formControlName="motif" rows="3"
+          placeholder="Précisions..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></textarea>
+      </div>
+    </div>
+
+    <div class="flex gap-3 justify-end pt-4 border-t border-gray-100">
+      <button type="button" (click)="annuler()"
+        class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium">
+        Annuler
+      </button>
+      <button type="submit" [disabled]="submitting"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-60">
+        <lucide-icon [name]="submitting ? 'Loader' : 'Send'" [class.animate-spin]="submitting" class="w-4 h-4"></lucide-icon>
+        Soumettre
+      </button>
+    </div>
+  </form>
+</div>

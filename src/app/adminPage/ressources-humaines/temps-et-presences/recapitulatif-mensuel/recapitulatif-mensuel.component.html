@@ -1,0 +1,138 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Récapitulatif mensuel</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Jours travaillés, absences, retards et heures supplémentaires — alimente la paie
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="exporterExcel()" [disabled]="loading || recaps.length === 0"
+        class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50">
+        <lucide-icon name="FileSpreadsheet" class="w-4 h-4"></lucide-icon>
+        Export Excel
+      </button>
+      <button (click)="exporterPdf()" [disabled]="loading || recaps.length === 0"
+        class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50">
+        <lucide-icon name="FileText" class="w-4 h-4"></lucide-icon>
+        Export PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Mois</label>
+        <select [(ngModel)]="filtres.mois"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option *ngFor="let m of mois" [ngValue]="m.v">{{ m.l }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Année</label>
+        <select [(ngModel)]="filtres.annee"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option *ngFor="let a of annees" [ngValue]="a">{{ a }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <input type="text" [(ngModel)]="filtres.departement"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Site</label>
+        <input type="text" [(ngModel)]="filtres.site"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, matricule..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button (click)="generer()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="PlayCircle" class="w-4 h-4"></lucide-icon>
+        Générer
+      </button>
+    </div>
+  </div>
+
+  <!-- TOTAUX -->
+  <div *ngIf="loaded && recaps.length > 0" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <p class="text-xs text-gray-500 uppercase">Effectif</p>
+      <p class="text-2xl font-bold text-gray-800 mt-1">{{ totalEffectif }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4">
+      <p class="text-xs text-green-700 uppercase">J. travaillés</p>
+      <p class="text-2xl font-bold text-green-700 mt-1">{{ totalJoursTravailles }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
+      <p class="text-xs text-red-700 uppercase">J. absence</p>
+      <p class="text-2xl font-bold text-red-700 mt-1">{{ totalAbsences }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-amber-100 p-4">
+      <p class="text-xs text-amber-700 uppercase">Retards</p>
+      <p class="text-2xl font-bold text-amber-700 mt-1">{{ totalRetards }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-indigo-100 p-4">
+      <p class="text-xs text-indigo-700 uppercase">HS totales</p>
+      <p class="text-2xl font-bold text-indigo-700 mt-1">{{ totalHS }} h</p>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+      <p class="mt-2 text-sm">Génération du récapitulatif...</p>
+    </div>
+
+    <div *ngIf="!loading && loaded && recaps.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune donnée pour cette période.</p>
+    </div>
+
+    <div *ngIf="!loading && recaps.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Département</th>
+            <th class="px-4 py-3">J. ouvr.</th>
+            <th class="px-4 py-3">J. trav.</th>
+            <th class="px-4 py-3">Absences</th>
+            <th class="px-4 py-3">Congés</th>
+            <th class="px-4 py-3">Retards</th>
+            <th class="px-4 py-3">Min. retard</th>
+            <th class="px-4 py-3">HS (h)</th>
+            <th class="px-4 py-3">HS maj. équiv.</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let r of recaps; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ r.prenom }} {{ r.nom }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ r.matricule }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ r.departement }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ r.joursOuvrables }}</td>
+            <td class="px-4 py-3 text-green-700 font-medium">{{ r.joursTravailles }}</td>
+            <td class="px-4 py-3 text-red-700">{{ r.joursAbsence }}</td>
+            <td class="px-4 py-3 text-blue-700">{{ r.joursConge }}</td>
+            <td class="px-4 py-3 text-amber-700">{{ r.nombreRetards }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ r.minutesRetardTotal }}</td>
+            <td class="px-4 py-3 text-indigo-700 font-medium">{{ r.heuresSupTotal }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ r.heuresSupMajoreesEquivalent }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

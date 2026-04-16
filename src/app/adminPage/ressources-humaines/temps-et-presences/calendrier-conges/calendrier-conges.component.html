@@ -1,0 +1,188 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Calendrier des congés</h1>
+      <p class="text-sm text-gray-500 mt-1">Soldes, demandes et workflow d'approbation</p>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="validation()"
+        class="inline-flex items-center gap-2 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-4 py-2.5 rounded-lg font-medium">
+        <lucide-icon name="CheckSquare" class="w-4 h-4"></lucide-icon>
+        Validation
+      </button>
+      <button (click)="nouvelleDemande()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+        <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon>
+        Nouvelle demande
+      </button>
+    </div>
+  </div>
+
+  <!-- SOLDES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <h2 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+      <lucide-icon name="Wallet" class="w-5 h-5 text-indigo-600"></lucide-icon>
+      Soldes de congés
+    </h2>
+
+    <div *ngIf="loadingSoldes" class="p-4 text-center text-gray-500 text-sm">
+      <lucide-icon name="Loader" class="w-5 h-5 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loadingSoldes && soldes.length === 0" class="p-4 text-center text-gray-500 text-sm">
+      Aucun solde disponible.
+    </div>
+
+    <div *ngIf="!loadingSoldes && soldes.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Département</th>
+            <th class="px-4 py-3">Année</th>
+            <th class="px-4 py-3">Acquis</th>
+            <th class="px-4 py-3">Pris</th>
+            <th class="px-4 py-3">En cours</th>
+            <th class="px-4 py-3">Solde</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let s of soldes; trackBy: trackBySolde" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ s.prenom }} {{ s.nom }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ s.matricule }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ s.departement }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.anneeReference }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.acquis }} j</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.pris }} j</td>
+            <td class="px-4 py-3 text-amber-700">{{ s.enCours }} j</td>
+            <td class="px-4 py-3 font-semibold"
+              [ngClass]="s.solde > 0 ? 'text-green-700' : 'text-red-700'">
+              {{ s.solde }} j
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FILTRES DEMANDES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="APPROUVE">Approuvées</option>
+          <option value="REFUSE">Refusées</option>
+          <option value="ANNULE">Annulées</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Type</label>
+        <select [(ngModel)]="filtres.type"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="ANNUEL">Annuel</option>
+          <option value="MATERNITE">Maternité</option>
+          <option value="PATERNITE">Paternité</option>
+          <option value="SANS_SOLDE">Sans solde</option>
+          <option value="EXCEPTIONNEL">Exceptionnel</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <input type="text" [(ngModel)]="filtres.departement"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Du</label>
+        <input type="date" [(ngModel)]="filtres.dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Au</label>
+        <input type="date" [(ngModel)]="filtres.dateFin"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, matricule..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button (click)="applyFilters()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+      </button>
+      <button (click)="resetFilters()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- DEMANDES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loadingDemandes" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loadingDemandes && demandes.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune demande trouvée.</p>
+    </div>
+
+    <div *ngIf="!loadingDemandes && demandes.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Du</th>
+            <th class="px-4 py-3">Au</th>
+            <th class="px-4 py-3">Jours</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let d of demandes; trackBy: trackByDemande" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ d.prenom }} {{ d.nom }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ d.matricule }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ getTypeLabel(d.type) }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.dateDebut | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.dateFin | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.nombreJours ?? '—' }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button *ngIf="d.statut === 'EN_ATTENTE'"
+                (click)="annulerDemande(d)"
+                class="text-red-600 hover:text-red-800 text-xs underline">Annuler</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingDemandes && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} demande(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>

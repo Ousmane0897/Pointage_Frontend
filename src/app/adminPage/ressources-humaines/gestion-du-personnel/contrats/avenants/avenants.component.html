@@ -1,0 +1,359 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- ══════════════════════════════════════════════
+       EN-TÊTE
+  ══════════════════════════════════════════════ -->
+  <div class="flex items-center gap-3 mb-6">
+    <button
+      (click)="retourListe()"f
+      class="p-2 rounded-lg text-gray-500 hover:bg-gray-200 transition-colors duration-150">
+      <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Avenants &amp; Renouvellements</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Gestion des modifications et renouvellements du contrat</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CHARGEMENT
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="loading" class="flex items-center justify-center py-20">
+    <div class="flex flex-col items-center gap-3">
+      <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      <span class="text-sm text-gray-500 font-medium">Chargement du contrat…</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CONTENU
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="!loading && contrat">
+
+    <!-- ─── Carte récapitulatif contrat ──────────────── -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+
+        <!-- Avatar employé -->
+        <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+          <span class="text-indigo-600 font-bold text-lg">
+            {{ contrat.employePrenom?.charAt(0) | uppercase }}{{ contrat.employeNom?.charAt(0) | uppercase }}
+          </span>
+        </div>
+
+        <!-- Infos employé -->
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <h2 class="text-lg font-semibold text-gray-800">
+              {{ contrat.employePrenom }} {{ contrat.employeNom }}
+            </h2>
+            <span [class]="getTypeBadgeClasses(contrat.typeContrat)"
+              class="text-xs font-bold px-2.5 py-0.5 rounded-full">
+              {{ contrat.typeContrat }}
+            </span>
+            <span [class]="getStatutBadgeClasses(contrat.statut)"
+              class="text-xs font-semibold px-2.5 py-0.5 rounded-full">
+              {{ getStatutLabel(contrat.statut) }}
+            </span>
+          </div>
+          <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
+            <span class="flex items-center gap-1.5">
+              <lucide-icon name="CalendarCheck" class="w-3.5 h-3.5 text-green-500"></lucide-icon>
+              Début : <span class="font-medium text-gray-700">{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</span>
+            </span>
+            <span class="flex items-center gap-1.5">
+              <lucide-icon name="CalendarX" class="w-3.5 h-3.5 text-red-400"></lucide-icon>
+              Fin :
+              <span *ngIf="contrat.dateFin" class="font-medium text-gray-700">{{ contrat.dateFin | date:'dd/MM/yyyy' }}</span>
+              <span *ngIf="!contrat.dateFin" class="italic text-gray-400">Indéterminée</span>
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── Deux colonnes : avenants + renouvellements ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- ════════════════════════════════════════
+           SECTION AVENANTS
+      ════════════════════════════════════════ -->
+      <div class="flex flex-col gap-4">
+
+        <!-- En-tête section -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <lucide-icon name="ClipboardList" class="w-4 h-4 text-indigo-500"></lucide-icon>
+            Avenants
+            <span class="text-xs font-normal bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full ml-1">
+              {{ avenants.length }}
+            </span>
+          </h3>
+          <button
+            (click)="toggleAvenantForm()"
+            class="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors duration-150"
+            [ngClass]="showAvenantForm
+              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white'">
+            <lucide-icon [name]="showAvenantForm ? 'X' : 'Plus'" class="w-4 h-4"></lucide-icon>
+            {{ showAvenantForm ? 'Annuler' : 'Nouvel avenant' }}
+          </button>
+        </div>
+
+        <!-- Formulaire avenant (inline) -->
+        <div *ngIf="showAvenantForm"
+          class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+          <h4 class="text-sm font-semibold text-indigo-800 mb-3">Renseigner l'avenant</h4>
+          <form [formGroup]="avenantForm" (ngSubmit)="creerAvenant()" novalidate class="space-y-3">
+
+            <!-- Objet -->
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-gray-700">Objet <span class="text-red-500">*</span></label>
+              <input
+                type="text"
+                formControlName="objet"
+                placeholder="Ex : Augmentation de salaire, Changement de poste…"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                [ngClass]="{'border-red-400': avenantForm.get('objet')?.invalid && avenantForm.get('objet')?.touched}" />
+              <span *ngIf="avenantForm.get('objet')?.invalid && avenantForm.get('objet')?.touched" class="text-xs text-red-500">L'objet est obligatoire.</span>
+            </div>
+
+            <!-- Date d'effet -->
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-gray-700">Date d'effet <span class="text-red-500">*</span></label>
+              <input
+                type="date"
+                formControlName="dateEffet"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                [ngClass]="{'border-red-400': avenantForm.get('dateEffet')?.invalid && avenantForm.get('dateEffet')?.touched}" />
+              <span *ngIf="avenantForm.get('dateEffet')?.invalid && avenantForm.get('dateEffet')?.touched" class="text-xs text-red-500">La date d'effet est obligatoire.</span>
+            </div>
+
+            <!-- Description -->
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-gray-700">Description</label>
+              <textarea
+                formControlName="description"
+                rows="3"
+                placeholder="Détails de l'avenant…"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-y placeholder-gray-400">
+              </textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                (click)="toggleAvenantForm()"
+                class="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 transition-colors">
+                Annuler
+              </button>
+              <button
+                type="submit"
+                [disabled]="savingAvenant"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white transition-colors">
+                <div *ngIf="savingAvenant" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                <lucide-icon *ngIf="!savingAvenant" name="Check" class="w-3.5 h-3.5"></lucide-icon>
+                {{ savingAvenant ? 'Création…' : 'Créer l\'avenant' }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Liste des avenants -->
+        <div class="space-y-3">
+
+          <!-- État vide -->
+          <div *ngIf="avenants.length === 0 && !showAvenantForm"
+            class="bg-white rounded-xl border border-gray-200 p-10 text-center">
+            <lucide-icon name="FileX" class="w-10 h-10 text-gray-300 mx-auto mb-3"></lucide-icon>
+            <p class="text-sm text-gray-500">Aucun avenant enregistré pour ce contrat.</p>
+          </div>
+
+          <!-- Cartes avenants -->
+          <div *ngFor="let avenant of avenants"
+            class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow transition-shadow duration-150">
+
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div>
+                <p class="font-semibold text-gray-800 text-sm">{{ avenant.objet }}</p>
+                <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-gray-500">
+                  <span class="flex items-center gap-1">
+                    <lucide-icon name="Calendar" class="w-3 h-3"></lucide-icon>
+                    Créé le : {{ avenant.dateCreation | date:'dd/MM/yyyy' }}
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <lucide-icon name="Zap" class="w-3 h-3 text-amber-500"></lucide-icon>
+                    Effet le : <span class="font-medium text-gray-700">{{ avenant.dateEffet | date:'dd/MM/yyyy' }}</span>
+                  </span>
+                </div>
+              </div>
+              <button
+                (click)="supprimerAvenant(avenant)"
+                title="Supprimer l'avenant"
+                class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors shrink-0">
+                <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </div>
+
+            <p *ngIf="avenant.description" class="text-xs text-gray-500 border-t border-gray-100 pt-2 mt-2 leading-relaxed">
+              {{ avenant.description }}
+            </p>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════════════════════════════════════
+           SECTION RENOUVELLEMENTS
+      ════════════════════════════════════════ -->
+      <div class="flex flex-col gap-4">
+
+        <!-- En-tête section -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <lucide-icon name="RefreshCw" class="w-4 h-4 text-teal-500"></lucide-icon>
+            Renouvellements
+            <span class="text-xs font-normal bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full ml-1">
+              {{ renouvellements.length }}
+            </span>
+          </h3>
+          <button
+            *ngIf="peutRenouveler"
+            (click)="toggleRenouvellementForm()"
+            class="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors duration-150"
+            [ngClass]="showRenouvellementForm
+              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              : 'bg-teal-600 hover:bg-teal-700 text-white'">
+            <lucide-icon [name]="showRenouvellementForm ? 'X' : 'Plus'" class="w-4 h-4"></lucide-icon>
+            {{ showRenouvellementForm ? 'Annuler' : 'Renouveler' }}
+          </button>
+
+          <!-- Info CDI / Alternance -->
+          <span *ngIf="!peutRenouveler"
+            class="text-xs text-gray-400 italic flex items-center gap-1">
+            <lucide-icon name="Info" class="w-3.5 h-3.5"></lucide-icon>
+            Non applicable pour ce type
+          </span>
+        </div>
+
+        <!-- Formulaire renouvellement (inline) -->
+        <div *ngIf="showRenouvellementForm"
+          class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+          <h4 class="text-sm font-semibold text-teal-800 mb-3">Renouveler le contrat</h4>
+
+          <!-- Date fin actuelle -->
+          <div *ngIf="contrat?.dateFin"
+            class="flex items-center gap-2 mb-3 text-sm text-gray-600 bg-white rounded-lg px-3 py-2 border border-teal-100">
+            <lucide-icon name="CalendarX" class="w-4 h-4 text-red-400 shrink-0"></lucide-icon>
+            Date de fin actuelle : <span class="font-medium text-gray-800">{{ contrat.dateFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <form [formGroup]="renouvellementForm" (ngSubmit)="renouvelerContrat()" novalidate class="space-y-3">
+
+            <!-- Nouvelle date de fin -->
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-gray-700">Nouvelle date de fin <span class="text-red-500">*</span></label>
+              <input
+                type="date"
+                formControlName="nouvelleDateFin"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                [ngClass]="{'border-red-400': renouvellementForm.get('nouvelleDateFin')?.invalid && renouvellementForm.get('nouvelleDateFin')?.touched}" />
+              <span *ngIf="renouvellementForm.get('nouvelleDateFin')?.invalid && renouvellementForm.get('nouvelleDateFin')?.touched"
+                class="text-xs text-red-500">La nouvelle date de fin est obligatoire.</span>
+            </div>
+
+            <!-- Motif -->
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-gray-700">Motif <span class="text-red-500">*</span></label>
+              <input
+                type="text"
+                formControlName="motif"
+                placeholder="Ex : Prolongation de mission, Accord des deux parties…"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white placeholder-gray-400"
+                [ngClass]="{'border-red-400': renouvellementForm.get('motif')?.invalid && renouvellementForm.get('motif')?.touched}" />
+              <span *ngIf="renouvellementForm.get('motif')?.invalid && renouvellementForm.get('motif')?.touched" class="text-xs text-red-500">Le motif est obligatoire.</span>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                (click)="toggleRenouvellementForm()"
+                class="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 transition-colors">
+                Annuler
+              </button>
+              <button
+                type="submit"
+                [disabled]="savingRenouvellement"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white transition-colors">
+                <div *ngIf="savingRenouvellement" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                <lucide-icon *ngIf="!savingRenouvellement" name="RefreshCw" class="w-3.5 h-3.5"></lucide-icon>
+                {{ savingRenouvellement ? 'Renouvellement…' : 'Confirmer le renouvellement' }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Timeline renouvellements -->
+        <div>
+
+          <!-- État vide -->
+          <div *ngIf="renouvellements.length === 0 && !showRenouvellementForm"
+            class="bg-white rounded-xl border border-gray-200 p-10 text-center">
+            <lucide-icon name="History" class="w-10 h-10 text-gray-300 mx-auto mb-3"></lucide-icon>
+            <p class="text-sm text-gray-500">Aucun renouvellement enregistré pour ce contrat.</p>
+          </div>
+
+          <!-- Items timeline -->
+          <div class="relative pl-6" *ngIf="renouvellements.length > 0">
+
+            <!-- Ligne verticale -->
+            <div class="absolute left-2.5 top-0 bottom-0 w-px bg-teal-200"></div>
+
+            <div *ngFor="let renouv of renouvellements; let i = index"
+              class="relative mb-4 last:mb-0">
+
+              <!-- Point timeline -->
+              <div class="absolute -left-4 top-3.5 w-3 h-3 rounded-full border-2 border-teal-500 bg-white"></div>
+
+              <!-- Carte -->
+              <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm ml-2">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs font-bold bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">
+                    Renouvellement #{{ i + 1 }}
+                  </span>
+                  <span class="text-xs text-gray-400">
+                    le {{ renouv.dateRenouvellement | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+                <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600 mb-2">
+                  <span class="flex items-center gap-1">
+                    <lucide-icon name="CalendarX" class="w-3 h-3 text-red-400"></lucide-icon>
+                    Ancienne fin : <span class="font-medium text-gray-700">{{ renouv.ancienneDateFin | date:'dd/MM/yyyy' }}</span>
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <lucide-icon name="CalendarCheck" class="w-3 h-3 text-green-500"></lucide-icon>
+                    Nouvelle fin : <span class="font-medium text-gray-700">{{ renouv.nouvelleDateFin | date:'dd/MM/yyyy' }}</span>
+                  </span>
+                </div>
+                <p *ngIf="renouv.motif" class="text-xs text-gray-500 italic border-t border-gray-100 pt-2">
+                  {{ renouv.motif }}
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    <!-- fin grille -->
+
+  </div>
+  <!-- fin contenu -->
+
+</div>

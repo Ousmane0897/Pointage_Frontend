@@ -52,6 +52,9 @@ export class GestionPrivilegeComponent implements OnInit {
       jourFeries: false,
       employes: false,
       agences: false,
+      ressourcesHumaines: {
+        agentsRh: false
+      },
 
       stock: {
         produits: false,
@@ -113,6 +116,9 @@ export class GestionPrivilegeComponent implements OnInit {
         statistiquesAgences: false,
         planifications: false,
         calendrier: false,
+        ressourcesHumaines: {
+          agentsRh: false
+        },
         stock: {
           produits: false,
           entrees: false,
@@ -155,6 +161,9 @@ export class GestionPrivilegeComponent implements OnInit {
         statistiquesAgences: !!admin.modulesAutorises?.statistiquesAgences,
         planifications: !!admin.modulesAutorises?.planifications,
         calendrier: !!admin.modulesAutorises?.calendrier,
+        ressourcesHumaines: {
+          agentsRh: !!admin.modulesAutorises?.ressourcesHumaines?.agentsRh
+        },
         stock: {
           produits: !!admin.modulesAutorises?.stock?.produits,
           entrees: !!admin.modulesAutorises?.stock?.entrees,

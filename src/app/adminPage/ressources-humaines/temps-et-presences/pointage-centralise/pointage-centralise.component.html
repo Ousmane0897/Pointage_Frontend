@@ -1,0 +1,154 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- EN-TÊTE -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Pointage centralisé</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Vue globale du pointage terrain, tous départements confondus
+      </p>
+    </div>
+  </div>
+
+  <!-- RÉSUMÉ JOURNÉE -->
+  <div *ngIf="resume" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <p class="text-xs text-gray-500 uppercase tracking-wide">Total</p>
+      <p class="text-2xl font-bold text-gray-800 mt-1">{{ resume.totalEmployes }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4">
+      <p class="text-xs text-green-700 uppercase tracking-wide">Présents</p>
+      <p class="text-2xl font-bold text-green-700 mt-1">{{ resume.presents }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
+      <p class="text-xs text-red-700 uppercase tracking-wide">Absents</p>
+      <p class="text-2xl font-bold text-red-700 mt-1">{{ resume.absents }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-amber-100 p-4">
+      <p class="text-xs text-amber-700 uppercase tracking-wide">Retards</p>
+      <p class="text-2xl font-bold text-amber-700 mt-1">{{ resume.retards }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-4">
+      <p class="text-xs text-blue-700 uppercase tracking-wide">En congé</p>
+      <p class="text-2xl font-bold text-blue-700 mt-1">{{ resume.enConge }}</p>
+    </div>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Date</label>
+        <input type="date" [(ngModel)]="filtres.date"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Département</label>
+        <input type="text" [(ngModel)]="filtres.departement" placeholder="Tous"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Site</label>
+        <input type="text" [(ngModel)]="filtres.site" placeholder="Tous"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="PRESENT">Présent</option>
+          <option value="ABSENT">Absent</option>
+          <option value="RETARD">Retard</option>
+          <option value="CONGE">En congé</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, matricule..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button (click)="applyFilters()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+      </button>
+      <button (click)="resetFilters()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+      <p class="mt-2 text-sm">Chargement des pointages...</p>
+    </div>
+
+    <div *ngIf="!loading && pointages.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucun pointage trouvé pour ces critères.</p>
+    </div>
+
+    <div *ngIf="!loading && pointages.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Matricule</th>
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Département</th>
+            <th class="px-4 py-3">Site</th>
+            <th class="px-4 py-3">Arrivée</th>
+            <th class="px-4 py-3">Départ</th>
+            <th class="px-4 py-3">Retard</th>
+            <th class="px-4 py-3">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let p of pointages; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ p.matricule }}</td>
+            <td class="px-4 py-3 font-medium text-gray-800">{{ p.prenom }} {{ p.nom }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ p.departement }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ p.site }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ p.heureArrivee || '—' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ p.heureDepart || '—' }}</td>
+            <td class="px-4 py-3">
+              <span *ngIf="p.retardMinutes && p.retardMinutes > 0"
+                class="inline-flex items-center gap-1 text-amber-700 font-medium">
+                <lucide-icon name="AlertTriangle" class="w-3.5 h-3.5"></lucide-icon>
+                {{ p.retardMinutes }} min
+              </span>
+              <span *ngIf="!p.retardMinutes" class="text-gray-400">—</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(p.statut)">
+                <lucide-icon [name]="getStatutIcon(p.statut)" class="w-3.5 h-3.5"></lucide-icon>
+                {{ getStatutLabel(p.statut) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} pointage(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">
+          Précédent
+        </button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">
+          Suivant
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

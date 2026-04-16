@@ -1,0 +1,263 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- ══════════════════════════════════════════════
+       EN-TÊTE
+  ══════════════════════════════════════════════ -->
+  <div class="flex items-center gap-3 mb-6">
+    <button
+      (click)="annuler()"
+      class="p-2 rounded-lg text-gray-500 hover:bg-gray-200 transition-colors duration-150">
+      <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">
+        {{ isEditMode ? 'Modifier le contrat' : 'Nouveau contrat' }}
+      </h1>
+      <p class="text-sm text-gray-500 mt-0.5">
+        {{ isEditMode ? 'Mettez à jour les informations du contrat.' : 'Renseignez les informations du nouveau contrat de travail.' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CHARGEMENT
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="loading" class="flex items-center justify-center py-20">
+    <div class="flex flex-col items-center gap-3">
+      <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      <span class="text-sm text-gray-500 font-medium">Chargement…</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       FORMULAIRE
+  ══════════════════════════════════════════════ -->
+  <div *ngIf="!loading">
+    <form [formGroup]="contratForm" (ngSubmit)="sauvegarder()" novalidate>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+
+        <!-- ─── Bloc Employé ─────────────────────────────────── -->
+        <div>
+          <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <lucide-icon name="User" class="w-4 h-4 text-indigo-500"></lucide-icon>
+            Employé concerné
+          </h2>
+
+          <!-- Si employé pré-rempli depuis la route -->
+          <div *ngIf="routeEmployeId && employeSelectionne; else employeSelect">
+            <div class="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                <span class="text-indigo-600 font-bold text-sm">
+                  {{ employeSelectionne.prenom.charAt(0) | uppercase }}{{ employeSelectionne.nom.charAt(0) | uppercase }}
+                </span>
+              </div>
+              <div>
+                <div class="font-medium text-gray-800">{{ employeSelectionne.prenom }} {{ employeSelectionne.nom }}</div>
+                <div class="text-xs text-gray-500">{{ employeSelectionne.poste }} &ndash; {{ employeSelectionne.departement }}</div>
+              </div>
+              <lucide-icon name="Lock" class="w-4 h-4 text-gray-400 ml-auto"></lucide-icon>
+            </div>
+            <input type="hidden" formControlName="employeId" />
+          </div>
+
+          <!-- Sélection depuis la liste -->
+          <ng-template #employeSelect>
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-medium text-gray-700">
+                Sélectionner un employé <span class="text-red-500">*</span>
+              </label>
+              <select
+                formControlName="employeId"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                [ngClass]="{'border-red-400 focus:ring-red-400': contratForm.get('employeId')?.invalid && contratForm.get('employeId')?.touched}">
+                <option value="">-- Choisir un employé --</option>
+                <option *ngFor="let emp of employes" [value]="emp.id">
+                  {{ emp.prenom }} {{ emp.nom }} &ndash; {{ emp.poste }}
+                </option>
+              </select>
+              <span *ngIf="contratForm.get('employeId')?.invalid && contratForm.get('employeId')?.touched"
+                class="text-xs text-red-500 mt-0.5">L'employé est obligatoire.</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <hr class="border-gray-100" />
+
+        <!-- ─── Bloc Type de contrat ─────────────────────────── -->
+        <div>
+          <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <lucide-icon name="FileText" class="w-4 h-4 text-indigo-500"></lucide-icon>
+            Type de contrat
+          </h2>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+            <!-- CDI -->
+            <label
+              [class]="contratForm.get('typeContrat')?.value === 'CDI'
+                ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-300'
+                : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'"
+              class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
+              <input type="radio" formControlName="typeContrat" value="CDI" class="hidden" />
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">CDI</span>
+              <span class="text-xs text-gray-500 text-center">Durée indéterminée</span>
+            </label>
+
+            <!-- CDD -->
+            <label
+              [class]="contratForm.get('typeContrat')?.value === 'CDD'
+                ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-300'
+                : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50'"
+              class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
+              <input type="radio" formControlName="typeContrat" value="CDD" class="hidden" />
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">CDD</span>
+              <span class="text-xs text-gray-500 text-center">Durée déterminée</span>
+            </label>
+
+            <!-- STAGE -->
+            <label
+              [class]="contratForm.get('typeContrat')?.value === 'STAGE'
+                ? 'ring-2 ring-purple-500 bg-purple-50 border-purple-300'
+                : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'"
+              class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
+              <input type="radio" formControlName="typeContrat" value="STAGE" class="hidden" />
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Stage</span>
+              <span class="text-xs text-gray-500 text-center">Convention de stage</span>
+            </label>
+
+            <!-- ALTERNANCE -->
+            <label
+              [class]="contratForm.get('typeContrat')?.value === 'ALTERNANCE'
+                ? 'ring-2 ring-teal-500 bg-teal-50 border-teal-300'
+                : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50/50'"
+              class="flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all duration-150 select-none">
+              <input type="radio" formControlName="typeContrat" value="ALTERNANCE" class="hidden" />
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Alternance</span>
+              <span class="text-xs text-gray-500 text-center">Apprentissage</span>
+            </label>
+
+          </div>
+        </div>
+
+        <hr class="border-gray-100" />
+
+        <!-- ─── Bloc Dates ────────────────────────────────────── -->
+        <div>
+          <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <lucide-icon name="Calendar" class="w-4 h-4 text-indigo-500"></lucide-icon>
+            Durée du contrat
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+            <!-- Date de début -->
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-medium text-gray-700">
+                Date de début <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                formControlName="dateDebut"
+                class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                [ngClass]="{'border-red-400 focus:ring-red-400': contratForm.get('dateDebut')?.invalid && contratForm.get('dateDebut')?.touched}" />
+              <span *ngIf="contratForm.get('dateDebut')?.invalid && contratForm.get('dateDebut')?.touched"
+                class="text-xs text-red-500 mt-0.5">La date de début est obligatoire.</span>
+            </div>
+
+            <!-- Date de fin (masquée pour CDI) -->
+            <div *ngIf="contratForm.get('typeContrat')?.value !== 'CDI'" class="flex flex-col gap-1">
+              <label class="text-sm font-medium text-gray-700">
+                Date de fin <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                formControlName="dateFin"
+                class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                [ngClass]="{'border-red-400 focus:ring-red-400': contratForm.get('dateFin')?.invalid && contratForm.get('dateFin')?.touched}" />
+              <span *ngIf="contratForm.get('dateFin')?.invalid && contratForm.get('dateFin')?.touched"
+                class="text-xs text-red-500 mt-0.5">La date de fin est obligatoire pour ce type de contrat.</span>
+            </div>
+
+            <!-- Indéterminé (CDI) -->
+            <div *ngIf="contratForm.get('typeContrat')?.value === 'CDI'" class="flex flex-col gap-1">
+              <label class="text-sm font-medium text-gray-700">Date de fin</label>
+              <div class="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50 text-sm text-gray-400 italic">
+                <lucide-icon name="Infinity" class="w-4 h-4"></lucide-icon>
+                Durée indéterminée (CDI)
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ─── Jours avant alerte (CDD/STAGE) ───────────────── -->
+        <div *ngIf="showJoursAlerte">
+          <hr class="border-gray-100 mb-6" />
+          <div class="flex flex-col gap-1 max-w-xs">
+            <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <lucide-icon name="Bell" class="w-4 h-4 text-amber-500"></lucide-icon>
+              Alerte avant expiration (jours)
+            </label>
+            <input
+              type="number"
+              formControlName="joursAvantAlerte"
+              min="1"
+              max="365"
+              class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" />
+            <p class="text-xs text-gray-400 mt-0.5">
+              Une alerte sera déclenchée {{ contratForm.get('joursAvantAlerte')?.value }} jours avant la date de fin.
+            </p>
+          </div>
+        </div>
+
+        <hr class="border-gray-100" />
+
+        <!-- ─── Clauses ───────────────────────────────────────── -->
+        <div>
+          <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <lucide-icon name="AlignLeft" class="w-4 h-4 text-indigo-500"></lucide-icon>
+            Clauses particulières
+          </h2>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700">Clauses du contrat</label>
+            <textarea
+              formControlName="clauses"
+              rows="5"
+              placeholder="Renseignez ici les clauses particulières du contrat (période d'essai, non-concurrence, télétravail, avantages…)"
+              class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y placeholder-gray-400">
+            </textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           BOUTONS D'ACTION
+      ══════════════════════════════════════════════ -->
+      <div class="flex flex-col sm:flex-row items-center justify-end gap-3 mt-6">
+
+        <button
+          type="button"
+          (click)="annuler()"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium px-6 py-2.5 rounded-lg transition-colors duration-200">
+          <lucide-icon name="X" class="w-4 h-4"></lucide-icon>
+          Annuler
+        </button>
+
+        <button
+          type="submit"
+          [disabled]="saving"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-medium px-6 py-2.5 rounded-lg shadow transition-colors duration-200">
+          <div *ngIf="saving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+          <lucide-icon *ngIf="!saving" name="Save" class="w-4 h-4"></lucide-icon>
+          {{ saving ? 'Enregistrement…' : (isEditMode ? 'Enregistrer les modifications' : 'Créer le contrat') }}
+        </button>
+
+      </div>
+
+    </form>
+  </div>
+
+</div>

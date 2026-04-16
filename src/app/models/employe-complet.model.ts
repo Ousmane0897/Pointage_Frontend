@@ -36,6 +36,7 @@ export interface EmployeComplet {
     managerOps2?: string;
     poste: string;
     typeContrat: string;
+    contratNom: string | null;
     dateEmbauche: Date | null;
     dateFinContrat?: Date | null;
     tempsDeTravail: string;
