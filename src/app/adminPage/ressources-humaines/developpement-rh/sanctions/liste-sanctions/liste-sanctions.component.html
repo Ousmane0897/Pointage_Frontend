@@ -1,0 +1,177 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Sanctions & Disciplinaire</h1>
+      <p class="text-sm text-gray-500 mt-1">Registre des sanctions, suivi de la procédure disciplinaire</p>
+    </div>
+    <button (click)="nouvelle()"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+      <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon>
+      Nouvelle sanction
+    </button>
+  </div>
+
+  <!-- ALERTES RÉCIDIVE -->
+  <div *ngIf="alertes.length > 0 && showAlertes"
+    class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2 text-red-700 font-semibold text-sm">
+        <lucide-icon name="AlertTriangle" class="w-5 h-5"></lucide-icon>
+        Alertes récidive ({{ alertes.length }})
+      </div>
+      <button (click)="showAlertes = false" class="text-red-400 hover:text-red-600">
+        <lucide-icon name="X" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+    <ul class="space-y-1">
+      <li *ngFor="let a of alertes" class="flex items-center justify-between text-sm text-red-700">
+        <span>{{ a.prenom }} {{ a.nom }} — {{ a.nombreSanctions }} sanction(s), dernière : {{ a.derniereDate | date: 'dd/MM/yyyy' }}</span>
+        <button (click)="voirHistorique(a.employeId)"
+          class="text-red-600 hover:text-red-800 underline text-xs">Voir historique</button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Employé</label>
+        <select [(ngModel)]="filtres.employeId"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let e of employes" [value]="e.id">{{ e.prenom }} {{ e.nom }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Type</label>
+        <select [(ngModel)]="filtres.type"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="AVERTISSEMENT">Avertissement</option>
+          <option value="BLAME">Blâme</option>
+          <option value="MISE_A_PIED">Mise à pied</option>
+          <option value="LICENCIEMENT">Licenciement</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="CONVOCATION">Convocation</option>
+          <option value="ENTRETIEN_PLANIFIE">Entretien planifié</option>
+          <option value="NOTIFICATION">Notification</option>
+          <option value="EXECUTEE">Exécutée</option>
+          <option value="ANNULEE">Annulée</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <select [(ngModel)]="filtres.departement"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Du</label>
+        <input type="date" [(ngModel)]="filtres.dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Au</label>
+        <input type="date" [(ngModel)]="filtres.dateFin"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, motif..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button (click)="applyFilters()"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+      </button>
+      <button (click)="resetFilters()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && sanctions.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune sanction trouvée.</p>
+    </div>
+
+    <div *ngIf="!loading && sanctions.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Motif</th>
+            <th class="px-4 py-3">Date faits</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3">Durée</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let s of sanctions; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ s.prenom }} {{ s.nom }}</div>
+              <div class="text-xs text-gray-500">{{ s.departement }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getTypeClasses(s.type)">{{ getTypeLabel(s.type) }}</span>
+            </td>
+            <td class="px-4 py-3 text-gray-700 max-w-xs truncate" [title]="s.motif">{{ s.motif }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.dateFaits | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(s.statut)">{{ getStatutLabel(s.statut) }}</span>
+            </td>
+            <td class="px-4 py-3 text-gray-700">
+              <span *ngIf="s.type === 'MISE_A_PIED' && s.dureeMiseAPied">{{ s.dureeMiseAPied }} j</span>
+              <span *ngIf="s.type !== 'MISE_A_PIED' || !s.dureeMiseAPied">—</span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button (click)="voirDetail(s)" class="text-gray-600 hover:text-gray-800 p-1" title="Détail">
+                <lucide-icon name="Eye" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button (click)="modifier(s)" class="text-indigo-600 hover:text-indigo-800 p-1 ml-1" title="Modifier">
+                <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button (click)="supprimer(s)" class="text-red-600 hover:text-red-800 p-1 ml-1" title="Supprimer">
+                <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} sanction(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+</div>

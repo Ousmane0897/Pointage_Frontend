@@ -1,0 +1,98 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <div *ngIf="!loading && sanction">
+
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Fiche sanction</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ sanction.prenom }} {{ sanction.nom }} — {{ sanction.departement }}</p>
+      </div>
+      <div class="flex gap-2">
+        <button (click)="modifier()"
+          class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon> Modifier
+        </button>
+        <button (click)="retour()"
+          class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="ArrowLeft" class="w-4 h-4"></lucide-icon> Retour
+        </button>
+      </div>
+    </div>
+
+    <!-- Informations principales -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <span class="block text-xs text-gray-500 uppercase mb-1">Type</span>
+          <span class="inline-flex px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="getTypeClasses(sanction.type)">{{ getTypeLabel(sanction.type) }}</span>
+        </div>
+        <div>
+          <span class="block text-xs text-gray-500 uppercase mb-1">Statut</span>
+          <span class="text-sm font-medium text-gray-800">{{ getStatutLabel(sanction.statut) }}</span>
+        </div>
+        <div>
+          <span class="block text-xs text-gray-500 uppercase mb-1">Date des faits</span>
+          <span class="text-sm text-gray-800">{{ sanction.dateFaits | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        <div *ngIf="sanction.type === 'MISE_A_PIED' && sanction.dureeMiseAPied">
+          <span class="block text-xs text-gray-500 uppercase mb-1">Durée mise à pied</span>
+          <span class="text-sm text-gray-800">{{ sanction.dureeMiseAPied }} jour(s)</span>
+        </div>
+        <div class="md:col-span-2">
+          <span class="block text-xs text-gray-500 uppercase mb-1">Motif</span>
+          <p class="text-sm text-gray-800">{{ sanction.motif }}</p>
+        </div>
+        <div *ngIf="sanction.description" class="md:col-span-3">
+          <span class="block text-xs text-gray-500 uppercase mb-1">Description</span>
+          <p class="text-sm text-gray-700">{{ sanction.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline procédure -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Procédure disciplinaire</h2>
+      <div class="flex items-start gap-4">
+        <div *ngFor="let etape of etapesProcedure; let last = last" class="flex-1 relative">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+              [ngClass]="etape.done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'">
+              <lucide-icon *ngIf="etape.done" name="Check" class="w-4 h-4"></lucide-icon>
+              <span *ngIf="!etape.done">—</span>
+            </div>
+            <div *ngIf="!last" class="flex-1 h-0.5" [ngClass]="etape.done ? 'bg-green-400' : 'bg-gray-200'"></div>
+          </div>
+          <p class="text-xs font-medium text-gray-700">{{ etape.label }}</p>
+          <p class="text-xs text-gray-500">{{ etape.date ? (etape.date | date: 'dd/MM/yyyy') : 'Non renseigné' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pièces jointes -->
+    <div *ngIf="sanction.piecesJointes && sanction.piecesJointes.length > 0"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Pièces jointes</h2>
+      <ul class="space-y-2">
+        <li *ngFor="let pj of sanction.piecesJointes" class="flex items-center gap-2 text-sm text-gray-700">
+          <lucide-icon name="Paperclip" class="w-4 h-4 text-gray-400"></lucide-icon>
+          <span>{{ pj.nom }}</span>
+          <span *ngIf="pj.taille" class="text-xs text-gray-400">({{ (pj.taille! / 1024).toFixed(0) }} Ko)</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Commentaire -->
+    <div *ngIf="sanction.commentaire"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-2">Commentaire</h2>
+      <p class="text-sm text-gray-700">{{ sanction.commentaire }}</p>
+    </div>
+
+  </div>
+</div>

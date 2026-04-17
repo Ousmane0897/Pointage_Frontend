@@ -101,6 +101,13 @@ export const routes: Routes = [
             { path: 'rh/paie/declarations', loadComponent: () => import('./adminPage/ressources-humaines/paie/declarations-sociales/liste-declarations/liste-declarations.component').then(m => m.ListeDeclarationsComponent) },
             { path: 'rh/paie/declarations/generer', loadComponent: () => import('./adminPage/ressources-humaines/paie/declarations-sociales/generation-declaration/generation-declaration.component').then(m => m.GenerationDeclarationComponent) },
 
+            // ─── Développement RH — Sanctions ──────────────────────
+            { path: 'rh/developpement-rh/sanctions', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/liste-sanctions/liste-sanctions.component').then(m => m.ListeSanctionsComponent) },
+            { path: 'rh/developpement-rh/sanctions/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/formulaire-sanction/formulaire-sanction.component').then(m => m.FormulaireSanctionComponent) },
+            { path: 'rh/developpement-rh/sanctions/:id', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/fiche-sanction/fiche-sanction.component').then(m => m.FicheSanctionComponent) },
+            { path: 'rh/developpement-rh/sanctions/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/formulaire-sanction/formulaire-sanction.component').then(m => m.FormulaireSanctionComponent) },
+            { path: 'rh/developpement-rh/sanctions/historique/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/historique-disciplinaire/historique-disciplinaire.component').then(m => m.HistoriqueDisciplinaireComponent) },
+
         ]
     }
 ];

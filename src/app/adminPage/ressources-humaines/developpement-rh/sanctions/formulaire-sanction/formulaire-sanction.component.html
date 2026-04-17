@@ -1,0 +1,143 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">{{ isEditMode ? 'Modifier la sanction' : 'Nouvelle sanction' }}</h1>
+    <p class="text-sm text-gray-500 mt-1">Procédure disciplinaire conforme au Code du Travail sénégalais</p>
+  </div>
+
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="enregistrer()" class="space-y-6">
+
+    <!-- Identité -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Employé concerné</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Employé *</label>
+          <select formControlName="employeId"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="">Sélectionner un employé</option>
+            <option *ngFor="let e of employes" [value]="e.id">{{ e.matricule }} — {{ e.prenom }} {{ e.nom }}</option>
+          </select>
+          <p *ngIf="form.get('employeId')?.touched && form.get('employeId')?.invalid"
+            class="text-red-500 text-xs mt-1">Obligatoire</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Type de sanction *</label>
+          <select formControlName="type"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="">Sélectionner</option>
+            <option *ngFor="let t of typesSanction" [value]="t.value">{{ t.label }}</option>
+          </select>
+          <p *ngIf="form.get('type')?.touched && form.get('type')?.invalid"
+            class="text-red-500 text-xs mt-1">Obligatoire</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motif & dates -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Faits & motif</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date des faits *</label>
+          <input type="date" formControlName="dateFaits"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date de la sanction *</label>
+          <input type="date" formControlName="dateSanction"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Motif * (min. 10 caractères)</label>
+          <textarea formControlName="motif" rows="3"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            placeholder="Décrivez les faits reprochés..."></textarea>
+          <p *ngIf="form.get('motif')?.touched && form.get('motif')?.invalid"
+            class="text-red-500 text-xs mt-1">Motif requis (min. 10 caractères)</p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Description complémentaire</label>
+          <textarea formControlName="description" rows="2"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            placeholder="Informations supplémentaires..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mise à pied : durée -->
+    <div *ngIf="form.get('type')?.value === 'MISE_A_PIED'"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Mise à pied</h2>
+      <div class="max-w-xs">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Durée (jours) * — max. 8 jours</label>
+        <input type="number" formControlName="dureeMiseAPied" min="1" max="8"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        <p *ngIf="form.get('dureeMiseAPied')?.touched && form.get('dureeMiseAPied')?.invalid"
+          class="text-red-500 text-xs mt-1">Durée requise (1-8 jours)</p>
+      </div>
+    </div>
+
+    <!-- Procédure sénégalaise -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Procédure disciplinaire</h2>
+      <p class="text-xs text-gray-500 mb-4">Minimum 3 jours ouvrés entre la convocation et l'entretien (Code du Travail sénégalais)</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date convocation</label>
+          <input type="date" formControlName="dateConvocation"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date entretien</label>
+          <input type="date" formControlName="dateEntretien"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <p *ngIf="!delaiConvocationValide" class="text-red-500 text-xs mt-1">
+            Minimum 3 jours après la convocation
+          </p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date notification</label>
+          <input type="date" formControlName="dateNotification"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Pièces jointes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Pièces jointes</h2>
+      <input type="file" multiple (change)="onFileChange($event)"
+        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+      <div *ngIf="fichiers.length > 0" class="mt-2 text-sm text-gray-600">
+        {{ fichiers.length }} fichier(s) sélectionné(s)
+      </div>
+    </div>
+
+    <!-- Commentaire -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Commentaire interne</label>
+      <textarea formControlName="commentaire" rows="2"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+        placeholder="Notes internes..."></textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3">
+      <button type="submit" [disabled]="saving"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg shadow font-medium disabled:opacity-50">
+        <lucide-icon name="Save" class="w-5 h-5"></lucide-icon>
+        {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+      <button type="button" (click)="annuler()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg font-medium">
+        Annuler
+      </button>
+    </div>
+
+  </form>
+</div>

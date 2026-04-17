@@ -1,0 +1,70 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <div *ngIf="!loading">
+
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Historique disciplinaire</h1>
+        <p *ngIf="employe" class="text-sm text-gray-500 mt-1">
+          {{ employe.prenom }} {{ employe.nom }} — {{ employe.matricule }} — {{ employe.departement }}
+        </p>
+      </div>
+      <button (click)="retour()"
+        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+        <lucide-icon name="ArrowLeft" class="w-4 h-4"></lucide-icon> Retour
+      </button>
+    </div>
+
+    <!-- Résumé -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+        <p class="text-2xl font-bold text-gray-800">{{ sanctions.length }}</p>
+        <p class="text-xs text-gray-500 uppercase mt-1">Total sanctions</p>
+      </div>
+      <div *ngFor="let t of totalParType"
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+        <p class="text-2xl font-bold text-gray-800">{{ t.count }}</p>
+        <p class="text-xs text-gray-500 uppercase mt-1">{{ t.type }}</p>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div *ngIf="sanctions.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune sanction enregistrée pour cet employé.</p>
+    </div>
+
+    <div *ngIf="sanctions.length > 0" class="space-y-4">
+      <div *ngFor="let s of sanctions" (click)="voirDetail(s.id!)"
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:border-indigo-200 cursor-pointer transition-colors">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full"
+              [ngClass]="{
+                'bg-yellow-400': s.type === 'AVERTISSEMENT',
+                'bg-orange-400': s.type === 'BLAME',
+                'bg-red-500': s.type === 'MISE_A_PIED',
+                'bg-red-700': s.type === 'LICENCIEMENT'
+              }"></div>
+            <div>
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getTypeClasses(s.type)">{{ getTypeLabel(s.type) }}</span>
+              <span class="ml-2 text-xs text-gray-500">{{ getStatutLabel(s.statut) }}</span>
+            </div>
+          </div>
+          <span class="text-sm text-gray-500">{{ s.dateFaits | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        <p class="text-sm text-gray-700 mt-2">{{ s.motif }}</p>
+        <p *ngIf="s.type === 'MISE_A_PIED' && s.dureeMiseAPied" class="text-xs text-gray-500 mt-1">
+          Durée : {{ s.dureeMiseAPied }} jour(s)
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
