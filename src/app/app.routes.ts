@@ -108,6 +108,20 @@ export const routes: Routes = [
             { path: 'rh/developpement-rh/sanctions/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/formulaire-sanction/formulaire-sanction.component').then(m => m.FormulaireSanctionComponent) },
             { path: 'rh/developpement-rh/sanctions/historique/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/sanctions/historique-disciplinaire/historique-disciplinaire.component').then(m => m.HistoriqueDisciplinaireComponent) },
 
+            // ─── Développement RH — Plan de Formation ─────────────
+            { path: 'rh/developpement-rh/formations', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/liste-formations/liste-formations.component').then(m => m.ListeFormationsComponent) },
+            { path: 'rh/developpement-rh/formations/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/formulaire-formation/formulaire-formation.component').then(m => m.FormulaireFormationComponent) },
+            { path: 'rh/developpement-rh/formations/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/formulaire-formation/formulaire-formation.component').then(m => m.FormulaireFormationComponent) },
+            { path: 'rh/developpement-rh/formations/sessions', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/sessions/liste-sessions/liste-sessions.component').then(m => m.ListeSessionsComponent) },
+            { path: 'rh/developpement-rh/formations/sessions/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/sessions/formulaire-session/formulaire-session.component').then(m => m.FormulaireSessionComponent) },
+            { path: 'rh/developpement-rh/formations/sessions/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/sessions/formulaire-session/formulaire-session.component').then(m => m.FormulaireSessionComponent) },
+            { path: 'rh/developpement-rh/formations/sessions/:id/participants', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/sessions/suivi-participants/suivi-participants.component').then(m => m.SuiviParticipantsComponent) },
+            { path: 'rh/developpement-rh/formations/sessions/:id/evaluation', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/sessions/evaluation-session/evaluation-session.component').then(m => m.EvaluationSessionComponent) },
+            { path: 'rh/developpement-rh/formations/besoins', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/besoins-formation/liste-besoins/liste-besoins.component').then(m => m.ListeBesoinsComponent) },
+            { path: 'rh/developpement-rh/formations/besoins/nouveau', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/besoins-formation/formulaire-besoin/formulaire-besoin.component').then(m => m.FormulaireBesoinComponent) },
+            { path: 'rh/developpement-rh/formations/besoins/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/besoins-formation/formulaire-besoin/formulaire-besoin.component').then(m => m.FormulaireBesoinComponent) },
+            { path: 'rh/developpement-rh/formations/recap-budget', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/recap-budget/recap-budget.component').then(m => m.RecapBudgetComponent) },
+
         ]
     }
 ];

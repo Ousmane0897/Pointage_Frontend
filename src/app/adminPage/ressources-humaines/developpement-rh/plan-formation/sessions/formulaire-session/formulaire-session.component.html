@@ -1,0 +1,54 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">{{ isEditMode ? 'Modifier la session' : 'Nouvelle session' }}</h1>
+  </div>
+
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="enregistrer()" class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Informations de la session</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Formation *</label>
+          <select formControlName="formationId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="">-- Sélectionner une formation --</option>
+            <option *ngFor="let f of formations" [value]="f.id">{{ f.titre }}</option>
+          </select>
+          <p *ngIf="form.get('formationId')?.touched && form.get('formationId')?.invalid" class="text-red-500 text-xs mt-1">Formation requise</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date de début *</label>
+          <input type="date" formControlName="dateDebut" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <p *ngIf="form.get('dateDebut')?.touched && form.get('dateDebut')?.invalid" class="text-red-500 text-xs mt-1">Date de début requise</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Date de fin *</label>
+          <input type="date" formControlName="dateFin" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <p *ngIf="form.get('dateFin')?.touched && form.get('dateFin')?.invalid" class="text-red-500 text-xs mt-1">Date de fin requise</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Lieu *</label>
+          <input type="text" formControlName="lieu" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Lieu de la session" />
+          <p *ngIf="form.get('lieu')?.touched && form.get('lieu')?.invalid" class="text-red-500 text-xs mt-1">Lieu requis</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Capacité max *</label>
+          <input type="number" formControlName="capaciteMax" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <p *ngIf="form.get('capaciteMax')?.touched && form.get('capaciteMax')?.invalid" class="text-red-500 text-xs mt-1">Capacité min. 1</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" [disabled]="saving"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg shadow font-medium disabled:opacity-50">
+        <lucide-icon name="Save" class="w-5 h-5"></lucide-icon>
+        {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+      <button type="button" (click)="annuler()" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg font-medium">Annuler</button>
+    </div>
+  </form>
+</div>

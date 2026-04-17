@@ -1,0 +1,80 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">{{ isEditMode ? 'Modifier la formation' : 'Nouvelle formation' }}</h1>
+  </div>
+
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="enregistrer()" class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Informations générales</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Titre *</label>
+          <input type="text" formControlName="titre" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Titre de la formation" />
+          <p *ngIf="form.get('titre')?.touched && form.get('titre')?.invalid" class="text-red-500 text-xs mt-1">Titre requis (min. 3 caractères)</p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Description *</label>
+          <textarea formControlName="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Description de la formation"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Durée (heures) *</label>
+          <input type="number" formControlName="dureeHeures" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Coût (FCFA) *</label>
+          <input type="number" formControlName="coutFcfa" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Type de formateur *</label>
+          <select formControlName="typeFormateur" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="INTERNE">Interne</option>
+            <option value="EXTERNE">Externe</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Nom du formateur *</label>
+          <input type="text" formControlName="formateurNom" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Nom du formateur" />
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Compétences visées</h2>
+      <div class="flex gap-2 mb-3">
+        <input type="text" [(ngModel)]="competenceInput" [ngModelOptions]="{standalone: true}"
+          (keydown.enter)="$event.preventDefault(); ajouterCompetence()"
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Ajouter une compétence..." />
+        <button type="button" (click)="ajouterCompetence()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm">Ajouter</button>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <span *ngFor="let c of competences; let i = index"
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-700">
+          {{ c }}
+          <button type="button" (click)="retirerCompetence(i)" class="hover:text-red-500">
+            <lucide-icon name="X" class="w-3 h-3"></lucide-icon>
+          </button>
+        </span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <label class="inline-flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" formControlName="actif" class="rounded border-gray-300" />
+        <span class="text-sm text-gray-700">Formation active</span>
+      </label>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" [disabled]="saving"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg shadow font-medium disabled:opacity-50">
+        <lucide-icon name="Save" class="w-5 h-5"></lucide-icon>
+        {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+      <button type="button" (click)="annuler()" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg font-medium">Annuler</button>
+    </div>
+  </form>
+</div>

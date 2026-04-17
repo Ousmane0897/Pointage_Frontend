@@ -1,0 +1,114 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Besoins de formation</h1>
+      <p class="text-sm text-gray-500 mt-1">Identification et suivi des besoins en formation</p>
+    </div>
+    <button (click)="nouveau()" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+      <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon> Nouveau besoin
+    </button>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, compétence..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <select [(ngModel)]="filtres.departement" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Priorité</label>
+        <select [(ngModel)]="filtres.priorite" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Toutes</option>
+          <option value="HAUTE">Haute</option>
+          <option value="MOYENNE">Moyenne</option>
+          <option value="BASSE">Basse</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="IDENTIFIE">Identifié</option>
+          <option value="PLANIFIE">Planifié</option>
+          <option value="REALISE">Réalisé</option>
+        </select>
+      </div>
+      <div class="flex items-end gap-2">
+        <button (click)="applyFilters()" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+        </button>
+        <button (click)="resetFilters()" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+    <div *ngIf="!loading && besoins.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucun besoin de formation trouvé.</p>
+    </div>
+    <div *ngIf="!loading && besoins.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Département</th>
+            <th class="px-4 py-3">Compétence lacune</th>
+            <th class="px-4 py-3">Priorité</th>
+            <th class="px-4 py-3">Source</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let b of besoins; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-800">{{ b.nom }} {{ b.prenom }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ b.departement }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ b.competenceLacune }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium" [ngClass]="getPrioriteClasses(b.priorite)">
+                {{ getPrioriteLabel(b.priorite) }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ getSourceLabel(b.source) }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium" [ngClass]="getStatutClasses(b.statut)">
+                {{ getStatutLabel(b.statut) }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button (click)="modifier(b)" class="text-indigo-600 hover:text-indigo-800 p-1" title="Modifier">
+                <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button (click)="supprimer(b)" class="text-red-600 hover:text-red-800 p-1 ml-1" title="Supprimer">
+                <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} besoin(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>
