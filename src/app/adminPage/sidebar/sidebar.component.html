@@ -574,6 +574,65 @@
                     </li>
                   </ul>
                 </li>
+
+                <!-- Développement RH (sous-menu) -->
+                <li>
+                  <button (click)="toggleDropdownDeveloppementRh('devRh')"
+                    class="group flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl text-[0.8rem] font-medium text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                    [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold': isActivePrefix('/admin/rh/developpement-rh') }">
+                    <lucide-icon name="GraduationCap" class="w-4 h-4 flex-shrink-0 text-purple-400"></lucide-icon>
+                    <span class="flex-1 truncate">Développement RH</span>
+                    <svg class="w-3 h-3 text-slate-500 transition-transform duration-300"
+                      [ngClass]="{ 'rotate-180': openDropdownDeveloppementRh === 'devRh' }"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <ul *ngIf="openDropdownDeveloppementRh === 'devRh'"
+                    class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
+                    <li>
+                      <a routerLink="/admin/rh/developpement-rh/formations"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="BookOpen" class="w-3.5 h-3.5 text-purple-400"></lucide-icon>
+                        <span class="flex-1 truncate">Plan de formation</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/developpement-rh/evaluations"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="ClipboardCheck" class="w-3.5 h-3.5 text-purple-400"></lucide-icon>
+                        <span class="flex-1 truncate">Évaluations</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/developpement-rh/sanctions"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="ShieldAlert" class="w-3.5 h-3.5 text-purple-400"></lucide-icon>
+                        <span class="flex-1 truncate">Sanctions</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a routerLink="/admin/rh/developpement-rh/tableau-de-bord"
+                        routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                               hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                        <lucide-icon name="BarChart3" class="w-3.5 h-3.5 text-purple-400"></lucide-icon>
+                        <span class="flex-1 truncate">Tableau de bord RH</span>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
               </ul>
             </li>
 

@@ -35,6 +35,7 @@ export interface ModulesAutorises {
   agences: boolean;
   ressourcesHumaines: {
     agentsRh: boolean;
+    developpementRh?: boolean;
   }
 
   collecteLivraison: {
