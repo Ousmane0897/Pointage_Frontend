@@ -131,6 +131,9 @@ export const routes: Routes = [
             { path: 'rh/developpement-rh/evaluations/:id', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/formulaire-evaluation/formulaire-evaluation.component').then(m => m.FormulaireEvaluationComponent) },
             { path: 'rh/developpement-rh/evaluations/historique/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/historique-employe/historique-employe.component').then(m => m.HistoriqueEmployeComponent) },
 
+            // ─── Développement RH — Tableau de Bord RH ────────────
+            { path: 'rh/developpement-rh/tableau-de-bord', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/tableau-de-bord/tableau-de-bord-rh/tableau-de-bord-rh.component').then(m => m.TableauDeBordRhComponent) },
+
         ]
     }
 ];

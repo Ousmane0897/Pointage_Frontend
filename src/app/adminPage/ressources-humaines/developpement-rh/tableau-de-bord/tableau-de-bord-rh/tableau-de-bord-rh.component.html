@@ -1,0 +1,159 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Tableau de bord RH</h1>
+      <p class="text-sm text-gray-500 mt-1">Vue d'ensemble de l'activité Ressources Humaines</p>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="exportPdf()" [disabled]="!kpis"
+        class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
+        <lucide-icon name="FileText" class="w-4 h-4"></lucide-icon> Export PDF
+      </button>
+      <button (click)="exportExcel()" [disabled]="!kpis"
+        class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
+        <lucide-icon name="Table" class="w-4 h-4"></lucide-icon> Export Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres globaux -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Du</label>
+        <input type="date" [(ngModel)]="filtres.dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Au</label>
+        <input type="date" [(ngModel)]="filtres.dateFin"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <select [(ngModel)]="filtres.departement"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Site</label>
+        <select [(ngModel)]="filtres.site"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let s of sites" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="flex items-end gap-2">
+        <button (click)="applyFilters()"
+          class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Appliquer
+        </button>
+        <button (click)="resetFilters()"
+          class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    <p class="mt-2 text-sm">Chargement des indicateurs...</p>
+  </div>
+
+  <div *ngIf="!loading && kpis">
+
+    <!-- KPIs — Personnel (6.1) -->
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Gestion du Personnel</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <app-kpi-card label="Effectif total" [value]="kpis.effectifTotal" icon="Users" iconColor="text-blue-500"></app-kpi-card>
+      <app-kpi-card label="Turnover" [value]="formatPct(kpis.turnover)" icon="ArrowUpDown" iconColor="text-orange-500"></app-kpi-card>
+    </div>
+
+    <!-- KPIs — Temps & Présences (6.2) -->
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Temps & Présences</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <app-kpi-card label="Taux d'absentéisme" [value]="formatPct(kpis.tauxAbsenteisme)" icon="UserX" iconColor="text-red-500"></app-kpi-card>
+      <app-kpi-card label="Retards moyens" [value]="formatMin(kpis.retardsMoyensMinutes)" icon="Clock" iconColor="text-amber-500"></app-kpi-card>
+      <app-kpi-card label="Solde congés moyen" [value]="kpis.soldeCongesMoyen.toFixed(1) + ' j'" icon="Calendar" iconColor="text-green-500"></app-kpi-card>
+    </div>
+
+    <!-- KPIs — Paie (6.3) -->
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Paie</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <app-kpi-card label="Masse salariale mensuelle" [value]="formatFcfa(kpis.masseSalarialeMensuelle)" icon="Wallet" iconColor="text-indigo-500"></app-kpi-card>
+      <app-kpi-card label="Masse salariale annuelle" [value]="formatFcfa(kpis.masseSalarialeAnnuelle)" icon="Wallet" iconColor="text-indigo-400"></app-kpi-card>
+      <app-kpi-card label="Coût moyen / employé" [value]="formatFcfa(kpis.coutMoyenParEmploye)" icon="CircleDollarSign" iconColor="text-purple-500"></app-kpi-card>
+    </div>
+
+    <!-- KPIs — Développement RH (6.4) -->
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Développement RH</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <app-kpi-card label="Formations réalisées" [value]="kpis.formationsRealisees" icon="GraduationCap" iconColor="text-teal-500"></app-kpi-card>
+      <app-kpi-card label="Taux participation formation" [value]="formatPct(kpis.tauxParticipationFormation)" icon="TrendingUp" iconColor="text-emerald-500"></app-kpi-card>
+    </div>
+
+    <!-- Graphiques -->
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Répartitions & Tendances</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Répartition par département -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Répartition par département</h3>
+        <div *ngIf="deptChartData" class="max-w-xs mx-auto">
+          <canvas baseChart [data]="deptChartData" [options]="deptChartOptions" type="doughnut"></canvas>
+        </div>
+      </div>
+
+      <!-- Répartition par type de contrat -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Répartition par type de contrat</h3>
+        <div *ngIf="contratChartData" class="max-w-xs mx-auto">
+          <canvas baseChart [data]="contratChartData" [options]="contratChartOptions" type="doughnut"></canvas>
+        </div>
+      </div>
+
+      <!-- Sanctions par type -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Sanctions par type</h3>
+        <div *ngIf="sanctionTypeChartData">
+          <canvas baseChart [data]="sanctionTypeChartData" [options]="sanctionTypeChartOptions" type="bar"></canvas>
+        </div>
+      </div>
+
+      <!-- Sanctions par période -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Sanctions par période</h3>
+        <div *ngIf="sanctionPeriodeChartData">
+          <canvas baseChart [data]="sanctionPeriodeChartData" [options]="sanctionPeriodeChartOptions" type="bar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau répartition par site -->
+    <div *ngIf="kpis.repartitionSite.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-4">Répartition par site</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+              <th class="px-4 py-3">Site</th>
+              <th class="px-4 py-3 text-right">Effectif</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr *ngFor="let r of kpis.repartitionSite" class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-gray-800">{{ r.label }}</td>
+              <td class="px-4 py-3 text-right font-medium text-gray-800">{{ r.value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
