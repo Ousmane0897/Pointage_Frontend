@@ -83,7 +83,9 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 
 ## Module RH (`src/app/adminPage/ressources-humaines/`)
 
-Module Ressources Humaines complet, découpé en 4 sous-modules. Contexte métier : droit du travail sénégalais (IPRES, CSS, barème IR sénégalais). Toutes les interfaces sont en français.
+Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Terminé (4/4 sous-modules livrés)**. Contexte métier : droit du travail sénégalais (IPRES, CSS, barème IR sénégalais). Toutes les interfaces sont en français.
+
+> **Bilan global module RH :** 33 composants, 19 services, 13 modèles, 1 fichier de constantes réglementaires.
 
 ### 6.1 Gestion du personnel (`ressources-humaines/gestion-du-personnel/`)
 
@@ -112,23 +114,31 @@ Module Ressources Humaines complet, découpé en 4 sous-modules. Contexte métie
 
 ### 6.3 Paie (`ressources-humaines/paie/`)
 
-- **Grille salariale** — paramétrage du salaire de base, primes (ancienneté, rendement, transport), indemnités par catégorie
-- **Calcul bulletin de paie** — calcul automatisé : brut, cotisations IPRES/CSS, impôt sur le revenu (barème sénégalais), net à payer
-- **Génération bulletins PDF** — création automatisée des bulletins au format PDF, téléchargeables et imprimables
-- **Historique des paies** — archive complète par employé : tous les bulletins, évolution salariale, cumuls annuels
-- **Déclarations sociales** — génération des déclarations IPRES, CSS, et formulaires Inspection du travail
+- **Grille salariale** — paramétrage du salaire de base par catégorie professionnelle (Cadre, Agent de maîtrise, Employé, Ouvrier, Stagiaire), configuration des primes (transport, assiduité, risque) et indemnités, CRUD complet avec `FormArray` pour primes/indemnités dynamiques
+- **Calcul bulletin de paie** — sélection employé + période, récupération automatique du récapitulatif mensuel (6.2), calcul intégral côté client : brut = base + primes + HS majorées + indemnités, cotisations IPRES (RG 5,6/8,4 % plafonnées à 432 000, RC 2,4/3,6 % plafonnées à 1 296 000), CSS (AT/MP 1 % sal / 3 % emp, PF 7 % emp), IR barème progressif 6 tranches, TRIMF, net à payer
+- **Génération bulletins PDF** — bulletin conforme aux standards sénégalais via jsPDF + jspdf-autotable : entête entreprise + employé, corps en 3 blocs (gains, retenues salariales, cotisations patronales), net à payer, cumuls annuels. Téléchargement, impression et aperçu iframe
+- **Historique des paies** — archive paginée par employé avec filtres (département, période, statut), évolution salariale en histogramme inline (CSS pur, sans dépendance chart), workflow de statut (Brouillon → Validé → Payé / Annulé), cumuls annuels brut/net/IR
+- **Déclarations sociales** — agrégation des bulletins validés par période, génération des déclarations IPRES (mensuelle/annuelle), CSS (mensuelle/annuelle), Inspection du Travail, exports PDF et Excel (XLSX)
 
-**Statut : 🔲 À faire**
-**Dépendances :** consomme le récapitulatif mensuel de 6.2 + données employé de 6.1. Utilise jsPDF + jspdf-autotable pour la génération PDF (déjà dans le projet).
+**Statut : ✅ Terminé** (9 composants créés)
+**Composants :** `liste-categories`, `formulaire-categorie`, `calcul-bulletin`, `preview-bulletin`, `generation-bulletin`, `liste-bulletins`, `fiche-bulletin`, `liste-declarations`, `generation-declaration`
+**Services :** `grille-salariale.service.ts`, `bulletin-paie.service.ts` (calcul pur côté client + CRUD), `bulletin-pdf.service.ts` (jsPDF), `declaration-sociale.service.ts` (CRUD + exports PDF/Excel)
+**Modèles :** `grille-salariale.model.ts`, `bulletin-paie.model.ts`, `declaration-sociale.model.ts`
+**Constantes :** `src/app/constants/paie.constants.ts` — taux IPRES, CSS, barème IR, TRIMF, majorations HS, paramètres généraux. Tous les taux sont centralisés et configurables (aucune valeur en dur dans les composants).
+**Dépendances :** consomme `RecapitulatifMensuelService` (6.2) + `EmployeCompletService` (6.1) automatiquement. Utilise jsPDF + jspdf-autotable + XLSX (déjà dans le projet). `ReactiveFormsModule` exclusivement (pas de `FormsModule` / `ngModel`).
 
 ### 6.4 Développement RH (`ressources-humaines/developpement-rh/`)
 
 - **Plan de formation** — identification des besoins, planification des sessions, suivi des participations et évaluations
 - **Évaluations périodiques** — grilles d'évaluation personnalisées, objectifs fixés, auto-évaluation, entretien annuel avec notation
 - **Sanctions & disciplinaire** — registre des avertissements, mises à pied, historique disciplinaire par employé
-- **Tableau de bord RH** — KPIs : effectif total, turnover, taux d'absentéisme, masse salariale, répartition par département
+- **Tableau de bord RH** — KPIs : effectif total, turnover, taux d'absentéisme, masse salariale, répartition par département, graphiques interactifs
 
-**Statut : 🔲 À faire**
+**Statut : ✅ Terminé** (4 composants créés)
+**Composants :** `plan-formation`, `evaluations`, `sanctions-disciplinaire`, `tableau-bord-rh`
+**Services :** `formation.service.ts`, `evaluation.service.ts`, `sanction.service.ts`, `tableau-bord-rh.service.ts`
+**Modèles :** `formation.model.ts`, `evaluation.model.ts`, `sanction.model.ts`
+**Charts :** ng2-charts + Chart.js pour les graphiques du tableau de bord RH (dépendances déjà installées dans le projet : `chart.js ^4.4.4`, `ng2-charts ^8.0.0`)
 **Dépendances :** consomme les données de 6.1 (effectif), 6.2 (absentéisme) et 6.3 (masse salariale) pour alimenter les KPIs du tableau de bord.
 
 ### Flux de données entre sous-modules RH
