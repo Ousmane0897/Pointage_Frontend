@@ -1,0 +1,128 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Évaluations périodiques</h1>
+      <p class="text-sm text-gray-500 mt-1">Suivi des évaluations des collaborateurs</p>
+    </div>
+    <button (click)="nouvelle()"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+      <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon>
+      Nouvelle évaluation
+    </button>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Département</label>
+        <select [(ngModel)]="filtres.departement"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="">Tous</option>
+          <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Période</label>
+        <input type="text" [(ngModel)]="filtres.periode" placeholder="Ex: 2025, 2025-S1"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Statut</label>
+        <select [(ngModel)]="filtres.statut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option [ngValue]="undefined">Tous</option>
+          <option value="BROUILLON">Brouillon</option>
+          <option value="AUTO_EVALUATION">Auto-évaluation</option>
+          <option value="EVALUATION_MANAGER">Évaluation manager</option>
+          <option value="VALIDE">Validé</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="filtres.q" placeholder="Nom, matricule..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div class="flex items-end gap-2">
+        <button (click)="applyFilters()"
+          class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Filtrer
+        </button>
+        <button (click)="resetFilters()"
+          class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && evaluations.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune évaluation trouvée.</p>
+    </div>
+
+    <div *ngIf="!loading && evaluations.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Poste</th>
+            <th class="px-4 py-3">Période</th>
+            <th class="px-4 py-3">Grille</th>
+            <th class="px-4 py-3">Note globale</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let e of evaluations; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ e.prenom }} {{ e.nom }}</div>
+              <div class="text-xs text-gray-500">{{ e.matricule }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ e.poste ?? '—' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ e.periode }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ e.grilleTitre ?? '—' }}</td>
+            <td class="px-4 py-3">
+              <span *ngIf="e.noteGlobale != null" class="font-semibold text-gray-800">
+                {{ e.noteGlobale | number:'1.1-1' }} / 5
+              </span>
+              <span *ngIf="e.noteGlobale == null" class="text-gray-400">—</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(e.statut)">{{ getStatutLabel(e.statut) }}</span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button (click)="voir(e)" class="text-indigo-600 hover:text-indigo-800 p-1" title="Voir / Modifier">
+                <lucide-icon name="Eye" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button *ngIf="e.employeId" (click)="voirHistorique(e.employeId)"
+                class="text-gray-600 hover:text-gray-800 p-1 ml-1" title="Historique employé">
+                <lucide-icon name="History" class="w-4 h-4"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} évaluation(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+</div>

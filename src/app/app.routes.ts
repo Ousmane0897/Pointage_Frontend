@@ -122,6 +122,15 @@ export const routes: Routes = [
             { path: 'rh/developpement-rh/formations/besoins/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/besoins-formation/formulaire-besoin/formulaire-besoin.component').then(m => m.FormulaireBesoinComponent) },
             { path: 'rh/developpement-rh/formations/recap-budget', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/plan-formation/recap-budget/recap-budget.component').then(m => m.RecapBudgetComponent) },
 
+            // ─── Développement RH — Évaluations Périodiques ────────
+            { path: 'rh/developpement-rh/evaluations/grilles', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/grilles/liste-grilles/liste-grilles.component').then(m => m.ListeGrillesComponent) },
+            { path: 'rh/developpement-rh/evaluations/grilles/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/grilles/formulaire-grille/formulaire-grille.component').then(m => m.FormulaireGrilleComponent) },
+            { path: 'rh/developpement-rh/evaluations/grilles/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/grilles/formulaire-grille/formulaire-grille.component').then(m => m.FormulaireGrilleComponent) },
+            { path: 'rh/developpement-rh/evaluations', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/liste-evaluations/liste-evaluations.component').then(m => m.ListeEvaluationsComponent) },
+            { path: 'rh/developpement-rh/evaluations/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/formulaire-evaluation/formulaire-evaluation.component').then(m => m.FormulaireEvaluationComponent) },
+            { path: 'rh/developpement-rh/evaluations/:id', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/formulaire-evaluation/formulaire-evaluation.component').then(m => m.FormulaireEvaluationComponent) },
+            { path: 'rh/developpement-rh/evaluations/historique/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/evaluations/historique-employe/historique-employe.component').then(m => m.HistoriqueEmployeComponent) },
+
         ]
     }
 ];

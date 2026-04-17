@@ -1,0 +1,109 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Grilles d'évaluation</h1>
+      <p class="text-sm text-gray-500 mt-1">Gestion des grilles de critères pour les évaluations périodiques</p>
+    </div>
+    <button (click)="nouvelle()"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
+      <lucide-icon name="Plus" class="w-5 h-5"></lucide-icon>
+      Nouvelle grille
+    </button>
+  </div>
+
+  <!-- RECHERCHE -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="flex-1">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Recherche</label>
+        <input type="text" [(ngModel)]="q" placeholder="Titre, poste, département..."
+          (keyup.enter)="rechercher()"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div class="flex items-end gap-2">
+        <button (click)="rechercher()"
+          class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="Search" class="w-4 h-4"></lucide-icon> Rechercher
+        </button>
+        <button (click)="resetRecherche()"
+          class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <lucide-icon name="RotateCcw" class="w-4 h-4"></lucide-icon> Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && grilles.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Inbox" class="w-10 h-10 inline text-gray-300"></lucide-icon>
+      <p class="mt-2 text-sm">Aucune grille trouvée.</p>
+    </div>
+
+    <div *ngIf="!loading && grilles.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Titre</th>
+            <th class="px-4 py-3">Postes concernés</th>
+            <th class="px-4 py-3">Départements</th>
+            <th class="px-4 py-3">Nb critères</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let g of grilles; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ g.titre }}</div>
+              <div *ngIf="g.description" class="text-xs text-gray-500 truncate max-w-xs">{{ g.description }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let p of g.postesConcernes"
+                  class="inline-flex px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-100">{{ p }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let d of g.departementsConcernes"
+                  class="inline-flex px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-100">{{ d }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-700 text-center">{{ g.criteres?.length ?? 0 }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClasses(g.actif)">
+                {{ g.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button (click)="modifier(g)" class="text-indigo-600 hover:text-indigo-800 p-1" title="Modifier">
+                <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button (click)="supprimer(g)" class="text-red-600 hover:text-red-800 p-1 ml-1" title="Supprimer">
+                <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} grille(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+</div>
