@@ -106,7 +106,7 @@
             </td>
             <td class="px-4 py-3">
               <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
-                [ngClass]="getTypeClasses(a.type)">{{ getTypeLabel(a.type) }}</span>
+                [ngClass]="getTypeClasses(a.type)">{{ getTypeLibelle(a) }}</span>
             </td>
             <td class="px-4 py-3 text-gray-700">{{ a.dateDebut | date: 'dd/MM/yyyy' }}</td>
             <td class="px-4 py-3 text-gray-700">{{ a.dateFin | date: 'dd/MM/yyyy' }}</td>

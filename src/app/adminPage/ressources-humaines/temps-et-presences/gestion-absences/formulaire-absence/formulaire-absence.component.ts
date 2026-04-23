@@ -60,10 +60,25 @@ export class FormulaireAbsenceComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       employeId: ['', Validators.required],
       type: ['', Validators.required],
+      typeAutrePrecision: [''],
       dateDebut: ['', Validators.required],
       dateFin: ['', Validators.required],
       motif: [''],
     });
+
+    // Validator dynamique : typeAutrePrecision requis si type = AUTRE
+    this.form.get('type')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((type: string) => {
+        const ctrl = this.form.get('typeAutrePrecision')!;
+        if (type === 'AUTRE') {
+          ctrl.setValidators([Validators.required, Validators.maxLength(200)]);
+        } else {
+          ctrl.clearValidators();
+          ctrl.setValue('', { emitEvent: false });
+        }
+        ctrl.updateValueAndValidity();
+      });
   }
 
   private loadEmployes(): void {
@@ -86,6 +101,7 @@ export class FormulaireAbsenceComponent implements OnInit, OnDestroy {
       this.form.patchValue({
         employeId: a.employeId,
         type: a.type,
+        typeAutrePrecision: a.typeAutrePrecision ?? '',
         dateDebut: a.dateDebut,
         dateFin: a.dateFin,
         motif: a.motif ?? '',
@@ -124,6 +140,9 @@ export class FormulaireAbsenceComponent implements OnInit, OnDestroy {
     const fd = new FormData();
     fd.append('employeId', v.employeId);
     fd.append('type', v.type);
+    if (v.type === 'AUTRE' && v.typeAutrePrecision) {
+      fd.append('typeAutrePrecision', v.typeAutrePrecision);
+    }
     fd.append('dateDebut', v.dateDebut);
     fd.append('dateFin', v.dateFin);
     if (v.motif) fd.append('motif', v.motif);

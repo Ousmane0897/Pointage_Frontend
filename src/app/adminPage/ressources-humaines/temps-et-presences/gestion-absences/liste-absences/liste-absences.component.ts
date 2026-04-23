@@ -148,6 +148,14 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
     return map[t] ?? t;
   }
 
+  getTypeLibelle(a: Absence): string {
+    const base = this.getTypeLabel(a.type);
+    if (a.type === 'AUTRE' && a.typeAutrePrecision) {
+      return `${base} (${a.typeAutrePrecision})`;
+    }
+    return base;
+  }
+
   getTypeClasses(t: TypeAbsence): string {
     const map: Record<TypeAbsence, string> = {
       CONGE_PAYE: 'bg-blue-100 text-blue-700 border border-blue-200',

@@ -32,6 +32,7 @@ export interface Absence {
 
   // Données absence
   type: TypeAbsence;
+  typeAutrePrecision?: string;     // renseigné uniquement si type === 'AUTRE'
   dateDebut: string;               // yyyy-MM-dd
   dateFin: string;                 // yyyy-MM-dd
   nombreJours?: number;            // calculé côté serveur

@@ -49,7 +49,22 @@
         </select>
       </div>
 
-      <div></div>
+      <!-- Précision (visible uniquement si type = AUTRE) -->
+      <div *ngIf="form.get('type')?.value === 'AUTRE'">
+        <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
+          Précisez le type d'absence <span class="text-red-500">*</span>
+        </label>
+        <input type="text" formControlName="typeAutrePrecision"
+          placeholder="Ex. Formation externe"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+          [ngClass]="{'border-red-400': form.get('typeAutrePrecision')?.invalid && form.get('typeAutrePrecision')?.touched}" />
+        <p *ngIf="form.get('typeAutrePrecision')?.invalid && form.get('typeAutrePrecision')?.touched"
+          class="text-xs text-red-500 mt-0.5">
+          La précision est obligatoire.
+        </p>
+      </div>
+
+      <div *ngIf="form.get('type')?.value !== 'AUTRE'"></div>
 
       <div>
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
