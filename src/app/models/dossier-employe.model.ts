@@ -8,6 +8,8 @@ export interface ContactUrgence {
   telephone: string;
 }
 
+export type SituationMatrimoniale = 'CELIBATAIRE' | 'MARIE';
+
 export interface DossierEmploye {
   id?: string;
   matricule: string;
@@ -19,6 +21,9 @@ export interface DossierEmploye {
   genre: 'HOMME' | 'FEMME';
   nationalite: string;
   photoUrl?: string;
+  numeroIdentification?: string;
+  situationMatrimoniale?: SituationMatrimoniale;
+  nombreEnfants?: number;
 
   // Poste
   poste: string;
@@ -26,6 +31,9 @@ export interface DossierEmploye {
   siteAffecte: string;
   dateEntree: Date | null;
   statut: 'ACTIF' | 'EN_PERIODE_ESSAI' | 'SUSPENDU' | 'SORTI';
+  superieurHierarchiqueId?: string;
+  superieurHierarchiqueNom?: string;
+  dureeEssaiMois?: number;
 
   // Contacts
   telephone: string;

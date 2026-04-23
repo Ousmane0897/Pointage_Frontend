@@ -218,6 +218,24 @@
                 <dt class="text-sm text-gray-500 shrink-0">Nationalité</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.nationalite || '—' }}</dd>
               </div>
+              <div class="flex justify-between items-start gap-3">
+                <dt class="text-sm text-gray-500 shrink-0">N° identification</dt>
+                <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.numeroIdentification || '—' }}</dd>
+              </div>
+              <div class="flex justify-between items-start gap-3">
+                <dt class="text-sm text-gray-500 shrink-0">Situation matrimoniale</dt>
+                <dd class="text-sm font-medium text-gray-800 text-right">
+                  <ng-container [ngSwitch]="employe.situationMatrimoniale">
+                    <span *ngSwitchCase="'CELIBATAIRE'">Célibataire</span>
+                    <span *ngSwitchCase="'MARIE'">Marié(e)</span>
+                    <span *ngSwitchDefault>—</span>
+                  </ng-container>
+                </dd>
+              </div>
+              <div *ngIf="employe.situationMatrimoniale === 'MARIE'" class="flex justify-between items-start gap-3">
+                <dt class="text-sm text-gray-500 shrink-0">Nombre d'enfants</dt>
+                <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.nombreEnfants ?? 0 }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -278,6 +296,18 @@
                   <span class="font-mono text-xs bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded">
                     {{ employe.matricule }}
                   </span>
+                </dd>
+              </div>
+              <div *ngIf="employe.statut === 'EN_PERIODE_ESSAI'" class="flex justify-between items-start gap-3">
+                <dt class="text-sm text-gray-500 shrink-0">Durée d'essai</dt>
+                <dd class="text-sm font-medium text-gray-800 text-right">
+                  {{ employe.dureeEssaiMois ?? '—' }}<span *ngIf="employe.dureeEssaiMois"> mois</span>
+                </dd>
+              </div>
+              <div class="flex justify-between items-start gap-3">
+                <dt class="text-sm text-gray-500 shrink-0">Supérieur hiérarchique</dt>
+                <dd class="text-sm font-medium text-gray-800 text-right">
+                  {{ employe.superieurHierarchiqueNom || '—' }}
                 </dd>
               </div>
             </dl>

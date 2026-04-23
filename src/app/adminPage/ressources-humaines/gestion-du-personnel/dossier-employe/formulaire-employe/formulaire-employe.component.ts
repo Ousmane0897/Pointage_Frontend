@@ -51,14 +51,14 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
   // ─── Formulaire réactif (multi-étapes via sous-FormGroup) ─────────────────
   employeForm!: FormGroup;
-  // photoUrl & matricule sont gérés hors du FormGroup pour rester silencieux
-  matricule = '';
+  // photoUrl reste hors du FormGroup pour rester silencieux
   photoUrl = '';
 
   // ─── Listes de référence ──────────────────────────────────────────────────
   departements: string[] = [];
   sites: string[] = [];
   postes: string[] = [];
+  superieursHierarchiques: DossierEmploye[] = [];
 
   readonly statutOptions = [
     { valeur: 'ACTIF', libelle: 'Actif' },
@@ -82,10 +82,25 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     this.isEditMode = !!this.employeId;
 
     this.chargerReferentiels();
+    this.chargerSuperieursHierarchiques();
 
     if (this.isEditMode && this.employeId) {
       this.chargerEmploye(this.employeId);
     }
+  }
+
+  private chargerSuperieursHierarchiques(): void {
+    this.dossierEmployeService.getEmployes(0, 500)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.superieursHierarchiques = res.content.filter(
+            e => (e.statut === 'ACTIF' || e.statut === 'EN_PERIODE_ESSAI')
+              && e.id !== this.employeId,
+          );
+        },
+        error: () => {},
+      });
   }
 
   /**
@@ -97,11 +112,15 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     this.employeForm = this.fb.group({
       // Étape 1
       identite: this.fb.group({
+        matricule: ['', [Validators.required, Validators.maxLength(30)]],
+        numeroIdentification: ['', Validators.required],
         nom: ['', Validators.required],
         prenom: ['', Validators.required],
         dateNaissance: [null, Validators.required],
         genre: ['HOMME', Validators.required],
         nationalite: ['', Validators.required],
+        situationMatrimoniale: ['', Validators.required],
+        nombreEnfants: [null],
       }),
       // Étape 2
       poste: this.fb.group({
@@ -110,6 +129,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         siteAffecte: ['', Validators.required],
         dateEntree: [null, Validators.required],
         statut: ['ACTIF', Validators.required],
+        superieurHierarchiqueId: ['', Validators.required],
+        dureeEssaiMois: [null],
       }),
       // Étape 3
       contacts: this.fb.group({
@@ -123,6 +144,34 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         }),
       }),
     });
+
+    // Validator dynamique : nombreEnfants requis si situation = MARIE
+    this.identiteGroup.get('situationMatrimoniale')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((valeur: string) => {
+        const ctrl = this.identiteGroup.get('nombreEnfants')!;
+        if (valeur === 'MARIE') {
+          ctrl.setValidators([Validators.required, Validators.min(0)]);
+        } else {
+          ctrl.clearValidators();
+          ctrl.setValue(null, { emitEvent: false });
+        }
+        ctrl.updateValueAndValidity();
+      });
+
+    // Validator dynamique : dureeEssaiMois requis si statut = EN_PERIODE_ESSAI
+    this.posteGroup.get('statut')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((statut: string) => {
+        const ctrl = this.posteGroup.get('dureeEssaiMois')!;
+        if (statut === 'EN_PERIODE_ESSAI') {
+          ctrl.setValidators([Validators.required, Validators.min(1)]);
+        } else {
+          ctrl.clearValidators();
+          ctrl.setValue(null, { emitEvent: false });
+        }
+        ctrl.updateValueAndValidity();
+      });
   }
 
   /** Raccourcis vers les sous-groupes pour le template. */
@@ -157,8 +206,6 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (employe) => {
-          // Champs hors form (matricule, photoUrl)
-          this.matricule = employe.matricule ?? '';
           this.photoUrl = employe.photoUrl ?? '';
           if (employe.photoUrl) {
             this.previewUrl = employe.photoUrl;
@@ -167,11 +214,15 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
           // Hydrate les sous-FormGroup
           this.employeForm.patchValue({
             identite: {
+              matricule: employe.matricule ?? '',
+              numeroIdentification: employe.numeroIdentification ?? '',
               nom: employe.nom,
               prenom: employe.prenom,
               dateNaissance: employe.dateNaissance,
               genre: employe.genre,
               nationalite: employe.nationalite,
+              situationMatrimoniale: employe.situationMatrimoniale ?? '',
+              nombreEnfants: employe.nombreEnfants ?? null,
             },
             poste: {
               poste: employe.poste,
@@ -179,6 +230,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
               siteAffecte: employe.siteAffecte,
               dateEntree: employe.dateEntree,
               statut: employe.statut,
+              superieurHierarchiqueId: employe.superieurHierarchiqueId ?? '',
+              dureeEssaiMois: employe.dureeEssaiMois ?? null,
             },
             contacts: {
               telephone: employe.telephone,
@@ -298,12 +351,17 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
     // Reconstitue l'objet DossierEmploye à partir des sous-FormGroup
     const v = this.employeForm.value;
+    const superieur = this.superieursHierarchiques.find(
+      e => e.id === v.poste.superieurHierarchiqueId,
+    );
     const employePayload = {
-      matricule: this.matricule,
       photoUrl: this.photoUrl,
       ...v.identite,
       ...v.poste,
       ...v.contacts,
+      superieurHierarchiqueNom: superieur
+        ? `${superieur.prenom} ${superieur.nom}`
+        : undefined,
     };
 
     const formData = new FormData();
@@ -364,5 +422,17 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
   get libelleGenre(): string {
     return this.identiteGroup?.get('genre')?.value === 'HOMME' ? 'Homme' : 'Femme';
+  }
+
+  get libelleSituation(): string {
+    const v = this.identiteGroup?.get('situationMatrimoniale')?.value;
+    if (v === 'MARIE') return 'Marié(e)';
+    if (v === 'CELIBATAIRE') return 'Célibataire';
+    return '';
+  }
+
+  get superieurSelectionne(): DossierEmploye | null {
+    const id = this.posteGroup?.get('superieurHierarchiqueId')?.value;
+    return this.superieursHierarchiques.find(e => e.id === id) ?? null;
   }
 }
