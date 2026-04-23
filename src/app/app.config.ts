@@ -11,7 +11,7 @@ import { NgxMatTimepickerModule } from 'ngx-mat-timepicker';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { LucideAngularModule, ArrowUp, ArrowDown, Package, Activity, ChartBar, FileText, UserX, ArchiveX, FolderArchive, NotebookPen, TrendingUp, MapPinCheck, MapPinHouse } from 'lucide-angular';
+import { LucideIconsProvider } from './lucide-icons';
 
 // ✅ Ajout pour activer le format français
 import { registerLocaleData } from '@angular/common';
@@ -40,23 +40,7 @@ export const appConfig: ApplicationConfig = {
       useClass: AuthInterceptor,
       multi: true,
     },
-    importProvidersFrom(
-      LucideAngularModule.pick({
-        ArrowUp,
-        ArrowDown,
-        Package,
-        Activity,
-        ChartBar,
-        FileText,
-        UserX,
-        ArchiveX,
-        FolderArchive,
-        NotebookPen,
-        TrendingUp,
-        MapPinCheck,
-        MapPinHouse
-      })
-    ),
+    LucideIconsProvider,
     provideToastr({
       timeOut: 4000,
       positionClass: 'toast-top-right',

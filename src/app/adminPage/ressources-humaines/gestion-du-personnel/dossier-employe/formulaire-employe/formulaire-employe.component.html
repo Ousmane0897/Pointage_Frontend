@@ -16,7 +16,7 @@
       (click)="annuler()"
       class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
     >
-      <lucide-icon name="x" [size]="16"></lucide-icon>
+      <lucide-icon name="X" [size]="16"></lucide-icon>
       Annuler
     </button>
   </div>
@@ -24,7 +24,7 @@
   <!-- Chargement initial -->
   <div *ngIf="loading" class="max-w-3xl mx-auto flex justify-center py-20">
     <div class="flex flex-col items-center gap-3 text-gray-500">
-      <lucide-icon name="loader-2" [size]="32" class="animate-spin text-indigo-600"></lucide-icon>
+      <lucide-icon name="LoaderCircle" [size]="32" class="animate-spin text-indigo-600"></lucide-icon>
       <span class="text-sm">Chargement des données…</span>
     </div>
   </div>
@@ -75,7 +75,7 @@
       <div *ngIf="etapeActuelle === 1">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
-            <lucide-icon name="user" [size]="20" class="text-indigo-500"></lucide-icon>
+            <lucide-icon name="User" [size]="20" class="text-indigo-500"></lucide-icon>
             Identité
           </h2>
 
@@ -108,7 +108,7 @@
                 class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition"
                 title="Supprimer la photo"
               >
-                <lucide-icon name="x" [size]="12"></lucide-icon>
+                <lucide-icon name="X" [size]="12"></lucide-icon>
               </button>
             </div>
             <!-- Input fichier caché -->
@@ -116,7 +116,7 @@
               for="photoInput"
               class="mt-3 cursor-pointer inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
             >
-              <lucide-icon name="upload" [size]="14"></lucide-icon>
+              <lucide-icon name="Upload" [size]="14"></lucide-icon>
               {{ previewUrl ? 'Changer la photo' : 'Ajouter une photo' }}
             </label>
             <input
@@ -228,7 +228,7 @@
       <div *ngIf="etapeActuelle === 2">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
-            <lucide-icon name="briefcase" [size]="20" class="text-indigo-500"></lucide-icon>
+            <lucide-icon name="Briefcase" [size]="20" class="text-indigo-500"></lucide-icon>
             Poste &amp; Affectation
           </h2>
 
@@ -359,7 +359,7 @@
       <div *ngIf="etapeActuelle === 3" formGroupName="contacts">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
-            <lucide-icon name="phone" [size]="20" class="text-indigo-500"></lucide-icon>
+            <lucide-icon name="Phone" [size]="20" class="text-indigo-500"></lucide-icon>
             Contacts
           </h2>
 
@@ -424,7 +424,7 @@
           <!-- Contact d'urgence (sous-FormGroup imbriqué) -->
           <div class="border-t border-gray-100 pt-5" formGroupName="contactUrgence">
             <h3 class="text-base font-semibold text-gray-600 mb-4 flex items-center gap-2">
-              <lucide-icon name="alert-circle" [size]="16" class="text-orange-400"></lucide-icon>
+              <lucide-icon name="AlertCircle" [size]="16" class="text-orange-400"></lucide-icon>
               Contact d'urgence
             </h3>
 
@@ -480,7 +480,7 @@
       <div *ngIf="etapeActuelle === 4">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
-            <lucide-icon name="clipboard-list" [size]="20" class="text-indigo-500"></lucide-icon>
+            <lucide-icon name="ClipboardList" [size]="20" class="text-indigo-500"></lucide-icon>
             Récapitulatif
           </h2>
 
@@ -595,7 +595,7 @@
             <!-- Carte : Contact d'urgence -->
             <div class="rounded-xl border border-orange-100 bg-orange-50 p-4">
               <h4 class="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-3 flex items-center gap-1">
-                <lucide-icon name="alert-circle" [size]="13"></lucide-icon>
+                <lucide-icon name="AlertCircle" [size]="13"></lucide-icon>
                 Contact d'urgence
               </h4>
               <div class="space-y-1.5 text-sm">
@@ -629,7 +629,7 @@
         *ngIf="erreurEtape"
         class="mt-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3"
       >
-        <lucide-icon name="alert-triangle" [size]="16" class="shrink-0"></lucide-icon>
+        <lucide-icon name="AlertTriangle" [size]="16" class="shrink-0"></lucide-icon>
         {{ erreurEtape }}
       </div>
 
@@ -643,7 +643,7 @@
           [disabled]="etapeActuelle === 1"
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <lucide-icon name="chevron-left" [size]="16"></lucide-icon>
+          <lucide-icon name="ChevronLeft" [size]="16"></lucide-icon>
           Précédent
         </button>
 
@@ -665,7 +665,7 @@
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition shadow-sm"
           >
             Suivant
-            <lucide-icon name="chevron-right" [size]="16"></lucide-icon>
+            <lucide-icon name="ChevronRight" [size]="16"></lucide-icon>
           </button>
 
           <button

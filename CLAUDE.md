@@ -62,6 +62,7 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 - **Models** — Typed interfaces in `src/app/models/` (20 files)
 - **PDF/Excel export** — jsPDF + jspdf-autotable, XLSX library used in several feature components
 - **Localization** — fr-FR locale registered globally in `app.config.ts`
+- **Icônes Lucide** — toute icône utilisée dans un template (`<lucide-icon name="Xxx">`) doit être enregistrée dans [src/app/lucide-icons.ts](src/app/lucide-icons.ts) (import + `LucideAngularModule.pick({...})`). Sans enregistrement, l'icône ne rend rien sans erreur. Noms en **PascalCase strict** (pas de kebab-case). Liste officielle : https://lucide.dev/icons/
 
 ### Feature Areas Under `/admin`
 
