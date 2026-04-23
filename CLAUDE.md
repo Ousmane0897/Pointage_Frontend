@@ -100,6 +100,12 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 **Statut : ✅ Terminé** (6 composants créés)
 **Entité centrale :** le dossier employé est le référentiel partagé par tous les autres sous-modules.
 
+**Corrections ultérieures :**
+- Dossier employé — nouveaux champs d'identité : matricule saisi manuellement (obligatoire, unicité serveur), numéro d'identification (CNI), situation matrimoniale (`CELIBATAIRE` | `MARIE`), nombre d'enfants (visible + requis uniquement si `MARIE`).
+- Dossier employé — nouveaux champs de poste : supérieur hiérarchique (select alimenté par les employés `ACTIF` ou `EN_PERIODE_ESSAI`, l'employé courant est exclu en mode édition), durée de la période d'essai en mois (visible + requise uniquement si `statut === 'EN_PERIODE_ESSAI'`).
+- Contrats — le type `ALTERNANCE` est remplacé par `PRESTATION` dans le `TypeContrat`, avec mise à jour des radios du formulaire, de l'option du filtre et des mappings de badges (liste-contrats, avenants).
+- Contrats — upload d'un fichier de contrat (PDF/DOC/DOCX) via zone drag-and-drop. Le `ContratService.creerContrat` / `modifierContrat` passent à `FormData` (blob JSON `contrat` + champ `fichier`) avec les champs optionnels `fichierUrl`, `fichierNom`, `tailleFichier` sur l'interface. Nouvelles méthodes `telechargerContrat(id)` (Blob) et `supprimerFichierContrat(id)`.
+
 ### 6.2 Temps & Présences (`ressources-humaines/temps-et-presences/`)
 
 - **Pointage centralisé** — vue globale tous départements confondus, données de pointage terrain remontées automatiquement depuis le module Exploitation, alertes absences et retards pour tout le personnel (terrain, siège, production, commercial)
@@ -113,6 +119,9 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 **Services :** `pointage-centralise.service.ts`, `absence.service.ts`, `conge.service.ts`, `heure-supplementaire.service.ts`, `recapitulatif-mensuel.service.ts`
 **Modèles :** `pointage-centralise.model.ts`, `absence.model.ts`, `conge.model.ts`, `heure-supplementaire.model.ts`, `recapitulatif-mensuel.model.ts`
 **Dépendances :** consomme les données employé de 6.1. Le récapitulatif mensuel alimente directement le calcul de paie (6.3). Le pointage centralisé reçoit des données du module Exploitation existant.
+
+**Corrections ultérieures :**
+- Formulaire d'absence — quand le type sélectionné est `AUTRE`, un champ texte "Précisez le type d'absence" apparaît et devient obligatoire. La valeur est stockée dans `Absence.typeAutrePrecision` (optionnel) et envoyée dans le `FormData` de soumission. Dans le tableau de la liste, le type `AUTRE` est affiché enrichi : `Autre (précision saisie)` via le helper `getTypeLibelle(a)`.
 
 ### 6.3 Paie (`ressources-humaines/paie/`)
 
@@ -128,6 +137,10 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 **Modèles :** `grille-salariale.model.ts`, `bulletin-paie.model.ts`, `declaration-sociale.model.ts`
 **Constantes :** `src/app/constants/paie.constants.ts` — taux IPRES, CSS, barème IR, TRIMF, majorations HS, paramètres généraux. Tous les taux sont centralisés et configurables (aucune valeur en dur dans les composants).
 **Dépendances :** consomme `RecapitulatifMensuelService` (6.2) + `EmployeCompletService` (6.1) automatiquement. Utilise jsPDF + jspdf-autotable + XLSX (déjà dans le projet). `ReactiveFormsModule` exclusivement (pas de `FormsModule` / `ngModel`).
+
+**Corrections ultérieures :**
+- Grille salariale — en plus des primes et indemnités, la `CategorieProfessionnelle` supporte 3 nouvelles listes configurables : `prets[]` et `avances[]` (avec `libelle`, `montant`, `dureeMois`) et `retenues[]` (avec `libelle`, `montant` — pas de durée). Le formulaire expose 3 `FormArray` supplémentaires suivant exactement le pattern existant.
+- Calcul bulletin — ces rubriques génèrent des lignes de nature `RETENUE_PERSONNELLE` (nouvelle valeur de `LigneBulletin.nature`) et sont **soustraites après les cotisations légales**. Elles n'entrent donc PAS dans l'assiette IR/IPRES/CSS. Le net à payer est désormais : `brut − totalCotisationsSalariales − totalRetenuesPersonnelles`. Le nouveau total `bulletin.totalRetenuesPersonnelles` est exposé pour le preview (section dédiée "Prêts, avances & retenues" visible uniquement si non vide) et pour le pied du PDF.
 
 ### 6.4 Développement RH (`ressources-humaines/developpement-rh/`)
 
