@@ -49,6 +49,11 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
   saving = false;
   errorMessage = '';
 
+  // ─── Upload fichier contrat ───────────────────────────────────────────────
+  selectedFile: File | null = null;
+  dragOver = false;
+  fichierExistant: { nom: string; taille?: number; url?: string } | null = null;
+
   // ─── Cycle de vie ─────────────────────────────────────────────────────────
   private destroy$ = new Subject<void>();
 
@@ -128,10 +133,83 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
         this.employes = employes.content;
         if (contrat) {
           this.contratForm.patchValue(contrat);
+          if (contrat.fichierUrl || contrat.fichierNom) {
+            this.fichierExistant = {
+              nom: contrat.fichierNom ?? 'Fichier du contrat',
+              taille: contrat.tailleFichier,
+              url: contrat.fichierUrl,
+            };
+          }
         } else {
           this.toastr.error('Contrat introuvable.', 'Erreur');
           this.router.navigate(['/admin/rh/gestion-du-personnel/contrats']);
         }
+      });
+  }
+
+  // ─── Upload fichier contrat ───────────────────────────────────────────────
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOver = true;
+  }
+
+  onDragLeave(): void {
+    this.dragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOver = false;
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      this.selectedFile = event.dataTransfer.files[0];
+    }
+  }
+
+  retirerFichier(): void {
+    this.selectedFile = null;
+  }
+
+  formatFileSize(bytes?: number): string {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  }
+
+  telechargerFichierContrat(): void {
+    if (!this.contratId) return;
+    this.contratService.telechargerContrat(this.contratId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = this.fichierExistant?.nom ?? 'contrat';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => this.toastr.error('Impossible de télécharger le fichier.', 'Erreur'),
+      });
+  }
+
+  supprimerFichierContratExistant(): void {
+    if (!this.contratId) return;
+    this.contratService.supprimerFichierContrat(this.contratId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.fichierExistant = null;
+          this.toastr.success('Fichier supprimé.', 'Succès');
+        },
+        error: () => this.toastr.error('Suppression impossible.', 'Erreur'),
       });
   }
 
@@ -202,9 +280,15 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
 
     this.saving = true;
 
+    const formData = new FormData();
+    formData.append('contrat', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    if (this.selectedFile) {
+      formData.append('fichier', this.selectedFile, this.selectedFile.name);
+    }
+
     const operation$ = this.isEditMode && this.contratId
-      ? this.contratService.modifierContrat(this.contratId, payload)
-      : this.contratService.creerContrat(payload);
+      ? this.contratService.modifierContrat(this.contratId, formData)
+      : this.contratService.creerContrat(formData);
 
     operation$
       .pipe(

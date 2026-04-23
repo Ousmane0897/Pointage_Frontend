@@ -2,7 +2,7 @@
  * Modèle de données pour les contrats de travail – Gestion du Personnel
  */
 
-export type TypeContrat = 'CDI' | 'CDD' | 'STAGE' | 'ALTERNANCE';
+export type TypeContrat = 'CDI' | 'CDD' | 'STAGE' | 'PRESTATION';
 
 export type StatutContrat = 'ACTIF' | 'EXPIRE' | 'RENOUVELE' | 'RESILIE';
 
@@ -18,6 +18,11 @@ export interface Contrat {
   statut: StatutContrat;
   clauses: string;
   joursAvantAlerte: number;
+
+  // Fichier du contrat (PDF/DOC/DOCX)
+  fichierUrl?: string;
+  fichierNom?: string;
+  tailleFichier?: number;
 
   // Historique des renouvellements
   renouvellements?: Renouvellement[];

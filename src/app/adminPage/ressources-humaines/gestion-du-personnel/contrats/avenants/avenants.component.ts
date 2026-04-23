@@ -255,7 +255,7 @@ export class AvenantsComponent implements OnInit, OnDestroy {
       CDI: 'bg-blue-100 text-blue-700 border border-blue-200',
       CDD: 'bg-amber-100 text-amber-700 border border-amber-200',
       STAGE: 'bg-purple-100 text-purple-700 border border-purple-200',
-      ALTERNANCE: 'bg-teal-100 text-teal-700 border border-teal-200',
+      PRESTATION: 'bg-teal-100 text-teal-700 border border-teal-200',
     };
     return map[type] ?? 'bg-gray-100 text-gray-600 border border-gray-200';
   }

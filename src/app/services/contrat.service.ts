@@ -53,22 +53,22 @@ export class ContratService {
   }
 
   /**
-   * Crée un nouveau contrat
+   * Crée un nouveau contrat (FormData : contrat JSON + fichier optionnel).
    */
-  creerContrat(contrat: Contrat): Observable<Contrat> {
+  creerContrat(formData: FormData): Observable<Contrat> {
     return this.http.post<Contrat>(
       `${this.baseUrl}/gestion-personnel/contrats`,
-      contrat
+      formData
     );
   }
 
   /**
-   * Met à jour un contrat
+   * Met à jour un contrat (FormData : contrat JSON + fichier optionnel).
    */
-  modifierContrat(id: string, contrat: Contrat): Observable<Contrat> {
+  modifierContrat(id: string, formData: FormData): Observable<Contrat> {
     return this.http.put<Contrat>(
       `${this.baseUrl}/gestion-personnel/contrats/${id}`,
-      contrat
+      formData
     );
   }
 
@@ -78,6 +78,25 @@ export class ContratService {
   supprimerContrat(id: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/gestion-personnel/contrats/${id}`
+    );
+  }
+
+  /**
+   * Télécharge le fichier du contrat (PDF/DOC/DOCX).
+   */
+  telechargerContrat(id: string): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/gestion-personnel/contrats/${id}/fichier`,
+      { responseType: 'blob' }
+    );
+  }
+
+  /**
+   * Supprime uniquement le fichier attaché au contrat (le contrat reste).
+   */
+  supprimerFichierContrat(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/gestion-personnel/contrats/${id}/fichier`
     );
   }
 
