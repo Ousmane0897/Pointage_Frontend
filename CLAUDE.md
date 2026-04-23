@@ -68,6 +68,7 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 | Path segment | Purpose |
 |---|---|
 | `ressources-humaines/` | Module RH complet (voir section dédiée ci-dessous) |
+| `exploitation/` | Module Exploitation (Nettoyage & Entretien phytosanitaire) |
 | `employes/`, `employes-complet/` | Employee data (partial vs. complete views) |
 | `planification/`, `calendrier/` | Scheduling & calendar (FullCalendar) |
 | `pointages/`, `pointage-historique/` | Today's and historical attendance |
