@@ -20,6 +20,28 @@ export interface IndemniteCategorie {
   imposable: boolean;
 }
 
+/**
+ * Rubriques de retenues personnelles configurables sur la catégorie.
+ * Ces rubriques diminuent le net à payer POST-cotisations (elles n'impactent
+ * pas l'assiette IR/IPRES/CSS).
+ */
+export interface PretCategorie {
+  libelle: string;
+  montant: number;       // FCFA
+  dureeMois: number;     // nombre de mois d'échelonnement
+}
+
+export interface AvanceCategorie {
+  libelle: string;
+  montant: number;       // FCFA
+  dureeMois: number;
+}
+
+export interface RetenueCategorie {
+  libelle: string;
+  montant: number;       // FCFA — pas de durée
+}
+
 export type RegimeIpres = 'REGIME_GENERAL' | 'REGIME_COMPLEMENTAIRE';
 
 export interface CategorieProfessionnelle {
@@ -32,6 +54,9 @@ export interface CategorieProfessionnelle {
 
   primes: PrimeCategorie[];        // liste libre, configurée par RH
   indemnites: IndemniteCategorie[];
+  prets?: PretCategorie[];
+  avances?: AvanceCategorie[];
+  retenues?: RetenueCategorie[];
 
   regimeIpres: RegimeIpres;        // détermine l'application du régime complémentaire
   tauxAtMp?: number;               // override optionnel du taux AT/MP (ex 0.05 pour secteur à risque)

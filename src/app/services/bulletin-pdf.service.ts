@@ -98,8 +98,17 @@ export class BulletinPdfService {
     doc.setFont('helvetica', 'normal');
     doc.text(`Salaire brut : ${this.formatFCFA(bulletin.salaireBrut)}`, 14, finY);
     doc.text(`Total retenues salariales : ${this.formatFCFA(bulletin.totalCotisationsSalariales)}`, 14, finY + 6);
-    doc.text(`Total cotisations patronales : ${this.formatFCFA(bulletin.totalCotisationsPatronales)}`, 14, finY + 12);
-    doc.text(`Coût total employeur : ${this.formatFCFA(bulletin.coutTotalEmployeur)}`, 14, finY + 18);
+    let ligneY = finY + 12;
+    const retenuesPerso = bulletin.totalRetenuesPersonnelles ?? 0;
+    if (retenuesPerso > 0) {
+      doc.text(
+        `Total prêts, avances & retenues : ${this.formatFCFA(retenuesPerso)}`,
+        14, ligneY,
+      );
+      ligneY += 6;
+    }
+    doc.text(`Total cotisations patronales : ${this.formatFCFA(bulletin.totalCotisationsPatronales)}`, 14, ligneY);
+    doc.text(`Coût total employeur : ${this.formatFCFA(bulletin.coutTotalEmployeur)}`, 14, ligneY + 6);
 
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
@@ -112,7 +121,8 @@ export class BulletinPdfService {
     );
     doc.setTextColor(0);
 
-    // Cumuls annuels (si dispo)
+    // Cumuls annuels (si dispo) — décalés sous la dernière ligne de totaux
+    const cumulsY = ligneY + 18;
     if (bulletin.cumulBrutAnnuel !== undefined) {
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
@@ -120,7 +130,7 @@ export class BulletinPdfService {
         `Cumul brut annuel : ${this.formatFCFA(bulletin.cumulBrutAnnuel)}   •   ` +
         `Cumul net annuel : ${this.formatFCFA(bulletin.cumulNetAnnuel ?? 0)}   •   ` +
         `Solde congés : ${bulletin.soldeConges ?? 0} j`,
-        14, finY + 30,
+        14, cumulsY,
       );
     }
 

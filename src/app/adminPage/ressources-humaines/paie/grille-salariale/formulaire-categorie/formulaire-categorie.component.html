@@ -200,6 +200,151 @@
       </div>
     </div>
 
+    <!-- Prêts -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">Prêts</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Déduits du net à payer, échelonnés sur une durée en mois.</p>
+        </div>
+        <button
+          type="button"
+          (click)="ajouterPret()"
+          class="inline-flex items-center gap-2 bg-orange-50 hover:bg-orange-100 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+          <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+          Ajouter un prêt
+        </button>
+      </div>
+
+      <div *ngIf="prets.length === 0" class="text-sm text-gray-400 text-center py-4">
+        Aucun prêt configuré.
+      </div>
+
+      <div formArrayName="prets" class="space-y-3">
+        <div *ngFor="let p of prets.controls; let i = index"
+             [formGroupName]="i"
+             class="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="col-span-4">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Libellé</label>
+            <input type="text" formControlName="libelle"
+                   placeholder="ex : Prêt scolaire"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant (FCFA)</label>
+            <input type="number" formControlName="montant" min="0"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-right" />
+          </div>
+          <div class="col-span-3">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Durée (mois)</label>
+            <input type="number" formControlName="dureeMois" min="1"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-right" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button type="button" (click)="retirerPret(i)"
+                    class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded">
+              <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Avances sur salaire -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">Avances sur salaire</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Déduites du net à payer, échelonnées sur une durée en mois.</p>
+        </div>
+        <button
+          type="button"
+          (click)="ajouterAvance()"
+          class="inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+          <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+          Ajouter une avance
+        </button>
+      </div>
+
+      <div *ngIf="avances.length === 0" class="text-sm text-gray-400 text-center py-4">
+        Aucune avance configurée.
+      </div>
+
+      <div formArrayName="avances" class="space-y-3">
+        <div *ngFor="let a of avances.controls; let i = index"
+             [formGroupName]="i"
+             class="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="col-span-4">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Libellé</label>
+            <input type="text" formControlName="libelle"
+                   placeholder="ex : Avance sur juin"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant (FCFA)</label>
+            <input type="number" formControlName="montant" min="0"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-right" />
+          </div>
+          <div class="col-span-3">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Durée (mois)</label>
+            <input type="number" formControlName="dureeMois" min="1"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-right" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button type="button" (click)="retirerAvance(i)"
+                    class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded">
+              <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retenues -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">Retenues</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Retenues directes appliquées chaque mois sur le net.</p>
+        </div>
+        <button
+          type="button"
+          (click)="ajouterRetenue()"
+          class="inline-flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+          <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+          Ajouter une retenue
+        </button>
+      </div>
+
+      <div *ngIf="retenues.length === 0" class="text-sm text-gray-400 text-center py-4">
+        Aucune retenue configurée.
+      </div>
+
+      <div formArrayName="retenues" class="space-y-3">
+        <div *ngFor="let r of retenues.controls; let i = index"
+             [formGroupName]="i"
+             class="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="col-span-6">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Libellé</label>
+            <input type="text" formControlName="libelle"
+                   placeholder="ex : Cotisation syndicale"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" />
+          </div>
+          <div class="col-span-5">
+            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant (FCFA)</label>
+            <input type="number" formControlName="montant" min="0"
+                   class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 text-right" />
+          </div>
+          <div class="col-span-1 flex justify-end">
+            <button type="button" (click)="retirerRetenue(i)"
+                    class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded">
+              <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="flex items-center justify-end gap-3">
       <button

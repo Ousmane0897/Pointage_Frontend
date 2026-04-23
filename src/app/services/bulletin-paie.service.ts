@@ -270,10 +270,43 @@ export class BulletinPaieService {
       montantSalarial: trimf,
     });
 
-    // ─ 6. Totaux & net à payer ──────────────────────────────────────────────
+    // ─ 6. Retenues personnelles (post-cotisations) ──────────────────────────
+    // Prêts, avances sur salaire et retenues diverses configurés sur la catégorie.
+    // Ces montants ne rentrent PAS dans l'assiette IR/IPRES/CSS : ils sont
+    // simplement déduits du net à payer après calcul des cotisations.
+    categorie?.prets?.forEach((p, idx) => {
+      lignes.push({
+        code: `PRET_CAT_${idx}`,
+        libelle: `Prêt — ${p.libelle} (sur ${p.dureeMois} mois)`,
+        nature: 'RETENUE_PERSONNELLE',
+        montantSalarial: p.montant,
+      });
+    });
+    categorie?.avances?.forEach((a, idx) => {
+      lignes.push({
+        code: `AVANCE_CAT_${idx}`,
+        libelle: `Avance — ${a.libelle} (sur ${a.dureeMois} mois)`,
+        nature: 'RETENUE_PERSONNELLE',
+        montantSalarial: a.montant,
+      });
+    });
+    categorie?.retenues?.forEach((r, idx) => {
+      lignes.push({
+        code: `RETENUE_CAT_${idx}`,
+        libelle: `Retenue — ${r.libelle}`,
+        nature: 'RETENUE_PERSONNELLE',
+        montantSalarial: r.montant,
+      });
+    });
+
+    const totalRetenuesPersonnelles = lignes
+      .filter(l => l.nature === 'RETENUE_PERSONNELLE')
+      .reduce((sum, l) => sum + (l.montantSalarial ?? 0), 0);
+
+    // ─ 7. Totaux & net à payer ──────────────────────────────────────────────
     const totalCotisationsSalariales = ipresSal + ipresSalRC + cssAtSal + irMensuel + trimf;
     const totalCotisationsPatronales = ipresEmp + ipresEmpRC + cssAtEmp + cssPfEmp;
-    const netAPayer = salaireBrut - totalCotisationsSalariales;
+    const netAPayer = salaireBrut - totalCotisationsSalariales - totalRetenuesPersonnelles;
     const coutTotalEmployeur = salaireBrut + totalCotisationsPatronales;
 
     return {
@@ -302,6 +335,7 @@ export class BulletinPaieService {
       salaireBrut,
       totalCotisationsSalariales,
       totalCotisationsPatronales,
+      totalRetenuesPersonnelles,
       impotRevenu: irMensuel,
       trimf,
       netAPayer,

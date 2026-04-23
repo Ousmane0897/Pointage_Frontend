@@ -30,6 +30,10 @@ export class PreviewBulletinComponent {
     return (this.bulletin?.lignes ?? []).filter(l => l.nature === 'RETENUE_SALARIALE');
   }
 
+  get retenuesPersonnelles(): LigneBulletin[] {
+    return (this.bulletin?.lignes ?? []).filter(l => l.nature === 'RETENUE_PERSONNELLE');
+  }
+
   get cotisationsPatronales(): LigneBulletin[] {
     return (this.bulletin?.lignes ?? [])
       .filter(l => l.montantPatronal !== undefined && l.montantPatronal > 0);

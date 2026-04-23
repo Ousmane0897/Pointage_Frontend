@@ -22,7 +22,7 @@ export interface PeriodePaie {
 export interface LigneBulletin {
   code: string;                // ex : "SAL_BASE", "PRIME_TRANS", "IPRES_SAL"
   libelle: string;             // ex : "Salaire de base"
-  nature: 'GAIN' | 'RETENUE_SALARIALE' | 'COTISATION_PATRONALE' | 'INFORMATION';
+  nature: 'GAIN' | 'RETENUE_SALARIALE' | 'RETENUE_PERSONNELLE' | 'COTISATION_PATRONALE' | 'INFORMATION';
   base?: number;               // assiette (optionnelle)
   taux?: number;               // taux appliqué en décimal (optionnel)
   montantSalarial?: number;    // FCFA (0 pour cotisations patronales pures)
@@ -62,6 +62,7 @@ export interface BulletinPaie {
   salaireBrut: number;
   totalCotisationsSalariales: number;
   totalCotisationsPatronales: number;
+  totalRetenuesPersonnelles?: number;  // prêts + avances + retenues de la catégorie (post-cotisations)
   impotRevenu: number;
   trimf: number;
   netAPayer: number;

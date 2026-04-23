@@ -48,6 +48,9 @@ export class FormulaireCategorieComponent implements OnInit, OnDestroy {
       actif: [true],
       primes: this.fb.array([]),
       indemnites: this.fb.array([]),
+      prets: this.fb.array([]),
+      avances: this.fb.array([]),
+      retenues: this.fb.array([]),
     });
   }
 
@@ -61,6 +64,9 @@ export class FormulaireCategorieComponent implements OnInit, OnDestroy {
 
   get primes(): FormArray { return this.form.get('primes') as FormArray; }
   get indemnites(): FormArray { return this.form.get('indemnites') as FormArray; }
+  get prets(): FormArray { return this.form.get('prets') as FormArray; }
+  get avances(): FormArray { return this.form.get('avances') as FormArray; }
+  get retenues(): FormArray { return this.form.get('retenues') as FormArray; }
 
   ajouterPrime(): void {
     this.primes.push(this.fb.group({
@@ -88,6 +94,41 @@ export class FormulaireCategorieComponent implements OnInit, OnDestroy {
     this.indemnites.removeAt(i);
   }
 
+  ajouterPret(): void {
+    this.prets.push(this.fb.group({
+      libelle: ['', Validators.required],
+      montant: [0, [Validators.required, Validators.min(0)]],
+      dureeMois: [1, [Validators.required, Validators.min(1)]],
+    }));
+  }
+
+  retirerPret(i: number): void {
+    this.prets.removeAt(i);
+  }
+
+  ajouterAvance(): void {
+    this.avances.push(this.fb.group({
+      libelle: ['', Validators.required],
+      montant: [0, [Validators.required, Validators.min(0)]],
+      dureeMois: [1, [Validators.required, Validators.min(1)]],
+    }));
+  }
+
+  retirerAvance(i: number): void {
+    this.avances.removeAt(i);
+  }
+
+  ajouterRetenue(): void {
+    this.retenues.push(this.fb.group({
+      libelle: ['', Validators.required],
+      montant: [0, [Validators.required, Validators.min(0)]],
+    }));
+  }
+
+  retirerRetenue(i: number): void {
+    this.retenues.removeAt(i);
+  }
+
   private charger(id: string): void {
     this.loading = true;
     this.grilleService.getById(id)
@@ -96,6 +137,9 @@ export class FormulaireCategorieComponent implements OnInit, OnDestroy {
         next: cat => {
           this.primes.clear();
           this.indemnites.clear();
+          this.prets.clear();
+          this.avances.clear();
+          this.retenues.clear();
           (cat.primes ?? []).forEach(p => this.primes.push(this.fb.group({
             libelle: [p.libelle, Validators.required],
             montant: [p.montant, [Validators.required, Validators.min(0)]],
@@ -107,6 +151,20 @@ export class FormulaireCategorieComponent implements OnInit, OnDestroy {
             libelle: [i.libelle, Validators.required],
             montant: [i.montant, [Validators.required, Validators.min(0)]],
             imposable: [i.imposable],
+          })));
+          (cat.prets ?? []).forEach(p => this.prets.push(this.fb.group({
+            libelle: [p.libelle, Validators.required],
+            montant: [p.montant, [Validators.required, Validators.min(0)]],
+            dureeMois: [p.dureeMois, [Validators.required, Validators.min(1)]],
+          })));
+          (cat.avances ?? []).forEach(a => this.avances.push(this.fb.group({
+            libelle: [a.libelle, Validators.required],
+            montant: [a.montant, [Validators.required, Validators.min(0)]],
+            dureeMois: [a.dureeMois, [Validators.required, Validators.min(1)]],
+          })));
+          (cat.retenues ?? []).forEach(r => this.retenues.push(this.fb.group({
+            libelle: [r.libelle, Validators.required],
+            montant: [r.montant, [Validators.required, Validators.min(0)]],
           })));
           this.form.patchValue({
             code: cat.code,
