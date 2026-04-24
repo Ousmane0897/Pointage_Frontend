@@ -1,0 +1,356 @@
+<div class="bg-white rounded-xl w-[min(720px,92vw)] max-h-[85vh] flex flex-col overflow-hidden">
+
+  <!-- ══════════════════════════════════════════════
+       EN-TÊTE
+  ══════════════════════════════════════════════ -->
+  <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+        <lucide-icon name="FileSpreadsheet" class="w-5 h-5 text-indigo-600"></lucide-icon>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800">Importer des employés</h2>
+        <p class="text-xs text-gray-500">Import en masse depuis un fichier Excel</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="annuler()"
+      class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+      <lucide-icon name="X" class="w-5 h-5"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CORPS (scrollable)
+  ══════════════════════════════════════════════ -->
+  <div class="flex-1 overflow-y-auto px-6 py-5">
+
+    <!-- ─── STAGE : UPLOAD ─────────────────────────── -->
+    @if (stage === 'upload') {
+      <div class="flex flex-col gap-4">
+
+        <!-- Lien télécharger template -->
+        <div class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3">
+          <div class="flex items-center gap-3">
+            <lucide-icon name="FileText" class="w-5 h-5 text-indigo-600"></lucide-icon>
+            <div class="text-sm">
+              <div class="font-medium text-gray-800">Besoin du modèle Excel ?</div>
+              <div class="text-xs text-gray-500">22 colonnes + feuille de consignes.</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="telechargerTemplate()"
+            class="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+            <lucide-icon name="Download" class="w-4 h-4"></lucide-icon>
+            Télécharger
+          </button>
+        </div>
+
+        <!-- Zone drag-and-drop -->
+        <div
+          class="border-2 border-dashed rounded-xl p-6 text-center transition-colors duration-200 cursor-pointer"
+          [ngClass]="dragOver
+            ? 'border-indigo-500 bg-indigo-50'
+            : selectedFile
+              ? 'border-green-400 bg-green-50'
+              : 'border-gray-300 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50/40'"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()">
+          <input
+            #fileInput
+            type="file"
+            class="hidden"
+            accept=".xlsx,.xls"
+            (change)="onFileSelected($event)" />
+
+          @if (!selectedFile) {
+            <div class="flex flex-col items-center gap-2">
+              <lucide-icon name="UploadCloud" class="w-10 h-10 text-gray-400"></lucide-icon>
+              <p class="text-sm font-medium text-gray-600">Glissez-déposez votre fichier ici</p>
+              <p class="text-xs text-gray-400">ou cliquez pour parcourir — .xlsx ou .xls</p>
+            </div>
+          } @else {
+            <div class="flex flex-col items-center gap-2">
+              <lucide-icon name="FileCheck2" class="w-10 h-10 text-green-500"></lucide-icon>
+              <p class="text-sm font-semibold text-green-700">{{ selectedFile.name }}</p>
+              <p class="text-xs text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); retirerFichier()"
+                class="text-xs text-red-500 hover:text-red-700 underline mt-1">
+                Retirer le fichier
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Erreur d'en-têtes manquants -->
+        @if (enTetesManquants.length > 0) {
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex items-start gap-2">
+              <lucide-icon name="AlertCircle" class="w-5 h-5 text-red-600 shrink-0 mt-0.5"></lucide-icon>
+              <div class="text-sm">
+                <div class="font-semibold text-red-800 mb-1">Colonnes manquantes dans le fichier :</div>
+                <ul class="list-disc list-inside text-red-700 text-xs space-y-0.5">
+                  @for (col of enTetesManquants; track col) {
+                    <li>{{ col }}</li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ─── STAGE : VALIDATION (spinner) ──────────── -->
+    @if (stage === 'validation') {
+      <div class="flex flex-col items-center justify-center py-10 gap-3">
+        <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p class="text-sm text-gray-600 font-medium">Analyse du fichier en cours…</p>
+        <p class="text-xs text-gray-400">Lecture des données et vérification des règles</p>
+      </div>
+    }
+
+    <!-- ─── STAGE : PREVIEW ────────────────────────── -->
+    @if (stage === 'preview' && validation) {
+      <div class="flex flex-col gap-4">
+
+        <!-- Compteurs -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total</div>
+            <div class="text-2xl font-bold text-gray-800 mt-1">{{ validation.total }}</div>
+          </div>
+          <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+            <div class="text-xs font-medium text-green-700 uppercase tracking-wide">Valides</div>
+            <div class="text-2xl font-bold text-green-700 mt-1">{{ validation.valides }}</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+            <div class="text-xs font-medium text-amber-700 uppercase tracking-wide">En erreur</div>
+            <div class="text-2xl font-bold text-amber-700 mt-1">{{ validation.enErreur }}</div>
+          </div>
+        </div>
+
+        @if (aDesErreurs) {
+          <!-- Bannière + bouton export -->
+          <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <div class="flex items-center gap-2">
+              <lucide-icon name="AlertTriangle" class="w-5 h-5 text-amber-600"></lucide-icon>
+              <span class="text-sm text-amber-800 font-medium">
+                {{ validation.erreurs.length }} erreur{{ validation.erreurs.length > 1 ? 's' : '' }} détectée{{ validation.erreurs.length > 1 ? 's' : '' }}
+              </span>
+            </div>
+            <button
+              type="button"
+              (click)="exporterRapportValidation()"
+              class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors">
+              <lucide-icon name="Download" class="w-3.5 h-3.5"></lucide-icon>
+              Exporter le rapport
+            </button>
+          </div>
+
+          <!-- Tableau erreurs -->
+          <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <div class="max-h-64 overflow-y-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-gray-50 sticky top-0 border-b border-gray-200">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-gray-600 w-16">Ligne</th>
+                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Colonne</th>
+                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Valeur</th>
+                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Message</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  @for (e of validation.erreurs; track trackErreur($index, e)) {
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 font-mono text-gray-700">{{ e.numeroLigne }}</td>
+                      <td class="px-3 py-2 text-gray-700">{{ e.colonne }}</td>
+                      <td class="px-3 py-2 text-gray-500 truncate max-w-[120px]" [title]="afficherValeur(e.valeurRecue)">
+                        {{ afficherValeur(e.valeurRecue) || '—' }}
+                      </td>
+                      <td class="px-3 py-2 text-red-700">{{ e.message }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        } @else {
+          <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+            <lucide-icon name="CheckCircle" class="w-5 h-5 text-green-600"></lucide-icon>
+            <span class="text-sm text-green-800 font-medium">
+              Toutes les lignes sont valides. Prêt à importer.
+            </span>
+          </div>
+        }
+
+        <!-- Rappel transactionnel -->
+        <div class="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <lucide-icon name="Info" class="w-4 h-4 text-gray-400 shrink-0 mt-0.5"></lucide-icon>
+          <span>L'import est transactionnel : si une ligne échoue côté serveur, <strong>aucun employé n'est créé</strong>.</span>
+        </div>
+      </div>
+    }
+
+    <!-- ─── STAGE : IMPORT (spinner) ──────────────── -->
+    @if (stage === 'import') {
+      <div class="flex flex-col items-center justify-center py-10 gap-3">
+        <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p class="text-sm text-gray-600 font-medium">
+          Import de {{ validation?.valides }} employé{{ (validation?.valides ?? 0) > 1 ? 's' : '' }} en cours…
+        </p>
+        <p class="text-xs text-gray-400">Transaction atomique côté serveur</p>
+      </div>
+    }
+
+    <!-- ─── STAGE : RÉSULTAT ───────────────────────── -->
+    @if (stage === 'resultat' && resultatImport) {
+      <div class="flex flex-col gap-4">
+        @if (resultatImport.succes > 0) {
+          <div class="flex flex-col items-center text-center py-4 gap-2">
+            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+              <lucide-icon name="CheckCircle" class="w-8 h-8 text-green-600"></lucide-icon>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Import réussi</h3>
+            <p class="text-sm text-gray-600">
+              {{ resultatImport.succes }} employé{{ resultatImport.succes > 1 ? 's' : '' }} créé{{ resultatImport.succes > 1 ? 's' : '' }} avec succès.
+            </p>
+          </div>
+        } @else {
+          <div class="flex flex-col items-center text-center py-2 gap-2">
+            <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+              <lucide-icon name="XCircle" class="w-8 h-8 text-red-600"></lucide-icon>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Import annulé</h3>
+            <p class="text-sm text-gray-600">
+              Aucun employé n'a été créé. Corrigez les erreurs ci-dessous et relancez l'import.
+            </p>
+          </div>
+
+          @if (resultatImport.echecs.length > 0) {
+            <div class="flex items-center justify-between bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              <div class="flex items-center gap-2">
+                <lucide-icon name="AlertCircle" class="w-5 h-5 text-red-600"></lucide-icon>
+                <span class="text-sm text-red-800 font-medium">
+                  {{ resultatImport.echecs.length }} erreur{{ resultatImport.echecs.length > 1 ? 's' : '' }} serveur
+                </span>
+              </div>
+              <button
+                type="button"
+                (click)="exporterRapportServeur()"
+                class="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:text-red-900 transition-colors">
+                <lucide-icon name="Download" class="w-3.5 h-3.5"></lucide-icon>
+                Exporter le rapport
+              </button>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <div class="max-h-64 overflow-y-auto">
+                <table class="w-full text-xs">
+                  <thead class="bg-gray-50 sticky top-0 border-b border-gray-200">
+                    <tr>
+                      <th class="px-3 py-2 text-left font-semibold text-gray-600 w-16">Ligne</th>
+                      <th class="px-3 py-2 text-left font-semibold text-gray-600">Matricule</th>
+                      <th class="px-3 py-2 text-left font-semibold text-gray-600">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    @for (e of resultatImport.echecs; track e.numeroLigne) {
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-3 py-2 font-mono text-gray-700">{{ e.numeroLigne }}</td>
+                        <td class="px-3 py-2 text-gray-700">{{ e.matricule || '—' }}</td>
+                        <td class="px-3 py-2 text-red-700">{{ e.message }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       PIED : boutons d'action selon stage
+  ══════════════════════════════════════════════ -->
+  <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2 shrink-0">
+
+    @if (stage === 'upload') {
+      <button
+        type="button"
+        (click)="annuler()"
+        class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+        Annuler
+      </button>
+      <button
+        type="button"
+        (click)="analyser()"
+        [disabled]="!selectedFile"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+        [ngClass]="selectedFile
+          ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+          : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
+        <lucide-icon name="Upload" class="w-4 h-4"></lucide-icon>
+        Analyser le fichier
+      </button>
+    }
+
+    @if (stage === 'validation' || stage === 'import') {
+      <button
+        type="button"
+        disabled
+        class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-100 rounded-lg cursor-not-allowed">
+        Annuler
+      </button>
+    }
+
+    @if (stage === 'preview') {
+      <button
+        type="button"
+        (click)="retourUpload()"
+        class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+        Changer de fichier
+      </button>
+      <button
+        type="button"
+        (click)="annuler()"
+        class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+        Annuler
+      </button>
+      <button
+        type="button"
+        (click)="lancerImport()"
+        [disabled]="!peutImporter"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+        [ngClass]="peutImporter
+          ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+          : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
+        <lucide-icon name="Upload" class="w-4 h-4"></lucide-icon>
+        @if (aDesErreurs) {
+          Importer les {{ validation?.valides }} lignes valides
+        } @else {
+          Importer les {{ validation?.valides }} lignes
+        }
+      </button>
+    }
+
+    @if (stage === 'resultat') {
+      <button
+        type="button"
+        (click)="fermer()"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+        Fermer
+      </button>
+    }
+
+  </div>
+</div>
