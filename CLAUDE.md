@@ -101,7 +101,7 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 **Entité centrale :** le dossier employé est le référentiel partagé par tous les autres sous-modules.
 
 **Corrections ultérieures :**
-- Dossier employé — nouveaux champs d'identité : matricule saisi manuellement (obligatoire, unicité serveur), numéro d'identification (CNI), situation matrimoniale (`CELIBATAIRE` | `MARIE`), nombre d'enfants (visible + requis uniquement si `MARIE`).
+- Dossier employé — nouveaux champs d'identité : matricule saisi manuellement (obligatoire, unicité serveur), numéro d'identification (CNI), situation matrimoniale (`CELIBATAIRE` | `MARIE`), nombre d'enfants (toujours visible, optionnel, min 0 — on peut avoir des enfants et être célibataire).
 - Dossier employé — nouveaux champs de poste : supérieur hiérarchique (select alimenté par les employés `ACTIF` ou `EN_PERIODE_ESSAI`, l'employé courant est exclu en mode édition), durée de la période d'essai en mois (visible + requise uniquement si `statut === 'EN_PERIODE_ESSAI'`).
 - Contrats — le type `ALTERNANCE` est remplacé par `PRESTATION` dans le `TypeContrat`, avec mise à jour des radios du formulaire, de l'option du filtre et des mappings de badges (liste-contrats, avenants).
 - Contrats — upload d'un fichier de contrat (PDF/DOC/DOCX) via zone drag-and-drop. Le `ContratService.creerContrat` / `modifierContrat` passent à `FormData` (blob JSON `contrat` + champ `fichier`) avec les champs optionnels `fichierUrl`, `fichierNom`, `tailleFichier` sur l'interface. Nouvelles méthodes `telechargerContrat(id)` (Blob) et `supprimerFichierContrat(id)`.

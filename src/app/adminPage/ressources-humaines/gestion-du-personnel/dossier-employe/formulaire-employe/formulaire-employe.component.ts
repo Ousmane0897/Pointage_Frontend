@@ -120,7 +120,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         genre: ['HOMME', Validators.required],
         nationalite: ['', Validators.required],
         situationMatrimoniale: ['', Validators.required],
-        nombreEnfants: [null],
+        nombreEnfants: [null, Validators.min(0)],
       }),
       // Étape 2
       poste: this.fb.group({
@@ -144,20 +144,6 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         }),
       }),
     });
-
-    // Validator dynamique : nombreEnfants requis si situation = MARIE
-    this.identiteGroup.get('situationMatrimoniale')!.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((valeur: string) => {
-        const ctrl = this.identiteGroup.get('nombreEnfants')!;
-        if (valeur === 'MARIE') {
-          ctrl.setValidators([Validators.required, Validators.min(0)]);
-        } else {
-          ctrl.clearValidators();
-          ctrl.setValue(null, { emitEvent: false });
-        }
-        ctrl.updateValueAndValidity();
-      });
 
     // Validator dynamique : dureeEssaiMois requis si statut = EN_PERIODE_ESSAI
     this.posteGroup.get('statut')!.valueChanges
