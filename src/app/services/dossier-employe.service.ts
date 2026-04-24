@@ -1,9 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Observable, catchError, of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { DossierEmploye, FiltreEmploye } from '../models/dossier-employe.model';
 import { PageResponse } from '../models/pageResponse.model';
+import {
+  DossierEmployeBulkPayload,
+  ResultatImport,
+} from '../models/import-employe.model';
 
 /**
  * Service CRUD pour les dossiers employés – Gestion du Personnel
@@ -102,5 +106,27 @@ export class DossierEmployeService {
     return this.http.get<string[]>(
       `${this.baseUrl}/gestion-personnel/employes/postes`
     );
+  }
+
+  /**
+   * Import bulk transactionnel (all-or-nothing) — consommé par la modale d'import Excel.
+   * Le backend résout les supérieurs hiérarchiques par matricule (internes au batch + existants en base).
+   * En cas d'échec d'une seule ligne, aucun employé n'est créé.
+   */
+  importerBulk(payload: DossierEmployeBulkPayload): Observable<ResultatImport> {
+    return this.http
+      .post<ResultatImport>(
+        `${this.baseUrl}/gestion-personnel/employes/bulk`,
+        payload,
+      )
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          const corps = err.error;
+          if (corps && typeof corps === 'object' && 'succes' in corps && 'echecs' in corps) {
+            return of(corps as ResultatImport);
+          }
+          return throwError(() => err);
+        }),
+      );
   }
 }

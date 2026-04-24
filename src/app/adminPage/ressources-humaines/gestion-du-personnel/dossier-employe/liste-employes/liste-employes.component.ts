@@ -22,6 +22,8 @@ import { DossierEmployeService } from '../../../../../services/dossier-employe.s
 import { DossierEmploye, FiltreEmploye } from '../../../../../models/dossier-employe.model';
 import { PageResponse } from '../../../../../models/pageResponse.model';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
+import { ImportExcelModalComponent } from '../import-excel-modal/import-excel-modal.component';
+import { ResultatImport } from '../../../../../models/import-employe.model';
 
 @Component({
   selector: 'app-liste-employes',
@@ -197,6 +199,27 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
 
   navigateToModification(id: string): void {
     this.router.navigate(['/admin/rh/gestion-du-personnel/dossier-employe/modifier', id]);
+  }
+
+  // ─── Import Excel ─────────────────────────────────────────────────────────
+  ouvrirImportExcel(): void {
+    const dialogRef = this.dialog.open(ImportExcelModalComponent, {
+      width: 'auto',
+      maxWidth: '92vw',
+      panelClass: 'import-excel-dialog-panel',
+      autoFocus: false,
+      disableClose: true,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((resultat: ResultatImport | null | undefined) => {
+        if (resultat && resultat.succes > 0) {
+          this.page = 0;
+          this.loadEmployes();
+        }
+      });
   }
 
   // ─── Suppression ──────────────────────────────────────────────────────────
