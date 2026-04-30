@@ -134,7 +134,7 @@ export class SidebarComponent implements OnInit {
     if (this.role === 'SUPERADMIN' || this.role === 'RH') return true;
     const m: ModulesAutorises = this.modulesAutorises;
     if (!m) return false;
-    return m.ressourcesHumaines?.agentsRh;
+    return m.rh;
   }
 
   hasOperationsAccess(): boolean {
@@ -191,10 +191,6 @@ export class SidebarComponent implements OnInit {
   hasAccess(path: string): boolean {
 
     if (this.role === 'SUPERADMIN') {
-      return true;
-    }
-
-    if (this.role === 'RH' && path.startsWith('ressourcesHumaines')) {
       return true;
     }
 

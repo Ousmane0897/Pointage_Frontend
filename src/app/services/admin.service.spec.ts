@@ -28,10 +28,7 @@ describe('AdminService', () => {
       jourFeries: true,
       employes: true,
       agences: true,
-      ressourcesHumaines: {
-        agentsRh: true,
-        developpementRh: true,
-      },
+      rh: true,
       collecteLivraison: {
         collecteBesoins: true,
         suiviLivraison: true,
