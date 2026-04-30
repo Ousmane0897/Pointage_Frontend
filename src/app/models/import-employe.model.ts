@@ -69,6 +69,28 @@ export interface ResultatImport {
   echecs: EchecImport[];
 }
 
+/**
+ * Forme exacte renvoyée par le backend (POST /gestion-personnel/employes/bulk).
+ * Mappée vers `ResultatImport` dans `DossierEmployeService.importerBulk()`.
+ * 200 OK (tout inséré), 207 Multi-Status (import partiel) et 422 Unprocessable
+ * Entity (TOUT_OU_RIEN avec erreurs) renvoient tous ce même corps.
+ */
+export interface BackendBulkImportResponse {
+  total: number;
+  inserted: number;
+  failed: number;
+  insertedIds: string[];
+  errors: BackendBulkImportError[];
+}
+
+export interface BackendBulkImportError {
+  lineNumber?: number;
+  numeroLigne?: number;
+  matricule?: string;
+  message?: string;
+  field?: string;
+}
+
 export const COLONNES_TEMPLATE: readonly string[] = [
   'Matricule *',
   'Nom *',

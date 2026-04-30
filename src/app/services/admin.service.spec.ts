@@ -18,21 +18,40 @@ describe('AdminService', () => {
     email: 'admin@test.com',
     password: 'password123',
     poste: 'Super Admin',
-    role: 'SUPER_ADMIN',
+    role: 'SUPERADMIN',
     modulesAutorises: {
-      Dashboard: true,
-      Admin: true,
-      StatistiquesAgences: true,
-      Planifications: false,
-      Calendrier: true,
-      Stock: false,
-      CollecteLivraison: true,
-      JourFeries: true,
-      Employes: true,
-      Agences: true,
-      Absences: false,
-      RH: true,
-      Pointages: true
+      dashboard: true,
+      admin: true,
+      statistiquesAgences: true,
+      planifications: false,
+      calendrier: true,
+      jourFeries: true,
+      employes: true,
+      agences: true,
+      ressourcesHumaines: {
+        agentsRh: true,
+        developpementRh: true,
+      },
+      collecteLivraison: {
+        collecteBesoins: true,
+        suiviLivraison: true,
+      },
+      absences: {
+        tempsReel: false,
+        historiqueAbsences: false,
+      },
+      pointages: {
+        pointagesDuJour: true,
+        historiquePointages: true,
+      },
+      stock: {
+        produits: false,
+        entrees: false,
+        sorties: false,
+        suivis: false,
+        historiquesEntrees: false,
+        historiquesSorties: false,
+      },
     },
     active: true
   };
@@ -61,10 +80,10 @@ describe('AdminService', () => {
     service.getAdmins().subscribe(admins => {
       expect(admins.length).toBe(1);
       expect(admins[0].email).toBe('admin@test.com');
-      expect(admins[0].modulesAutorises.Admin).toBeTrue();
+      expect(admins[0].modulesAutorises.admin).toBeTrue();
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/superadmin`);
+    const req = httpMock.expectOne(`${baseUrl}/superadmin`);
     expect(req.request.method).toBe('GET');
 
     req.flush([mockAdmin]);
@@ -77,7 +96,7 @@ describe('AdminService', () => {
       expect(admin.active).toBeTrue();
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/superadmin`);
+    const req = httpMock.expectOne(`${baseUrl}/superadmin`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(mockAdmin);
 
@@ -88,10 +107,10 @@ describe('AdminService', () => {
   it('should update an admin', () => {
     service.updateAdmin('1', mockAdmin).subscribe(admin => {
       expect(admin.id).toBe('1');
-      expect(admin.modulesAutorises.Dashboard).toBeTrue();
+      expect(admin.modulesAutorises.dashboard).toBeTrue();
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/superadmin/1`);
+    const req = httpMock.expectOne(`${baseUrl}/superadmin/1`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual(mockAdmin);
 
@@ -104,7 +123,7 @@ describe('AdminService', () => {
       expect(response).toBeNull();
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/superadmin/1`);
+    const req = httpMock.expectOne(`${baseUrl}/superadmin/1`);
     expect(req.request.method).toBe('DELETE');
 
     req.flush(null);

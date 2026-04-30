@@ -19,10 +19,10 @@ export interface Contrat {
   clauses: string;
   joursAvantAlerte: number;
 
-  // Fichier du contrat (PDF/DOC/DOCX)
-  fichierUrl?: string;
-  fichierNom?: string;
-  tailleFichier?: number;
+  // Fichier du contrat (PDF/DOC/DOCX) — noms alignés sur le DTO backend
+  fichierContratUrl?: string;
+  fichierContratNom?: string;
+  fichierContratMimeType?: string;
 
   // Historique des renouvellements
   renouvellements?: Renouvellement[];

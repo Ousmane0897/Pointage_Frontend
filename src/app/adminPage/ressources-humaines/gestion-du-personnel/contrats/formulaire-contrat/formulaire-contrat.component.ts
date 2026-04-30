@@ -52,7 +52,7 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
   // ─── Upload fichier contrat ───────────────────────────────────────────────
   selectedFile: File | null = null;
   dragOver = false;
-  fichierExistant: { nom: string; taille?: number; url?: string } | null = null;
+  fichierExistant: { nom: string; url?: string } | null = null;
 
   // ─── Cycle de vie ─────────────────────────────────────────────────────────
   private destroy$ = new Subject<void>();
@@ -133,11 +133,10 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
         this.employes = employes.content;
         if (contrat) {
           this.contratForm.patchValue(contrat);
-          if (contrat.fichierUrl || contrat.fichierNom) {
+          if (contrat.fichierContratUrl || contrat.fichierContratNom) {
             this.fichierExistant = {
-              nom: contrat.fichierNom ?? 'Fichier du contrat',
-              taille: contrat.tailleFichier,
-              url: contrat.fichierUrl,
+              nom: contrat.fichierContratNom ?? 'Fichier du contrat',
+              url: contrat.fichierContratUrl,
             };
           }
         } else {

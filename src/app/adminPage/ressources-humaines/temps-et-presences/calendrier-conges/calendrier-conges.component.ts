@@ -112,13 +112,13 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
 
   annulerDemande(d: DemandeConge): void {
     if (!d.id) return;
-    this.congeService.annulerDemande(d.id).pipe(
-      catchError(err => { this.handleError(err); return of(null); }),
-      takeUntil(this.destroy$),
-    ).subscribe(() => {
-      this.toastr.success('Demande annulée.', 'Succès');
-      this.loadDemandes();
-      this.loadSoldes();
+    this.congeService.annulerDemande(d.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.toastr.success('Demande annulée.', 'Succès');
+        this.loadDemandes();
+        this.loadSoldes();
+      },
+      error: err => this.handleError(err),
     });
   }
 

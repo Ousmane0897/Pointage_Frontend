@@ -144,22 +144,32 @@ export class AvenantsComponent implements OnInit, OnDestroy {
     this.contratService
       .creerAvenant(this.contratId, payload)
       .pipe(
-        catchError(err => {
-          console.error('Erreur création avenant :', err);
-          this.toastr.error("Erreur lors de la création de l'avenant.", 'Erreur');
-          return of(null);
-        }),
         finalize(() => (this.savingAvenant = false)),
         takeUntil(this.destroy$),
       )
-      .subscribe(res => {
-        if (res) {
+      .subscribe({
+        next: () => {
           this.toastr.success('Avenant créé avec succès.', 'Succès');
-          this.avenants = [...this.avenants, res];
           this.avenantForm.reset({ objet: '', dateEffet: null, description: '' });
           this.showAvenantForm = false;
-        }
+          this.reloadAvenants();
+        },
+        error: err => {
+          console.error('Erreur création avenant :', err);
+          this.toastr.error("Erreur lors de la création de l'avenant.", 'Erreur');
+        },
       });
+  }
+
+  /** Recharge la liste des avenants depuis le backend (POST renvoie un body partiel). */
+  private reloadAvenants(): void {
+    this.contratService
+      .getAvenants(this.contratId)
+      .pipe(
+        catchError(() => of([] as Avenant[])),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(avenants => (this.avenants = avenants));
   }
 
   supprimerAvenant(avenant: Avenant): void {
@@ -177,19 +187,16 @@ export class AvenantsComponent implements OnInit, OnDestroy {
         if (confirmed) {
           this.contratService
             .supprimerAvenant(this.contratId, avenant.id!)
-            .pipe(
-              catchError(err => {
-                console.error('Erreur suppression avenant :', err);
-                this.toastr.error("Erreur lors de la suppression de l'avenant.", 'Erreur');
-                return of(null);
-              }),
-              takeUntil(this.destroy$),
-            )
-            .subscribe(res => {
-              if (res !== null) {
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: () => {
                 this.toastr.success('Avenant supprimé avec succès.', 'Succès');
                 this.avenants = this.avenants.filter(a => a.id !== avenant.id);
-              }
+              },
+              error: err => {
+                console.error('Erreur suppression avenant :', err);
+                this.toastr.error("Erreur lors de la suppression de l'avenant.", 'Erreur');
+              },
             });
         }
       });
@@ -223,25 +230,33 @@ export class AvenantsComponent implements OnInit, OnDestroy {
     this.contratService
       .renouvelerContrat(this.contratId, payload)
       .pipe(
-        catchError(err => {
-          console.error('Erreur renouvellement :', err);
-          this.toastr.error('Erreur lors du renouvellement du contrat.', 'Erreur');
-          return of(null);
-        }),
         finalize(() => (this.savingRenouvellement = false)),
         takeUntil(this.destroy$),
       )
-      .subscribe(res => {
-        if (res) {
+      .subscribe({
+        next: () => {
           this.toastr.success('Contrat renouvelé avec succès.', 'Succès');
-          this.renouvellements = [...this.renouvellements, res];
-          // Mettre à jour la date de fin du contrat affiché
-          if (this.contrat) {
-            this.contrat = { ...this.contrat, dateFin: res.nouvelleDateFin, statut: 'RENOUVELE' };
-          }
           this.renouvellementForm.reset({ nouvelleDateFin: null, motif: '' });
           this.showRenouvellementForm = false;
-        }
+          this.reloadContratAndRenouvellements();
+        },
+        error: err => {
+          console.error('Erreur renouvellement :', err);
+          this.toastr.error('Erreur lors du renouvellement du contrat.', 'Erreur');
+        },
+      });
+  }
+
+  /** Recharge contrat + renouvellements depuis le backend (POST renvoie un body partiel). */
+  private reloadContratAndRenouvellements(): void {
+    forkJoin({
+      contrat: this.contratService.getContratById(this.contratId).pipe(catchError(() => of(null))),
+      renouvellements: this.contratService.getRenouvellements(this.contratId).pipe(catchError(() => of([] as Renouvellement[]))),
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ contrat, renouvellements }) => {
+        if (contrat) this.contrat = contrat;
+        this.renouvellements = renouvellements;
       });
   }
 

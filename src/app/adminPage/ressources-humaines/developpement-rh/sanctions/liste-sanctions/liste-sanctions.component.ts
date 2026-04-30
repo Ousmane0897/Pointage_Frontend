@@ -148,13 +148,13 @@ export class ListeSanctionsComponent implements OnInit, OnDestroy {
 
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (!confirmed) return;
-      this.sanctionService.supprimer(s.id!).pipe(
-        catchError(err => { this.handleError(err); return of(null); }),
-        takeUntil(this.destroy$),
-      ).subscribe(() => {
-        this.toastr.success('Sanction supprimée.', 'Succès');
-        if (this.sanctions.length === 1 && this.page > 0) this.page--;
-        this.loadSanctions();
+      this.sanctionService.supprimer(s.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Sanction supprimée.', 'Succès');
+          if (this.sanctions.length === 1 && this.page > 0) this.page--;
+          this.loadSanctions();
+        },
+        error: err => this.handleError(err),
       });
     });
   }

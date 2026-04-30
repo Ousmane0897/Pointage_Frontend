@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, catchError, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { DossierEmploye, FiltreEmploye } from '../models/dossier-employe.model';
 import { PageResponse } from '../models/pageResponse.model';
 import {
+  BackendBulkImportResponse,
   DossierEmployeBulkPayload,
+  EchecImport,
   ResultatImport,
 } from '../models/import-employe.model';
 
@@ -82,51 +84,109 @@ export class DossierEmployeService {
   }
 
   /**
-   * Récupère la liste des départements disponibles
+   * Récupère la photo binaire de l'employé.
+   * Le endpoint étant protégé par JWT, on passe par HttpClient (AuthInterceptor)
+   * et on convertit ensuite le Blob en ObjectURL côté composant.
+   */
+  getPhotoBlob(id: string): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/gestion-personnel/employes/${id}/photo`,
+      { responseType: 'blob' }
+    );
+  }
+
+  /**
+   * Récupère en un seul appel les valeurs distinctes (départements, sites, postes)
+   * dérivées des employés en base. Utilisé pour peupler les dropdowns de filtres
+   * (liste des employés) et le formulaire de création/édition.
+   *
+   * Le backend n'expose pas d'endpoints dédiés pour ces référentiels — on dérive
+   * depuis la liste paginée. Pattern identique à `import-employe-excel.service.ts`.
+   *
+   * À privilégier sur `getDepartements/Sites/Postes()` quand on a besoin de plusieurs
+   * listes : un seul aller-retour serveur au lieu de N.
+   */
+  getValeursFiltres(): Observable<{ departements: string[]; sites: string[]; postes: string[] }> {
+    return this.getEmployes(0, 1000).pipe(
+      map(page => {
+        const employes = page.content ?? [];
+        const distinctTrie = (vs: (string | undefined | null)[]) =>
+          [...new Set(vs.filter((v): v is string => !!v && v.trim() !== ''))]
+            .sort((a, b) => a.localeCompare(b, 'fr'));
+        return {
+          departements: distinctTrie(employes.map(e => e.departement)),
+          sites: distinctTrie(employes.map(e => e.siteAffecte)),
+          postes: distinctTrie(employes.map(e => e.poste)),
+        };
+      }),
+    );
+  }
+
+  /**
+   * Liste des départements distincts dérivée des employés. Délègue à `getValeursFiltres()`.
+   * Préférer `getValeursFiltres()` si on a besoin aussi des sites/postes (1 appel au lieu de N).
    */
   getDepartements(): Observable<string[]> {
-    return this.http.get<string[]>(
-      `${this.baseUrl}/gestion-personnel/employes/departements`
-    );
+    return this.getValeursFiltres().pipe(map(v => v.departements));
   }
 
   /**
-   * Récupère la liste des sites disponibles
+   * Liste des sites distincts dérivée des employés. Délègue à `getValeursFiltres()`.
    */
   getSites(): Observable<string[]> {
-    return this.http.get<string[]>(
-      `${this.baseUrl}/gestion-personnel/employes/sites`
-    );
+    return this.getValeursFiltres().pipe(map(v => v.sites));
   }
 
   /**
-   * Récupère la liste des postes disponibles
+   * Liste des postes distincts dérivée des employés. Délègue à `getValeursFiltres()`.
    */
   getPostes(): Observable<string[]> {
-    return this.http.get<string[]>(
-      `${this.baseUrl}/gestion-personnel/employes/postes`
-    );
+    return this.getValeursFiltres().pipe(map(v => v.postes));
   }
 
   /**
    * Import bulk transactionnel (all-or-nothing) — consommé par la modale d'import Excel.
    * Le backend résout les supérieurs hiérarchiques par matricule (internes au batch + existants en base).
    * En cas d'échec d'une seule ligne, aucun employé n'est créé.
+   *
+   * Le backend renvoie {@link BackendBulkImportResponse} ({@code inserted}, {@code errors}, …) ;
+   * on mappe vers {@link ResultatImport} ({@code succes}, {@code echecs}) consommé par l'UI.
+   * Le HTTP 422 (TOUT_OU_RIEN avec erreurs) est intercepté et mappé de la même façon.
    */
   importerBulk(payload: DossierEmployeBulkPayload): Observable<ResultatImport> {
     return this.http
-      .post<ResultatImport>(
+      .post<BackendBulkImportResponse>(
         `${this.baseUrl}/gestion-personnel/employes/bulk`,
         payload,
       )
       .pipe(
+        map(corps => this.mapperReponseBulk(corps)),
         catchError((err: HttpErrorResponse) => {
           const corps = err.error;
-          if (corps && typeof corps === 'object' && 'succes' in corps && 'echecs' in corps) {
-            return of(corps as ResultatImport);
+          if (this.estReponseBulkBackend(corps)) {
+            return of(this.mapperReponseBulk(corps));
           }
           return throwError(() => err);
         }),
       );
+  }
+
+  private estReponseBulkBackend(corps: unknown): corps is BackendBulkImportResponse {
+    return (
+      !!corps &&
+      typeof corps === 'object' &&
+      'inserted' in corps &&
+      'errors' in corps &&
+      Array.isArray((corps as { errors: unknown }).errors)
+    );
+  }
+
+  private mapperReponseBulk(corps: BackendBulkImportResponse): ResultatImport {
+    const echecs: EchecImport[] = (corps.errors ?? []).map(e => ({
+      numeroLigne: e.numeroLigne ?? e.lineNumber ?? 0,
+      matricule: e.matricule ?? '',
+      message: e.message ?? 'Erreur serveur (détail manquant)',
+    }));
+    return { succes: corps.inserted ?? 0, echecs };
   }
 }

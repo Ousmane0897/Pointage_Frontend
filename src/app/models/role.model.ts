@@ -3,4 +3,5 @@ export type Role =
   | "SUPERVISEUR"
   | "EXPLOITATION"
   | "BACKOFFICE"
-  | "SUPERADMIN";
+  | "SUPERADMIN"
+  | "RH";

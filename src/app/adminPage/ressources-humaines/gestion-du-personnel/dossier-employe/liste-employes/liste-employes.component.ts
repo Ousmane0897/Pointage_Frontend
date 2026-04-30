@@ -14,7 +14,6 @@ import {
   catchError,
   of,
   finalize,
-  forkJoin,
 } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -24,6 +23,7 @@ import { PageResponse } from '../../../../../models/pageResponse.model';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import { ImportExcelModalComponent } from '../import-excel-modal/import-excel-modal.component';
 import { ResultatImport } from '../../../../../models/import-employe.model';
+import { environment } from '../../../../../../environments/environment';
 
 @Component({
   selector: 'app-liste-employes',
@@ -44,6 +44,11 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
   total = 0;
   totalPages = 0;
 
+  // ─── Photos (id employé → ObjectURL local) ───────────────────────────────
+  photoUrls: Record<string, string> = {};
+
+  // ─── baseUrl ─────────────────────────────────────────────────
+   baseUrl: string = environment.apiUrl;
   // ─── Pagination ───────────────────────────────────────────────────────────
   page = 0;
   size = 10;
@@ -79,12 +84,12 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
 
   // ─── Chargement des options de filtres ────────────────────────────────────
   private loadFilterOptions(): void {
-    forkJoin({
-      departements: this.dossierEmployeService.getDepartements().pipe(catchError(() => of([]))),
-      sites: this.dossierEmployeService.getSites().pipe(catchError(() => of([]))),
-      postes: this.dossierEmployeService.getPostes().pipe(catchError(() => of([]))),
-    })
-      .pipe(takeUntil(this.destroy$))
+    this.dossierEmployeService
+      .getValeursFiltres()
+      .pipe(
+        catchError(() => of({ departements: [], sites: [], postes: [] })),
+        takeUntil(this.destroy$),
+      )
       .subscribe(({ departements, sites, postes }) => {
         this.departements = departements;
         this.sites = sites;
@@ -117,6 +122,7 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
         this.employes = res.content;
         this.total = res.totalElements ?? 0;
         this.totalPages = Math.ceil(this.total / this.size);
+        this.chargerPhotos();
       });
   }
 
@@ -140,7 +146,34 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
         this.employes = res.content;
         this.total = res.totalElements ?? 0;
         this.totalPages = Math.ceil(this.total / this.size);
+        this.chargerPhotos();
       });
+  }
+
+  // ─── Chargement des photos (via endpoint protégé par JWT) ────────────────
+  private chargerPhotos(): void {
+    this.revoquerPhotoUrls();
+    this.employes
+      .filter(e => !!e.id && !!e.photoUrl)
+      .forEach(e => {
+        this.dossierEmployeService
+          .getPhotoBlob(e.id!)
+          .pipe(
+            catchError(() => of(null)),
+            takeUntil(this.destroy$),
+          )
+          .subscribe(blob => { 
+            if (blob) {
+              this.photoUrls[e.id!] = URL.createObjectURL(blob);
+            }
+          });
+      });
+  }
+  
+  // ─── Libération des ObjectURLs pour éviter les fuites de mémoire ─────────────
+  private revoquerPhotoUrls(): void {
+    Object.values(this.photoUrls).forEach(url => URL.revokeObjectURL(url));
+    this.photoUrls = {};
   }
 
   // ─── Recherche ────────────────────────────────────────────────────────────
@@ -233,19 +266,16 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
       if (confirmed) {
         this.dossierEmployeService
           .supprimerEmploye(id)
-          .pipe(
-            catchError(err => {
-              console.error('Erreur suppression :', err);
-              this.toastr.error('Erreur lors de la suppression du dossier employé.', 'Erreur');
-              return of(null);
-            }),
-            takeUntil(this.destroy$),
-          )
-          .subscribe(res => {
-            if (res !== null) {
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
               this.toastr.success(`Le dossier de ${nomComplet} a été supprimé avec succès.`, 'Succès');
               this.loadEmployes();
-            }
+            },
+            error: err => {
+              console.error('Erreur suppression :', err);
+              this.toastr.error('Erreur lors de la suppression du dossier employé.', 'Erreur');
+            },
           });
       }
     });
@@ -277,6 +307,7 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
 
   // ─── Nettoyage ────────────────────────────────────────────────────────────
   ngOnDestroy(): void {
+    this.revoquerPhotoUrls();
     this.destroy$.next();
     this.destroy$.complete();
   }

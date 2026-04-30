@@ -188,11 +188,11 @@ export class ListeContratsComponent implements OnInit, OnDestroy {
   }
 
   navigateToModification(id: string): void {
-    this.router.navigate(['/admin/rh/gestion-du-personnel/contrats/modifier', id]);
+    this.router.navigate(['/admin/rh/gestion-du-personnel/contrats', id, 'modifier']);
   }
 
   navigateToAvenants(contratId: string): void {
-    this.router.navigate(['/admin/rh/gestion-du-personnel/contrats/avenants', contratId]);
+    this.router.navigate(['/admin/rh/gestion-du-personnel/contrats', contratId, 'avenants']);
   }
 
   // ─── Suppression ──────────────────────────────────────────────────────────
@@ -212,19 +212,16 @@ export class ListeContratsComponent implements OnInit, OnDestroy {
         if (confirmed) {
           this.contratService
             .supprimerContrat(contrat.id!)
-            .pipe(
-              catchError(err => {
-                console.error('Erreur suppression contrat :', err);
-                this.toastr.error('Erreur lors de la suppression du contrat.', 'Erreur');
-                return of(null);
-              }),
-              takeUntil(this.destroy$),
-            )
-            .subscribe(res => {
-              if (res !== null) {
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: () => {
                 this.toastr.success('Contrat supprimé avec succès.', 'Succès');
                 this.loadContrats();
-              }
+              },
+              error: err => {
+                console.error('Erreur suppression contrat :', err);
+                this.toastr.error('Erreur lors de la suppression du contrat.', 'Erreur');
+              },
             });
         }
       });

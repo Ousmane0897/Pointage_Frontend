@@ -32,6 +32,9 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   contrats: Contrat[] = [];
   documents: DocumentEmploye[] = [];
 
+  // ─── Photo (ObjectURL local, le endpoint est protégé par JWT) ────────────
+  photoBlobUrl: string | null = null;
+
   // ─── États UI ─────────────────────────────────────────────────────────────
   loading = false;
   errorMessage = '';
@@ -91,7 +94,33 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
         this.employe = employe;
         this.contrats = contrats;
         this.documents = documents;
+        this.chargerPhoto();
       });
+  }
+
+  // ─── Chargement de la photo (endpoint protégé par JWT) ───────────────────
+  private chargerPhoto(): void {
+    this.revoquerPhotoBlobUrl();
+    if (!this.employe?.id || !this.employe.photoUrl) return;
+
+    this.dossierEmployeService
+      .getPhotoBlob(this.employe.id)
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(blob => {
+        if (blob) {
+          this.photoBlobUrl = URL.createObjectURL(blob);
+        }
+      });
+  }
+
+  private revoquerPhotoBlobUrl(): void {
+    if (this.photoBlobUrl) {
+      URL.revokeObjectURL(this.photoBlobUrl);
+      this.photoBlobUrl = null;
+    }
   }
 
   // ─── Navigation par onglets ───────────────────────────────────────────────
@@ -194,6 +223,7 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
 
   // ─── Nettoyage ────────────────────────────────────────────────────────────
   ngOnDestroy(): void {
+    this.revoquerPhotoBlobUrl();
     this.destroy$.next();
     this.destroy$.complete();
   }

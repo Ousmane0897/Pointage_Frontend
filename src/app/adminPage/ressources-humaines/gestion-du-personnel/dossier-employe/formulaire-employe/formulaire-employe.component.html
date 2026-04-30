@@ -45,7 +45,7 @@
               'bg-white border-gray-300 text-gray-400': etapeActuelle < i + 1
             }"
           >
-            <lucide-icon *ngIf="etapeActuelle > i + 1" name="check" [size]="16"></lucide-icon>
+            <lucide-icon *ngIf="etapeActuelle > i + 1" name="Check" [size]="16"></lucide-icon>
             <span *ngIf="etapeActuelle <= i + 1">{{ i + 1 }}</span>
           </div>
           <span
@@ -95,7 +95,7 @@
                 />
                 <lucide-icon
                   *ngIf="!previewUrl"
-                  name="camera"
+                  name="Camera"
                   [size]="32"
                   class="text-gray-400"
                 ></lucide-icon>
@@ -613,7 +613,7 @@
                   />
                   <lucide-icon
                     *ngIf="!previewUrl"
-                    name="user"
+                    name="User"
                     [size]="24"
                     class="text-gray-400"
                   ></lucide-icon>
@@ -814,13 +814,13 @@
           >
             <lucide-icon
               *ngIf="enregistrement"
-              name="loader-2"
+              name="Loader2"
               [size]="16"
               class="animate-spin"
             ></lucide-icon>
             <lucide-icon
               *ngIf="!enregistrement"
-              name="save"
+              name="Save"
               [size]="16"
             ></lucide-icon>
             {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}

@@ -96,13 +96,13 @@ export class ListeFormationsComponent implements OnInit, OnDestroy {
 
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (!confirmed) return;
-      this.formationService.supprimer(f.id!).pipe(
-        catchError(err => { this.handleError(err); return of(null); }),
-        takeUntil(this.destroy$),
-      ).subscribe(() => {
-        this.toastr.success('Formation supprimée.', 'Succès');
-        if (this.formations.length === 1 && this.page > 0) this.page--;
-        this.loadFormations();
+      this.formationService.supprimer(f.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Formation supprimée.', 'Succès');
+          if (this.formations.length === 1 && this.page > 0) this.page--;
+          this.loadFormations();
+        },
+        error: err => this.handleError(err),
       });
     });
   }

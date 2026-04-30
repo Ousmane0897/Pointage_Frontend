@@ -31,7 +31,7 @@ export class GestionPrivilegeComponent implements OnInit {
 
   admins: Admin[] = [];
   selectedAdmin: Admin | null = null;
-  role: string[] = ['EXPLOITATION', 'BACKOFFICE', 'SUPERVISEUR', 'MAGASINIER', 'RESPONSABLE_IT', 'Responsable_QHSE', 'CONTROLEUR_STOCK'];
+  role: string[] = ['EXPLOITATION', 'BACKOFFICE', 'SUPERVISEUR', 'MAGASINIER', 'RESPONSABLE_IT', 'Responsable_QHSE', 'CONTROLEUR_STOCK', 'RH'];
   searchText: string = '';
   showModal = false;
   showPassword: boolean = false;

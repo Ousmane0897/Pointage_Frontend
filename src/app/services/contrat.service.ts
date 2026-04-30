@@ -107,7 +107,7 @@ export class ContratService {
    */
   renouvelerContrat(contratId: string, renouvellement: Renouvellement): Observable<Renouvellement> {
     return this.http.post<Renouvellement>(
-      `${this.baseUrl}/gestion-personnel/contrats/${contratId}/renouvellements`,
+      `${this.baseUrl}/gestion-personnel/contrats/${contratId}/renouveler`,
       renouvellement
     );
   }

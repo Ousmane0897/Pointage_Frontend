@@ -132,12 +132,12 @@ export class ListeHeuresSupComponent implements OnInit, OnDestroy {
     });
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(ok => {
       if (!ok) return;
-      this.hsService.supprimer(h.id!).pipe(
-        catchError(err => { this.handleError(err); return of(null); }),
-        takeUntil(this.destroy$),
-      ).subscribe(() => {
-        this.toastr.success('Déclaration supprimée.', 'Succès');
-        this.load();
+      this.hsService.supprimer(h.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Déclaration supprimée.', 'Succès');
+          this.load();
+        },
+        error: err => this.handleError(err),
       });
     });
   }

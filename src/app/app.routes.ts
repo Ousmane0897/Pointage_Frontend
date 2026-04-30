@@ -33,7 +33,7 @@ export const routes: Routes = [
             //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // redirection vers la page dashboard par défaut
             { path: 'dashboard', loadComponent: () => import('./adminPage/dashboard/dashboard.component').then(m => m.DashboardComponent) }, // lazy loading de la page dashboard
             { path: 'page-par-defaut-apres-login', loadComponent: () => import('./adminPage/page-par-defaut-apres-login/page-par-defaut-apres-login.component').then(m => m.PageParDefautApresLoginComponent) }, // lazy loading de la page par défaut après login
-            { path: 'rh/agentsRh', loadComponent: () => import('./adminPage/rh/rh.component').then(m => m.RhComponent) }, // lazy loading de la page ressources humaines
+            
             { path: 'dashboard-par-agence', loadComponent: () => import('./adminPage/dashboard-par-agence/tableau-de-bord-par-agence.component').then(m => m.TableauDeBordParAgenceComponent) }, // lazy loading de la page tableau de bord par agence
             { path: 'operations/planification', loadComponent: () => import('./adminPage/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
             { path: 'calendrier', loadComponent: () => import('./adminPage/calendrier/calendrier.component').then(m => m.CalendrierComponent) },
@@ -66,7 +66,7 @@ export const routes: Routes = [
             { path: 'rh/gestion-du-personnel/dossier-employe', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/liste-employes/liste-employes.component').then(m => m.ListeEmployesComponent) },
             { path: 'rh/gestion-du-personnel/dossier-employe/nouveau', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/formulaire-employe.component').then(m => m.FormulaireEmployeComponent) },
             { path: 'rh/gestion-du-personnel/dossier-employe/fiche/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/fiche-employe/fiche-employe.component').then(m => m.FicheEmployeComponent) },
-            { path: 'rh/gestion-du-personnel/dossier-employe/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/formulaire-employe.component').then(m => m.FormulaireEmployeComponent) },
+            { path: 'rh/gestion-du-personnel/dossier-employe/modifier/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/formulaire-employe.component').then(m => m.FormulaireEmployeComponent) },
             { path: 'rh/gestion-du-personnel/contrats', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/liste-contrats/liste-contrats.component').then(m => m.ListeContratsComponent) },
             { path: 'rh/gestion-du-personnel/contrats/nouveau', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },
             { path: 'rh/gestion-du-personnel/contrats/nouveau/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },

@@ -103,13 +103,13 @@ export class ListeBesoinsComponent implements OnInit, OnDestroy {
     });
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (!confirmed) return;
-      this.formationService.supprimerBesoin(b.id!).pipe(
-        catchError(err => { this.handleError(err); return of(null); }),
-        takeUntil(this.destroy$),
-      ).subscribe(() => {
-        this.toastr.success('Besoin supprimé.', 'Succès');
-        if (this.besoins.length === 1 && this.page > 0) this.page--;
-        this.loadBesoins();
+      this.formationService.supprimerBesoin(b.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Besoin supprimé.', 'Succès');
+          if (this.besoins.length === 1 && this.page > 0) this.page--;
+          this.loadBesoins();
+        },
+        error: err => this.handleError(err),
       });
     });
   }

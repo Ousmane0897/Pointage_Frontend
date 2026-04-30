@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { catchError, takeUntil } from 'rxjs/operators';
 import { LucideAngularModule } from 'lucide-angular';
 import { ToastrService } from 'ngx-toastr';
 
@@ -48,6 +48,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   // ─── Photo ────────────────────────────────────────────────────────────────
   photoFile: File | null = null;
   previewUrl: string | null = null;
+  /** True quand previewUrl est un ObjectURL local à révoquer au nettoyage. */
+  private previewUrlIsObject = false;
 
   // ─── Formulaire réactif (multi-étapes via sous-FormGroup) ─────────────────
   employeForm!: FormGroup;
@@ -167,23 +169,24 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   get contactUrgenceGroup(): FormGroup { return this.contactsGroup.get('contactUrgence') as FormGroup; }
 
   ngOnDestroy(): void {
+    this.revoquerPreviewUrlSiObjet();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   // ─── Chargement des données ───────────────────────────────────────────────
   private chargerReferentiels(): void {
-    this.dossierEmployeService.getDepartements()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({ next: (d) => (this.departements = d), error: () => {} });
-
-    this.dossierEmployeService.getSites()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({ next: (s) => (this.sites = s), error: () => {} });
-
-    this.dossierEmployeService.getPostes()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({ next: (p) => (this.postes = p), error: () => {} });
+    this.dossierEmployeService
+      .getValeursFiltres()
+      .pipe(
+        catchError(() => of({ departements: [], sites: [], postes: [] })),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(({ departements, sites, postes }) => {
+        this.departements = departements;
+        this.sites = sites;
+        this.postes = postes;
+      });
   }
 
   private chargerEmploye(id: string): void {
@@ -193,8 +196,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (employe) => {
           this.photoUrl = employe.photoUrl ?? '';
-          if (employe.photoUrl) {
-            this.previewUrl = employe.photoUrl;
+          if (employe.photoUrl && employe.id) {
+            this.chargerPhotoBlob(employe.id);
           }
 
           // Hydrate les sous-FormGroup
@@ -290,6 +293,30 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  // ─── Récupération du binaire photo (endpoint protégé par JWT) ────────────
+  private chargerPhotoBlob(id: string): void {
+    this.dossierEmployeService
+      .getPhotoBlob(id)
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(blob => {
+        if (blob) {
+          this.revoquerPreviewUrlSiObjet();
+          this.previewUrl = URL.createObjectURL(blob);
+          this.previewUrlIsObject = true;
+        }
+      });
+  }
+
+  private revoquerPreviewUrlSiObjet(): void {
+    if (this.previewUrlIsObject && this.previewUrl) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
+    this.previewUrlIsObject = false;
+  }
+
   // ─── Gestion de la photo ──────────────────────────────────────────────────
   onPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -314,6 +341,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
     const reader = new FileReader();
     reader.onload = (e) => {
+      this.revoquerPreviewUrlSiObjet();
       this.previewUrl = e.target?.result as string;
     };
     reader.readAsDataURL(fichier);
@@ -321,6 +349,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
   supprimerPhoto(): void {
     this.photoFile = null;
+    this.revoquerPreviewUrlSiObjet();
     this.previewUrl = null;
     this.photoUrl = '';
   }
@@ -352,7 +381,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
     const formData = new FormData();
     const employeJson = JSON.stringify(employePayload);
-    formData.append('employe', new Blob([employeJson], { type: 'application/json' }));
+    formData.append('dossier', new Blob([employeJson], { type: 'application/json' }));
 
     if (this.photoFile) {
       formData.append('photo', this.photoFile, this.photoFile.name);

@@ -125,13 +125,13 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
 
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (!confirmed) return;
-      this.absenceService.supprimer(a.id!).pipe(
-        catchError(err => { this.handleError(err); return of(null); }),
-        takeUntil(this.destroy$),
-      ).subscribe(() => {
-        this.toastr.success('Absence supprimée.', 'Succès');
-        if (this.absences.length === 1 && this.page > 0) this.page--;
-        this.loadAbsences();
+      this.absenceService.supprimer(a.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Absence supprimée.', 'Succès');
+          if (this.absences.length === 1 && this.page > 0) this.page--;
+          this.loadAbsences();
+        },
+        error: err => this.handleError(err),
       });
     });
   }

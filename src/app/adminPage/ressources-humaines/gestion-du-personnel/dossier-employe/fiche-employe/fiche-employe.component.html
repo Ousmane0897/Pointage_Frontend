@@ -63,8 +63,8 @@
         <div class="shrink-0">
           <div class="w-24 h-24 rounded-full overflow-hidden bg-indigo-100 flex items-center justify-center border-4 border-indigo-200 shadow">
             <img
-              *ngIf="employe.photoUrl; else avatarInitiales"
-              [src]="employe.photoUrl"
+              *ngIf="photoBlobUrl; else avatarInitiales"
+              [src]="photoBlobUrl"
               [alt]="employe.prenom + ' ' + employe.nom"
               class="w-full h-full object-cover" />
             <ng-template #avatarInitiales>

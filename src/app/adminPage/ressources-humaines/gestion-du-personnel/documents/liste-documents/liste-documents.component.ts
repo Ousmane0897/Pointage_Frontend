@@ -251,6 +251,8 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
       width: '420px',
       data: {
         message: `Êtes-vous sûr de vouloir ${label} ce document ?`,
+        confirmLabel: statut === 'VALIDE' ? 'Valider' : 'Refuser',
+        confirmColor: statut === 'VALIDE' ? 'primary' : 'warn',
       },
     });
 
@@ -297,19 +299,16 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
 
         this.documentService
           .supprimerDocument(id)
-          .pipe(
-            catchError(err => {
-              this.handleError(err);
-              return of(null);
-            }),
-            takeUntil(this.destroy$),
-          )
-          .subscribe(() => {
-            this.toastr.success('Document supprimé avec succès.', 'Succès');
-            if (this.documents.length === 1 && this.page > 0) {
-              this.page--;
-            }
-            this.loadDocuments();
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastr.success('Document supprimé avec succès.', 'Succès');
+              if (this.documents.length === 1 && this.page > 0) {
+                this.page--;
+              }
+              this.loadDocuments();
+            },
+            error: err => this.handleError(err),
           });
       });
   }
@@ -382,7 +381,7 @@ export class ListeDocumentsComponent implements OnInit, OnDestroy {
   }
 
   isRH(): boolean {
-    return this.currentRole === 'RH' || this.currentRole === 'ADMIN' || this.currentRole === 'SUPER_ADMIN';
+    return this.currentRole === 'RH' || this.currentRole === 'ADMIN' || this.currentRole === 'SUPERADMIN';
   }
 
   formatFileSize(bytes?: number): string {

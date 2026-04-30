@@ -86,13 +86,13 @@ export class ListeGrillesComponent implements OnInit, OnDestroy {
 
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (!confirmed) return;
-      this.evaluationService.supprimerGrille(g.id!).pipe(
-        catchError(err => { this.handleError(err); return of(null); }),
-        takeUntil(this.destroy$),
-      ).subscribe(() => {
-        this.toastr.success('Grille supprimée.', 'Succès');
-        if (this.grilles.length === 1 && this.page > 0) this.page--;
-        this.loadGrilles();
+      this.evaluationService.supprimerGrille(g.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Grille supprimée.', 'Succès');
+          if (this.grilles.length === 1 && this.page > 0) this.page--;
+          this.loadGrilles();
+        },
+        error: err => this.handleError(err),
       });
     });
   }
