@@ -60,4 +60,15 @@
         </table>
     </div>
 
+    <!-- Pagination -->
+    <div *ngIf="total > size" class="flex items-center justify-between px-4 py-3 border border-gray-200 rounded-lg bg-gray-50">
+        <p class="text-xs text-gray-500">{{ total }} pointage(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+        <div class="flex gap-1">
+            <button (click)="prevPage()" [disabled]="page === 0"
+                class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+            <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+                class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+        </div>
+    </div>
+
 </div>

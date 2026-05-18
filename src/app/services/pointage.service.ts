@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { Pointage } from '../models/pointage.model';
+import { PageResponse } from '../models/pageResponse.model';
 
 @Injectable({
   providedIn: 'root'
@@ -69,8 +70,15 @@ export class PointageService {
     return this.http.get<Pointage[]>(`${this.baseUrl}/pointages`);
   }
 
-  getTodayPointages(): Observable<Pointage[]> {
-    return this.http.get<Pointage[]>(`${this.baseUrl}/pointages/today`);
+  getTodayPointages(page: number = 0, size: number = 20): Observable<PageResponse<Pointage>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<PageResponse<Pointage>>(
+      `${this.baseUrl}/pointages/today`,
+      { params }
+    );
   }
 
   searchHistorique(

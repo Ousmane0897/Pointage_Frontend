@@ -1,10 +1,6 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { PointageService } from '../../services/pointage.service';
 import { Pointage } from '../../models/pointage.model';
-import { Observable } from 'rxjs';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,13 +17,17 @@ import { NgxSpinnerService } from 'ngx-spinner';
 })
 export class PointagesComponent implements OnInit {
 
-  // Déclaration des variables
-  pointages$!: Observable<Pointage[]>;
   pointages: Pointage[] = [];
   searchText: string = '';
   sortDirection: boolean = true;
   toastMessage: string | null = null;
   toastTimeout: any;
+
+  page = 0;
+  size = 20;
+  total = 0;
+  totalPages = 0;
+  loading = false;
 
   private destroy$ = inject(DestroyRef);
 
@@ -38,42 +38,47 @@ export class PointagesComponent implements OnInit {
   }
 
   loadData() {
+    this.loading = true;
     this.spinner.show();
-    this.pointages$ = this.pointageService.getTodayPointages();
-    this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
-      this.pointages = data;
-      this.spinner.hide();
-    });
+    this.pointageService.getTodayPointages(this.page, this.size)
+      .pipe(takeUntilDestroyed(this.destroy$))
+      .subscribe({
+        next: res => {
+          this.pointages = res.content;
+          this.total = res.totalElements ?? 0;
+          this.totalPages = Math.ceil(this.total / this.size);
+          this.loading = false;
+          this.spinner.hide();
+        },
+        error: () => {
+          this.loading = false;
+          this.spinner.hide();
+        }
+      });
+  }
+
+  prevPage() {
+    if (this.page > 0) {
+      this.page--;
+      this.loadData();
+    }
+  }
+
+  nextPage() {
+    if (this.page + 1 < this.totalPages) {
+      this.page++;
+      this.loadData();
+    }
   }
 
   get filteredPointages() {
     const term = this.searchText.toLowerCase();
     return this.pointages.filter(pointage =>
-      `${pointage.codeSecret} ${pointage.prenom} ${pointage.nom} ${pointage.date} 
+      `${pointage.codeSecret} ${pointage.prenom} ${pointage.nom} ${pointage.date}
       ${pointage.heureArrive} ${pointage.heureDepart} ${pointage.duree} ${pointage.status} ${pointage.site}`
         .toLowerCase()
         .includes(term)
     );
-  }
-
-  exportExcel() {
-    this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Pointages');
-      XLSX.writeFile(wb, 'pointages.xlsx');
-    });
-  }
-
-  exportPdf() {
-    this.pointages$.pipe(takeUntilDestroyed(this.destroy$)).subscribe(data => {
-      const doc = new jsPDF();
-      autoTable(doc, {
-        head: [['codeSecret', 'Prénom', 'Nom', 'Date', 'Heure arrivée', 'Heure départ', 'Durée', 'Status', 'Site']],
-        body: data.map(p => [p.codeSecret, p.prenom, p.nom, p.date, p.heureArrive, p.heureDepart, p.duree, p.status, p.site])
-      });
-      doc.save('pointages.pdf');
-    });
   }
 
   trackById(_: number, item: Pointage): string {
