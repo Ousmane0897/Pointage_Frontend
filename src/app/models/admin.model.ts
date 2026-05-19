@@ -58,4 +58,17 @@ export interface ModulesAutorises {
     historiquesEntrees: boolean;
     historiquesSorties: boolean;
   };
+
+  // ─── Exploitation v2 — Production Chimie (5.1) ──────────────────────
+  // Optionnel pour rester rétrocompatible avec les JWT existants qui
+  // n'embarquent pas encore ce champ.
+  productionChimie?: {
+    formulations?: boolean;
+    ordresFabrication?: boolean;
+    lots?: boolean;
+    controleQualite?: boolean;
+    matieresPremieres?: boolean;
+    conditionnement?: boolean;
+    tableauBord?: boolean;
+  };
 }

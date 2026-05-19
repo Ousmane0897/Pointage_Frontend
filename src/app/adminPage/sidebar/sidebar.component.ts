@@ -32,6 +32,8 @@ export class SidebarComponent implements OnInit {
   openDropdownTempsPresences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Temps & Présences
   openDropdownPaie: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Paie
   openDropdownDeveloppementRh: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Développement RH
+  openDropdownExploitationV2: string | null = null; // Variable pour la nouvelle section Exploitation v2
+  openDropdownProductionChimie: string | null = null; // Sous-menu Production Chimie
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -135,6 +137,31 @@ export class SidebarComponent implements OnInit {
     const m: ModulesAutorises = this.modulesAutorises;
     if (!m) return false;
     return m.rh;
+  }
+
+  /** Accès à la nouvelle section Exploitation v2 (au moins une fonctionnalité Production Chimie). */
+  accessExploitationV2(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m) return false;
+    return this.accessProductionChimie();
+  }
+
+  /** Accès au sous-module Production Chimie (5.1). */
+  accessProductionChimie(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.productionChimie) return false;
+    const pc = m.productionChimie;
+    return !!(
+      pc.formulations ||
+      pc.ordresFabrication ||
+      pc.lots ||
+      pc.controleQualite ||
+      pc.matieresPremieres ||
+      pc.conditionnement ||
+      pc.tableauBord
+    );
   }
 
   hasOperationsAccess(): boolean {
@@ -275,6 +302,14 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownDeveloppementRh(menu: string) {
     this.openDropdownDeveloppementRh = this.openDropdownDeveloppementRh === menu ? null : menu;
+  }
+
+  toggleDropdownExploitationV2(menu: string) {
+    this.openDropdownExploitationV2 = this.openDropdownExploitationV2 === menu ? null : menu;
+  }
+
+  toggleDropdownProductionChimie(menu: string) {
+    this.openDropdownProductionChimie = this.openDropdownProductionChimie === menu ? null : menu;
   }
 
 
