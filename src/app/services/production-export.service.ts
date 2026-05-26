@@ -7,66 +7,58 @@ import {
   RapportTableauBord,
 } from '../models/production-tableau-bord.model';
 
-/**
- * Exports Excel et PDF du rapport du Tableau de Bord Production —
- * Module Production Chimie (5.1).
- */
 @Injectable({ providedIn: 'root' })
 export class ProductionExportService {
 
   exporterRapportExcel(rapport: RapportTableauBord): void {
     const wb = XLSX.utils.book_new();
 
-    // KPI
     const kpiRows = [
-      { Indicateur: 'Volume produit (L)', Valeur: rapport.kpi.volumeProduit },
-      { Indicateur: 'OF terminés', Valeur: rapport.kpi.nbOfTermines },
-      { Indicateur: 'OF annulés', Valeur: rapport.kpi.nbOfAnnules },
-      { Indicateur: 'Taux de réussite CQ (%)', Valeur: (rapport.kpi.tauxReussiteCq * 100).toFixed(1) },
-      { Indicateur: 'Taux de perte moyen (%)', Valeur: (rapport.kpi.tauxPerteMoyen * 100).toFixed(1) },
-      { Indicateur: 'Lots validés', Valeur: rapport.kpi.nbLotsValides },
-      { Indicateur: 'Lots rejetés', Valeur: rapport.kpi.nbLotsRejetes },
-      { Indicateur: 'Lots en stock', Valeur: rapport.kpi.nbLotsEnStock },
+      { Indicateur: 'Volume produit (L)', Valeur: rapport.kpis.volumeProduitLitres },
+      { Indicateur: 'OF terminés', Valeur: rapport.kpis.nbOfTermines },
+      { Indicateur: 'OF annulés', Valeur: rapport.kpis.nbOfAnnules },
+      { Indicateur: 'Taux de réussite CQ (%)', Valeur: (rapport.kpis.tauxReussiteCq * 100).toFixed(1) },
+      { Indicateur: 'Taux de perte moyen (%)', Valeur: (rapport.kpis.tauxPerteMoyen * 100).toFixed(1) },
+      { Indicateur: 'Lots validés', Valeur: rapport.kpis.nbLotsValide },
+      { Indicateur: 'Lots rejetés', Valeur: rapport.kpis.nbLotsRejete },
+      { Indicateur: 'Lots en attente CQ', Valeur: rapport.kpis.nbLotsEnAttenteControle },
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpiRows), 'KPI');
 
-    // Volumes par produit
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.json_to_sheet(
         rapport.volumesParProduit.map((v) => ({
           Produit: v.produitNom,
-          'Volume total': v.volumeTotal,
-          'OF terminés': v.nbOfTermines,
+          'Volume (L)': v.volumeLitres,
+          'Nb lots': v.nbLots,
         })),
       ),
       'Volumes par produit',
     );
 
-    // Évolution mensuelle
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.json_to_sheet(
-        rapport.evolutionMensuelle.map((e) => ({ Mois: e.mois, Volume: e.volume, 'Nb OF': e.nbOf })),
+        rapport.evolutionMensuelle.map((e) => ({ Mois: e.mois, 'Volume (L)': e.volumeLitres, 'Nb lots': e.nbLots })),
       ),
       'Évolution mensuelle',
     );
 
-    // Rendements
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.json_to_sheet(
         rapport.rendements.map((r) => ({
           Produit: r.produitNom,
-          'Théorique (L)': r.rendementTheorique,
-          'Réel (L)': r.rendementReel,
-          'Écart (%)': r.ecart.toFixed(2),
+          'Théorique': r.sommeQuantiteTheorique,
+          'Réel': r.sommeQuantiteReelle,
+          'Écart (%)': r.ecartPourcent.toFixed(2),
         })),
       ),
       'Rendements',
     );
 
-    XLSX.writeFile(wb, `rapport-production-${rapport.filtre.dateDebut}_${rapport.filtre.dateFin}.xlsx`);
+    XLSX.writeFile(wb, `rapport-production-${rapport.kpis.dateDebut}_${rapport.kpis.dateFin}.xlsx`);
   }
 
   exporterRapportPdf(rapport: RapportTableauBord): void {
@@ -79,23 +71,22 @@ export class ProductionExportService {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(
-      `Période : ${this.formatDate(rapport.filtre.dateDebut)} → ${this.formatDate(rapport.filtre.dateFin)}`,
+      `Période : ${this.formatDate(rapport.kpis.dateDebut)} → ${this.formatDate(rapport.kpis.dateFin)}`,
       pageWidth / 2,
       26,
       { align: 'center' },
     );
 
-    // KPI
     autoTable(doc, {
       startY: 36,
       head: [['Indicateur clé', 'Valeur']],
       body: [
-        ['Volume produit', `${rapport.kpi.volumeProduit.toLocaleString('fr-FR')} L`],
-        ['OF terminés', `${rapport.kpi.nbOfTermines}`],
-        ['OF annulés', `${rapport.kpi.nbOfAnnules}`],
-        ['Taux réussite CQ', `${(rapport.kpi.tauxReussiteCq * 100).toFixed(1)} %`],
-        ['Taux de perte moyen', `${(rapport.kpi.tauxPerteMoyen * 100).toFixed(1)} %`],
-        ['Lots validés / rejetés / en stock', `${rapport.kpi.nbLotsValides} / ${rapport.kpi.nbLotsRejetes} / ${rapport.kpi.nbLotsEnStock}`],
+        ['Volume produit', `${rapport.kpis.volumeProduitLitres.toLocaleString('fr-FR')} L`],
+        ['OF terminés', `${rapport.kpis.nbOfTermines}`],
+        ['OF annulés', `${rapport.kpis.nbOfAnnules}`],
+        ['Taux réussite CQ', `${(rapport.kpis.tauxReussiteCq * 100).toFixed(1)} %`],
+        ['Taux de perte moyen', `${(rapport.kpis.tauxPerteMoyen * 100).toFixed(1)} %`],
+        ['Lots validés / rejetés / en attente CQ', `${rapport.kpis.nbLotsValide} / ${rapport.kpis.nbLotsRejete} / ${rapport.kpis.nbLotsEnAttenteControle}`],
       ],
       headStyles: { fillColor: [30, 64, 175], textColor: 255 },
       styles: { fontSize: 9 },
@@ -103,14 +94,13 @@ export class ProductionExportService {
 
     const finKpi = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
-    // Volumes par produit
     autoTable(doc, {
       startY: finKpi + 8,
-      head: [['Produit', 'Volume total (L)', 'OF terminés']],
+      head: [['Produit', 'Volume (L)', 'Nb lots']],
       body: rapport.volumesParProduit.map((v) => [
         v.produitNom,
-        v.volumeTotal.toLocaleString('fr-FR'),
-        String(v.nbOfTermines),
+        v.volumeLitres.toLocaleString('fr-FR'),
+        String(v.nbLots),
       ]),
       headStyles: { fillColor: [30, 64, 175], textColor: 255 },
       styles: { fontSize: 9 },
@@ -118,21 +108,20 @@ export class ProductionExportService {
 
     const finVol = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
-    // Rendements
     autoTable(doc, {
       startY: finVol + 8,
       head: [['Produit', 'Théorique', 'Réel', 'Écart']],
       body: rapport.rendements.map((r) => [
         r.produitNom,
-        `${r.rendementTheorique.toLocaleString('fr-FR')} L`,
-        `${r.rendementReel.toLocaleString('fr-FR')} L`,
-        `${r.ecart >= 0 ? '+' : ''}${r.ecart.toFixed(2)} %`,
+        `${r.sommeQuantiteTheorique.toLocaleString('fr-FR')} L`,
+        `${r.sommeQuantiteReelle.toLocaleString('fr-FR')} L`,
+        `${r.ecartPourcent >= 0 ? '+' : ''}${r.ecartPourcent.toFixed(2)} %`,
       ]),
       headStyles: { fillColor: [30, 64, 175], textColor: 255 },
       styles: { fontSize: 9 },
     });
 
-    doc.save(`rapport-production-${rapport.filtre.dateDebut}_${rapport.filtre.dateFin}.pdf`);
+    doc.save(`rapport-production-${rapport.kpis.dateDebut}_${rapport.kpis.dateFin}.pdf`);
   }
 
   private formatDate(iso: string): string {

@@ -70,6 +70,13 @@ export class ProductionControleQualiteService {
     return this.http.get<ControleQualite>(`${this.baseUrl}/controles/${id}`);
   }
 
+  getPhoto(controleId: string, index: number): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/controles/${controleId}/photos/${index}`,
+      { responseType: 'blob' },
+    );
+  }
+
   /** Création d'un contrôle (FormData = JSON + photos). */
   creerControle(formData: FormData): Observable<ControleQualite> {
     return this.http.post<ControleQualite>(`${this.baseUrl}/controles`, formData);

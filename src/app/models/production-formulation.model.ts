@@ -14,7 +14,7 @@ export type StatutFormulation = 'BROUILLON' | 'VALIDEE' | 'ARCHIVEE';
 export interface IngredientFormulation {
   matierePremiereId: string;
   matierePremiereNom?: string;   // dénormalisé pour affichage rapide
-  dosage: number;                // quantité par unité de production
+  dosage: number;                // quantité pour le lot de référence (voir quantiteRef sur FicheFormulation)
   unite: Unite;
   ordre: number;
   remarque?: string;
@@ -50,6 +50,7 @@ export interface FicheFormulation {
   ingredients: IngredientFormulation[];
   etapes: EtapeProcessus[];
   dureePeremptionJours: number;  // règle de calcul de la date de péremption des lots
+  quantiteRef: number;           // taille du lot de référence pour les dosages (en uniteProduction)
   uniteProduction: Unite;        // unité de la quantité cible des OF référençant cette fiche
   statut: StatutFormulation;
   versions: VersionFormulation[];

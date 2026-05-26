@@ -172,6 +172,7 @@ export const routes: Routes = [
             { path: 'exploitation-v2/production-chimie/controles/grilles', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/grille-tests/grille-tests.component').then(m => m.GrilleTestsComponent) },
             { path: 'exploitation-v2/production-chimie/controles/nouveau/:lotId', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/formulaire-controle/formulaire-controle.component').then(m => m.FormulaireControleComponent) },
             { path: 'exploitation-v2/production-chimie/controles/historique/:produitNom', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/historique-controles/historique-controles.component').then(m => m.HistoriqueControlesComponent) },
+            { path: 'exploitation-v2/production-chimie/controles/:id', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/fiche-controle/fiche-controle.component').then(m => m.FicheControleComponent) },
 
             // Tableau de bord
             { path: 'exploitation-v2/production-chimie/tableau-bord', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/tableau-bord-production/tableau-bord-production.component').then(m => m.TableauBordProductionComponent) },

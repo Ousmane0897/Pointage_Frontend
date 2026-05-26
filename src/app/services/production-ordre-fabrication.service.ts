@@ -78,10 +78,10 @@ export class ProductionOrdreFabricationService {
     );
   }
 
-  terminer(id: string, commentaire?: string): Observable<OrdreFabrication> {
+  terminer(id: string, quantiteReelle: number, commentaire?: string): Observable<OrdreFabrication> {
     return this.http.post<OrdreFabrication>(
       `${this.baseUrl}/${id}/terminer`,
-      { commentaire },
+      { quantiteReelle, commentaire },
     );
   }
 
