@@ -722,6 +722,133 @@
           </ul>
         </li>
 
+        <!-- ============================================================ -->
+        <!-- Exploitation v2 — Production Chimie (5.1)                     -->
+        <!-- ============================================================ -->
+        <li *ngIf="isOpen && accessExploitationV2()"
+          class="px-3 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-slate-500">
+          Exploitation v2
+        </li>
+
+        <li *ngIf="accessExploitationV2()">
+          <button (click)="toggleDropdownExploitationV2('exploitationV2')"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/exploitation-v2'),
+              'justify-center px-0': !isOpen
+            }">
+            <lucide-icon name="FlaskConical"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/exploitation-v2') }"></lucide-icon>
+            <span *ngIf="isOpen" class="flex-1 truncate">Exploitation v2</span>
+            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
+              [ngClass]="{ 'rotate-180': openDropdownExploitationV2 === 'exploitationV2' }"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <ul *ngIf="openDropdownExploitationV2 === 'exploitationV2' && isOpen"
+            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+
+            <!-- Production Chimie -->
+            <li *ngIf="accessProductionChimie()">
+              <button (click)="toggleDropdownProductionChimie('productionChimie')"
+                class="group flex items-center gap-2 w-full px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{
+                  'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold':
+                    isActivePrefix('/admin/exploitation-v2/production-chimie')
+                }">
+                <lucide-icon name="Beaker" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
+                <span class="flex-1 truncate">Production Chimie</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownProductionChimie === 'productionChimie' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <ul *ngIf="openDropdownProductionChimie === 'productionChimie'"
+                class="ml-3 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
+
+                <li *ngIf="hasAccess('productionChimie.tableauBord')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/tableau-bord"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="BarChart3" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
+                    <span class="flex-1 truncate">Tableau de bord</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('productionChimie.matieresPremieres')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/matieres-premieres"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="TestTube" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
+                    <span class="flex-1 truncate">Matières premières</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('productionChimie.formulations')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/formulations"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="FlaskConical" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
+                    <span class="flex-1 truncate">Formulations</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('productionChimie.ordresFabrication')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/ordres"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Workflow" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
+                    <span class="flex-1 truncate">Ordres de fabrication</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('productionChimie.lots')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/lots"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Package" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
+                    <span class="flex-1 truncate">Lots & traçabilité</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('productionChimie.controleQualite')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/controles"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ClipboardCheck" class="w-3.5 h-3.5 text-green-300"></lucide-icon>
+                    <span class="flex-1 truncate">Contrôle qualité</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('productionChimie.conditionnement')">
+                  <a routerLink="/admin/exploitation-v2/production-chimie/conditionnement/formats"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="QrCode" class="w-3.5 h-3.5 text-purple-300"></lucide-icon>
+                    <span class="flex-1 truncate">Conditionnement</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+          </ul>
+        </li>
+
       </ul>
     </nav>
 

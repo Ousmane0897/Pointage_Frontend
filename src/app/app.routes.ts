@@ -3,7 +3,7 @@ import { PageCodePinComponent } from './page-code-pin/page-code-pin.component';
 import { HomePageComponent } from './home-page/home-page.component';
 import { FinalPage1Component } from './final-page1/final-page1.component';
 import { FinalPage2Component } from './final-page2/final-page2.component';
-import { DashboardComponent } from './adminPage/dashboard/dashboard.component';
+import { DashboardComponent } from './adminPage/exploitation/dashboard/dashboard.component';
 import { AdminComponent } from './adminPage/admin/admin.component';
 import { AuthGuard } from './guards/auth.guard';
 
@@ -31,36 +31,36 @@ export const routes: Routes = [
         canActivate: [AuthGuard], // protection de la route admin avec AuthGuard
         children: [
             //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // redirection vers la page dashboard par défaut
-            { path: 'dashboard', loadComponent: () => import('./adminPage/dashboard/dashboard.component').then(m => m.DashboardComponent) }, // lazy loading de la page dashboard
+            { path: 'dashboard', loadComponent: () => import('./adminPage/exploitation/dashboard/dashboard.component').then(m => m.DashboardComponent) }, // lazy loading de la page dashboard
             { path: 'page-par-defaut-apres-login', loadComponent: () => import('./adminPage/page-par-defaut-apres-login/page-par-defaut-apres-login.component').then(m => m.PageParDefautApresLoginComponent) }, // lazy loading de la page par défaut après login
-            
-            { path: 'dashboard-par-agence', loadComponent: () => import('./adminPage/dashboard-par-agence/tableau-de-bord-par-agence.component').then(m => m.TableauDeBordParAgenceComponent) }, // lazy loading de la page tableau de bord par agence
-            { path: 'operations/planification', loadComponent: () => import('./adminPage/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
-            { path: 'calendrier', loadComponent: () => import('./adminPage/calendrier/calendrier.component').then(m => m.CalendrierComponent) },
-            //{ path: 'employes', loadComponent: () => import('./adminPage/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page employes
-            { path: 'employes/donnees-complet', loadComponent: () => import('./adminPage/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page employes complet
-            { path: 'employes/donnees-complet1', loadComponent: () => import('./adminPage/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page employes complet
-            { path: 'operations/agents', loadComponent: () => import('./adminPage/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page agents
-            { path: 'operations/statistique-par-agence-groupe', loadComponent: () => import('./adminPage/statistique-par-agence-groupe/statistique-par-agence-groupe.component').then(m => m.StatistiqueParAgenceGroupeComponent) }, // lazy loading de la page statistique par agence groupe
-            { path: 'employes/donnees-partiel', loadComponent: () => import('./adminPage/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page données employé
-            { path: 'collecte-et-livraison/collecte-des-besoins', loadComponent: () => import('./adminPage/collecte et livraison/collecte-des-besoins/collecte-des-besoins.component').then(m => m.CollecteDesBesoinsComponent) }, // lazy loading de la page collecte des besoins
-            { path: 'collecte-et-livraison/suivi-livraison', loadComponent: () => import('./adminPage/collecte et livraison/suivi-commandes/suivi-commandes.component').then(m => m.SuiviCommandesComponent) }, // lazy loading de la page livraison des besoins
-            { path: 'collecte-et-livraison/historique-livraisons', loadComponent: () => import('./adminPage/collecte et livraison/historique-livraisons/historique-livraisons.component').then(m => m.HistoriqueLivraisonsComponent) }, // lazy loading de la page historique des livraisons
-            { path: 'stock/entrees', loadComponent: () => import('./adminPage/stock/entrees/entrees.component').then(m => m.EntreesComponent) }, // lazy loading de la page entrees
-            { path: 'stock/sorties', loadComponent: () => import('./adminPage/stock/sorties/sorties.component').then(m => m.SortiesComponent) }, // lazy loading de la page sorties
-            { path: 'stock/produits', loadComponent: () => import('./adminPage/stock/produit-list/produit-list.component').then(m => m.ProduitListComponent) }, // lazy loading de la page produits
-            { path: 'stock/historiques-entrees', loadComponent: () => import('./adminPage/stock/historiques-entrees/historiques-entrees.component').then(m => m.HistoriquesEntreesComponent) }, // lazy loading de la page historiques entrées
-            { path: 'stock/historiques-sorties', loadComponent: () => import('./adminPage/stock/historiques-sorties/historiques-sorties.component').then(m => m.HistoriquesSortiesComponent) }, // lazy loading de la page historiques sorties
-            //{ path: 'stock/rapports-mensuels', loadComponent: () => import('./adminPage/stock/rapport-mensuel/rapport-mensuel.component').then(m => m.RapportMensuelComponent) }, // lazy loading de la page rapports mensuels
-            { path: 'stock/suivi', loadComponent: () => import('./adminPage/stock/suivi-stock/suivi-stock.component').then(m => m.SuiviStockComponent) }, // lazy loading de la page suivi
-            { path: 'feries', loadComponent: () => import('./adminPage/ferie/ferie.component').then(m => m.FerieComponent) }, // lazy loading de la page feries
+
+            { path: 'dashboard-par-agence', loadComponent: () => import('./adminPage/exploitation/dashboard-par-agence/tableau-de-bord-par-agence.component').then(m => m.TableauDeBordParAgenceComponent) }, // lazy loading de la page tableau de bord par agence
+            { path: 'operations/planification', loadComponent: () => import('./adminPage/exploitation/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
+            { path: 'calendrier', loadComponent: () => import('./adminPage/exploitation/calendrier/calendrier.component').then(m => m.CalendrierComponent) },
+            //{ path: 'employes', loadComponent: () => import('./adminPage/exploitation/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page employes
+            { path: 'employes/donnees-complet', loadComponent: () => import('./adminPage/exploitation/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page employes complet
+            { path: 'employes/donnees-complet1', loadComponent: () => import('./adminPage/exploitation/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page employes complet
+            { path: 'operations/agents', loadComponent: () => import('./adminPage/exploitation/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page agents
+            { path: 'operations/statistique-par-agence-groupe', loadComponent: () => import('./adminPage/exploitation/statistique-par-agence-groupe/statistique-par-agence-groupe.component').then(m => m.StatistiqueParAgenceGroupeComponent) }, // lazy loading de la page statistique par agence groupe
+            { path: 'employes/donnees-partiel', loadComponent: () => import('./adminPage/exploitation/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page données employé
+            { path: 'collecte-et-livraison/collecte-des-besoins', loadComponent: () => import('./adminPage/exploitation/collecte et livraison/collecte-des-besoins/collecte-des-besoins.component').then(m => m.CollecteDesBesoinsComponent) }, // lazy loading de la page collecte des besoins
+            { path: 'collecte-et-livraison/suivi-livraison', loadComponent: () => import('./adminPage/exploitation/collecte et livraison/suivi-commandes/suivi-commandes.component').then(m => m.SuiviCommandesComponent) }, // lazy loading de la page livraison des besoins
+            { path: 'collecte-et-livraison/historique-livraisons', loadComponent: () => import('./adminPage/exploitation/collecte et livraison/historique-livraisons/historique-livraisons.component').then(m => m.HistoriqueLivraisonsComponent) }, // lazy loading de la page historique des livraisons
+            { path: 'stock/entrees', loadComponent: () => import('./adminPage/exploitation/stock/entrees/entrees.component').then(m => m.EntreesComponent) }, // lazy loading de la page entrees
+            { path: 'stock/sorties', loadComponent: () => import('./adminPage/exploitation/stock/sorties/sorties.component').then(m => m.SortiesComponent) }, // lazy loading de la page sorties
+            { path: 'stock/produits', loadComponent: () => import('./adminPage/exploitation/stock/produit-list/produit-list.component').then(m => m.ProduitListComponent) }, // lazy loading de la page produits
+            { path: 'stock/historiques-entrees', loadComponent: () => import('./adminPage/exploitation/stock/historiques-entrees/historiques-entrees.component').then(m => m.HistoriquesEntreesComponent) }, // lazy loading de la page historiques entrées
+            { path: 'stock/historiques-sorties', loadComponent: () => import('./adminPage/exploitation/stock/historiques-sorties/historiques-sorties.component').then(m => m.HistoriquesSortiesComponent) }, // lazy loading de la page historiques sorties
+            //{ path: 'stock/rapports-mensuels', loadComponent: () => import('./adminPage/exploitation/stock/rapport-mensuel/rapport-mensuel.component').then(m => m.RapportMensuelComponent) }, // lazy loading de la page rapports mensuels
+            { path: 'stock/suivi', loadComponent: () => import('./adminPage/exploitation/stock/suivi-stock/suivi-stock.component').then(m => m.SuiviStockComponent) }, // lazy loading de la page suivi
+            { path: 'feries', loadComponent: () => import('./adminPage/exploitation/ferie/ferie.component').then(m => m.FerieComponent) }, // lazy loading de la page feries
             { path: 'gestion-privilege', loadComponent: () => import('./adminPage/gestion-privilege/gestion-privilege.component').then(m => m.GestionPrivilegeComponent),}, // lazy loading de la page gestion privilege
-            { path: 'pointages/pointagesDuJour', loadComponent: () => import('./adminPage/pointages/pointages.component').then(m => m.PointagesComponent) }, // lazy loading de la page pointages
-            { path: 'pointages/historique', loadComponent: () => import('./adminPage/pointage-historique/pointage-historique.component').then(m => m.PointageHistoriqueComponent) }, // lazy loading de la page historique des pointages
+            { path: 'pointages/pointagesDuJour', loadComponent: () => import('./adminPage/exploitation/pointages/pointages.component').then(m => m.PointagesComponent) }, // lazy loading de la page pointages
+            { path: 'pointages/historique', loadComponent: () => import('./adminPage/exploitation/pointage-historique/pointage-historique.component').then(m => m.PointageHistoriqueComponent) }, // lazy loading de la page historique des pointages
             //{ path: 'ressources-humaines', loadComponent: () => import('./adminPage/agents-rh/agents-rh.component').then(m => m.AgentsRhComponent) }, // lazy loading de la page ressources humaines
-            { path: 'operations/agences', loadComponent: () => import('./adminPage/agences/agences.component').then(m => m.AgencesComponent) }, // lazy loading de la page agences
-            { path: 'absences/tempsreel', loadComponent: () => import('./adminPage/absences-temps-reel/absences-temps-reel.component').then(m => m.AbsencesTempsReelComponent) }, // lazy loading de la page absences
-            { path: 'absences/historique', loadComponent: () => import('./adminPage/absences-historique/absences-historique.component').then(m => m.AbsencesHistoriqueComponent) }, // lazy loading de la page absences
+            { path: 'operations/agences', loadComponent: () => import('./adminPage/exploitation/agences/agences.component').then(m => m.AgencesComponent) }, // lazy loading de la page agences
+            { path: 'absences/tempsreel', loadComponent: () => import('./adminPage/exploitation/absences-temps-reel/absences-temps-reel.component').then(m => m.AbsencesTempsReelComponent) }, // lazy loading de la page absences
+            { path: 'absences/historique', loadComponent: () => import('./adminPage/exploitation/absences-historique/absences-historique.component').then(m => m.AbsencesHistoriqueComponent) }, // lazy loading de la page absences
 
             // ─── Gestion du Personnel ────────────────────────────────────
             { path: 'rh/gestion-du-personnel/dossier-employe', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/liste-employes/liste-employes.component').then(m => m.ListeEmployesComponent) },
@@ -133,6 +133,49 @@ export const routes: Routes = [
 
             // ─── Développement RH — Tableau de Bord RH ────────────
             { path: 'rh/developpement-rh/tableau-de-bord', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/tableau-de-bord/tableau-de-bord-rh/tableau-de-bord-rh.component').then(m => m.TableauDeBordRhComponent) },
+
+            // ─── Exploitation v2 / Production Chimie (5.1) ────────────
+            // Matières premières
+            { path: 'exploitation-v2/production-chimie/matieres-premieres', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/liste-matieres/liste-matieres.component').then(m => m.ListeMatieresComponent) },
+            { path: 'exploitation-v2/production-chimie/matieres-premieres/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/formulaire-matiere/formulaire-matiere.component').then(m => m.FormulaireMatiereComponent) },
+            { path: 'exploitation-v2/production-chimie/matieres-premieres/reception', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/reception-mp/reception-mp.component').then(m => m.ReceptionMpComponent) },
+            { path: 'exploitation-v2/production-chimie/matieres-premieres/mouvements', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/mouvements-stock-chimie/mouvements-stock-chimie.component').then(m => m.MouvementsStockChimieComponent) },
+            { path: 'exploitation-v2/production-chimie/matieres-premieres/:id/mouvements', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/mouvements-stock-chimie/mouvements-stock-chimie.component').then(m => m.MouvementsStockChimieComponent) },
+            { path: 'exploitation-v2/production-chimie/matieres-premieres/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/formulaire-matiere/formulaire-matiere.component').then(m => m.FormulaireMatiereComponent) },
+
+            // Conditionnement
+            { path: 'exploitation-v2/production-chimie/conditionnement/formats', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/conditionnement/liste-formats/liste-formats.component').then(m => m.ListeFormatsComponent) },
+            { path: 'exploitation-v2/production-chimie/conditionnement/formats/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/conditionnement/formulaire-format/formulaire-format.component').then(m => m.FormulaireFormatComponent) },
+            { path: 'exploitation-v2/production-chimie/conditionnement/formats/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/conditionnement/formulaire-format/formulaire-format.component').then(m => m.FormulaireFormatComponent) },
+            { path: 'exploitation-v2/production-chimie/conditionnement/etiquettes', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/conditionnement/generation-etiquettes/generation-etiquettes.component').then(m => m.GenerationEtiquettesComponent) },
+
+            // Fiches de formulation
+            { path: 'exploitation-v2/production-chimie/formulations', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/fiches-formulation/liste-formulations/liste-formulations.component').then(m => m.ListeFormulationsComponent) },
+            { path: 'exploitation-v2/production-chimie/formulations/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/fiches-formulation/formulaire-formulation/formulaire-formulation.component').then(m => m.FormulaireFormulationComponent) },
+            { path: 'exploitation-v2/production-chimie/formulations/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/fiches-formulation/formulaire-formulation/formulaire-formulation.component').then(m => m.FormulaireFormulationComponent) },
+            { path: 'exploitation-v2/production-chimie/formulations/:id/versions', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/fiches-formulation/historique-versions/historique-versions.component').then(m => m.HistoriqueVersionsComponent) },
+            { path: 'exploitation-v2/production-chimie/formulations/:id/versions/comparer', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/fiches-formulation/comparaison-versions/comparaison-versions.component').then(m => m.ComparaisonVersionsComponent) },
+
+            // Ordres de fabrication
+            { path: 'exploitation-v2/production-chimie/ordres', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/ordres-fabrication/liste-ordres/liste-ordres.component').then(m => m.ListeOrdresComponent) },
+            { path: 'exploitation-v2/production-chimie/ordres/kanban', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/ordres-fabrication/kanban-ordres/kanban-ordres.component').then(m => m.KanbanOrdresComponent) },
+            { path: 'exploitation-v2/production-chimie/ordres/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/ordres-fabrication/formulaire-ordre/formulaire-ordre.component').then(m => m.FormulaireOrdreComponent) },
+            { path: 'exploitation-v2/production-chimie/ordres/:id', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/ordres-fabrication/detail-ordre/detail-ordre.component').then(m => m.DetailOrdreComponent) },
+
+            // Lots & traçabilité
+            { path: 'exploitation-v2/production-chimie/lots', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/lots-tracabilite/liste-lots/liste-lots.component').then(m => m.ListeLotsComponent) },
+            { path: 'exploitation-v2/production-chimie/lots/:id', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/lots-tracabilite/fiche-lot/fiche-lot.component').then(m => m.FicheLotComponent) },
+            { path: 'exploitation-v2/production-chimie/lots/:id/tracabilite', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/lots-tracabilite/tracabilite-lot/tracabilite-lot.component').then(m => m.TracabiliteLotComponent) },
+
+            // Contrôle qualité
+            { path: 'exploitation-v2/production-chimie/controles', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/liste-controles/liste-controles.component').then(m => m.ListeControlesComponent) },
+            { path: 'exploitation-v2/production-chimie/controles/grilles', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/grille-tests/grille-tests.component').then(m => m.GrilleTestsComponent) },
+            { path: 'exploitation-v2/production-chimie/controles/nouveau/:lotId', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/formulaire-controle/formulaire-controle.component').then(m => m.FormulaireControleComponent) },
+            { path: 'exploitation-v2/production-chimie/controles/historique/:produitNom', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/historique-controles/historique-controles.component').then(m => m.HistoriqueControlesComponent) },
+            { path: 'exploitation-v2/production-chimie/controles/:id', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/controle-qualite/fiche-controle/fiche-controle.component').then(m => m.FicheControleComponent) },
+
+            // Tableau de bord
+            { path: 'exploitation-v2/production-chimie/tableau-bord', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/tableau-bord-production/tableau-bord-production.component').then(m => m.TableauBordProductionComponent) },
 
         ]
     }
