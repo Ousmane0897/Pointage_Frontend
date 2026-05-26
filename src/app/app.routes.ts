@@ -198,6 +198,11 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/pointage/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/historique-pointages/historique-pointages.component').then(m => m.HistoriquePointagesComponent) },
             { path: 'exploitation-v2/terrain/pointage/historique/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/fiche-pointage/fiche-pointage.component').then(m => m.FichePointageComponent) },
 
+            // Alertes & escalade
+            { path: 'exploitation-v2/terrain/alertes', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/tableau-alertes/tableau-alertes.component').then(m => m.TableauAlertesComponent) },
+            { path: 'exploitation-v2/terrain/alertes/recap', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/recapitulatif-quotidien/recapitulatif-quotidien.component').then(m => m.RecapitulatifQuotidienComponent) },
+            { path: 'exploitation-v2/terrain/alertes/parametres', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/parametres-escalade/parametres-escalade.component').then(m => m.ParametresEscaladeComponent) },
+
         ]
     }
 ];
