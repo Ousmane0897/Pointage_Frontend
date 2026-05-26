@@ -184,6 +184,14 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/sites-clients/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/formulaire-site/formulaire-site.component').then(m => m.FormulaireSiteComponent) },
             { path: 'exploitation-v2/terrain/sites-clients/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/fiche-site/fiche-site.component').then(m => m.FicheSiteComponent) },
 
+            // Planning des équipes
+            { path: 'exploitation-v2/terrain/planning/affectations', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/liste-affectations/liste-affectations.component').then(m => m.ListeAffectationsComponent) },
+            { path: 'exploitation-v2/terrain/planning/calendrier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/calendrier-planning/calendrier-planning.component').then(m => m.CalendrierPlanningComponent) },
+            { path: 'exploitation-v2/terrain/planning/conflits', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/detection-conflits/detection-conflits.component').then(m => m.DetectionConflitsComponent) },
+            { path: 'exploitation-v2/terrain/planning/affectations/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
+            { path: 'exploitation-v2/terrain/planning/affectations/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
+            { path: 'exploitation-v2/terrain/planning/affectations/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/fiche-affectation/fiche-affectation.component').then(m => m.FicheAffectationComponent) },
+
         ]
     }
 ];
