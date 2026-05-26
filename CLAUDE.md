@@ -246,10 +246,48 @@ Module en construction, découpé en 2 sous-modules :
   alertes, fiches intervention, contrôle qualité terrain, matériel,
   phytosanitaire, tableau de bord
 
-**Statut : 🔲 À faire (0/2 sous-modules)**
+**Statut : 🟡 En cours (1/2 sous-modules livrés — 5.1 terminé, 5.2 à faire)**
 
 #### 5.1 Production Chimie (`exploitation-v2/production-chimie/`)
-**Statut : 🔲 À faire**
+
+**Statut : ✅ Terminé** (livré par PR #1, mergé sur master)
+
+7 sous-modules livrés couvrant l'ensemble du flux production chimique de
+l'usine : formulation → ordre de fabrication → lot & traçabilité → contrôle
+qualité → matières premières & stock → conditionnement → pilotage par
+tableau de bord.
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `fiches-formulation/` | liste, formulaire, historique-versions, comparaison-versions | Recettes produits avec versioning et lot de référence (`quantiteRef`) |
+| `ordres-fabrication/` | liste, kanban, formulaire, detail | OF avec workflow EN_ATTENTE → EN_COURS → TERMINE, calcul auto des MP nécessaires, saisie quantité réelle à la terminaison |
+| `lots-tracabilite/` | liste, fiche, tracabilite | Lots générés depuis OF terminés, traçabilité complète (formulation, OF, contrôle, conditionnement) |
+| `controle-qualite/` | grille-tests, liste, formulaire, fiche, historique | Grilles de tests paramétrables par produit, fiches de contrôle avec photos authentifiées, décision VALIDE/REJET |
+| `matieres-premieres/` | liste, formulaire, reception, mouvements-stock | CRUD MP + entrées/sorties stock chimie, historique des mouvements |
+| `conditionnement/` | liste-formats, formulaire-format, generation-etiquettes | Formats de conditionnement + génération PDF des étiquettes produits |
+| `tableau-bord-production/` | tableau-bord-production | KPIs (volumes, rendement, taux de perte), graphiques (chart.js), comparaison de périodes, export Excel/PDF |
+
+**Services** (dans [src/app/services/](src/app/services/)) :
+`production-formulation.service`, `production-ordre-fabrication.service`,
+`production-lot.service`, `production-controle-qualite.service`,
+`production-format-conditionnement.service`, `production-tableau-bord.service`,
+`production-export.service`, `production-fiche-pdf.service`,
+`production-etiquette-pdf.service`, `stock-chimie.service`.
+
+**Modèles** (dans [src/app/models/](src/app/models/)) :
+`production-formulation.model`, `production-ordre-fabrication.model`,
+`production-lot.model`, `production-controle-qualite.model`,
+`production-matiere-premiere.model`, `production-mouvement-stock.model`,
+`production-format-conditionnement.model`, `production-tableau-bord.model`.
+
+**Constantes :** [src/app/constants/production-chimie.constants.ts](src/app/constants/production-chimie.constants.ts)
+— libellés/couleurs des statuts (OF, lot, contrôle, décision), unités chimie,
+palette charts.
+
+**Dépendances backend** : API REST sous `/production-chimie/*` (formulations,
+ordres-fabrication, lots, controle-qualite, matieres-premieres, formats,
+tableau-bord). Photos contrôle qualité chargées via HttpClient blob +
+DomSanitizer (JWT obligatoire — voir [fiche-controle.component.ts](src/app/adminPage/exploitation-v2/production-chimie/controle-qualite/fiche-controle/fiche-controle.component.ts)).
 
 #### 5.2 Exploitation Terrain (`exploitation-v2/terrain/`)
 **Statut : 🔲 À faire**
