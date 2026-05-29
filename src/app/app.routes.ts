@@ -209,6 +209,14 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/interventions/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/formulaire-intervention/formulaire-intervention.component').then(m => m.FormulaireInterventionComponent) },
             { path: 'exploitation-v2/terrain/interventions/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/fiche-intervention-detail/fiche-intervention-detail.component').then(m => m.FicheInterventionDetailComponent) },
 
+            // Contrôle qualité terrain
+            // Note : ordre important — /grilles, /nouveau, /historique/:siteId AVANT /:id
+            { path: 'exploitation-v2/terrain/controles', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/liste-controles-terrain/liste-controles-terrain.component').then(m => m.ListeControlesTerrainComponent) },
+            { path: 'exploitation-v2/terrain/controles/grilles', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/grilles-evaluation/grilles-evaluation.component').then(m => m.GrillesEvaluationComponent) },
+            { path: 'exploitation-v2/terrain/controles/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/formulaire-controle-terrain/formulaire-controle-terrain.component').then(m => m.FormulaireControleTerrainComponent) },
+            { path: 'exploitation-v2/terrain/controles/historique/:siteId', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/historique-site/historique-site.component').then(m => m.HistoriqueSiteComponent) },
+            { path: 'exploitation-v2/terrain/controles/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/fiche-controle-terrain/fiche-controle-terrain.component').then(m => m.FicheControleTerrainComponent) },
+
         ]
     }
 ];
