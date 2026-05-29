@@ -217,6 +217,14 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/controles/historique/:siteId', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/historique-site/historique-site.component').then(m => m.HistoriqueSiteComponent) },
             { path: 'exploitation-v2/terrain/controles/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/fiche-controle-terrain/fiche-controle-terrain.component').then(m => m.FicheControleTerrainComponent) },
 
+            // Matériel
+            // Note : ordre important — /nouveau, /maintenance, /:id/historique AVANT /:id
+            { path: 'exploitation-v2/terrain/materiel', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/liste-materiel/liste-materiel.component').then(m => m.ListeMaterielComponent) },
+            { path: 'exploitation-v2/terrain/materiel/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/formulaire-materiel/formulaire-materiel.component').then(m => m.FormulaireMaterielComponent) },
+            { path: 'exploitation-v2/terrain/materiel/maintenance', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/suivi-maintenance/suivi-maintenance.component').then(m => m.SuiviMaintenanceComponent) },
+            { path: 'exploitation-v2/terrain/materiel/:id/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/historique-materiel/historique-materiel.component').then(m => m.HistoriqueMaterielComponent) },
+            { path: 'exploitation-v2/terrain/materiel/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/formulaire-materiel/formulaire-materiel.component').then(m => m.FormulaireMaterielComponent) },
+
         ]
     }
 ];
