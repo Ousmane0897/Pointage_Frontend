@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FicheIntervention } from '../models/terrain-intervention.model';
 import { ApplicationPhyto } from '../models/terrain-phytosanitaire.model';
+import { RapportTableauBordTerrain } from '../models/terrain-tableau-bord.model';
 
 /**
  * Service de génération PDF — Module Exploitation Terrain (5.2).
@@ -10,6 +11,7 @@ import { ApplicationPhyto } from '../models/terrain-phytosanitaire.model';
  * Gère :
  * - Fiches d'intervention (archivage / envoi client)
  * - Registre phytosanitaire (conformité réglementaire)
+ * - Tableau de bord de pilotage (rapport périodique)
  */
 @Injectable({ providedIn: 'root' })
 export class TerrainPdfService {
@@ -150,6 +152,106 @@ export class TerrainPdfService {
     });
 
     doc.save(`registre-phytosanitaire-${dateDebut}_${dateFin}.pdf`);
+  }
+
+  // ─── Tableau de bord ────────────────────────────────────────────────────
+
+  exporterTableauBordPdf(rapport: RapportTableauBordTerrain): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const k = rapport.kpis;
+
+    // En-tête
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TABLEAU DE BORD EXPLOITATION TERRAIN', pageWidth / 2, 16, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      `Période : ${this.formatDate(k.dateDebut)} → ${this.formatDate(k.dateFin)}`,
+      pageWidth / 2,
+      24,
+      { align: 'center' },
+    );
+
+    // Bloc KPIs
+    autoTable(doc, {
+      startY: 32,
+      head: [['Indicateur', 'Valeur']],
+      body: [
+        ['Taux de couverture', `${(k.tauxCouverture * 100).toFixed(1)} %`],
+        ['Interventions réalisées', `${k.nbInterventionsRealisees} / ${k.nbAffectationsPlanifiees}`],
+        ['Satisfaction moyenne', `${k.satisfactionMoyenne.toFixed(2)} / 5`],
+        ['Nb d\'incidents', String(k.nbIncidents)],
+        ['Agents actifs', String(k.nbAgentsActifs)],
+        ['Sites actifs', String(k.nbSitesActifs)],
+        [
+          'Contrôles qualité',
+          `${k.nbControlesConformes} conformes / ${k.nbControles}`,
+        ],
+        ['Alertes escaladées', String(k.nbAlertesEscaladees)],
+      ],
+      headStyles: { fillColor: [99, 102, 241], textColor: 255 },
+      styles: { fontSize: 10 },
+    });
+
+    let cursorY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+
+    // Bloc Interventions par site
+    if (rapport.interventionsParSite.length > 0) {
+      autoTable(doc, {
+        startY: cursorY + 8,
+        head: [['Site', 'Code', 'Réalisées', 'Prévues', 'Couverture']],
+        body: rapport.interventionsParSite.map((s) => [
+          s.siteNom,
+          s.siteCode,
+          s.nbInterventions.toString(),
+          s.nbPrevues.toString(),
+          `${(s.tauxCouverture * 100).toFixed(0)} %`,
+        ]),
+        headStyles: { fillColor: [99, 102, 241], textColor: 255 },
+        styles: { fontSize: 9 },
+      });
+      cursorY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+    }
+
+    // Bloc Incidents par site
+    if (rapport.incidentsParSite.length > 0) {
+      autoTable(doc, {
+        startY: cursorY + 8,
+        head: [['Site', 'Nb incidents', 'Retards', 'Absences', 'Hors zone', 'Départs préma.']],
+        body: rapport.incidentsParSite.map((i) => [
+          i.siteNom,
+          i.nbIncidents.toString(),
+          String(i.parType['RETARD'] ?? 0),
+          String(i.parType['ABSENCE'] ?? 0),
+          String(i.parType['HORS_ZONE'] ?? i.parType['POINTAGE_HORS_ZONE'] ?? 0),
+          String(i.parType['DEPART_PREMATURE'] ?? 0),
+        ]),
+        headStyles: { fillColor: [239, 68, 68], textColor: 255 },
+        styles: { fontSize: 9 },
+      });
+      cursorY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+    }
+
+    // Bloc Comparaison N vs N-1
+    if (rapport.comparaison) {
+      const c = rapport.comparaison;
+      autoTable(doc, {
+        startY: cursorY + 8,
+        head: [['Comparaison N vs N-1', 'Évolution']],
+        body: [
+          ['Δ Taux de couverture', `${c.deltaCouverturePoints >= 0 ? '+' : ''}${c.deltaCouverturePoints.toFixed(1)} pts`],
+          ['Δ Interventions', `${c.deltaInterventionsPourcent >= 0 ? '+' : ''}${c.deltaInterventionsPourcent.toFixed(1)} %`],
+          ['Δ Satisfaction', `${c.deltaSatisfactionPoints >= 0 ? '+' : ''}${c.deltaSatisfactionPoints.toFixed(2)} pts`],
+          ['Δ Incidents', `${c.deltaIncidentsPourcent >= 0 ? '+' : ''}${c.deltaIncidentsPourcent.toFixed(1)} %`],
+        ],
+        headStyles: { fillColor: [55, 65, 81], textColor: 255 },
+        styles: { fontSize: 10 },
+      });
+    }
+
+    doc.save(`tableau-bord-terrain-${k.dateDebut}_${k.dateFin}.pdf`);
   }
 
   private formatDate(iso: string): string {

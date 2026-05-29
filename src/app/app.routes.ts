@@ -225,6 +225,9 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/materiel/:id/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/historique-materiel/historique-materiel.component').then(m => m.HistoriqueMaterielComponent) },
             { path: 'exploitation-v2/terrain/materiel/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/formulaire-materiel/formulaire-materiel.component').then(m => m.FormulaireMaterielComponent) },
 
+            // Tableau de bord terrain
+            { path: 'exploitation-v2/terrain/tableau-bord', loadComponent: () => import('./adminPage/exploitation-v2/terrain/tableau-bord/tableau-bord-terrain/tableau-bord-terrain.component').then(m => m.TableauBordTerrainComponent) },
+
             // Phytosanitaire
             // Note : ordre important — /produits, /registre, /alertes, /applications/nouvelle AVANT /applications/:id
             { path: 'exploitation-v2/terrain/phytosanitaire', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/calendrier-phyto/calendrier-phyto.component').then(m => m.CalendrierPhytoComponent) },
