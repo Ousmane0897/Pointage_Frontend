@@ -203,6 +203,12 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/alertes/recap', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/recapitulatif-quotidien/recapitulatif-quotidien.component').then(m => m.RecapitulatifQuotidienComponent) },
             { path: 'exploitation-v2/terrain/alertes/parametres', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/parametres-escalade/parametres-escalade.component').then(m => m.ParametresEscaladeComponent) },
 
+            // Fiches d'intervention
+            { path: 'exploitation-v2/terrain/interventions', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/liste-interventions/liste-interventions.component').then(m => m.ListeInterventionsComponent) },
+            { path: 'exploitation-v2/terrain/interventions/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/formulaire-intervention/formulaire-intervention.component').then(m => m.FormulaireInterventionComponent) },
+            { path: 'exploitation-v2/terrain/interventions/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/formulaire-intervention/formulaire-intervention.component').then(m => m.FormulaireInterventionComponent) },
+            { path: 'exploitation-v2/terrain/interventions/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/fiche-intervention-detail/fiche-intervention-detail.component').then(m => m.FicheInterventionDetailComponent) },
+
         ]
     }
 ];
