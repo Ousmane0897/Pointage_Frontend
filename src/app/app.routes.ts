@@ -225,6 +225,15 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/materiel/:id/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/historique-materiel/historique-materiel.component').then(m => m.HistoriqueMaterielComponent) },
             { path: 'exploitation-v2/terrain/materiel/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/formulaire-materiel/formulaire-materiel.component').then(m => m.FormulaireMaterielComponent) },
 
+            // Phytosanitaire
+            // Note : ordre important — /produits, /registre, /alertes, /applications/nouvelle AVANT /applications/:id
+            { path: 'exploitation-v2/terrain/phytosanitaire', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/calendrier-phyto/calendrier-phyto.component').then(m => m.CalendrierPhytoComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/produits', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/produits-phyto/produits-phyto.component').then(m => m.ProduitsPhytoComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/registre', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/registre-phyto/registre-phyto.component').then(m => m.RegistrePhytoComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/alertes', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/alertes-delais/alertes-delais.component').then(m => m.AlertesDelaisComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/applications/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/applications/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
+
         ]
     }
 ];
