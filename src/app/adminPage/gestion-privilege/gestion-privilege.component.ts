@@ -236,11 +236,24 @@ export class GestionPrivilegeComponent implements OnInit {
       // Mise à jour
       this.adminService.updateAdmin(this.selectedId, this.modalData)
         .pipe(takeUntil(this.destroy$))
-        .subscribe(() => {
-          this.loadData();
-          this.closeModal();
-          this.toastr.success('Admin mis à jour avec succès !', 'Succès');
-          this.spinner.hide();
+        .subscribe({
+          next: () => {
+            this.loadData();
+            this.closeModal();
+            this.toastr.success('Admin mis à jour avec succès !', 'Succès');
+            this.spinner.hide();
+          },
+          error: (err) => {
+            console.error('Erreur mise à jour admin :', err);
+            this.spinner.hide();
+            const msg = this.extraireMessageErreur(
+              err,
+              err.status === 409
+                ? 'Conflit : cet email existe déjà ou une erreur serveur est survenue.'
+                : 'Erreur lors de la mise à jour de l\'admin'
+            );
+            this.toastr.error(msg, 'Erreur');
+          }
         });
     } else {
       // Création
@@ -256,14 +269,26 @@ export class GestionPrivilegeComponent implements OnInit {
           error: (err) => {
             console.error('Erreur création admin :', err);
             this.spinner.hide();
-            if (err.status === 409) {
-              this.toastr.error(err.error.message, 'Erreur');
-            } else {
-              this.toastr.error('Erreur lors de la création de l\'admin', 'Erreur');
-            }
+            const msg = this.extraireMessageErreur(
+              err,
+              err.status === 409
+                ? 'Conflit : cet email existe déjà ou une erreur serveur est survenue.'
+                : 'Erreur lors de la création de l\'admin'
+            );
+            this.toastr.error(msg, 'Erreur');
           }
         });
     }
+  }
+
+  /**
+   * Extrait un message d'erreur lisible depuis une réponse HTTP, en couvrant les
+   * différents formats renvoyés par le backend (`err.error.message`,
+   * `err.error.error`, ou une chaîne brute). Retourne `fallback` si rien d'exploitable.
+   */
+  private extraireMessageErreur(err: any, fallback: string): string {
+    if (typeof err?.error === 'string') return err.error;
+    return err?.error?.message ?? err?.error?.error ?? fallback;
   }
 
   get filteredAdmins() {
