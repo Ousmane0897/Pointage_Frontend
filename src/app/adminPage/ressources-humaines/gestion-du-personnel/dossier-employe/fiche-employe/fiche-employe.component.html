@@ -104,6 +104,10 @@
                 </span>
                 {{ getLibelleStatut(employe.statut) }}
               </span>
+              <!-- AgentId -->
+              <span class="font-mono text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
+                AgentId : {{ employe.agentId }}
+              </span>
               <!-- Matricule -->
               <span class="font-mono text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
                 Matricule : {{ employe.matricule }}
@@ -288,6 +292,14 @@
                 <dt class="text-sm text-gray-500 shrink-0">Date d'entrée</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">
                   {{ employe.dateEntree ? (employe.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') : '—' }}
+                </dd>
+              </div>
+              <div class="flex justify-between items-start gap-3">
+                <dt class="text-sm text-gray-500 shrink-0">AgentId</dt>
+                <dd>
+                  <span class="font-mono text-xs bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded">
+                    {{ employe.agentId }}
+                  </span>
                 </dd>
               </div>
               <div class="flex justify-between items-start gap-3">

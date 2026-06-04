@@ -246,7 +246,7 @@ Module en construction, découpé en 2 sous-modules :
   alertes, fiches intervention, contrôle qualité terrain, matériel,
   phytosanitaire, tableau de bord
 
-**Statut : 🟡 En cours (1/2 sous-modules livrés — 5.1 terminé, 5.2 à faire)**
+**Statut : ✅ Terminé (2/2 sous-modules livrés)**
 
 #### 5.1 Production Chimie (`exploitation-v2/production-chimie/`)
 
@@ -290,9 +290,71 @@ tableau-bord). Photos contrôle qualité chargées via HttpClient blob +
 DomSanitizer (JWT obligatoire — voir [fiche-controle.component.ts](src/app/adminPage/exploitation-v2/production-chimie/controle-qualite/fiche-controle/fiche-controle.component.ts)).
 
 #### 5.2 Exploitation Terrain (`exploitation-v2/terrain/`)
-**Statut : 🔲 À faire**
-**Dépendances :** consomme `EmployeService`, étend `Pointage` existant,
-utilise `websocket.service.ts`. Alimente `pointage-centralise` du module RH 6.2.
+
+**Statut : ✅ Terminé** (livré par PR à venir, branche `feature/exploitation-v2-terrain`)
+
+9 sous-modules livrés couvrant l'ensemble du flux terrain Nettoyage /
+Entretien phytosanitaire : référentiel sites → planning des équipes →
+pointage GPS → alertes & escalade temps réel → fiches d'intervention →
+contrôle qualité terrain → matériel & maintenance → phytosanitaire
+(traçabilité réglementaire) → pilotage par tableau de bord.
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `sites-clients/` | liste, formulaire, fiche, import-modal | CRUD sites + carte Google Maps + import Excel transactionnel (template + drag&drop + rapport d'erreurs) |
+| `shared/` | selecteur-site, selecteur-agent, signature-pad, photo-uploader, geolocation-button, carte-google | Briques transverses : autocompletes, canvas signature `signature_pad`, upload + compression `browser-image-compression`, GPS, Google Maps singleton |
+| `planning/` | calendrier-planning, liste-affectations, formulaire-affectation, fiche-affectation, detection-conflits | FullCalendar drag&drop CDK + détection conflits temps réel |
+| `pointage/` | suivi-pointages, historique-pointages, fiche-pointage | Le pointage réel est saisi par l'agent depuis la page d'accueil (boutons Arrivée/Départ → code-PIN, modèle `Pointage` via `PointageService`) — pas de création depuis le terrain. `suivi-pointages` affiche les pointages du jour (table de l'ancien module, recherche + pagination, rafraîchissement auto 30 s). `historique-pointages`/`fiche-pointage` restent sur l'ancien modèle GPS `PointageTerrain` (en sursis) |
+| `alertes/` | tableau-alertes, recapitulatif-quotidien, parametres-escalade | Alertes WebSocket (topics `/topic/alertes-terrain`, `/user/queue/notifications-terrain`) + workflow escalade superviseur → responsable → DG |
+| `fiches-intervention/` | liste, formulaire, detail | Rapport de passage avec checklist, produits, photos `moment` AVANT/APRES/AUTRE, signature client `signature_pad`, géoloc, export PDF jsPDF |
+| `controle-qualite/` | grilles-evaluation, liste, formulaire, fiche, historique-site | Grilles paramétrables par site (générique ou spécifique), notation slider 1-5 pondérée, line chart ng2-charts d'évolution |
+| `materiel/` | liste, formulaire, suivi-maintenance, historique-materiel + 3 dialogs (Affecter, Programmer, Déclarer) | Inventaire avec alertes maintenance préventive 3 niveaux (CRITIQUE/ATTENTION/INFO), FullCalendar maintenances, timeline événements |
+| `phytosanitaire/` | calendrier-phyto, produits, formulaire-application, registre, alertes-delais | Référentiel produits homologués (n° AMM), calendrier coloré par catégorie, registre exportable PDF/Excel pour audits, alertes délais réentrée et nouvelle application |
+| `tableau-bord/` | tableau-bord-terrain | KPIs (couverture, satisfaction, incidents) + 4 charts ng2-charts (bar, line × 2, doughnut) + comparaison N vs N-1 + exports Excel/PDF |
+
+**Services** (dans [src/app/services/](src/app/services/)) :
+`terrain-site-client.service`, `terrain-planning.service`,
+`terrain-pointage.service`, `terrain-alerte.service`,
+`terrain-intervention.service`, `terrain-controle-qualite.service`,
+`terrain-materiel.service`, `terrain-phytosanitaire.service`,
+`terrain-tableau-bord.service`, `terrain-export.service`,
+`terrain-pdf.service`, `terrain-geolocation.service`,
+`terrain-import-excel.service`, `terrain-google-maps.service`
+(14 services). Le `websocket.service.ts` partagé a été étendu pour
+exposer les topics `/topic/alertes-terrain`, `/topic/pointages-terrain`
+et `/user/queue/notifications-terrain`.
+
+**Modèles** (dans [src/app/models/](src/app/models/)) :
+`terrain-site-client.model`, `terrain-planning.model`,
+`terrain-pointage.model`, `terrain-alerte.model`,
+`terrain-intervention.model`, `terrain-controle-qualite.model`,
+`terrain-materiel.model`, `terrain-phytosanitaire.model`,
+`terrain-tableau-bord.model` (9 modèles).
+
+**Constantes :** [src/app/constants/terrain.constants.ts](src/app/constants/terrain.constants.ts)
+— libellés/couleurs des statuts (affectation, pointage, alerte, intervention,
+décision contrôle terrain, matériel, application phyto), seuils
+(RAYON_TOLERANCE_GPS_DEFAUT_M, SEUIL_ALERTE_MAINTENANCE_INFO_JOURS,
+NOTE_MAX_DEFAUT, SEUIL_CONFORMITE_DEFAUT), palette charts, topics
+WebSocket, paramètres de compression photos.
+
+**Dépendances** :
+- **`DossierEmployeService` (RH 6.1)** — lecture seule via le composant
+  shared `selecteur-agent` (filtre département `Exploitation`). Aucune
+  écriture sur les employés depuis le module terrain.
+- **`websocket.service.ts`** — topics alertes Phase 5.
+- **FullCalendar v6 + locale fr** — calendriers Phases 3, 8, 9.
+- **ng2-charts + Chart.js** — Phases 7 et 10.
+- **jsPDF + jspdf-autotable + XLSX** — exports PDF/Excel Phases 6, 9, 10.
+- **signature_pad** — Phase 6.
+- **browser-image-compression** — compression photos Phase 2.
+- **@googlemaps/js-api-loader + @types/google.maps** — Phase 1.
+
+**RBAC** : flag `terrain?` optionnel dans
+[ModulesAutorises](src/app/models/admin.model.ts) avec 9 sous-flags
+(sitesClients, planning, pointage, alertes, interventions, controleQualite,
+materiel, phytosanitaire, tableauBord). Backend doit ajouter
+`modules.terrain` au claim JWT pour activer le menu en production.
 
 ### Procédure de bascule (à exécuter quand exploitation-v2 sera validé)
 

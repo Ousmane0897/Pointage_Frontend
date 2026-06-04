@@ -2,6 +2,7 @@ import { SituationMatrimoniale } from './dossier-employe.model';
 
 export interface DossierEmployeImportPayload {
   numeroLigne: number;
+  agentId: string;
   matricule: string;
 
   nom: string;
@@ -92,6 +93,7 @@ export interface BackendBulkImportError {
 }
 
 export const COLONNES_TEMPLATE: readonly string[] = [
+  'AgentId *',
   'Matricule *',
   'Nom *',
   'Prénom *',

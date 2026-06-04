@@ -36,7 +36,7 @@
             <lucide-icon name="FileText" class="w-5 h-5 text-indigo-600"></lucide-icon>
             <div class="text-sm">
               <div class="font-medium text-gray-800">Besoin du modèle Excel ?</div>
-              <div class="text-xs text-gray-500">22 colonnes + feuille de consignes.</div>
+              <div class="text-xs text-gray-500">23 colonnes + feuille de consignes.</div>
             </div>
           </div>
           <button
@@ -100,6 +100,16 @@
                     <li>{{ col }}</li>
                   }
                 </ul>
+                @if (enTetesTrouves.length > 0) {
+                  <div class="mt-2 pt-2 border-t border-red-200">
+                    <div class="font-medium text-red-800 mb-1">En-têtes détectés dans votre fichier :</div>
+                    <div class="flex flex-wrap gap-1">
+                      @for (h of enTetesTrouves; track $index) {
+                        <span class="px-1.5 py-0.5 rounded bg-white border border-red-200 font-mono text-[11px] text-gray-700">{{ h || '(vide)' }}</span>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           </div>

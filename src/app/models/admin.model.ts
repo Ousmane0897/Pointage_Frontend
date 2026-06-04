@@ -71,4 +71,20 @@ export interface ModulesAutorises {
     conditionnement?: boolean;
     tableauBord?: boolean;
   };
+
+  // ─── Exploitation v2 — Terrain (5.2) ────────────────────────────────
+  // Optionnel pour rester rétrocompatible avec les JWT existants qui
+  // n'embarquent pas encore ce champ. Le backend devra ajouter
+  // `modules.terrain` au claim JWT pour activer ce menu en production.
+  terrain?: {
+    sitesClients?: boolean;
+    planning?: boolean;
+    pointage?: boolean;
+    alertes?: boolean;
+    interventions?: boolean;
+    controleQualite?: boolean;
+    materiel?: boolean;
+    phytosanitaire?: boolean;
+    tableauBord?: boolean;
+  };
 }

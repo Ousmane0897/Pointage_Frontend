@@ -12,6 +12,7 @@ export type SituationMatrimoniale = 'CELIBATAIRE' | 'MARIE';
 
 export interface DossierEmploye {
   id?: string;
+  agentId: string;   // code 4 chiffres pour le pointage (= codeSecret côté backend)
   matricule: string;
 
   // Identité

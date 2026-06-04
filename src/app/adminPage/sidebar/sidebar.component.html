@@ -846,6 +846,120 @@
               </ul>
             </li>
 
+            <!-- Exploitation Terrain (5.2) -->
+            <li *ngIf="accessTerrain()">
+              <button (click)="toggleDropdownTerrain('terrain')"
+                class="group flex items-center gap-2 w-full px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{
+                  'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold':
+                    isActivePrefix('/admin/exploitation-v2/terrain')
+                }">
+                <lucide-icon name="MapPinned" class="w-3.5 h-3.5 text-cyan-300"></lucide-icon>
+                <span class="flex-1 truncate">Exploitation Terrain</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownTerrain === 'terrain' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <ul *ngIf="openDropdownTerrain === 'terrain'"
+                class="ml-3 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
+
+                <li *ngIf="hasAccess('terrain.tableauBord')">
+                  <a routerLink="/admin/exploitation-v2/terrain/tableau-bord"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Gauge" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
+                    <span class="flex-1 truncate">Tableau de bord</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.sitesClients')">
+                  <a routerLink="/admin/exploitation-v2/terrain/sites-clients"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Building2" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
+                    <span class="flex-1 truncate">Sites clients</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.planning')">
+                  <a routerLink="/admin/exploitation-v2/terrain/planning/calendrier"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="CalendarDays" class="w-3.5 h-3.5 text-violet-300"></lucide-icon>
+                    <span class="flex-1 truncate">Planning</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.pointage')">
+                  <a routerLink="/admin/exploitation-v2/terrain/pointage/aujourd-hui"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="MapPinCheck" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
+                    <span class="flex-1 truncate">Pointage GPS</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.alertes')">
+                  <a routerLink="/admin/exploitation-v2/terrain/alertes"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="BellRing" class="w-3.5 h-3.5 text-red-300"></lucide-icon>
+                    <span class="flex-1 truncate">Alertes</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.interventions')">
+                  <a routerLink="/admin/exploitation-v2/terrain/interventions"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="FileText" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
+                    <span class="flex-1 truncate">Interventions</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.controleQualite')">
+                  <a routerLink="/admin/exploitation-v2/terrain/controles"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ClipboardCheck" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
+                    <span class="flex-1 truncate">Contrôle qualité</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.materiel')">
+                  <a routerLink="/admin/exploitation-v2/terrain/materiel"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Wrench" class="w-3.5 h-3.5 text-orange-300"></lucide-icon>
+                    <span class="flex-1 truncate">Matériel</span>
+                  </a>
+                </li>
+
+                <li *ngIf="hasAccess('terrain.phytosanitaire')">
+                  <a routerLink="/admin/exploitation-v2/terrain/phytosanitaire"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Sprout" class="w-3.5 h-3.5 text-lime-300"></lucide-icon>
+                    <span class="flex-1 truncate">Phytosanitaire</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
           </ul>
         </li>
 

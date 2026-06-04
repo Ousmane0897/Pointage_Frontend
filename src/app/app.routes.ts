@@ -192,8 +192,7 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/planning/affectations/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
             { path: 'exploitation-v2/terrain/planning/affectations/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/fiche-affectation/fiche-affectation.component').then(m => m.FicheAffectationComponent) },
 
-            // Pointage terrain GPS
-            { path: 'exploitation-v2/terrain/pointage/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/pointer-terrain/pointer-terrain.component').then(m => m.PointerTerrainComponent) },
+            // Pointage terrain (les pointages sont créés via le code-PIN de la page d'accueil)
             { path: 'exploitation-v2/terrain/pointage/aujourd-hui', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/suivi-pointages/suivi-pointages.component').then(m => m.SuiviPointagesComponent) },
             { path: 'exploitation-v2/terrain/pointage/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/historique-pointages/historique-pointages.component').then(m => m.HistoriquePointagesComponent) },
             { path: 'exploitation-v2/terrain/pointage/historique/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/fiche-pointage/fiche-pointage.component').then(m => m.FichePointageComponent) },

@@ -113,9 +113,15 @@ export class DossierEmployeService {
         const distinctTrie = (vs: (string | undefined | null)[]) =>
           [...new Set(vs.filter((v): v is string => !!v && v.trim() !== ''))]
             .sort((a, b) => a.localeCompare(b, 'fr'));
+        // `siteAffecte` peut contenir plusieurs sites séparés par « / »
+        // (ex. "Ouakam / zone A"). On éclate chaque valeur pour lister les sites
+        // individuels dans le filtre.
+        const sitesEclates = employes
+          .flatMap(e => (e.siteAffecte ?? '').split('/'))
+          .map(s => s.trim());
         return {
           departements: distinctTrie(employes.map(e => e.departement)),
-          sites: distinctTrie(employes.map(e => e.siteAffecte)),
+          sites: distinctTrie(sitesEclates),
           postes: distinctTrie(employes.map(e => e.poste)),
         };
       }),

@@ -31,6 +31,7 @@ export class ImportExcelModalComponent implements OnDestroy {
 
   validation: ResultatValidation | null = null;
   enTetesManquants: string[] = [];
+  enTetesTrouves: string[] = [];
 
   resultatImport: ResultatImport | null = null;
 
@@ -99,14 +100,16 @@ export class ImportExcelModalComponent implements OnDestroy {
     if (!this.selectedFile) return;
     this.stage = 'validation';
     this.enTetesManquants = [];
+    this.enTetesTrouves = [];
 
     this.importService
       .lireFichier(this.selectedFile)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: ({ rows, enTetesManquants }) => {
+        next: ({ rows, enTetesManquants, enTetesTrouves }) => {
           if (enTetesManquants.length > 0) {
             this.enTetesManquants = enTetesManquants;
+            this.enTetesTrouves = enTetesTrouves;
             this.stage = 'upload';
             this.toastr.error(
               "Le fichier ne correspond pas au modèle attendu. Téléchargez à nouveau le modèle Excel.",
