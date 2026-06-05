@@ -108,7 +108,7 @@ export const COLONNES_TEMPLATE: readonly string[] = [
   'Site affecté *',
   "Date d'entrée *",
   'Statut *',
-  'Matricule supérieur hiérarchique',
+  'Supérieur hiérarchique',
   "Durée période d'essai (mois)",
   'Téléphone *',
   'Email *',

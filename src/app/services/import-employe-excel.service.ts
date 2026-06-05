@@ -80,7 +80,7 @@ export class ImportEmployeExcelService {
       ['   • Matricule : unique dans le fichier ET en base de données'],
       ['   • AgentId : exactement 4 chiffres, unique dans le fichier ET en base (code de pointage)'],
       ["   • Site affecté : un ou plusieurs sites séparés par « / » (ex. « Ouakam / zone A » ou « Keur gorgui / yoff / bgfi tann »)"],
-      ["   • Matricule supérieur hiérarchique : optionnel, doit exister en base OU être le matricule d'un autre employé du même fichier"],
+      ["   • Supérieur hiérarchique : optionnel, indiquer le matricule du supérieur ; doit exister en base OU être le matricule d'un autre employé du même fichier"],
       ["   • Durée période d'essai : obligatoire uniquement si Statut = En période d'essai"],
       [''],
       ['6. Champ photo non importable via Excel. À éditer ensuite depuis la fiche de l\'employé.'],
@@ -269,16 +269,16 @@ export class ImportEmployeExcelService {
 
     const statut = this.lireStatut(row, 'Statut *', pousser);
 
-    const superieurHierarchiqueMatricule = this.lireTexte(row, 'Matricule supérieur hiérarchique') || undefined;
+    const superieurHierarchiqueMatricule = this.lireTexte(row, 'Supérieur hiérarchique') || undefined;
     if (superieurHierarchiqueMatricule) {
       const ref = superieurHierarchiqueMatricule.toUpperCase();
       if (matricule && ref === matricule.toUpperCase()) {
-        pousser('Matricule supérieur hiérarchique', superieurHierarchiqueMatricule, 'Un employé ne peut pas être son propre supérieur.');
+        pousser('Supérieur hiérarchique', superieurHierarchiqueMatricule, 'Un employé ne peut pas être son propre supérieur.');
       } else if (!matriculesEnBase.has(ref) && !matriculesFichier.has(ref)) {
         pousser(
-          'Matricule supérieur hiérarchique',
+          'Supérieur hiérarchique',
           superieurHierarchiqueMatricule,
-          'Matricule supérieur hiérarchique introuvable en base ni dans le fichier.',
+          'Supérieur hiérarchique introuvable en base ni dans le fichier.',
         );
       }
     }
