@@ -93,7 +93,7 @@ export interface BackendBulkImportError {
 }
 
 export const COLONNES_TEMPLATE: readonly string[] = [
-  'AgentId *',
+  'agentId',
   'Matricule *',
   'Nom *',
   'Prénom *',

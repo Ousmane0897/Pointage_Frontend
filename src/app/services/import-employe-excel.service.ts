@@ -78,7 +78,7 @@ export class ImportEmployeExcelService {
       [''],
       ['5. Règles de validation :'],
       ['   • Matricule : unique dans le fichier ET en base de données'],
-      ['   • AgentId : exactement 4 chiffres, unique dans le fichier ET en base (code de pointage)'],
+      ['   • agentId : exactement 4 chiffres, unique dans le fichier ET en base (code de pointage)'],
       ["   • Site affecté : un ou plusieurs sites séparés par « / » (ex. « Ouakam / zone A » ou « Keur gorgui / yoff / bgfi tann »)"],
       ["   • Supérieur hiérarchique : optionnel, indiquer le matricule du supérieur ; doit exister en base OU être le matricule d'un autre employé du même fichier"],
       ["   • Durée période d'essai : obligatoire uniquement si Statut = En période d'essai"],
@@ -225,16 +225,16 @@ export class ImportEmployeExcelService {
         pousser('Matricule *', matricule, 'Matricule déjà existant en base.');
     }
 
-    const agentId = this.lireTexte(row, 'AgentId *');
-    if (!agentId) pousser('AgentId *', row['AgentId *'], 'AgentId obligatoire.');
+    const agentId = this.lireTexte(row, 'agentId');
+    if (!agentId) pousser('agentId', row['agentId'], 'agentId obligatoire.');
     else if (!/^\d{4}$/.test(agentId)) {
-      pousser('AgentId *', agentId, 'AgentId invalide — exactement 4 chiffres attendus.');
+      pousser('agentId', agentId, 'agentId invalide — exactement 4 chiffres attendus.');
     } else {
       const occurrences = toutesLesLignes.filter(
-        r => String(r['AgentId *'] ?? '').trim() === agentId,
+        r => String(r['agentId'] ?? '').trim() === agentId,
       ).length;
-      if (occurrences > 1) pousser('AgentId *', agentId, 'AgentId en doublon dans le fichier.');
-      if (agentIdsEnBase.has(agentId)) pousser('AgentId *', agentId, 'AgentId déjà existant en base.');
+      if (occurrences > 1) pousser('agentId', agentId, 'agentId en doublon dans le fichier.');
+      if (agentIdsEnBase.has(agentId)) pousser('agentId', agentId, 'agentId déjà existant en base.');
     }
 
     const nom = this.lireTexte(row, 'Nom *');
@@ -496,6 +496,7 @@ export class ImportEmployeExcelService {
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
       .toLowerCase()
+      .replace(/\*/g, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
