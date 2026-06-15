@@ -3,7 +3,6 @@ import { PageCodePinComponent } from './page-code-pin/page-code-pin.component';
 import { HomePageComponent } from './home-page/home-page.component';
 import { FinalPage1Component } from './final-page1/final-page1.component';
 import { FinalPage2Component } from './final-page2/final-page2.component';
-import { DashboardComponent } from './adminPage/exploitation/dashboard/dashboard.component';
 import { AdminComponent } from './adminPage/admin/admin.component';
 import { AuthGuard } from './guards/auth.guard';
 
@@ -30,37 +29,8 @@ export const routes: Routes = [
 
         canActivate: [AuthGuard], // protection de la route admin avec AuthGuard
         children: [
-            //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // redirection vers la page dashboard par défaut
-            { path: 'dashboard', loadComponent: () => import('./adminPage/exploitation/dashboard/dashboard.component').then(m => m.DashboardComponent) }, // lazy loading de la page dashboard
             { path: 'page-par-defaut-apres-login', loadComponent: () => import('./adminPage/page-par-defaut-apres-login/page-par-defaut-apres-login.component').then(m => m.PageParDefautApresLoginComponent) }, // lazy loading de la page par défaut après login
-
-            { path: 'dashboard-par-agence', loadComponent: () => import('./adminPage/exploitation/dashboard-par-agence/tableau-de-bord-par-agence.component').then(m => m.TableauDeBordParAgenceComponent) }, // lazy loading de la page tableau de bord par agence
-            { path: 'operations/planification', loadComponent: () => import('./adminPage/exploitation/planification/planification.component').then(m => m.PlanificationComponent) }, // lazy loading de la page planification
-            { path: 'calendrier', loadComponent: () => import('./adminPage/exploitation/calendrier/calendrier.component').then(m => m.CalendrierComponent) },
-            //{ path: 'employes', loadComponent: () => import('./adminPage/exploitation/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page employes
-            { path: 'employes/donnees-complet', loadComponent: () => import('./adminPage/exploitation/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page employes complet
-            { path: 'employes/donnees-complet1', loadComponent: () => import('./adminPage/exploitation/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page employes complet
-            { path: 'operations/agents', loadComponent: () => import('./adminPage/exploitation/employes-complet/employes-complet.component').then(m => m.EmployesCompletComponent) }, // lazy loading de la page agents
-            { path: 'operations/statistique-par-agence-groupe', loadComponent: () => import('./adminPage/exploitation/statistique-par-agence-groupe/statistique-par-agence-groupe.component').then(m => m.StatistiqueParAgenceGroupeComponent) }, // lazy loading de la page statistique par agence groupe
-            { path: 'employes/donnees-partiel', loadComponent: () => import('./adminPage/exploitation/employes/employes.component').then(m => m.EmployesComponent) }, // lazy loading de la page données employé
-            { path: 'collecte-et-livraison/collecte-des-besoins', loadComponent: () => import('./adminPage/exploitation/collecte et livraison/collecte-des-besoins/collecte-des-besoins.component').then(m => m.CollecteDesBesoinsComponent) }, // lazy loading de la page collecte des besoins
-            { path: 'collecte-et-livraison/suivi-livraison', loadComponent: () => import('./adminPage/exploitation/collecte et livraison/suivi-commandes/suivi-commandes.component').then(m => m.SuiviCommandesComponent) }, // lazy loading de la page livraison des besoins
-            { path: 'collecte-et-livraison/historique-livraisons', loadComponent: () => import('./adminPage/exploitation/collecte et livraison/historique-livraisons/historique-livraisons.component').then(m => m.HistoriqueLivraisonsComponent) }, // lazy loading de la page historique des livraisons
-            { path: 'stock/entrees', loadComponent: () => import('./adminPage/exploitation/stock/entrees/entrees.component').then(m => m.EntreesComponent) }, // lazy loading de la page entrees
-            { path: 'stock/sorties', loadComponent: () => import('./adminPage/exploitation/stock/sorties/sorties.component').then(m => m.SortiesComponent) }, // lazy loading de la page sorties
-            { path: 'stock/produits', loadComponent: () => import('./adminPage/exploitation/stock/produit-list/produit-list.component').then(m => m.ProduitListComponent) }, // lazy loading de la page produits
-            { path: 'stock/historiques-entrees', loadComponent: () => import('./adminPage/exploitation/stock/historiques-entrees/historiques-entrees.component').then(m => m.HistoriquesEntreesComponent) }, // lazy loading de la page historiques entrées
-            { path: 'stock/historiques-sorties', loadComponent: () => import('./adminPage/exploitation/stock/historiques-sorties/historiques-sorties.component').then(m => m.HistoriquesSortiesComponent) }, // lazy loading de la page historiques sorties
-            //{ path: 'stock/rapports-mensuels', loadComponent: () => import('./adminPage/exploitation/stock/rapport-mensuel/rapport-mensuel.component').then(m => m.RapportMensuelComponent) }, // lazy loading de la page rapports mensuels
-            { path: 'stock/suivi', loadComponent: () => import('./adminPage/exploitation/stock/suivi-stock/suivi-stock.component').then(m => m.SuiviStockComponent) }, // lazy loading de la page suivi
-            { path: 'feries', loadComponent: () => import('./adminPage/exploitation/ferie/ferie.component').then(m => m.FerieComponent) }, // lazy loading de la page feries
             { path: 'gestion-privilege', loadComponent: () => import('./adminPage/gestion-privilege/gestion-privilege.component').then(m => m.GestionPrivilegeComponent),}, // lazy loading de la page gestion privilege
-            { path: 'pointages/pointagesDuJour', loadComponent: () => import('./adminPage/exploitation/pointages/pointages.component').then(m => m.PointagesComponent) }, // lazy loading de la page pointages
-            { path: 'pointages/historique', loadComponent: () => import('./adminPage/exploitation/pointage-historique/pointage-historique.component').then(m => m.PointageHistoriqueComponent) }, // lazy loading de la page historique des pointages
-            //{ path: 'ressources-humaines', loadComponent: () => import('./adminPage/agents-rh/agents-rh.component').then(m => m.AgentsRhComponent) }, // lazy loading de la page ressources humaines
-            { path: 'operations/agences', loadComponent: () => import('./adminPage/exploitation/agences/agences.component').then(m => m.AgencesComponent) }, // lazy loading de la page agences
-            { path: 'absences/tempsreel', loadComponent: () => import('./adminPage/exploitation/absences-temps-reel/absences-temps-reel.component').then(m => m.AbsencesTempsReelComponent) }, // lazy loading de la page absences
-            { path: 'absences/historique', loadComponent: () => import('./adminPage/exploitation/absences-historique/absences-historique.component').then(m => m.AbsencesHistoriqueComponent) }, // lazy loading de la page absences
 
             // ─── Gestion du Personnel ────────────────────────────────────
             { path: 'rh/gestion-du-personnel/dossier-employe', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/liste-employes/liste-employes.component').then(m => m.ListeEmployesComponent) },
@@ -134,6 +104,9 @@ export const routes: Routes = [
             // ─── Développement RH — Tableau de Bord RH ────────────
             { path: 'rh/developpement-rh/tableau-de-bord', loadComponent: () => import('./adminPage/ressources-humaines/developpement-rh/tableau-de-bord/tableau-de-bord-rh/tableau-de-bord-rh.component').then(m => m.TableauDeBordRhComponent) },
 
+            // ─── Exploitation v2 / Tableau de bord global ────────────
+            { path: 'exploitation-v2/dashboard', loadComponent: () => import('./adminPage/exploitation-v2/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+
             // ─── Exploitation v2 / Production Chimie (5.1) ────────────
             // Matières premières
             { path: 'exploitation-v2/production-chimie/matieres-premieres', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/matieres-premieres/liste-matieres/liste-matieres.component').then(m => m.ListeMatieresComponent) },
@@ -176,6 +149,65 @@ export const routes: Routes = [
 
             // Tableau de bord
             { path: 'exploitation-v2/production-chimie/tableau-bord', loadComponent: () => import('./adminPage/exploitation-v2/production-chimie/tableau-bord-production/tableau-bord-production.component').then(m => m.TableauBordProductionComponent) },
+
+            // ─── Exploitation Terrain (5.2) ──────────────────────────────────────
+            // Sites clients
+            { path: 'exploitation-v2/terrain/sites-clients', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/liste-sites/liste-sites.component').then(m => m.ListeSitesComponent) },
+            { path: 'exploitation-v2/terrain/sites-clients/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/formulaire-site/formulaire-site.component').then(m => m.FormulaireSiteComponent) },
+            { path: 'exploitation-v2/terrain/sites-clients/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/formulaire-site/formulaire-site.component').then(m => m.FormulaireSiteComponent) },
+            { path: 'exploitation-v2/terrain/sites-clients/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/fiche-site/fiche-site.component').then(m => m.FicheSiteComponent) },
+
+            // Planning des équipes
+            { path: 'exploitation-v2/terrain/planning/affectations', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/liste-affectations/liste-affectations.component').then(m => m.ListeAffectationsComponent) },
+            { path: 'exploitation-v2/terrain/planning/calendrier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/calendrier-planning/calendrier-planning.component').then(m => m.CalendrierPlanningComponent) },
+            { path: 'exploitation-v2/terrain/planning/conflits', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/detection-conflits/detection-conflits.component').then(m => m.DetectionConflitsComponent) },
+            { path: 'exploitation-v2/terrain/planning/affectations/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
+            { path: 'exploitation-v2/terrain/planning/affectations/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
+            { path: 'exploitation-v2/terrain/planning/affectations/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/fiche-affectation/fiche-affectation.component').then(m => m.FicheAffectationComponent) },
+
+            // Pointage terrain (les pointages sont créés via le code-PIN de la page d'accueil)
+            { path: 'exploitation-v2/terrain/pointage/aujourd-hui', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/suivi-pointages/suivi-pointages.component').then(m => m.SuiviPointagesComponent) },
+            { path: 'exploitation-v2/terrain/pointage/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/historique-pointages/historique-pointages.component').then(m => m.HistoriquePointagesComponent) },
+            { path: 'exploitation-v2/terrain/pointage/historique/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/fiche-pointage/fiche-pointage.component').then(m => m.FichePointageComponent) },
+
+            // Alertes & escalade
+            { path: 'exploitation-v2/terrain/alertes', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/tableau-alertes/tableau-alertes.component').then(m => m.TableauAlertesComponent) },
+            { path: 'exploitation-v2/terrain/alertes/recap', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/recapitulatif-quotidien/recapitulatif-quotidien.component').then(m => m.RecapitulatifQuotidienComponent) },
+            { path: 'exploitation-v2/terrain/alertes/parametres', loadComponent: () => import('./adminPage/exploitation-v2/terrain/alertes/parametres-escalade/parametres-escalade.component').then(m => m.ParametresEscaladeComponent) },
+
+            // Fiches d'intervention
+            { path: 'exploitation-v2/terrain/interventions', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/liste-interventions/liste-interventions.component').then(m => m.ListeInterventionsComponent) },
+            { path: 'exploitation-v2/terrain/interventions/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/formulaire-intervention/formulaire-intervention.component').then(m => m.FormulaireInterventionComponent) },
+            { path: 'exploitation-v2/terrain/interventions/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/formulaire-intervention/formulaire-intervention.component').then(m => m.FormulaireInterventionComponent) },
+            { path: 'exploitation-v2/terrain/interventions/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/fiches-intervention/fiche-intervention-detail/fiche-intervention-detail.component').then(m => m.FicheInterventionDetailComponent) },
+
+            // Contrôle qualité terrain
+            // Note : ordre important — /grilles, /nouveau, /historique/:siteId AVANT /:id
+            { path: 'exploitation-v2/terrain/controles', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/liste-controles-terrain/liste-controles-terrain.component').then(m => m.ListeControlesTerrainComponent) },
+            { path: 'exploitation-v2/terrain/controles/grilles', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/grilles-evaluation/grilles-evaluation.component').then(m => m.GrillesEvaluationComponent) },
+            { path: 'exploitation-v2/terrain/controles/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/formulaire-controle-terrain/formulaire-controle-terrain.component').then(m => m.FormulaireControleTerrainComponent) },
+            { path: 'exploitation-v2/terrain/controles/historique/:siteId', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/historique-site/historique-site.component').then(m => m.HistoriqueSiteComponent) },
+            { path: 'exploitation-v2/terrain/controles/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/controle-qualite/fiche-controle-terrain/fiche-controle-terrain.component').then(m => m.FicheControleTerrainComponent) },
+
+            // Matériel
+            // Note : ordre important — /nouveau, /maintenance, /:id/historique AVANT /:id
+            { path: 'exploitation-v2/terrain/materiel', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/liste-materiel/liste-materiel.component').then(m => m.ListeMaterielComponent) },
+            { path: 'exploitation-v2/terrain/materiel/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/formulaire-materiel/formulaire-materiel.component').then(m => m.FormulaireMaterielComponent) },
+            { path: 'exploitation-v2/terrain/materiel/maintenance', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/suivi-maintenance/suivi-maintenance.component').then(m => m.SuiviMaintenanceComponent) },
+            { path: 'exploitation-v2/terrain/materiel/:id/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/historique-materiel/historique-materiel.component').then(m => m.HistoriqueMaterielComponent) },
+            { path: 'exploitation-v2/terrain/materiel/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/materiel/formulaire-materiel/formulaire-materiel.component').then(m => m.FormulaireMaterielComponent) },
+
+            // Tableau de bord terrain
+            { path: 'exploitation-v2/terrain/tableau-bord', loadComponent: () => import('./adminPage/exploitation-v2/terrain/tableau-bord/tableau-bord-terrain/tableau-bord-terrain.component').then(m => m.TableauBordTerrainComponent) },
+
+            // Phytosanitaire
+            // Note : ordre important — /produits, /registre, /alertes, /applications/nouvelle AVANT /applications/:id
+            { path: 'exploitation-v2/terrain/phytosanitaire', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/calendrier-phyto/calendrier-phyto.component').then(m => m.CalendrierPhytoComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/produits', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/produits-phyto/produits-phyto.component').then(m => m.ProduitsPhytoComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/registre', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/registre-phyto/registre-phyto.component').then(m => m.RegistrePhytoComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/alertes', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/alertes-delais/alertes-delais.component').then(m => m.AlertesDelaisComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/applications/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
+            { path: 'exploitation-v2/terrain/phytosanitaire/applications/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
 
         ]
     }

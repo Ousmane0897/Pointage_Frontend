@@ -61,7 +61,7 @@ export class ListeFormationsComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe(res => {
-        this.formations = res.content;
+        this.formations = res.content ?? [];
         this.total = res.totalElements ?? 0;
         this.totalPages = Math.ceil(this.total / this.size);
       });

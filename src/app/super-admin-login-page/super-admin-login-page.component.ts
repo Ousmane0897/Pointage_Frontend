@@ -67,7 +67,7 @@ export class SuperAdminLoginPageComponent {
           } else {
             console.log('Connexion normale → dashboard');
             console.log("Must Change Password:", mustChangePassword);
-            this.router.navigateByUrl('/admin/dashboard');
+            this.router.navigateByUrl('/admin/exploitation-v2/dashboard');
           }
 
         }, 200);

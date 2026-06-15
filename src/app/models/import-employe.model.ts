@@ -2,6 +2,7 @@ import { SituationMatrimoniale } from './dossier-employe.model';
 
 export interface DossierEmployeImportPayload {
   numeroLigne: number;
+  agentId: string;
   matricule: string;
 
   nom: string;
@@ -92,6 +93,7 @@ export interface BackendBulkImportError {
 }
 
 export const COLONNES_TEMPLATE: readonly string[] = [
+  'agentId',
   'Matricule *',
   'Nom *',
   'Prénom *',
@@ -106,7 +108,7 @@ export const COLONNES_TEMPLATE: readonly string[] = [
   'Site affecté *',
   "Date d'entrée *",
   'Statut *',
-  'Matricule supérieur hiérarchique',
+  'Supérieur hiérarchique',
   "Durée période d'essai (mois)",
   'Téléphone *',
   'Email *',

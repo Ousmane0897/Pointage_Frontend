@@ -154,6 +154,7 @@
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr>
             <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide w-14">Photo</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">AgentId</th>
             <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Matricule</th>
             <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Nom Complet</th>
             <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Poste</th>
@@ -183,6 +184,13 @@
                   </span>
                 </ng-template>
               </div>
+            </td>
+
+            <!-- AgentId -->
+            <td class="px-4 py-3">
+              <span class="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                {{ employe.agentId }}
+              </span>
             </td>
 
             <!-- Matricule -->

@@ -27,11 +27,11 @@
       </div>
 
       <div>
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Catégorie</label>
+        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Catégorie *</label>
         <select
           formControlName="categorieId"
           class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-          <option value="">Aucune (valeurs employé)</option>
+          <option value="" disabled>Choisir une catégorie…</option>
           <option *ngFor="let c of categories" [value]="c.id">
             {{ c.libelle }}
           </option>
@@ -69,7 +69,7 @@
       </span>
       <span *ngIf="!loadingData && !calculating && bulletin && !recap" class="inline-flex items-center gap-2 text-amber-600">
         <lucide-icon name="TriangleAlert" class="w-4 h-4"></lucide-icon>
-        Aucun récapitulatif mensuel trouvé pour cette période — calcul basé sur le salaire de base uniquement.
+        Aucun récapitulatif mensuel trouvé pour cette période — calcul basé sur le salaire de la catégorie, sans heures supplémentaires.
       </span>
     </div>
   </div>

@@ -114,6 +114,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     this.employeForm = this.fb.group({
       // Étape 1
       identite: this.fb.group({
+        agentId: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
         matricule: ['', [Validators.required, Validators.maxLength(30)]],
         numeroIdentification: ['', Validators.required],
         nom: ['', Validators.required],
@@ -203,6 +204,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
           // Hydrate les sous-FormGroup
           this.employeForm.patchValue({
             identite: {
+              agentId: employe.agentId ?? '',
               matricule: employe.matricule ?? '',
               numeroIdentification: employe.numeroIdentification ?? '',
               nom: employe.nom,

@@ -22,11 +22,6 @@ export class SidebarComponent implements OnInit {
   role: string = '';
   isOpen = true;
 
-  openDropdown: string | null = null; // Variable pour suivre quel dropdown est ouvert
-  openDropdownAbsences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Absences
-  openDropdownPointages: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Pointages
-  openDropdownStock: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Stock
-  openDropdownCollecte: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Collecte
   openDropdownRessourcesHumaines: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Ressources Humaines
   openDropdownGestionPersonnel: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Gestion du Personnel
   openDropdownTempsPresences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Temps & Présences
@@ -34,6 +29,7 @@ export class SidebarComponent implements OnInit {
   openDropdownDeveloppementRh: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Développement RH
   openDropdownExploitationV2: string | null = null; // Variable pour la nouvelle section Exploitation v2
   openDropdownProductionChimie: string | null = null; // Sous-menu Production Chimie
+  openDropdownTerrain: string | null = null; // Sous-menu Exploitation Terrain (5.2)
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -85,53 +81,6 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  accesStock(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-
-    const m: ModulesAutorises = this.modulesAutorises;
-
-    if (!m) return false;
-    return (
-      m.stock?.produits ||
-      m.stock?.entrees ||
-      m.stock?.sorties ||
-      m.stock?.suivis ||
-      m.stock?.historiquesEntrees ||
-      m.stock?.historiquesSorties
-    );
-  }
-
-  accessAbsences(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-
-    if (!m) return false;
-    return (
-      m.absences?.tempsReel ||
-      m.absences?.historiqueAbsences
-    );
-  }
-
-  accessPointages(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-    if (!m) return false;
-    return (
-      m.pointages?.pointagesDuJour ||
-      m.pointages?.historiquePointages
-    );
-  }
-
-  accessCollecte(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-    if (!m) return false;
-    return (
-      m.collecteLivraison?.collecteBesoins ||
-      m.collecteLivraison?.suiviLivraison
-    );
-  }
-
   accessRessourcesHumaines(): boolean {
     if (this.role === 'SUPERADMIN' || this.role === 'RH') return true;
     const m: ModulesAutorises = this.modulesAutorises;
@@ -139,12 +88,12 @@ export class SidebarComponent implements OnInit {
     return m.rh;
   }
 
-  /** Accès à la nouvelle section Exploitation v2 (au moins une fonctionnalité Production Chimie). */
+  /** Accès à la nouvelle section Exploitation v2 (au moins une fonctionnalité Production Chimie OU Terrain). */
   accessExploitationV2(): boolean {
     if (this.role === 'SUPERADMIN') return true;
     const m: ModulesAutorises = this.modulesAutorises;
     if (!m) return false;
-    return this.accessProductionChimie();
+    return this.accessProductionChimie() || this.accessTerrain();
   }
 
   /** Accès au sous-module Production Chimie (5.1). */
@@ -164,42 +113,23 @@ export class SidebarComponent implements OnInit {
     );
   }
 
-  hasOperationsAccess(): boolean {
+  /** Accès au sous-module Exploitation Terrain (5.2). */
+  accessTerrain(): boolean {
     if (this.role === 'SUPERADMIN') return true;
-
     const m: ModulesAutorises = this.modulesAutorises;
-
-    if (!m) return false;
-
-    return (
-      m.statistiquesAgences ||
-      m.planifications ||
-      m.calendrier ||
-      m.employes ||
-      m.agences ||
-      m.jourFeries ||
-
-      // Collecte & Livraison
-      m.collecteLivraison?.collecteBesoins ||
-      m.collecteLivraison?.suiviLivraison ||
-
-      // Pointages
-      m.pointages?.pointagesDuJour ||
-      m.pointages?.historiquePointages ||
-
-      // Absences
-      m.absences?.tempsReel ||
-      m.absences?.historiqueAbsences ||
-
-
-      // Stock    
-      m.stock?.entrees ||
-      m.stock?.sorties ||
-      m.stock?.suivis ||
-      m.stock?.historiquesEntrees ||
-      m.stock?.historiquesSorties
+    if (!m || !m.terrain) return false;
+    const t = m.terrain;
+    return !!(
+      t.sitesClients ||
+      t.planning ||
+      t.pointage ||
+      t.alertes ||
+      t.interventions ||
+      t.controleQualite ||
+      t.materiel ||
+      t.phytosanitaire ||
+      t.tableauBord
     );
-
   }
 
   toggleSidebar() {
@@ -237,55 +167,13 @@ export class SidebarComponent implements OnInit {
   }
 
 
-  hasAnyOperationPermission(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-
-    const ops = [
-      'StatistiquesAgences',
-      'Planifications',
-      'Calendrier',
-      'Stock',
-      'CollecteLivraison',
-      'JourFeries',
-      'Employes',
-      'Agences',
-      'Absences',
-      'Pointages',
-    ];
-
-    return ops.some(p => this.modulesAutorises?.[p] === true);
-  }
-
-
-
-
   logout() {
     localStorage.removeItem('token');
     this.router.navigateByUrl('/');
   }
 
-  toggleDropdown(menu: string) {
-    this.openDropdown = this.openDropdown === menu ? null : menu;
-  }
-
-  toggleDropdownAbsences(menu: string) {
-    this.openDropdownAbsences = this.openDropdownAbsences === menu ? null : menu;
-  }
-
-  toggleDropdownPointages(menu: string) {
-    this.openDropdownPointages = this.openDropdownPointages === menu ? null : menu;
-  }
-
   toggleDropdownRessourcesHumaines(menu: string) {
     this.openDropdownRessourcesHumaines = this.openDropdownRessourcesHumaines === menu ? null : menu;
-  }
-
-  toggleDropdownStock(menu: string) {
-    this.openDropdownStock = this.openDropdownStock === menu ? null : menu;
-  }
-
-  toggleDropdownCollecte(menu: string) {
-    this.openDropdownCollecte = this.openDropdownCollecte === menu ? null : menu;
   }
 
   toggleDropdownGestionPersonnel(menu: string) {
@@ -310,6 +198,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownProductionChimie(menu: string) {
     this.openDropdownProductionChimie = this.openDropdownProductionChimie === menu ? null : menu;
+  }
+
+  toggleDropdownTerrain(menu: string) {
+    this.openDropdownTerrain = this.openDropdownTerrain === menu ? null : menu;
   }
 
 

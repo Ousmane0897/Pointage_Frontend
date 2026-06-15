@@ -32,6 +32,7 @@ export class ImportEmployeExcelService {
     const feuilleEmployes = XLSX.utils.aoa_to_sheet([
       [...COLONNES_TEMPLATE],
       [
+        '0421',
         MATRICULE_EXEMPLE,
         'Diop',
         'Aminata',
@@ -77,7 +78,9 @@ export class ImportEmployeExcelService {
       [''],
       ['5. Règles de validation :'],
       ['   • Matricule : unique dans le fichier ET en base de données'],
-      ["   • Matricule supérieur hiérarchique : optionnel, doit exister en base OU être le matricule d'un autre employé du même fichier"],
+      ['   • agentId : exactement 4 chiffres, unique dans le fichier ET en base (code de pointage)'],
+      ["   • Site affecté : un ou plusieurs sites séparés par « / » (ex. « Ouakam / zone A » ou « Keur gorgui / yoff / bgfi tann »)"],
+      ["   • Supérieur hiérarchique : optionnel, indiquer le matricule du supérieur ; doit exister en base OU être le matricule d'un autre employé du même fichier"],
       ["   • Durée période d'essai : obligatoire uniquement si Statut = En période d'essai"],
       [''],
       ['6. Champ photo non importable via Excel. À éditer ensuite depuis la fiche de l\'employé.'],
@@ -95,13 +98,15 @@ export class ImportEmployeExcelService {
   // Lecture du fichier Excel
   // ──────────────────────────────────────────────────────────────────────
 
-  lireFichier(file: File): Observable<{ rows: Record<string, unknown>[]; enTetesManquants: string[] }> {
+  lireFichier(
+    file: File,
+  ): Observable<{ rows: Record<string, unknown>[]; enTetesManquants: string[]; enTetesTrouves: string[] }> {
     return from(this.lireFichierAsync(file));
   }
 
   private async lireFichierAsync(
     file: File,
-  ): Promise<{ rows: Record<string, unknown>[]; enTetesManquants: string[] }> {
+  ): Promise<{ rows: Record<string, unknown>[]; enTetesManquants: string[]; enTetesTrouves: string[] }> {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
     const nomFeuille = workbook.SheetNames.find(s => s.toLowerCase().startsWith('employ')) ?? workbook.SheetNames[0];
@@ -109,13 +114,30 @@ export class ImportEmployeExcelService {
 
     const matrice = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: '', blankrows: false });
     if (matrice.length === 0) {
-      return { rows: [], enTetesManquants: [...COLONNES_TEMPLATE] };
+      return { rows: [], enTetesManquants: [...COLONNES_TEMPLATE], enTetesTrouves: [] };
     }
 
+    // Détection tolérante des en-têtes : on normalise (casse, accents,
+    // apostrophes typographiques, espaces insécables/multiples) avant de
+    // comparer, puis on mappe chaque colonne attendue vers son index réel
+    // dans le fichier. Cela évite les faux « colonne manquante » dus à une
+    // différence invisible de casse ou d'espacement.
     const enTetesFichier = (matrice[0] as unknown[]).map(v => String(v ?? '').trim());
-    const enTetesManquants = COLONNES_TEMPLATE.filter(c => !enTetesFichier.includes(c));
+    const indexParEnteteNorm = new Map<string, number>();
+    enTetesFichier.forEach((entete, idx) => {
+      const norm = this.normaliserEntete(entete);
+      if (norm && !indexParEnteteNorm.has(norm)) indexParEnteteNorm.set(norm, idx);
+    });
+
+    const colonneVersIndex = new Map<string, number>();
+    const enTetesManquants: string[] = [];
+    for (const colonne of COLONNES_TEMPLATE) {
+      const idx = indexParEnteteNorm.get(this.normaliserEntete(colonne));
+      if (idx === undefined) enTetesManquants.push(colonne);
+      else colonneVersIndex.set(colonne, idx);
+    }
     if (enTetesManquants.length > 0) {
-      return { rows: [], enTetesManquants };
+      return { rows: [], enTetesManquants, enTetesTrouves: enTetesFichier };
     }
 
     const rows: Record<string, unknown>[] = [];
@@ -124,18 +146,20 @@ export class ImportEmployeExcelService {
       const ligneVide = cellules.every(c => c === '' || c === null || c === undefined);
       if (ligneVide) continue;
 
+      // On indexe par nom de colonne canonique (et non par l'en-tête brut du
+      // fichier), pour que la validation lise toujours les bonnes valeurs.
       const obj: Record<string, unknown> = { __numeroLigne: i + 1 };
-      enTetesFichier.forEach((entete, idx) => {
-        obj[entete] = cellules[idx];
+      colonneVersIndex.forEach((idx, colonne) => {
+        obj[colonne] = cellules[idx];
       });
 
-      const matricule = String(obj[COLONNES_TEMPLATE[0]] ?? '').trim();
+      const matricule = String(obj['Matricule *'] ?? '').trim();
       if (matricule.toUpperCase() === MATRICULE_EXEMPLE) continue;
 
       rows.push(obj);
     }
 
-    return { rows, enTetesManquants: [] };
+    return { rows, enTetesManquants: [], enTetesTrouves: enTetesFichier };
   }
 
   // ──────────────────────────────────────────────────────────────────────
@@ -149,15 +173,23 @@ export class ImportEmployeExcelService {
 
     return this.dossierEmployeService.getEmployes(0, 1000).pipe(
       catchError(() => of({ content: [], totalElements: 0 })),
-      map(page => new Set((page.content ?? []).map(e => e.matricule.trim().toUpperCase()))),
-      switchMap(matriculesEnBase => {
+      map(page => {
+        const employes = page.content ?? [];
+        return {
+          matriculesEnBase: new Set(employes.map(e => e.matricule.trim().toUpperCase())),
+          agentIdsEnBase: new Set(employes.map(e => (e.agentId ?? '').trim()).filter(Boolean)),
+        };
+      }),
+      switchMap(({ matriculesEnBase, agentIdsEnBase }) => {
         const matriculesFichier = new Set<string>();
         rows.forEach(r => {
-          const m = String(r[COLONNES_TEMPLATE[0]] ?? '').trim().toUpperCase();
+          const m = String(r['Matricule *'] ?? '').trim().toUpperCase();
           if (m) matriculesFichier.add(m);
         });
 
-        const lignes: LigneImport[] = rows.map(row => this.validerLigne(row, matriculesEnBase, matriculesFichier, rows));
+        const lignes: LigneImport[] = rows.map(row =>
+          this.validerLigne(row, matriculesEnBase, matriculesFichier, agentIdsEnBase, rows),
+        );
         return of(this.construireResultat(lignes));
       }),
     );
@@ -174,6 +206,7 @@ export class ImportEmployeExcelService {
     row: Record<string, unknown>,
     matriculesEnBase: Set<string>,
     matriculesFichier: Set<string>,
+    agentIdsEnBase: Set<string>,
     toutesLesLignes: Record<string, unknown>[],
   ): LigneImport {
     const numeroLigne = Number(row['__numeroLigne']) || 0;
@@ -185,11 +218,23 @@ export class ImportEmployeExcelService {
     if (!matricule) pousser('Matricule *', row['Matricule *'], 'Matricule obligatoire.');
     else {
       const occurrences = toutesLesLignes.filter(
-        r => String(r[COLONNES_TEMPLATE[0]] ?? '').trim().toUpperCase() === matricule.toUpperCase(),
+        r => String(r['Matricule *'] ?? '').trim().toUpperCase() === matricule.toUpperCase(),
       ).length;
       if (occurrences > 1) pousser('Matricule *', matricule, 'Matricule en doublon dans le fichier.');
       if (matriculesEnBase.has(matricule.toUpperCase()))
         pousser('Matricule *', matricule, 'Matricule déjà existant en base.');
+    }
+
+    const agentId = this.lireTexte(row, 'agentId');
+    if (!agentId) pousser('agentId', row['agentId'], 'agentId obligatoire.');
+    else if (!/^\d{4}$/.test(agentId)) {
+      pousser('agentId', agentId, 'agentId invalide — exactement 4 chiffres attendus.');
+    } else {
+      const occurrences = toutesLesLignes.filter(
+        r => String(r['agentId'] ?? '').trim() === agentId,
+      ).length;
+      if (occurrences > 1) pousser('agentId', agentId, 'agentId en doublon dans le fichier.');
+      if (agentIdsEnBase.has(agentId)) pousser('agentId', agentId, 'agentId déjà existant en base.');
     }
 
     const nom = this.lireTexte(row, 'Nom *');
@@ -224,16 +269,16 @@ export class ImportEmployeExcelService {
 
     const statut = this.lireStatut(row, 'Statut *', pousser);
 
-    const superieurHierarchiqueMatricule = this.lireTexte(row, 'Matricule supérieur hiérarchique') || undefined;
+    const superieurHierarchiqueMatricule = this.lireTexte(row, 'Supérieur hiérarchique') || undefined;
     if (superieurHierarchiqueMatricule) {
       const ref = superieurHierarchiqueMatricule.toUpperCase();
       if (matricule && ref === matricule.toUpperCase()) {
-        pousser('Matricule supérieur hiérarchique', superieurHierarchiqueMatricule, 'Un employé ne peut pas être son propre supérieur.');
+        pousser('Supérieur hiérarchique', superieurHierarchiqueMatricule, 'Un employé ne peut pas être son propre supérieur.');
       } else if (!matriculesEnBase.has(ref) && !matriculesFichier.has(ref)) {
         pousser(
-          'Matricule supérieur hiérarchique',
+          'Supérieur hiérarchique',
           superieurHierarchiqueMatricule,
-          'Matricule supérieur hiérarchique introuvable en base ni dans le fichier.',
+          'Supérieur hiérarchique introuvable en base ni dans le fichier.',
         );
       }
     }
@@ -270,6 +315,7 @@ export class ImportEmployeExcelService {
     if (erreurs.length === 0) {
       ligne.payload = {
         numeroLigne,
+        agentId,
         matricule,
         nom,
         prenom,
@@ -436,6 +482,23 @@ export class ImportEmployeExcelService {
 
   private normaliserEnum(s: string): string {
     return this.normaliser(s).replace(/['"\s_()\-.]/g, '');
+  }
+
+  /**
+   * Normalise un en-tête de colonne pour une comparaison tolérante :
+   * espaces insécables → espace, apostrophes typographiques → ', accents
+   * supprimés, casse uniformisée, espaces multiples réduits à un seul.
+   */
+  private normaliserEntete(s: string): string {
+    return String(s ?? '')
+      .replace(/ /g, ' ')
+      .replace(/[‘’‛′]/g, "'")
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/\*/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   // ──────────────────────────────────────────────────────────────────────

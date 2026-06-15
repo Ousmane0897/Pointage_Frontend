@@ -69,17 +69,8 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 | Path segment | Purpose |
 |---|---|
 | `ressources-humaines/` | Module RH complet (voir section dédiée ci-dessous) |
-| `exploitation/` | ⚠️ ANCIEN module Exploitation (legacy, à supprimer après bascule sur exploitation-v2/) |
-| `exploitation-v2/` | NOUVEAU module Exploitation en construction (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
-| `employes/`, `employes-complet/` | Employee data (partial vs. complete views) |
-| `planification/`, `calendrier/` | Scheduling & calendar (FullCalendar) |
-| `pointages/`, `pointage-historique/` | Today's and historical attendance |
-| `absences-temps-reel/`, `absences-historique/` | Real-time and historical absences |
-| `agences/` | Branch/agency management |
-| `stock/` | Inventory (products, entrees, sorties, tracking) |
-| `collecte-des-besoins/`, `suivi-commandes/` | Supply collection & order tracking |
+| `exploitation-v2/` | Module Exploitation (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
 | `gestion-privilege/` | Permission management |
-| `ferie/` | Holiday management |
 | `notification/` | Notification system |
 
 ---
@@ -181,63 +172,24 @@ Gestion du personnel (6.1)
 
 ---
 
-## Modules Exploitation — coexistence temporaire
+## Module Exploitation (`src/app/adminPage/exploitation-v2/`)
 
-⚠️ **Période de transition** : deux modules Exploitation coexistent dans le
-projet. Le nouveau (`exploitation-v2/`) est en construction. L'ancien
-(`exploitation/`) sera supprimé une fois la bascule validée.
+> **Note historique :** un ancien module `exploitation/` (dashboard global, pointages,
+> absences, planification, calendrier, agences, employés, fériés, stock, collecte &
+> livraison) a été **entièrement supprimé**. Ses composants, ses services dédiés
+> (`dashboard`, `dashboard-par-agence`, `absences`, `employe`, `employe-complet`,
+> `agences`, `ferie`, `besoins`, `produit`, `stock`) et ses modèles dédiés (`absent`,
+> `agences`, `employe`, `employe-complet`, `ferie`, `produit`, `CollecteBesoins`,
+> `MouvementEntreeStock`, `MouvementSortieStock`, `item`) n'existent plus.
+> Les éléments **partagés** qu'il utilisait ont été **conservés** :
+> `pointage.service`/`pointage.model` (kiosque de pointage + terrain),
+> `planification.service`/`planification.model` (super-admin), `pageResponse.model`
+> (pagination générique app-wide), et les transverses `login`/`websocket`/`auth`/
+> `confirm-dialog`. La redirection post-login pointe désormais vers
+> `/admin/exploitation-v2/dashboard`. Les fonctionnalités stock / collecte & livraison /
+> agences / fériés n'ont pas d'équivalent v2 et ont donc disparu de l'application.
 
-### Ancien module Exploitation (`src/app/adminPage/exploitation/`)
-
-**Statut : 🟡 Legacy — à conserver intact jusqu'à la bascule**
-
-**Composants existants** (15 sous-dossiers regroupés par refactor de réorganisation) :
-
-| Sous-dossier | Rôle |
-|---|---|
-| `dashboard/` | Tableau de bord global (eager + lazy via route `/admin/dashboard`) |
-| `dashboard-par-agence/` | Tableau de bord filtré par agence |
-| `pointages/` | Pointages du jour |
-| `pointage-historique/` | Historique des pointages |
-| `absences-temps-reel/` | Absences en temps réel |
-| `absences-historique/` | Historique des absences |
-| `planification/` | Planification des agents |
-| `calendrier/` | Vue calendrier (FullCalendar) |
-| `employes/` | Employés (vue partielle) |
-| `employes-complet/` | Employés (vue complète, utilisée aussi pour `operations/agents`) |
-| `agences/` | Gestion des agences |
-| `statistique-par-agence-groupe/` | Statistiques agrégées par agence/groupe |
-| `ferie/` | Jours fériés |
-| `collecte et livraison/` | 3 sous-modules : `collecte-des-besoins/`, `suivi-commandes/`, `historique-livraisons/` |
-| `stock/` | 6 sous-modules : `entrees/`, `sorties/`, `produit-list/`, `historiques-entrees/`, `historiques-sorties/`, `suivi-stock/` |
-
-**Services associés** (dans [src/app/services/](src/app/services/)) :
-`dashboard.service`, `dashboard-par-agence.service`, `pointage.service`, `absences.service`, `planification.service`, `employe.service`, `employe-complet.service`, `agences.service`, `ferie.service`, `besoins.service`, `produit.service`, `stock.service`. Services transverses partagés : `login.service`, `websocket.service`, `auth.service`, `shared/confirm-dialog.service`.
-
-**Modèles** (dans [src/app/models/](src/app/models/)) :
-`absent.model`, `agences.model`, `employe.model`, `employe-complet.model`, `planification.model`, `pointage.model`, `ferie.model`, `produit.model`, `CollecteBesoins.model`, `MouvementEntreeStock.model`, `MouvementSortieStock.model`, `item.model`, `pageResponse.model`.
-
-**Modules consommateurs** :
-- [admin.component](src/app/adminPage/admin/admin.component.ts) + [sidebar.component](src/app/adminPage/sidebar/sidebar.component.ts) (intégration UI, navigation, RBAC via `ModulesAutorises`)
-- Module RH 6.2 — `pointage-centralise` reçoit les pointages terrain de ce module (cf. flux de données RH)
-
-**Routes Angular** (chemins URL inchangés malgré la réorganisation des fichiers) :
-- `/admin/dashboard`, `/admin/dashboard-par-agence`
-- `/admin/operations/planification`, `/admin/operations/agents`, `/admin/operations/agences`, `/admin/operations/statistique-par-agence-groupe`
-- `/admin/calendrier`
-- `/admin/employes/donnees-complet`, `donnees-complet1`, `donnees-partiel`
-- `/admin/collecte-et-livraison/collecte-des-besoins`, `suivi-livraison`, `historique-livraisons`
-- `/admin/stock/entrees`, `sorties`, `produits`, `historiques-entrees`, `historiques-sorties`, `suivi`
-- `/admin/feries`
-- `/admin/pointages/pointagesDuJour`, `/admin/pointages/historique`
-- `/admin/absences/tempsreel`, `/admin/absences/historique`
-
-**Règles pendant la coexistence :**
-- Ne PAS modifier les fichiers de ce module sauf bugs critiques
-- Ne PAS supprimer tant que `exploitation-v2/` n'est pas validé
-- Les nouveaux développements vont dans `exploitation-v2/`
-
-### Nouveau module Exploitation (`src/app/adminPage/exploitation-v2/`)
+### Sous-modules Exploitation v2 (`src/app/adminPage/exploitation-v2/`)
 
 Module en construction, découpé en 2 sous-modules :
 - **5.1 Production Chimie** — formulations, OF, lots & traçabilité,
@@ -246,7 +198,7 @@ Module en construction, découpé en 2 sous-modules :
   alertes, fiches intervention, contrôle qualité terrain, matériel,
   phytosanitaire, tableau de bord
 
-**Statut : 🟡 En cours (1/2 sous-modules livrés — 5.1 terminé, 5.2 à faire)**
+**Statut : ✅ Terminé (2/2 sous-modules livrés)**
 
 #### 5.1 Production Chimie (`exploitation-v2/production-chimie/`)
 
@@ -290,19 +242,71 @@ tableau-bord). Photos contrôle qualité chargées via HttpClient blob +
 DomSanitizer (JWT obligatoire — voir [fiche-controle.component.ts](src/app/adminPage/exploitation-v2/production-chimie/controle-qualite/fiche-controle/fiche-controle.component.ts)).
 
 #### 5.2 Exploitation Terrain (`exploitation-v2/terrain/`)
-**Statut : 🔲 À faire**
-**Dépendances :** consomme `EmployeService`, étend `Pointage` existant,
-utilise `websocket.service.ts`. Alimente `pointage-centralise` du module RH 6.2.
 
-### Procédure de bascule (à exécuter quand exploitation-v2 sera validé)
+**Statut : ✅ Terminé** (livré par PR à venir, branche `feature/exploitation-v2-terrain`)
 
-1. Vérifier qu'aucun autre module ne consomme `exploitation/`
-2. Supprimer le dossier `src/app/adminPage/exploitation/`
-3. Supprimer les services/modèles dédiés à l'ancien module dans
-   `src/app/services/` et `src/app/models/`
-4. Renommer `exploitation-v2/` en `exploitation/`
-5. Mettre à jour les routes Angular et imports
-6. Mettre à jour ce CLAUDE.md (supprimer cette section de transition)
+9 sous-modules livrés couvrant l'ensemble du flux terrain Nettoyage /
+Entretien phytosanitaire : référentiel sites → planning des équipes →
+pointage GPS → alertes & escalade temps réel → fiches d'intervention →
+contrôle qualité terrain → matériel & maintenance → phytosanitaire
+(traçabilité réglementaire) → pilotage par tableau de bord.
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `sites-clients/` | liste, formulaire, fiche, import-modal | CRUD sites + carte Google Maps + import Excel transactionnel (template + drag&drop + rapport d'erreurs) |
+| `shared/` | selecteur-site, selecteur-agent, signature-pad, photo-uploader, geolocation-button, carte-google | Briques transverses : autocompletes, canvas signature `signature_pad`, upload + compression `browser-image-compression`, GPS, Google Maps singleton |
+| `planning/` | calendrier-planning, liste-affectations, formulaire-affectation, fiche-affectation, detection-conflits | FullCalendar drag&drop CDK + détection conflits temps réel |
+| `pointage/` | suivi-pointages, historique-pointages, fiche-pointage | Le pointage réel est saisi par l'agent depuis la page d'accueil (boutons Arrivée/Départ → code-PIN, modèle `Pointage` via `PointageService`) — pas de création depuis le terrain. `suivi-pointages` affiche les pointages du jour (table de l'ancien module, recherche + pagination, rafraîchissement auto 30 s). `historique-pointages`/`fiche-pointage` restent sur l'ancien modèle GPS `PointageTerrain` (en sursis) |
+| `alertes/` | tableau-alertes, recapitulatif-quotidien, parametres-escalade | Alertes WebSocket (topics `/topic/alertes-terrain`, `/user/queue/notifications-terrain`) + workflow escalade superviseur → responsable → DG |
+| `fiches-intervention/` | liste, formulaire, detail | Rapport de passage avec checklist, produits, photos `moment` AVANT/APRES/AUTRE, signature client `signature_pad`, géoloc, export PDF jsPDF |
+| `controle-qualite/` | grilles-evaluation, liste, formulaire, fiche, historique-site | Grilles paramétrables par site (générique ou spécifique), notation slider 1-5 pondérée, line chart ng2-charts d'évolution |
+| `materiel/` | liste, formulaire, suivi-maintenance, historique-materiel + 3 dialogs (Affecter, Programmer, Déclarer) | Inventaire avec alertes maintenance préventive 3 niveaux (CRITIQUE/ATTENTION/INFO), FullCalendar maintenances, timeline événements |
+| `phytosanitaire/` | calendrier-phyto, produits, formulaire-application, registre, alertes-delais | Référentiel produits homologués (n° AMM), calendrier coloré par catégorie, registre exportable PDF/Excel pour audits, alertes délais réentrée et nouvelle application |
+| `tableau-bord/` | tableau-bord-terrain | KPIs (couverture, satisfaction, incidents) + 4 charts ng2-charts (bar, line × 2, doughnut) + comparaison N vs N-1 + exports Excel/PDF |
+
+**Services** (dans [src/app/services/](src/app/services/)) :
+`terrain-site-client.service`, `terrain-planning.service`,
+`terrain-pointage.service`, `terrain-alerte.service`,
+`terrain-intervention.service`, `terrain-controle-qualite.service`,
+`terrain-materiel.service`, `terrain-phytosanitaire.service`,
+`terrain-tableau-bord.service`, `terrain-export.service`,
+`terrain-pdf.service`, `terrain-geolocation.service`,
+`terrain-import-excel.service`, `terrain-google-maps.service`
+(14 services). Le `websocket.service.ts` partagé a été étendu pour
+exposer les topics `/topic/alertes-terrain`, `/topic/pointages-terrain`
+et `/user/queue/notifications-terrain`.
+
+**Modèles** (dans [src/app/models/](src/app/models/)) :
+`terrain-site-client.model`, `terrain-planning.model`,
+`terrain-pointage.model`, `terrain-alerte.model`,
+`terrain-intervention.model`, `terrain-controle-qualite.model`,
+`terrain-materiel.model`, `terrain-phytosanitaire.model`,
+`terrain-tableau-bord.model` (9 modèles).
+
+**Constantes :** [src/app/constants/terrain.constants.ts](src/app/constants/terrain.constants.ts)
+— libellés/couleurs des statuts (affectation, pointage, alerte, intervention,
+décision contrôle terrain, matériel, application phyto), seuils
+(RAYON_TOLERANCE_GPS_DEFAUT_M, SEUIL_ALERTE_MAINTENANCE_INFO_JOURS,
+NOTE_MAX_DEFAUT, SEUIL_CONFORMITE_DEFAUT), palette charts, topics
+WebSocket, paramètres de compression photos.
+
+**Dépendances** :
+- **`DossierEmployeService` (RH 6.1)** — lecture seule via le composant
+  shared `selecteur-agent` (filtre département `Exploitation`). Aucune
+  écriture sur les employés depuis le module terrain.
+- **`websocket.service.ts`** — topics alertes Phase 5.
+- **FullCalendar v6 + locale fr** — calendriers Phases 3, 8, 9.
+- **ng2-charts + Chart.js** — Phases 7 et 10.
+- **jsPDF + jspdf-autotable + XLSX** — exports PDF/Excel Phases 6, 9, 10.
+- **signature_pad** — Phase 6.
+- **browser-image-compression** — compression photos Phase 2.
+- **@googlemaps/js-api-loader + @types/google.maps** — Phase 1.
+
+**RBAC** : flag `terrain?` optionnel dans
+[ModulesAutorises](src/app/models/admin.model.ts) avec 9 sous-flags
+(sitesClients, planning, pointage, alertes, interventions, controleQualite,
+materiel, phytosanitaire, tableauBord). Backend doit ajouter
+`modules.terrain` au claim JWT pour activer le menu en production.
 
 ### Conventions nouveau module Exploitation
 
