@@ -69,17 +69,8 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 | Path segment | Purpose |
 |---|---|
 | `ressources-humaines/` | Module RH complet (voir section dédiée ci-dessous) |
-| `exploitation/` | ⚠️ ANCIEN module Exploitation (legacy, à supprimer après bascule sur exploitation-v2/) |
-| `exploitation-v2/` | NOUVEAU module Exploitation en construction (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
-| `employes/`, `employes-complet/` | Employee data (partial vs. complete views) |
-| `planification/`, `calendrier/` | Scheduling & calendar (FullCalendar) |
-| `pointages/`, `pointage-historique/` | Today's and historical attendance |
-| `absences-temps-reel/`, `absences-historique/` | Real-time and historical absences |
-| `agences/` | Branch/agency management |
-| `stock/` | Inventory (products, entrees, sorties, tracking) |
-| `collecte-des-besoins/`, `suivi-commandes/` | Supply collection & order tracking |
+| `exploitation-v2/` | Module Exploitation (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
 | `gestion-privilege/` | Permission management |
-| `ferie/` | Holiday management |
 | `notification/` | Notification system |
 
 ---
@@ -181,63 +172,24 @@ Gestion du personnel (6.1)
 
 ---
 
-## Modules Exploitation — coexistence temporaire
+## Module Exploitation (`src/app/adminPage/exploitation-v2/`)
 
-⚠️ **Période de transition** : deux modules Exploitation coexistent dans le
-projet. Le nouveau (`exploitation-v2/`) est en construction. L'ancien
-(`exploitation/`) sera supprimé une fois la bascule validée.
+> **Note historique :** un ancien module `exploitation/` (dashboard global, pointages,
+> absences, planification, calendrier, agences, employés, fériés, stock, collecte &
+> livraison) a été **entièrement supprimé**. Ses composants, ses services dédiés
+> (`dashboard`, `dashboard-par-agence`, `absences`, `employe`, `employe-complet`,
+> `agences`, `ferie`, `besoins`, `produit`, `stock`) et ses modèles dédiés (`absent`,
+> `agences`, `employe`, `employe-complet`, `ferie`, `produit`, `CollecteBesoins`,
+> `MouvementEntreeStock`, `MouvementSortieStock`, `item`) n'existent plus.
+> Les éléments **partagés** qu'il utilisait ont été **conservés** :
+> `pointage.service`/`pointage.model` (kiosque de pointage + terrain),
+> `planification.service`/`planification.model` (super-admin), `pageResponse.model`
+> (pagination générique app-wide), et les transverses `login`/`websocket`/`auth`/
+> `confirm-dialog`. La redirection post-login pointe désormais vers
+> `/admin/exploitation-v2/dashboard`. Les fonctionnalités stock / collecte & livraison /
+> agences / fériés n'ont pas d'équivalent v2 et ont donc disparu de l'application.
 
-### Ancien module Exploitation (`src/app/adminPage/exploitation/`)
-
-**Statut : 🟡 Legacy — à conserver intact jusqu'à la bascule**
-
-**Composants existants** (15 sous-dossiers regroupés par refactor de réorganisation) :
-
-| Sous-dossier | Rôle |
-|---|---|
-| `dashboard/` | Tableau de bord global (eager + lazy via route `/admin/dashboard`) |
-| `dashboard-par-agence/` | Tableau de bord filtré par agence |
-| `pointages/` | Pointages du jour |
-| `pointage-historique/` | Historique des pointages |
-| `absences-temps-reel/` | Absences en temps réel |
-| `absences-historique/` | Historique des absences |
-| `planification/` | Planification des agents |
-| `calendrier/` | Vue calendrier (FullCalendar) |
-| `employes/` | Employés (vue partielle) |
-| `employes-complet/` | Employés (vue complète, utilisée aussi pour `operations/agents`) |
-| `agences/` | Gestion des agences |
-| `statistique-par-agence-groupe/` | Statistiques agrégées par agence/groupe |
-| `ferie/` | Jours fériés |
-| `collecte et livraison/` | 3 sous-modules : `collecte-des-besoins/`, `suivi-commandes/`, `historique-livraisons/` |
-| `stock/` | 6 sous-modules : `entrees/`, `sorties/`, `produit-list/`, `historiques-entrees/`, `historiques-sorties/`, `suivi-stock/` |
-
-**Services associés** (dans [src/app/services/](src/app/services/)) :
-`dashboard.service`, `dashboard-par-agence.service`, `pointage.service`, `absences.service`, `planification.service`, `employe.service`, `employe-complet.service`, `agences.service`, `ferie.service`, `besoins.service`, `produit.service`, `stock.service`. Services transverses partagés : `login.service`, `websocket.service`, `auth.service`, `shared/confirm-dialog.service`.
-
-**Modèles** (dans [src/app/models/](src/app/models/)) :
-`absent.model`, `agences.model`, `employe.model`, `employe-complet.model`, `planification.model`, `pointage.model`, `ferie.model`, `produit.model`, `CollecteBesoins.model`, `MouvementEntreeStock.model`, `MouvementSortieStock.model`, `item.model`, `pageResponse.model`.
-
-**Modules consommateurs** :
-- [admin.component](src/app/adminPage/admin/admin.component.ts) + [sidebar.component](src/app/adminPage/sidebar/sidebar.component.ts) (intégration UI, navigation, RBAC via `ModulesAutorises`)
-- Module RH 6.2 — `pointage-centralise` reçoit les pointages terrain de ce module (cf. flux de données RH)
-
-**Routes Angular** (chemins URL inchangés malgré la réorganisation des fichiers) :
-- `/admin/dashboard`, `/admin/dashboard-par-agence`
-- `/admin/operations/planification`, `/admin/operations/agents`, `/admin/operations/agences`, `/admin/operations/statistique-par-agence-groupe`
-- `/admin/calendrier`
-- `/admin/employes/donnees-complet`, `donnees-complet1`, `donnees-partiel`
-- `/admin/collecte-et-livraison/collecte-des-besoins`, `suivi-livraison`, `historique-livraisons`
-- `/admin/stock/entrees`, `sorties`, `produits`, `historiques-entrees`, `historiques-sorties`, `suivi`
-- `/admin/feries`
-- `/admin/pointages/pointagesDuJour`, `/admin/pointages/historique`
-- `/admin/absences/tempsreel`, `/admin/absences/historique`
-
-**Règles pendant la coexistence :**
-- Ne PAS modifier les fichiers de ce module sauf bugs critiques
-- Ne PAS supprimer tant que `exploitation-v2/` n'est pas validé
-- Les nouveaux développements vont dans `exploitation-v2/`
-
-### Nouveau module Exploitation (`src/app/adminPage/exploitation-v2/`)
+### Sous-modules Exploitation v2 (`src/app/adminPage/exploitation-v2/`)
 
 Module en construction, découpé en 2 sous-modules :
 - **5.1 Production Chimie** — formulations, OF, lots & traçabilité,
@@ -355,16 +307,6 @@ WebSocket, paramètres de compression photos.
 (sitesClients, planning, pointage, alertes, interventions, controleQualite,
 materiel, phytosanitaire, tableauBord). Backend doit ajouter
 `modules.terrain` au claim JWT pour activer le menu en production.
-
-### Procédure de bascule (à exécuter quand exploitation-v2 sera validé)
-
-1. Vérifier qu'aucun autre module ne consomme `exploitation/`
-2. Supprimer le dossier `src/app/adminPage/exploitation/`
-3. Supprimer les services/modèles dédiés à l'ancien module dans
-   `src/app/services/` et `src/app/models/`
-4. Renommer `exploitation-v2/` en `exploitation/`
-5. Mettre à jour les routes Angular et imports
-6. Mettre à jour ce CLAUDE.md (supprimer cette section de transition)
 
 ### Conventions nouveau module Exploitation
 

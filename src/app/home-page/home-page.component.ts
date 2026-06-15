@@ -97,7 +97,7 @@ export class HomePageComponent {
             this.router.navigateByUrl('/change-password');
           } else {
             console.log('Connexion normale → dashboard');
-            this.router.navigateByUrl('/admin/dashboard');
+            this.router.navigateByUrl('/admin/exploitation-v2/dashboard');
           }
 
         }, 200);

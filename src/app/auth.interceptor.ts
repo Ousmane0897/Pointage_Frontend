@@ -40,11 +40,16 @@ export class AuthInterceptor implements HttpInterceptor {
 
     let authReq = req;
 
+    // Le pointage public de l'agent (POST /api/pointages via code-PIN) part SANS JWT.
+    // En revanche les sous-routes admin (/api/pointages/today, /historique/*, …)
+    // sont protégées et DOIVENT recevoir le token, sinon le backend répond 403.
+    const isPublicPointage = /\/api\/pointages(\?|$)/.test(req.url);
+
     if (
       token &&
       req.url.includes('/api/') &&
       !req.url.includes('/api/login') &&
-      !req.url.includes('/api/pointages')
+      !isPublicPointage
     ) {
       authReq = req.clone({
         setHeaders: { Authorization: `Bearer ${token}` }

@@ -22,11 +22,6 @@ export class SidebarComponent implements OnInit {
   role: string = '';
   isOpen = true;
 
-  openDropdown: string | null = null; // Variable pour suivre quel dropdown est ouvert
-  openDropdownAbsences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Absences
-  openDropdownPointages: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Pointages
-  openDropdownStock: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Stock
-  openDropdownCollecte: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Collecte
   openDropdownRessourcesHumaines: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Ressources Humaines
   openDropdownGestionPersonnel: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Gestion du Personnel
   openDropdownTempsPresences: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Temps & Présences
@@ -86,53 +81,6 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  accesStock(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-
-    const m: ModulesAutorises = this.modulesAutorises;
-
-    if (!m) return false;
-    return (
-      m.stock?.produits ||
-      m.stock?.entrees ||
-      m.stock?.sorties ||
-      m.stock?.suivis ||
-      m.stock?.historiquesEntrees ||
-      m.stock?.historiquesSorties
-    );
-  }
-
-  accessAbsences(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-
-    if (!m) return false;
-    return (
-      m.absences?.tempsReel ||
-      m.absences?.historiqueAbsences
-    );
-  }
-
-  accessPointages(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-    if (!m) return false;
-    return (
-      m.pointages?.pointagesDuJour ||
-      m.pointages?.historiquePointages
-    );
-  }
-
-  accessCollecte(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-    if (!m) return false;
-    return (
-      m.collecteLivraison?.collecteBesoins ||
-      m.collecteLivraison?.suiviLivraison
-    );
-  }
-
   accessRessourcesHumaines(): boolean {
     if (this.role === 'SUPERADMIN' || this.role === 'RH') return true;
     const m: ModulesAutorises = this.modulesAutorises;
@@ -184,44 +132,6 @@ export class SidebarComponent implements OnInit {
     );
   }
 
-  hasOperationsAccess(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-
-    const m: ModulesAutorises = this.modulesAutorises;
-
-    if (!m) return false;
-
-    return (
-      m.statistiquesAgences ||
-      m.planifications ||
-      m.calendrier ||
-      m.employes ||
-      m.agences ||
-      m.jourFeries ||
-
-      // Collecte & Livraison
-      m.collecteLivraison?.collecteBesoins ||
-      m.collecteLivraison?.suiviLivraison ||
-
-      // Pointages
-      m.pointages?.pointagesDuJour ||
-      m.pointages?.historiquePointages ||
-
-      // Absences
-      m.absences?.tempsReel ||
-      m.absences?.historiqueAbsences ||
-
-
-      // Stock    
-      m.stock?.entrees ||
-      m.stock?.sorties ||
-      m.stock?.suivis ||
-      m.stock?.historiquesEntrees ||
-      m.stock?.historiquesSorties
-    );
-
-  }
-
   toggleSidebar() {
     this.isOpen = !this.isOpen;
   }
@@ -257,55 +167,13 @@ export class SidebarComponent implements OnInit {
   }
 
 
-  hasAnyOperationPermission(): boolean {
-    if (this.role === 'SUPERADMIN') return true;
-
-    const ops = [
-      'StatistiquesAgences',
-      'Planifications',
-      'Calendrier',
-      'Stock',
-      'CollecteLivraison',
-      'JourFeries',
-      'Employes',
-      'Agences',
-      'Absences',
-      'Pointages',
-    ];
-
-    return ops.some(p => this.modulesAutorises?.[p] === true);
-  }
-
-
-
-
   logout() {
     localStorage.removeItem('token');
     this.router.navigateByUrl('/');
   }
 
-  toggleDropdown(menu: string) {
-    this.openDropdown = this.openDropdown === menu ? null : menu;
-  }
-
-  toggleDropdownAbsences(menu: string) {
-    this.openDropdownAbsences = this.openDropdownAbsences === menu ? null : menu;
-  }
-
-  toggleDropdownPointages(menu: string) {
-    this.openDropdownPointages = this.openDropdownPointages === menu ? null : menu;
-  }
-
   toggleDropdownRessourcesHumaines(menu: string) {
     this.openDropdownRessourcesHumaines = this.openDropdownRessourcesHumaines === menu ? null : menu;
-  }
-
-  toggleDropdownStock(menu: string) {
-    this.openDropdownStock = this.openDropdownStock === menu ? null : menu;
-  }
-
-  toggleDropdownCollecte(menu: string) {
-    this.openDropdownCollecte = this.openDropdownCollecte === menu ? null : menu;
   }
 
   toggleDropdownGestionPersonnel(menu: string) {

@@ -34,13 +34,13 @@ export class DeclarationSocialeService {
     if (filtres?.annee) params = params.set('annee', filtres.annee);
     if (filtres?.statut) params = params.set('statut', filtres.statut);
     return this.http.get<DeclarationSociale[]>(
-      `${this.baseUrl}/paie/declarations`,
+      `${this.baseUrl}/paie/declarations-sociales`,
       { params },
     );
   }
 
   getById(id: string): Observable<DeclarationSociale> {
-    return this.http.get<DeclarationSociale>(`${this.baseUrl}/paie/declarations/${id}`);
+    return this.http.get<DeclarationSociale>(`${this.baseUrl}/paie/declarations-sociales/${id}`);
   }
 
   /**
@@ -50,7 +50,7 @@ export class DeclarationSocialeService {
     let params = new HttpParams().set('type', type).set('annee', annee);
     if (mois !== undefined) params = params.set('mois', mois);
     return this.http.post<DeclarationSociale>(
-      `${this.baseUrl}/paie/declarations/generer`,
+      `${this.baseUrl}/paie/declarations-sociales/generer`,
       null,
       { params },
     );
@@ -58,20 +58,20 @@ export class DeclarationSocialeService {
 
   enregistrer(declaration: DeclarationSociale): Observable<DeclarationSociale> {
     return this.http.post<DeclarationSociale>(
-      `${this.baseUrl}/paie/declarations`,
+      `${this.baseUrl}/paie/declarations-sociales`,
       declaration,
     );
   }
 
   marquerTransmise(id: string, referenceExterne: string): Observable<DeclarationSociale> {
-    return this.http.patch<DeclarationSociale>(
-      `${this.baseUrl}/paie/declarations/${id}/transmettre`,
+    return this.http.put<DeclarationSociale>(
+      `${this.baseUrl}/paie/declarations-sociales/${id}/transmettre`,
       { referenceExterne },
     );
   }
 
   supprimer(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/paie/declarations/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/paie/declarations-sociales/${id}`);
   }
 
   // ─── Agrégation côté client (fallback offline / preview) ──────────────────

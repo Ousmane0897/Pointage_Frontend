@@ -11,7 +11,7 @@ import {
   StatutBulletin,
 } from '../models/bulletin-paie.model';
 import { CategorieProfessionnelle } from '../models/grille-salariale.model';
-import { EmployeComplet } from '../models/employe-complet.model';
+import { DossierEmploye } from '../models/dossier-employe.model';
 import { RecapitulatifMensuel } from '../models/recapitulatif-mensuel.model';
 import {
   BAREME_IR,
@@ -99,7 +99,7 @@ export class BulletinPaieService {
    * ce qui permet un preview instantané dans l'UI.
    */
   calculerBulletin(
-    employe: EmployeComplet,
+    employe: DossierEmploye,
     categorie: CategorieProfessionnelle | null,
     recap: RecapitulatifMensuel | null,
     periode: PeriodePaie,
@@ -107,8 +107,10 @@ export class BulletinPaieService {
     const lignes: LigneBulletin[] = [];
 
     // ─ 1. Gains ─────────────────────────────────────────────────────────────
-    const salaireBase = this.parseMontant(employe.salaireDeBase)
-      || (categorie?.salaireBase ?? 0);
+    // Le dossier employé (RH 6.1) ne porte aucune donnée de paie : le salaire de
+    // base et les primes proviennent exclusivement de la catégorie
+    // professionnelle (grille salariale).
+    const salaireBase = categorie?.salaireBase ?? 0;
 
     lignes.push({
       code: 'SAL_BASE',
@@ -117,37 +119,7 @@ export class BulletinPaieService {
       montantSalarial: salaireBase,
     });
 
-    const primeTransport = this.parseMontant(employe.primeTransport);
-    if (primeTransport > 0) {
-      lignes.push({
-        code: 'PRIME_TRANSP',
-        libelle: 'Prime de transport',
-        nature: 'GAIN',
-        montantSalarial: primeTransport,
-      });
-    }
-
-    const primeAssiduite = this.parseMontant(employe.primeAssiduite);
-    if (primeAssiduite > 0) {
-      lignes.push({
-        code: 'PRIME_ASSID',
-        libelle: 'Prime d\'assiduité',
-        nature: 'GAIN',
-        montantSalarial: primeAssiduite,
-      });
-    }
-
-    const primeRisque = this.parseMontant(employe.primeRisque);
-    if (primeRisque > 0) {
-      lignes.push({
-        code: 'PRIME_RISQ',
-        libelle: 'Prime de risque',
-        nature: 'GAIN',
-        montantSalarial: primeRisque,
-      });
-    }
-
-    // Primes & indemnités provenant de la catégorie (non redondantes)
+    // Primes & indemnités provenant de la catégorie
     categorie?.primes?.forEach((p, idx) => {
       lignes.push({
         code: `PRIME_CAT_${idx}`,
@@ -315,12 +287,13 @@ export class BulletinPaieService {
       nom: employe.nom,
       prenom: employe.prenom,
       poste: employe.poste,
-      departement: employe.agence?.[0],
+      departement: employe.departement,
       categorieCode: categorie?.code,
-      numeroIpres: employe.cnssOuIpres,
-      numeroCss: employe.cnssOuIpres,
-      rib: employe.ribCompteBancaire,
-      banque: employe.banque,
+      // Non disponibles sur le dossier employé — à compléter ultérieurement.
+      numeroIpres: undefined,
+      numeroCss: undefined,
+      rib: undefined,
+      banque: undefined,
 
       periode,
 

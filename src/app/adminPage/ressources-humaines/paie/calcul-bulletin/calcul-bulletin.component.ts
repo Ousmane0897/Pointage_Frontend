@@ -12,13 +12,13 @@ import {
   of,
   takeUntil,
 } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { BulletinPaieService } from '../../../../services/bulletin-paie.service';
 import { GrilleSalarialeService } from '../../../../services/grille-salariale.service';
-import { EmployeCompletService } from '../../../../services/employe-complet.service';
+import { DossierEmployeService } from '../../../../services/dossier-employe.service';
 import { RecapitulatifMensuelService } from '../../../../services/recapitulatif-mensuel.service';
-import { EmployeComplet } from '../../../../models/employe-complet.model';
+import { DossierEmploye } from '../../../../models/dossier-employe.model';
 import { CategorieProfessionnelle } from '../../../../models/grille-salariale.model';
 import { RecapitulatifMensuel } from '../../../../models/recapitulatif-mensuel.model';
 import { BulletinPaie } from '../../../../models/bulletin-paie.model';
@@ -41,7 +41,7 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
 
   form: FormGroup;
 
-  employes: EmployeComplet[] = [];
+  employes: DossierEmploye[] = [];
   categories: CategorieProfessionnelle[] = [];
 
   loadingData = false;
@@ -68,7 +68,7 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private bulletinService: BulletinPaieService,
     private grilleService: GrilleSalarialeService,
-    private employeService: EmployeCompletService,
+    private dossierService: DossierEmployeService,
     private recapService: RecapitulatifMensuelService,
     private router: Router,
     private toastr: ToastrService,
@@ -80,7 +80,7 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
 
     this.form = this.fb.group({
       employeId: ['', Validators.required],
-      categorieId: [''],
+      categorieId: ['', Validators.required],
       mois: [mois, Validators.required],
       annee: [annee, Validators.required],
     });
@@ -102,8 +102,14 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
   private chargerDonnees(): void {
     this.loadingData = true;
     forkJoin({
-      employes: this.employeService.getAllEmployesComplet().pipe(
-        catchError(() => of([] as EmployeComplet[])),
+      employes: this.dossierService.getEmployes(0, 1000).pipe(
+        // Source unique des données employé : le référentiel dossiers employés
+        // (RH 6.1). L'endpoint renvoie une page { content, total } : on extrait
+        // le tableau et on ne garde que les employés payables.
+        map(res => (res.content ?? []).filter(
+          e => e.statut === 'ACTIF' || e.statut === 'EN_PERIODE_ESSAI',
+        )),
+        catchError(() => of([] as DossierEmploye[])),
       ),
       categories: this.grilleService.lister({ actif: true }).pipe(
         catchError(() => of([] as CategorieProfessionnelle[])),
@@ -119,7 +125,9 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
 
   recalculer(): void {
     const { employeId, categorieId, mois, annee } = this.form.value;
-    if (!employeId || !mois || !annee) {
+    // La catégorie est requise : c'est elle qui porte le salaire de base et les
+    // primes (le dossier employé ne contient aucune donnée de paie).
+    if (!employeId || !categorieId || !mois || !annee) {
       this.bulletin = null;
       return;
     }
@@ -128,9 +136,7 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
       this.bulletin = null;
       return;
     }
-    const categorie = categorieId
-      ? this.categories.find(c => c.id === categorieId) ?? null
-      : null;
+    const categorie = this.categories.find(c => c.id === categorieId) ?? null;
 
     this.calculating = true;
     this.recapService.genererRecap({
@@ -185,7 +191,7 @@ export class CalculBulletinComponent implements OnInit, OnDestroy {
     );
   }
 
-  employeLabel(e: EmployeComplet): string {
+  employeLabel(e: DossierEmploye): string {
     return `${e.matricule} — ${e.nom} ${e.prenom}`;
   }
 

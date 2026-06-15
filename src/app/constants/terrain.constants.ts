@@ -26,9 +26,11 @@ import {
 
 // ─── Dépendance RH — référence département lecture seule ───────────────────
 // Seul couplage autorisé avec le module RH : filtrer les employés par
-// département pour ne lister que les agents Exploitation. La valeur doit
-// correspondre EXACTEMENT à la chaîne stockée dans DossierEmploye.departement.
-export const DEPARTEMENT_EXPLOITATION = 'Exploitation';
+// département pour ne lister que les agents terrain. La valeur doit
+// correspondre EXACTEMENT à la chaîne stockée dans DossierEmploye.departement
+// (les dossiers employés rattachent les agents terrain au département
+// « Opération »).
+export const DEPARTEMENT_EXPLOITATION = 'Opération';
 
 // ─── Pointage GPS ──────────────────────────────────────────────────────────
 // Rayon de tolérance par défaut (mètres). Surchargeable par site via

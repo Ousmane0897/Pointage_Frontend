@@ -70,8 +70,6 @@ export class TerrainImportExcelService {
       const nom = String(row['Nom*'] ?? row['Nom'] ?? '').trim();
       const adresse = String(row['Adresse*'] ?? row['Adresse'] ?? '').trim();
       const ville = String(row['Ville*'] ?? row['Ville'] ?? '').trim();
-      const lat = this.toNombre(row['Latitude*'] ?? row['Latitude']);
-      const lng = this.toNombre(row['Longitude*'] ?? row['Longitude']);
       const freq = String(row['Fréquence*'] ?? row['Fréquence'] ?? '').trim() as FrequencePassage;
       const contactNom = String(row['Contact nom*'] ?? row['Contact nom'] ?? '').trim();
       const contactTel = String(row['Contact tél.*'] ?? row['Contact tél.'] ?? '').trim();
@@ -80,20 +78,6 @@ export class TerrainImportExcelService {
       if (!nom) erreurs.push({ ligne: numero, champ: 'Nom', message: 'Nom requis.' });
       if (!adresse) erreurs.push({ ligne: numero, champ: 'Adresse', message: 'Adresse requise.' });
       if (!ville) erreurs.push({ ligne: numero, champ: 'Ville', message: 'Ville requise.' });
-      if (lat === null) {
-        erreurs.push({ ligne: numero, champ: 'Latitude', message: 'Latitude numérique requise.' });
-      } else if (lat < -90 || lat > 90) {
-        erreurs.push({ ligne: numero, champ: 'Latitude', message: 'Latitude hors plage [-90, 90].' });
-      }
-      if (lng === null) {
-        erreurs.push({ ligne: numero, champ: 'Longitude', message: 'Longitude numérique requise.' });
-      } else if (lng < -180 || lng > 180) {
-        erreurs.push({
-          ligne: numero,
-          champ: 'Longitude',
-          message: 'Longitude hors plage [-180, 180].',
-        });
-      }
       if (!FREQUENCES_VALIDES.has(freq)) {
         erreurs.push({
           ligne: numero,
@@ -115,8 +99,6 @@ export class TerrainImportExcelService {
         adresse,
         ville,
         pays: String(row['Pays'] ?? '').trim() || undefined,
-        coordonnees: lat !== null && lng !== null ? { latitude: lat, longitude: lng } : undefined,
-        rayonToleranceM: this.toNombre(row['Rayon tolérance (m)']) ?? undefined,
         surfaceM2: this.toNombre(row['Surface (m²)']) ?? undefined,
         frequencePassage: FREQUENCES_VALIDES.has(freq) ? freq : undefined,
         frequencePersonnalisee: String(row['Fréquence personnalisée'] ?? '').trim() || undefined,

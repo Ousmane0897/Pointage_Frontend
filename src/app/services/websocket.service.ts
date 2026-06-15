@@ -37,8 +37,16 @@ export class WebsocketService {
 
   constructor() {
     const token = localStorage.getItem('token'); // Récupère le JWT depuis le localStorage
+
+    // SockJS exige une URL absolue. En dev/local on configure wsUrl en relatif ('/ws',
+    // proxifié par nginx) : on reconstruit alors l'origine courante. En prod distant,
+    // wsUrl est déjà une URL absolue (https://...) → utilisée telle quelle.
+    const wsUrl = environment.wsUrl.startsWith('http')
+      ? environment.wsUrl
+      : `${window.location.origin}${environment.wsUrl}`;
+
     this.client = new Client({
-      webSocketFactory: () => new SockJS(environment.wsUrl), // ton API en prod ou localhost
+      webSocketFactory: () => new SockJS(wsUrl), // ton API en prod ou localhost
       reconnectDelay: 5000,
       debug: (str: string) => console.log('STOMP: ', str),
       connectHeaders: {

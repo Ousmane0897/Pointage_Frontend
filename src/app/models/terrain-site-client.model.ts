@@ -36,7 +36,7 @@ export interface SiteClient {
   adresse: string;
   ville: string;
   pays?: string;
-  coordonnees: CoordonneesGps;
+  coordonnees?: CoordonneesGps; // optionnel : conservé pour l'ancien pointage GPS (fiche-pointage), plus saisi côté site
   rayonToleranceM?: number;    // surcharge du rayon GPS par défaut (100m)
 
   // Contact
