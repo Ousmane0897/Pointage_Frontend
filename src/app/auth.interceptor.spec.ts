@@ -8,6 +8,9 @@ import {
   HttpClient
 } from '@angular/common/http';
 
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+
 import { AuthInterceptor } from './auth.interceptor';
 import { LoginService } from './services/login.service';
 
@@ -15,14 +18,27 @@ describe('AuthInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let loginServiceSpy: jasmine.SpyObj<LoginService>;
+  let routerSpy: jasmine.SpyObj<Router>;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
 
   beforeEach(() => {
-    loginServiceSpy = jasmine.createSpyObj('LoginService', ['getToken']);
+    loginServiceSpy = jasmine.createSpyObj('LoginService', [
+      'getToken',
+      'isTokenExpired',
+      'logout'
+    ]);
+    // Par défaut le token n'est pas expiré : on laisse passer la requête.
+    loginServiceSpy.isTokenExpired.and.returnValue(false);
+
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    toastrSpy = jasmine.createSpyObj('ToastrService', ['error', 'success', 'info']);
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         { provide: LoginService, useValue: loginServiceSpy },
+        { provide: Router, useValue: routerSpy },
+        { provide: ToastrService, useValue: toastrSpy },
         {
           provide: HTTP_INTERCEPTORS,
           useClass: AuthInterceptor,

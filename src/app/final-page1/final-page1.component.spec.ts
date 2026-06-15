@@ -12,6 +12,7 @@ describe('FinalPage1Component', () => {
   let pageCodeService: jasmine.SpyObj<PageCodeService>;
 
   const mockPointage: Pointage = {
+    id: '1',
     codeSecret: 'XYZ789',
     prenom: 'Moussa',
     nom: 'Fall',
@@ -21,7 +22,7 @@ describe('FinalPage1Component', () => {
     duree: '9h',
     adresse: 'Dakar',
     status: 'PRESENT',
-    site: 'Agence Thiès'
+    site: ['Agence Thiès']
   };
 
   beforeEach(async () => {

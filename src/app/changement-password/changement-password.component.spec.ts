@@ -28,7 +28,7 @@ describe('ChangementPasswordComponent', () => {
       'error'
     ]);
 
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']);
 
     await TestBed.configureTestingModule({
       // ✅ Standalone component → imports
@@ -122,7 +122,7 @@ describe('ChangementPasswordComponent', () => {
       'Mot de passe changé',
       'Succès'
     );
-    expect(router.navigate).toHaveBeenCalledWith(['admin/dashboard']);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/exploitation-v2/dashboard');
   });
 
   // =====================================================

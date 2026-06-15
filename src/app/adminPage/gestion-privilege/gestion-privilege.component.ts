@@ -46,33 +46,27 @@ export class GestionPrivilegeComponent implements OnInit {
     modulesAutorises: {
       dashboard: false,
       admin: false,
-      statistiquesAgences: false,
-      planifications: false,
-      calendrier: false,
-      jourFeries: false,
-      employes: false,
-      agences: false,
       rh: false,
 
-      stock: {
-        produits: false,
-        entrees: false,
-        sorties: false,
-        suivis: false,
-        historiquesEntrees: false,
-        historiquesSorties: false
+      productionChimie: {
+        formulations: false,
+        ordresFabrication: false,
+        lots: false,
+        controleQualite: false,
+        matieresPremieres: false,
+        conditionnement: false,
+        tableauBord: false
       },
-      collecteLivraison: {
-        collecteBesoins: false,
-        suiviLivraison: false
-      },
-      absences: {
-        tempsReel: false,
-        historiqueAbsences: false
-      },
-      pointages: {
-        pointagesDuJour: false,
-        historiquePointages: false
+      terrain: {
+        sitesClients: false,
+        planning: false,
+        pointage: false,
+        alertes: false,
+        interventions: false,
+        controleQualite: false,
+        materiel: false,
+        phytosanitaire: false,
+        tableauBord: false
       }
 
     },
@@ -111,32 +105,26 @@ export class GestionPrivilegeComponent implements OnInit {
       prenom: '', nom: '', email: '', password: '', poste: '', role: '', modulesAutorises: {
         dashboard: false,
         admin: false,
-        statistiquesAgences: false,
-        planifications: false,
-        calendrier: false,
         rh: false,
-        stock: {
-          produits: false,
-          entrees: false,
-          sorties: false,
-          suivis: false,
-          historiquesEntrees: false,
-          historiquesSorties: false
+        productionChimie: {
+          formulations: false,
+          ordresFabrication: false,
+          lots: false,
+          controleQualite: false,
+          matieresPremieres: false,
+          conditionnement: false,
+          tableauBord: false
         },
-        collecteLivraison: {
-          collecteBesoins: false,
-          suiviLivraison: false
-        },
-        jourFeries: false,
-        employes: false,
-        agences: false,
-        absences: {
-          tempsReel: false,
-          historiqueAbsences: false
-        },
-        pointages: {
-          pointagesDuJour: false,
-          historiquePointages: false
+        terrain: {
+          sitesClients: false,
+          planning: false,
+          pointage: false,
+          alertes: false,
+          interventions: false,
+          controleQualite: false,
+          materiel: false,
+          phytosanitaire: false,
+          tableauBord: false
         },
 
       }, motifDesactivation: '', active: true
@@ -154,32 +142,26 @@ export class GestionPrivilegeComponent implements OnInit {
       modulesAutorises: {
         dashboard: !!admin.modulesAutorises?.dashboard,
         admin: !!admin.modulesAutorises?.admin,
-        statistiquesAgences: !!admin.modulesAutorises?.statistiquesAgences,
-        planifications: !!admin.modulesAutorises?.planifications,
-        calendrier: !!admin.modulesAutorises?.calendrier,
         rh: !!admin.modulesAutorises?.rh,
-        stock: {
-          produits: !!admin.modulesAutorises?.stock?.produits,
-          entrees: !!admin.modulesAutorises?.stock?.entrees,
-          sorties: !!admin.modulesAutorises?.stock?.sorties,
-          suivis: !!admin.modulesAutorises?.stock?.suivis,
-          historiquesEntrees: !!admin.modulesAutorises?.stock?.historiquesEntrees,
-          historiquesSorties: !!admin.modulesAutorises?.stock?.historiquesSorties
+        productionChimie: {
+          formulations: !!admin.modulesAutorises?.productionChimie?.formulations,
+          ordresFabrication: !!admin.modulesAutorises?.productionChimie?.ordresFabrication,
+          lots: !!admin.modulesAutorises?.productionChimie?.lots,
+          controleQualite: !!admin.modulesAutorises?.productionChimie?.controleQualite,
+          matieresPremieres: !!admin.modulesAutorises?.productionChimie?.matieresPremieres,
+          conditionnement: !!admin.modulesAutorises?.productionChimie?.conditionnement,
+          tableauBord: !!admin.modulesAutorises?.productionChimie?.tableauBord
         },
-        collecteLivraison: {
-          collecteBesoins: !!admin.modulesAutorises?.collecteLivraison?.collecteBesoins,
-          suiviLivraison: !!admin.modulesAutorises?.collecteLivraison?.suiviLivraison
-        },
-        jourFeries: !!admin.modulesAutorises?.jourFeries,
-        employes: !!admin.modulesAutorises?.employes,
-        agences: !!admin.modulesAutorises?.agences,
-        absences: {
-          tempsReel: !!admin.modulesAutorises?.absences?.tempsReel,
-          historiqueAbsences: !!admin.modulesAutorises?.absences?.historiqueAbsences
-        },
-        pointages: {
-          pointagesDuJour: !!admin.modulesAutorises?.pointages?.pointagesDuJour,
-          historiquePointages: !!admin.modulesAutorises?.pointages?.historiquePointages
+        terrain: {
+          sitesClients: !!admin.modulesAutorises?.terrain?.sitesClients,
+          planning: !!admin.modulesAutorises?.terrain?.planning,
+          pointage: !!admin.modulesAutorises?.terrain?.pointage,
+          alertes: !!admin.modulesAutorises?.terrain?.alertes,
+          interventions: !!admin.modulesAutorises?.terrain?.interventions,
+          controleQualite: !!admin.modulesAutorises?.terrain?.controleQualite,
+          materiel: !!admin.modulesAutorises?.terrain?.materiel,
+          phytosanitaire: !!admin.modulesAutorises?.terrain?.phytosanitaire,
+          tableauBord: !!admin.modulesAutorises?.terrain?.tableauBord
         }
       }
     };

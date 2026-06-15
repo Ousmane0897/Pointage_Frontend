@@ -6,7 +6,6 @@ import { WebsocketService } from '../../services/websocket.service';
 import { PlanificationService } from '../../services/planification.service';
 import { ToastrService } from 'ngx-toastr';
 import { Planification } from '../../models/planification.model';
-import { M } from '@angular/material/ripple-loader.d-C3HznB6v';
 
 describe('SuperAdminComponent', () => {
   let component: SuperAdminComponent;

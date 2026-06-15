@@ -31,35 +31,28 @@ describe('GestionPrivilegeComponent', () => {
       modulesAutorises: {
         dashboard: true,
         admin: false,
-        statistiquesAgences: false,
-        planifications: false,
-        calendrier: false,
-        jourFeries: false,
-        employes: false,
-        agences: false,
+        rh: false,
 
-        collecteLivraison: {
-          collecteBesoins: false,
-          suiviLivraison: false
+        productionChimie: {
+          formulations: false,
+          ordresFabrication: false,
+          lots: false,
+          controleQualite: false,
+          matieresPremieres: false,
+          conditionnement: false,
+          tableauBord: false
         },
 
-        absences: {
-          tempsReel: false,
-          historiqueAbsences: false
-        },
-
-        pointages: {
-          pointagesDuJour: false,
-          historiquePointages: false,
-        },
-
-        stock: {
-          produits: false,
-          entrees: false,
-          sorties: false,
-          suivis: false,
-          historiquesEntrees: false,
-          historiquesSorties: false
+        terrain: {
+          sitesClients: false,
+          planning: false,
+          pointage: false,
+          alertes: false,
+          interventions: false,
+          controleQualite: false,
+          materiel: false,
+          phytosanitaire: false,
+          tableauBord: false
         }
       },
       motifDesactivation: '',

@@ -28,6 +28,7 @@ describe('PageCodeService', () => {
 
   it('should fetch pointage by codeSecret', () => {
     const mockPointage: Pointage = {
+      id: '1',
       codeSecret: 'ABC123',
       prenom: 'John',
       nom: 'Doe',
@@ -37,7 +38,7 @@ describe('PageCodeService', () => {
       adresse: 'Dakar',
       duree: '9h',
       status: 'En cours',
-      site: 'Agence A'
+      site: ['Agence A']
       // ajoute ici les autres propriétés si nécessaire
     };
 
@@ -45,7 +46,7 @@ describe('PageCodeService', () => {
       expect(pointage).toEqual(mockPointage);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/pointages/ABC123`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/pointages/ABC123`);
     expect(req.request.method).toBe('GET');
 
     req.flush(mockPointage); // Simule la réponse du backend

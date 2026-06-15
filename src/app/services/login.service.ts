@@ -31,6 +31,16 @@ export class LoginService {
     return data ? JSON.parse(data) : {} as ModulesAutorises;
   }
 
+  /**
+   * Relit les permissions depuis le claim `modules` du JWT courant et les
+   * propage (stockage local + `permissions$`). À appeler après un login réussi.
+   */
+  notifyPermissionsChanged(): void {
+    const decoded = this.decodeToken();
+    const permissions = (decoded?.modules || {}) as ModulesAutorises;
+    this.setUserPermissions(permissions);
+  }
+
 
 
   changePassword(email: string, oldPassword: string, newPassword: string, confirmPassword: string, role: string | null) {

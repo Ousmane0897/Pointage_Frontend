@@ -1,9 +1,5 @@
 export type DropdownMenu =
   | 'operations'
-  | 'stock'
-  | 'collecte'
-  | 'absences'
-  | 'pointages'
   | null;
 
 
@@ -27,37 +23,7 @@ export interface ModulesAutorises {
 
   dashboard: boolean;
   admin: boolean;
-  statistiquesAgences: boolean;
-  planifications: boolean;
-  calendrier: boolean;
-  jourFeries: boolean;
-  employes: boolean;
-  agences: boolean;
   rh: boolean;
-
-  collecteLivraison: {
-    collecteBesoins: boolean;
-    suiviLivraison: boolean;
-  };
-
-  absences: {
-    tempsReel: boolean;
-    historiqueAbsences: boolean;
-  };
-
-  pointages: {
-    pointagesDuJour: boolean;
-    historiquePointages: boolean;
-  };
-
-  stock: {
-    produits: boolean;
-    entrees: boolean;
-    sorties: boolean;
-    suivis: boolean;
-    historiquesEntrees: boolean;
-    historiquesSorties: boolean;
-  };
 
   // ─── Exploitation v2 — Production Chimie (5.1) ──────────────────────
   // Optionnel pour rester rétrocompatible avec les JWT existants qui

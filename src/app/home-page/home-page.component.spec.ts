@@ -129,7 +129,7 @@ describe('HomePageComponent', () => {
 
     expect(loginService.notifyPermissionsChanged).toHaveBeenCalled();
     expect(toastr.success).toHaveBeenCalled();
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/exploitation-v2/dashboard');
 
 
   }));

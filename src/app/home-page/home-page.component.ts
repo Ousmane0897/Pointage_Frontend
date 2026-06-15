@@ -76,11 +76,8 @@ export class HomePageComponent {
         // 2.1️⃣ Vérifier si l'utilisateur doit changer son mot de passe
         const mustChangePassword = decoded.mustChangePassword === true;
 
-        // 3️⃣ Récupérer les permissions depuis le JWT (si tu les utilises)
-        const permissions = decoded.modules || {};
-
-        // ✅ UNE SEULE SOURCE
-        this.loginService.setUserPermissions(permissions);
+        // 3️⃣ Propager les permissions depuis le claim `modules` du JWT
+        this.loginService.notifyPermissionsChanged();
 
         this.closeForm();
         if (decoded.mustChangePassword) {

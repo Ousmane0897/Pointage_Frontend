@@ -44,6 +44,7 @@ describe('PointageService', () => {
 
   it('should send pointer data with POST', () => {
     const mockPointage: Pointage = {
+      id: '1',
       codeSecret: 'ABC123',
       prenom: 'John',
       nom: 'Doe',
@@ -53,18 +54,20 @@ describe('PointageService', () => {
       adresse: 'Dakar',
       duree: '9h',
       status: 'Présent',
-      site: 'Agence A'
+      site: ['Agence A']
     };
 
     service.pointer({ codeSecret: 'ABC123' }).subscribe((res) => {
       expect(res).toEqual(mockPointage);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/pointages`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/pointages`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       codeSecret: 'ABC123',
-      deviceId: '123e4567-e89b-12d3-a456-426614174000'
+      deviceId: '123e4567-e89b-12d3-a456-426614174000',
+      latitude: undefined,
+      longitude: undefined
     });
 
     req.flush(mockPointage);
@@ -73,6 +76,7 @@ describe('PointageService', () => {
   it('should get pointages with GET', () => {
     const mockPointages: Pointage[] = [
       {
+        id: '1',
         codeSecret: 'ABC123',
         prenom: 'John',
         nom: 'Doe',
@@ -82,9 +86,10 @@ describe('PointageService', () => {
         heureDepart: '17:00',
         duree: '9h',
         status: 'Présent',
-        site: 'Agence A'
+        site: ['Agence A']
       },
       {
+        id: '2',
         codeSecret: 'DEF456',
         prenom: 'Jane',
         nom: 'Doe',
@@ -94,7 +99,7 @@ describe('PointageService', () => {
         adresse: 'Dakar',
         duree: '9h',
         status: 'Présent',
-        site: 'Agence B'
+        site: ['Agence B']
       }
     ];
 
@@ -102,7 +107,7 @@ describe('PointageService', () => {
       expect(res).toEqual(mockPointages);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/pointages`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/pointages`);
     expect(req.request.method).toBe('GET');
     req.flush(mockPointages);
   });

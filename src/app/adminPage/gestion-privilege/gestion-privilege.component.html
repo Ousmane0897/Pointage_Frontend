@@ -184,116 +184,101 @@
               <span>Gestion des utilisateurs</span>
             </label>
             <label class="flex items-center space-x-2">
-              <input type="checkbox" name="StatistiquesAgences"
-                [(ngModel)]="modalData.modulesAutorises.statistiquesAgences" />
-              <span>Statistiques des agences</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Planifications" [(ngModel)]="modalData.modulesAutorises.planifications" />
-              <span>Planifications</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Calendrier" [(ngModel)]="modalData.modulesAutorises.calendrier" />
-              <span>Calendrier</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="JourFeries" [(ngModel)]="modalData.modulesAutorises.jourFeries" />
-              <span>Jours fériés</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Employes" [(ngModel)]="modalData.modulesAutorises.employes" />
-              <span>Gestion des employés</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="Agences" [(ngModel)]="modalData.modulesAutorises.agences" />
-              <span>Agences</span>
-            </label>
-            <label class="flex items-center space-x-2">
               <input type="checkbox" name="Rh" [(ngModel)]="modalData.modulesAutorises.rh" />
               <span>Ressources humaines</span>
             </label>
           </div>
 
-          <!-- Stock -->
+          <!-- Production Chimie (Exploitation v2 — 5.1) -->
           <div class="mb-2 mt-2">
-            <label class="font-semibold">Stock :</label>
+            <label class="font-semibold">Production Chimie :</label>
             <div class="ml-4 mt-2 space-y-1">
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="stockProduits" [(ngModel)]="modalData.modulesAutorises.stock.produits">
-                <span>Produits</span>
+                <input type="checkbox" name="pcTableauBord"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.tableauBord">
+                <span>Tableau de bord</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="stockEntrees" [(ngModel)]="modalData.modulesAutorises.stock.entrees">
-                <span>Entrées</span>
+                <input type="checkbox" name="pcMatieresPremieres"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.matieresPremieres">
+                <span>Matières premières</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="stockSorties" [(ngModel)]="modalData.modulesAutorises.stock.sorties">
-                <span>Sorties</span>
+                <input type="checkbox" name="pcFormulations"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.formulations">
+                <span>Formulations</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="stockSuivis" [(ngModel)]="modalData.modulesAutorises.stock.suivis">
-                <span>Suivis</span>
+                <input type="checkbox" name="pcOrdresFabrication"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.ordresFabrication">
+                <span>Ordres de fabrication</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="stockHistoriquesEntrees"
-                  [(ngModel)]="modalData.modulesAutorises.stock.historiquesEntrees">
-                <span>Historiques des entrées</span>
+                <input type="checkbox" name="pcLots"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.lots">
+                <span>Lots & traçabilité</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="stockHistoriquesSorties"
-                  [(ngModel)]="modalData.modulesAutorises.stock.historiquesSorties">
-                <span>Historiques des sorties</span>
+                <input type="checkbox" name="pcControleQualite"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.controleQualite">
+                <span>Contrôle qualité</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="pcConditionnement"
+                  [(ngModel)]="modalData.modulesAutorises.productionChimie!.conditionnement">
+                <span>Conditionnement</span>
               </label>
             </div>
           </div>
 
-          <!-- Collecte & Livraison -->
+          <!-- Exploitation Terrain (Exploitation v2 — 5.2) -->
           <div class="mb-2 mt-2">
-            <label class="font-semibold">Collecte & Livraison :</label>
+            <label class="font-semibold">Exploitation Terrain :</label>
             <div class="ml-4 mt-2 space-y-1">
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="collecteBesoins"
-                  [(ngModel)]="modalData.modulesAutorises.collecteLivraison.collecteBesoins">
-                <span>Collecte des besoins</span>
+                <input type="checkbox" name="terrainTableauBord"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.tableauBord">
+                <span>Tableau de bord</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="suiviLivraison"
-                  [(ngModel)]="modalData.modulesAutorises.collecteLivraison.suiviLivraison">
-                <span>Suivi de la livraison</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Absences -->
-          <div class="mb-2 mt-2">
-            <label class="font-semibold">Absences :</label>
-            <div class="ml-4 mt-2 space-y-1">
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" name="absencesTempsReel"
-                  [(ngModel)]="modalData.modulesAutorises.absences.tempsReel">
-                <span>Absences temps réel</span>
+                <input type="checkbox" name="terrainSitesClients"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.sitesClients">
+                <span>Sites clients</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="absencesHistorique"
-                  [(ngModel)]="modalData.modulesAutorises.absences.historiqueAbsences">
-                <span>Historique des absences</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Pointages -->
-          <div class="mb-2 mt-2">
-            <label class="font-semibold">Pointages :</label>
-            <div class="ml-4 mt-2 space-y-1">
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" name="pointagesDuJour"
-                  [(ngModel)]="modalData.modulesAutorises.pointages.pointagesDuJour">
-                <span>Pointages du jour</span>
+                <input type="checkbox" name="terrainPlanning"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.planning">
+                <span>Planning</span>
               </label>
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="pointagesHistorique"
-                  [(ngModel)]="modalData.modulesAutorises.pointages.historiquePointages">
-                <span>Historique des pointages</span>
+                <input type="checkbox" name="terrainPointage"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.pointage">
+                <span>Pointage GPS</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="terrainAlertes"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.alertes">
+                <span>Alertes</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="terrainInterventions"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.interventions">
+                <span>Interventions</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="terrainControleQualite"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.controleQualite">
+                <span>Contrôle qualité</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="terrainMateriel"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.materiel">
+                <span>Matériel</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="terrainPhytosanitaire"
+                  [(ngModel)]="modalData.modulesAutorises.terrain!.phytosanitaire">
+                <span>Phytosanitaire</span>
               </label>
             </div>
           </div>

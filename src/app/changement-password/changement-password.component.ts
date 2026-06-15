@@ -61,7 +61,7 @@ export class ChangementPasswordComponent implements OnInit {
           }
 
           this.toastr.success(res.message || 'Mot de passe changé', 'Succès');
-          this.router.navigate(['admin/dashboard']);
+          this.router.navigateByUrl('/admin/exploitation-v2/dashboard');
         },
         error: err => {
           this.toastr.error(err.error?.message || 'Erreur lors du changement', 'Erreur');

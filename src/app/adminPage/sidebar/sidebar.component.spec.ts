@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import { SidebarComponent } from './sidebar.component';
 import { LoginService } from '../../services/login.service';
+import { ModulesAutorises } from '../../models/admin.model';
 
 describe('SidebarComponent', () => {
   let component: SidebarComponent;
@@ -11,14 +12,37 @@ describe('SidebarComponent', () => {
   let router: jasmine.SpyObj<Router>;
   let loginService: jasmine.SpyObj<LoginService>;
 
-  const permissions$ = new BehaviorSubject<any>({
-    Dashboard: true,
-    Employes: false
-  });
+  const basePermissions: ModulesAutorises = {
+    dashboard: true,
+    admin: false,
+    rh: true,
+    productionChimie: {
+      formulations: true,
+      ordresFabrication: false,
+      lots: false,
+      controleQualite: false,
+      matieresPremieres: false,
+      conditionnement: false,
+      tableauBord: false
+    },
+    terrain: {
+      sitesClients: false,
+      planning: false,
+      pointage: false,
+      alertes: false,
+      interventions: false,
+      controleQualite: false,
+      materiel: false,
+      phytosanitaire: false,
+      tableauBord: false
+    }
+  };
+
+  const permissions$ = new BehaviorSubject<ModulesAutorises>(basePermissions);
 
   beforeEach(async () => {
     router = jasmine.createSpyObj('Router', ['navigateByUrl'], {
-      url: '/admin/dashboard'
+      url: '/admin/exploitation-v2/dashboard'
     });
 
     loginService = jasmine.createSpyObj(
@@ -28,10 +52,7 @@ describe('SidebarComponent', () => {
     );
 
     loginService.getUserRole.and.returnValue('ADMIN');
-    loginService.getUserPermissions.and.returnValue({
-      Dashboard: true,
-      Employes: false
-    });
+    loginService.getUserPermissions.and.returnValue(basePermissions);
 
     await TestBed.configureTestingModule({
       imports: [SidebarComponent],
@@ -58,14 +79,14 @@ describe('SidebarComponent', () => {
   // =====================================================
   it('should load role and permissions on init', () => {
     expect(component.role).toBe('ADMIN');
-    expect(component.modulesAutorises.Dashboard).toBeTrue();
+    expect(component.modulesAutorises.dashboard).toBeTrue();
   });
 
   it('should update permissions when permissions$ emits', () => {
-    permissions$.next({ Dashboard: false, Employes: true });
+    permissions$.next({ ...basePermissions, dashboard: false, admin: true });
 
-    expect(component.modulesAutorises.Dashboard).toBeFalse();
-    expect(component.modulesAutorises.Employes).toBeTrue();
+    expect(component.modulesAutorises.dashboard).toBeFalse();
+    expect(component.modulesAutorises.admin).toBeTrue();
   });
 
   // =====================================================
@@ -102,7 +123,7 @@ describe('SidebarComponent', () => {
   // 5️⃣ Router helpers
   // =====================================================
   it('should return true if route is active', () => {
-    expect(component.isActive('/admin/dashboard')).toBeTrue();
+    expect(component.isActive('/admin/exploitation-v2/dashboard')).toBeTrue();
   });
 
   it('should return true if route starts with prefix', () => {
@@ -113,37 +134,51 @@ describe('SidebarComponent', () => {
   // 6️⃣ Permissions
   // =====================================================
   it('should allow access if permission is true', () => {
-    expect(component.hasPermission('Dashboard')).toBeTrue();
+    expect(component.hasPermission('dashboard')).toBeTrue();
   });
 
   it('should deny access if permission is false', () => {
-    expect(component.hasPermission('Employes')).toBeFalse();
+    expect(component.hasPermission('admin')).toBeFalse();
+  });
+
+  it('should resolve nested access via hasAccess', () => {
+    expect(component.hasAccess('productionChimie.formulations')).toBeTrue();
+    expect(component.hasAccess('productionChimie.lots')).toBeFalse();
+    expect(component.hasAccess('terrain.sitesClients')).toBeFalse();
+  });
+
+  it('should expose RH section when rh flag is set', () => {
+    expect(component.accessRessourcesHumaines()).toBeTrue();
+  });
+
+  it('should expose Exploitation v2 when a Production Chimie sub-flag is set', () => {
+    expect(component.accessProductionChimie()).toBeTrue();
+    expect(component.accessExploitationV2()).toBeTrue();
+  });
+
+  it('should hide Terrain when no terrain sub-flag is set', () => {
+    expect(component.accessTerrain()).toBeFalse();
   });
 
   // =====================================================
   // 7️⃣ Dropdowns
   // =====================================================
-  it('should toggle dropdown menu', () => {
-    component.toggleDropdown('stock');
-    expect(component.openDropdown).toBe('stock');
+  it('should toggle the Ressources Humaines dropdown', () => {
+    component.toggleDropdownRessourcesHumaines('rh');
+    expect(component.openDropdownRessourcesHumaines).toBe('rh');
 
-    component.toggleDropdown('stock');
-    expect(component.openDropdown).toBeNull();
+    component.toggleDropdownRessourcesHumaines('rh');
+    expect(component.openDropdownRessourcesHumaines).toBeNull();
   });
 
-  it('should toggle employe dropdown', () => {
-    component.toggleDropdownEmploye('emp');
-    expect(component.openDropdownEmploye).toBe('emp');
+  it('should toggle the Production Chimie dropdown', () => {
+    component.toggleDropdownProductionChimie('pc');
+    expect(component.openDropdownProductionChimie).toBe('pc');
   });
 
-  it('should toggle collecte dropdown', () => {
-    component.toggleDropdownCollecte('collecte');
-    expect(component.openDropdownCollecte).toBe('collecte');
-  });
-
-  it('should toggle absent dropdown', () => {
-    component.toggleDropdownAbsent('absent');
-    expect(component.openDropdownAbsent).toBe('absent');
+  it('should toggle the Terrain dropdown', () => {
+    component.toggleDropdownTerrain('terrain');
+    expect(component.openDropdownTerrain).toBe('terrain');
   });
 
   // =====================================================
@@ -159,4 +194,3 @@ describe('SidebarComponent', () => {
   });
 });
 export { SidebarComponent };
-

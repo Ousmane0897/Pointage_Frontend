@@ -58,7 +58,7 @@ describe('PlanificationService', () => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/planification`);
+    const req = httpMock.expectOne(`${baseUrl}/planification`);
     expect(req.request.method).toBe('GET');
 
     req.flush([planificationMock]);
@@ -72,7 +72,7 @@ describe('PlanificationService', () => {
       expect(res.codeSecret).toBe('ABC123');
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/planification/ABC123`);
+    const req = httpMock.expectOne(`${baseUrl}/planification/ABC123`);
     expect(req.request.method).toBe('GET');
 
     req.flush(planificationMock);
@@ -86,7 +86,7 @@ describe('PlanificationService', () => {
       expect(res).toBeTruthy();
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/planification`);
+    const req = httpMock.expectOne(`${baseUrl}/planification`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(planificationMock);
 
@@ -101,7 +101,7 @@ describe('PlanificationService', () => {
       expect(res).toBeTruthy();
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/api/planification/ABC123`);
+    const req = httpMock.expectOne(`${baseUrl}/planification/ABC123`);
     expect(req.request.method).toBe('PUT');
 
     req.flush(planificationMock);
@@ -116,7 +116,7 @@ describe('PlanificationService', () => {
     });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/api/planification/AVenir/ABC123`
+      `${baseUrl}/planification/AVenir/ABC123`
     );
     expect(req.request.method).toBe('GET');
 
@@ -132,7 +132,7 @@ describe('PlanificationService', () => {
     });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/api/planification/EnCours/ABC123`
+      `${baseUrl}/planification/EnCours/ABC123`
     );
     expect(req.request.method).toBe('GET');
 
@@ -148,7 +148,7 @@ describe('PlanificationService', () => {
     });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/api/planification/Terminees/ABC123`
+      `${baseUrl}/planification/Terminees/ABC123`
     );
     expect(req.request.method).toBe('GET');
 
@@ -164,7 +164,7 @@ describe('PlanificationService', () => {
     });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/api/planification/ABC123`
+      `${baseUrl}/planification/ABC123`
     );
     expect(req.request.method).toBe('DELETE');
 
@@ -190,7 +190,7 @@ describe('PlanificationService', () => {
     });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/api/planification/demander`
+      `${baseUrl}/planification/demander`
     );
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.has('Authorization')).toBeTrue();
@@ -207,7 +207,7 @@ describe('PlanificationService', () => {
     });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/api/planification/valider`
+      `${baseUrl}/planification/valider`
     );
     expect(req.request.method).toBe('POST');
 
@@ -231,7 +231,7 @@ describe('PlanificationService', () => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne('/api/planification/pending');
+    const req = httpMock.expectOne(`${baseUrl}/planification/pending`);
     expect(req.request.method).toBe('GET');
 
     req.flush(pending);

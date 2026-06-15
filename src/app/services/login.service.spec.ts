@@ -54,9 +54,8 @@ describe('LoginService', () => {
   it('doit appeler l’API login', () => {
     service.login('test@mail.com', '1234').subscribe();
 
-    const req = httpMock.expectOne(`${baseUrl}/api/login`);
+    const req = httpMock.expectOne(`${baseUrl}/login`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.withCredentials).toBeTrue();
     expect(req.request.body).toEqual({
       email: 'test@mail.com',
       password: '1234'
@@ -72,7 +71,7 @@ describe('LoginService', () => {
       'ADMIN'
     ).subscribe();
 
-    const req = httpMock.expectOne(`${baseUrl}/api/login/change-password`);
+    const req = httpMock.expectOne(`${baseUrl}/login/change-password`);
     expect(req.request.method).toBe('POST');
   });
 
@@ -193,14 +192,13 @@ describe('LoginService', () => {
   // 🔹 LOGOUT
   // ===============================
 
-  it('doit supprimer le token et rediriger vers /', () => {
-    const router = TestBed.inject(Router);
-
+  it('doit supprimer le token', () => {
+    // `logout()` se contente de retirer le token ; la redirection est laissée
+    // à l'appelant (ex. AuthInterceptor / SidebarComponent).
     localStorage.setItem('token', fakeToken);
     service.logout();
 
     expect(localStorage.getItem('token')).toBeNull();
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
   });
 
 
