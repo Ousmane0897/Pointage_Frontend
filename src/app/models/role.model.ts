@@ -4,4 +4,5 @@ export type Role =
   | "EXPLOITATION"
   | "BACKOFFICE"
   | "SUPERADMIN"
+  | "RESPONSABLE_CHIMIE"
   | "RH";
