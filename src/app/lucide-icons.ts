@@ -2,7 +2,7 @@ import { importProvidersFrom } from '@angular/core';
 import {
   LucideAngularModule,
   Activity, AlertCircle, AlertOctagon, AlertTriangle, AlignLeft, Archive, ArchiveX,
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Atom, Award,
+  ArrowDown, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUp, ArrowUpDown, Atom, Award,
   BadgeCheck, Banknote, Barcode, BarChart3, Beaker, Bell, BellOff, BellRing, BookOpen,
   Briefcase, Bug, Building2, Calculator, Calendar, CalendarCheck, CalendarCheck2, CalendarClock,
   CalendarDays, CalendarPlus, CalendarX, CalendarX2, Camera, ChartBar,
@@ -23,13 +23,16 @@ import {
   TimerReset, Trash2, TrendingDown, TrendingUp, TriangleAlert, Upload,
   UploadCloud, User, UserCheck, UserMinus, UserPlus, UserX, Users, Wallet,
   Workflow, Wrench, X, XCircle, Zap,
+  // ─── Stock v2 (7.3) ───
+  Boxes, Warehouse, PackagePlus, PackageMinus, PackageSearch, PackageOpen,
+  ShoppingCart, Truck, Container, FolderTree, ClipboardX, Scale, PackageX,
 } from 'lucide-angular';
 
 // Ajouter ici toute nouvelle icône référencée par <lucide-icon name="..."> dans les templates.
 export const LucideIconsProvider = importProvidersFrom(
   LucideAngularModule.pick({
     Activity, AlertCircle, AlertOctagon, AlertTriangle, AlignLeft, Archive, ArchiveX,
-    ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Atom, Award,
+    ArrowDown, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUp, ArrowUpDown, Atom, Award,
     BadgeCheck, Banknote, Barcode, BarChart3, Beaker, Bell, BellOff, BellRing, BookOpen,
     Briefcase, Bug, Building2, Calculator, Calendar, CalendarCheck, CalendarCheck2, CalendarClock,
     CalendarDays, CalendarPlus, CalendarX, CalendarX2, Camera, ChartBar,
@@ -50,5 +53,8 @@ export const LucideIconsProvider = importProvidersFrom(
     TimerReset, Trash2, TrendingDown, TrendingUp, TriangleAlert, Upload,
     UploadCloud, User, UserCheck, UserMinus, UserPlus, UserX, Users, Wallet,
     Workflow, Wrench, X, XCircle, Zap,
+    // ─── Stock v2 (7.3) ───
+    Boxes, Warehouse, PackagePlus, PackageMinus, PackageSearch, PackageOpen,
+    ShoppingCart, Truck, Container, FolderTree, ClipboardX, Scale, PackageX,
   })
 );

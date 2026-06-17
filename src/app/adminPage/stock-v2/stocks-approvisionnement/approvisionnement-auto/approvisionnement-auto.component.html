@@ -1,0 +1,118 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+        <lucide-icon name="Boxes" [size]="14"></lucide-icon>
+        <span>Stocks &amp; Approvisionnement</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+        <lucide-icon name="ShoppingCart" [size]="24" class="text-indigo-600"></lucide-icon>
+        Approvisionnement automatique
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Suggestions de commande basées sur le seuil d'alerte et la consommation moyenne.
+      </p>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Horizon (mois de consommation)</label>
+          <input type="number" min="1" max="24" [formControl]="nMoisControl"
+            class="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+        </div>
+        <div class="flex flex-col gap-1 min-w-[220px]">
+          <label class="text-xs text-gray-400">Site</label>
+          <app-selecteur-site [formControl]="siteControl" placeholder="Tous sites…"></app-selecteur-site>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Catégorie</label>
+          <select [formControl]="categorieControl"
+            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+            <option value="">Toutes</option>
+            @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
+          </select>
+        </div>
+        <button type="button" (click)="charger()"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+          <lucide-icon name="RefreshCw" [size]="16"></lucide-icon>
+          Recalculer
+        </button>
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-3">
+        @for (_ of [0,1,2,3,4]; track $index) { <div class="h-12 rounded-lg bg-gray-100 animate-pulse"></div> }
+      </div>
+    } @else if (suggestions.length > 0) {
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+              <tr>
+                <th class="px-4 py-3 text-left">Code</th>
+                <th class="px-4 py-3 text-left">Produit</th>
+                <th class="px-4 py-3 text-left">Fournisseur</th>
+                <th class="px-4 py-3 text-right">Stock actuel</th>
+                <th class="px-4 py-3 text-right">Seuil</th>
+                <th class="px-4 py-3 text-right">Conso. moy.</th>
+                <th class="px-4 py-3 text-right">Besoin</th>
+                <th class="px-4 py-3 text-right">À commander</th>
+                <th class="px-4 py-3 text-right">Montant</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (s of suggestions; track trackById($index, s); let i = $index) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ s.produitCode }}</td>
+                  <td class="px-4 py-3 text-gray-800">{{ s.produitLibelle }}</td>
+                  <td class="px-4 py-3 text-gray-500 text-xs">{{ s.fournisseurPrincipal || '—' }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums" [class.text-red-600]="s.stockActuel <= s.seuilAlerte">
+                    {{ s.stockActuel | number:'1.0-2':'fr' }} {{ LIBELLES_UNITE[s.unite] }}
+                  </td>
+                  <td class="px-4 py-3 text-right tabular-nums text-gray-500">{{ s.seuilAlerte | number:'1.0-2':'fr' }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums text-gray-500">{{ s.consommationMoyenne | number:'1.0-2':'fr' }}/mois</td>
+                  <td class="px-4 py-3 text-right tabular-nums font-medium text-amber-600">{{ s.besoin | number:'1.0-2':'fr' }}</td>
+                  <td class="px-4 py-3 text-right">
+                    <input type="number" min="0" [formControl]="quantites.at(i)"
+                      class="w-24 px-2 py-1 rounded border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                  </td>
+                  <td class="px-4 py-3 text-right tabular-nums font-medium text-gray-800">{{ montantLigne(i) | number:'1.0-0':'fr' }} FCFA</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-indigo-50/60">
+              <tr>
+                <td colspan="8" class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Montant total estimé</td>
+                <td class="px-4 py-3 text-right tabular-nums font-bold text-indigo-700">{{ montantTotal | number:'1.0-0':'fr' }} FCFA</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="px-4 py-3 flex items-center justify-between border-t border-gray-100">
+          <p class="text-xs text-gray-500">{{ nbLignesRetenues }} produit(s) à commander sur {{ suggestions.length }} suggéré(s)</p>
+          <button type="button" (click)="genererBonCommande()"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
+            <lucide-icon name="FileText" [size]="16"></lucide-icon>
+            Générer le bon de commande (PDF)
+          </button>
+        </div>
+      </div>
+
+    } @else {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center mb-4 mx-auto">
+          <lucide-icon name="CheckCircle2" [size]="32" class="text-green-500"></lucide-icon>
+        </div>
+        <h3 class="text-base font-semibold text-gray-800">Aucun réapprovisionnement nécessaire</h3>
+        <p class="text-sm text-gray-500 mt-1">Tous les produits du périmètre sont au-dessus de leur seuil prévisionnel.</p>
+      </div>
+    }
+  </div>
+</div>

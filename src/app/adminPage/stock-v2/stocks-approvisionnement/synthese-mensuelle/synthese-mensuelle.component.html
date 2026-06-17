@@ -1,0 +1,129 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+      <div>
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+          <lucide-icon name="Boxes" [size]="14"></lucide-icon>
+          <span>Stocks &amp; Approvisionnement</span>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <lucide-icon name="FileBarChart" [size]="24" class="text-indigo-600"></lucide-icon>
+          Synthèse mensuelle
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Stock initial, entrées, sorties et stock final par produit.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="exporterPdf()" [disabled]="!synthese"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-50 transition-colors">
+          <lucide-icon name="FileText" [size]="16"></lucide-icon>
+          PDF
+        </button>
+        <button type="button" (click)="exporterExcel()" [disabled]="!synthese"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-50 transition-colors">
+          <lucide-icon name="FileSpreadsheet" [size]="16"></lucide-icon>
+          Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Mois</label>
+          <input type="month" [formControl]="moisControl"
+            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+        </div>
+        <div class="flex flex-col gap-1 min-w-[220px]">
+          <label class="text-xs text-gray-400">Site</label>
+          <app-selecteur-site [formControl]="siteControl" placeholder="Tous sites…"></app-selecteur-site>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Catégorie</label>
+          <select [formControl]="categorieControl"
+            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+            <option value="">Toutes</option>
+            @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
+          </select>
+        </div>
+        <button type="button" (click)="charger()"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+          <lucide-icon name="Search" [size]="16"></lucide-icon>
+          Générer
+        </button>
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-3">
+        @for (_ of [0,1,2,3,4]; track $index) { <div class="h-12 rounded-lg bg-gray-100 animate-pulse"></div> }
+      </div>
+    } @else if (synthese && synthese.lignes.length > 0) {
+
+      <!-- Totaux -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">Total entrées</p>
+          <p class="text-xl font-bold text-green-600 mt-1 tabular-nums">{{ synthese.totalEntrees | number:'1.0-2':'fr' }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">Total sorties</p>
+          <p class="text-xl font-bold text-red-600 mt-1 tabular-nums">{{ synthese.totalSorties | number:'1.0-2':'fr' }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">Valeur stock final</p>
+          <p class="text-xl font-bold text-indigo-600 mt-1 tabular-nums">{{ synthese.valeurStockFinal | number:'1.0-0':'fr' }} FCFA</p>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Mouvements par produit (top 12)</h2>
+        <div class="h-72">
+          @if (evolutionData) { <canvas baseChart [type]="'bar'" [data]="evolutionData" [options]="barOptions"></canvas> }
+        </div>
+      </div>
+
+      <!-- Tableau -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+              <tr>
+                <th class="px-4 py-3 text-left">Code</th>
+                <th class="px-4 py-3 text-left">Produit</th>
+                <th class="px-4 py-3 text-right">Stock initial</th>
+                <th class="px-4 py-3 text-right">Entrées</th>
+                <th class="px-4 py-3 text-right">Sorties</th>
+                <th class="px-4 py-3 text-right">Stock final</th>
+                <th class="px-4 py-3 text-right">Valeur</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (l of synthese.lignes; track trackById($index, l)) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ l.produitCode }}</td>
+                  <td class="px-4 py-3 text-gray-800">{{ l.produitLibelle }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums text-gray-600">{{ l.stockInitial | number:'1.0-2':'fr' }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums text-green-600">+{{ l.entrees | number:'1.0-2':'fr' }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums text-red-600">−{{ l.sorties | number:'1.0-2':'fr' }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums font-medium text-gray-800">{{ l.stockFinal | number:'1.0-2':'fr' }} {{ LIBELLES_UNITE[l.unite] }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums text-gray-700">{{ l.valeurFinale | number:'1.0-0':'fr' }} FCFA</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    } @else {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+        <lucide-icon name="FileBarChart" [size]="40" class="text-gray-300 mx-auto mb-3"></lucide-icon>
+        <h3 class="text-base font-semibold text-gray-800">Aucune donnée pour ce mois</h3>
+        <p class="text-sm text-gray-500 mt-1">Sélectionnez un mois et un périmètre, puis générez la synthèse.</p>
+      </div>
+    }
+  </div>
+</div>

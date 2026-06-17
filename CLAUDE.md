@@ -72,6 +72,8 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 | `exploitation-v2/` | Module Exploitation (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
 | `gestion-privilege/` | Permission management |
 | `notification/` | Notification system |
+| `stock/` | ⚠️ ANCIEN module Stock (legacy, à supprimer après bascule sur stock-v2/) |
+| `stock-v2/` | NOUVEAU module Stock complet (Stocks & Approvisionnement, Contrôle des mouvements, Analyse des consommations, Valorisation financière) |
 
 ---
 
@@ -309,6 +311,90 @@ materiel, phytosanitaire, tableauBord). Backend doit ajouter
 `modules.terrain` au claim JWT pour activer le menu en production.
 
 ### Conventions nouveau module Exploitation
+
+- **Standalone Components** (pas de NgModules) — Angular 19
+- **ReactiveFormsModule** exclusivement (pas de `FormsModule` / `ngModel`)
+- **ng2-charts + Chart.js** pour les graphiques (déjà installés)
+- **Localisation fr-FR** — dates au format `dd/MM/yyyy`
+- **Montants en FCFA**, pas de décimales
+- **Lucide icons** — enregistrer toute icône utilisée dans [src/app/lucide-icons.ts](src/app/lucide-icons.ts) (PascalCase strict)
+- Services dans [src/app/services/](src/app/services/), modèles dans [src/app/models/](src/app/models/)
+- Routes lazy-loadées via `loadComponent()` dans [app.routes.ts](src/app/app.routes.ts)
+- RBAC via `ModulesAutorises` + propagation réactive `BehaviorSubject`
+
+---
+
+## Module Stock (`src/app/adminPage/stock-v2/`)
+
+> **Module Stock en construction dans `stock-v2/`. L'ancien `stock/` sera supprimé après bascule complète.**
+
+Module de gestion des stocks, découpé en sous-modules. Toutes les interfaces sont en français.
+
+### 7.3 Stocks & Approvisionnement (`stock-v2/stocks-approvisionnement/`)
+
+- Gestion des articles, niveaux de stock, seuils de réapprovisionnement et commandes fournisseurs.
+
+**Statut : ✅ Terminé (frontend)** — 7 fonctionnalités, 1 composant standalone par fonctionnalité.
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `catalogue-produits/` | liste-produits, formulaire-produit, fiche-produit, arborescence-categories, import-produits-modal | Référentiel produits (5 types), catégories arborescentes (lazy expand), upload photo + fiche technique PDF, import/export Excel |
+| `mouvements-stock/` | liste-mouvements, formulaire-mouvement | Entrées / sorties / transferts inter-sites, saisie rapide avec autocompletes, historique filtrable exportable |
+| `etat-stock/` | etat-stock | État temps réel par produit/site, alertes RUPTURE/CRITIQUE/OK, édition inline des seuils, export Excel |
+| `inventaires/` | liste-inventaires, planification-inventaire, saisie-inventaire | Workflow BROUILLON→COMPTAGE→VALIDATION→CLOTURE, écart auto, justification au-delà du seuil, PV PDF |
+| `synthese-mensuelle/` | synthese-mensuelle | Stock initial/entrées/sorties/final par produit, chart ng2-charts, exports PDF/Excel |
+| `approvisionnement-auto/` | approvisionnement-auto | Suggestions (seuil + conso moyenne sur N mois), quantités éditables, bon de commande prévisionnel PDF |
+| `tableau-bord-stocks/` | tableau-bord-stocks | KPIs (valeur FCFA, ruptures, alertes, rotation, dormants) + 4 charts (donut, line, bar, table dormants), exports PDF/Excel |
+
+**Composants partagés** (`stocks-approvisionnement/shared/`) : `selecteur-produit`, `selecteur-site` (ControlValueAccessor, autocompletes).
+
+**Services** (préfixe `stock-v2-`, dans [src/app/services/](src/app/services/)) :
+`stock-v2-produit`, `stock-v2-categorie`, `stock-v2-mouvement`, `stock-v2-etat-stock`,
+`stock-v2-inventaire`, `stock-v2-synthese`, `stock-v2-approvisionnement`,
+`stock-v2-tableau-bord`, `stock-v2-import-excel`, `stock-v2-export` (XLSX), `stock-v2-pdf` (jsPDF).
+
+**Modèles** (préfixe `stock-v2-`, dans [src/app/models/](src/app/models/)) :
+`stock-v2-produit`, `stock-v2-categorie`, `stock-v2-mouvement`, `stock-v2-etat-stock`,
+`stock-v2-inventaire`, `stock-v2-synthese`, `stock-v2-approvisionnement`,
+`stock-v2-tableau-bord`, `stock-v2-import`.
+
+**Constantes :** [src/app/constants/stock.constants.ts](src/app/constants/stock.constants.ts).
+
+**Dépendance externe encadrée** : `TerrainSiteClientService.listerActifs()` en **lecture seule**
+(via le shared `selecteur-site`) pour référencer les sites des mouvements/transferts. Aucune
+écriture, aucun couplage avec l'ancien `stock/` ni avec `stock-chimie`.
+
+**Valorisation** : champ `prixUnitaire` (FCFA) sur le produit (KPIs dashboard 7.3) ; CMUP/FIFO renvoyé à 7.6.
+
+**RBAC** : flag `stock?` optionnel dans [ModulesAutorises](src/app/models/admin.model.ts) avec 7 sous-flags
+(catalogue, mouvements, etatStock, inventaires, synthese, approvisionnement, tableauBord). Backend doit
+ajouter `modules.stock` au claim JWT pour activer le menu en production.
+
+**Endpoints backend à prévoir** : `/stock-v2/produits` (+ `/actifs`, `/bulk`, upload photo+fiche,
+`/{id}/fiche-technique`, `/{id}/photo`), `/stock-v2/categories` (`/racines`, `/enfants`),
+`/stock-v2/mouvements`, `/stock-v2/etat-stock` (+ `/seuils`), `/stock-v2/inventaires`
+(+ transitions `/comptage`, `/validation`, `/cloture`), `/stock-v2/synthese-mensuelle`,
+`/stock-v2/approvisionnement/suggestions`, `/stock-v2/tableau-bord`.
+
+### 7.4 Contrôle des mouvements
+
+- Suivi des entrées/sorties de stock, transferts inter-sites, traçabilité et inventaires.
+
+**Statut : 🔲 À faire**
+
+### 7.5 Analyse des consommations
+
+- Statistiques de consommation par article/site/période, graphiques et alertes de surconsommation.
+
+**Statut : 🔲 À faire**
+
+### 7.6 Valorisation financière
+
+- Valorisation du stock (FCFA), méthodes de calcul (CMUP/FIFO), états de stock valorisés et exports comptables.
+
+**Statut : 🔲 À faire**
+
+### Conventions module Stock
 
 - **Standalone Components** (pas de NgModules) — Angular 19
 - **ReactiveFormsModule** exclusivement (pas de `FormsModule` / `ngModel`)

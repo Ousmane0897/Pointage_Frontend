@@ -209,6 +209,36 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/phytosanitaire/applications/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
             { path: 'exploitation-v2/terrain/phytosanitaire/applications/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
 
+            // ─── Stock v2 — 7.3 Stocks & Approvisionnement ───────────────────────
+            // Catalogue produits (ordre important : /categories, /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/stocks-approvisionnement/produits', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/liste-produits/liste-produits.component').then(m => m.ListeProduitsComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/categories', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/arborescence-categories/arborescence-categories.component').then(m => m.ArborescenceCategoriesComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/:id', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/fiche-produit/fiche-produit.component').then(m => m.FicheProduitComponent) },
+
+            // Mouvements de stock
+            { path: 'stock-v2/stocks-approvisionnement/mouvements', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/liste-mouvements/liste-mouvements.component').then(m => m.ListeMouvementsComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/mouvements/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/formulaire-mouvement/formulaire-mouvement.component').then(m => m.FormulaireMouvementComponent) },
+
+            // État du stock temps réel
+            { path: 'stock-v2/stocks-approvisionnement/etat', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/etat-stock/etat-stock.component').then(m => m.EtatStockComponent) },
+
+            // Inventaires (ordre important : /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/stocks-approvisionnement/inventaires', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/liste-inventaires/liste-inventaires.component').then(m => m.ListeInventairesComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/inventaires/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/planification-inventaire/planification-inventaire.component').then(m => m.PlanificationInventaireComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/inventaires/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/planification-inventaire/planification-inventaire.component').then(m => m.PlanificationInventaireComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/inventaires/:id', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/saisie-inventaire/saisie-inventaire.component').then(m => m.SaisieInventaireComponent) },
+
+            // Synthèse mensuelle
+            { path: 'stock-v2/stocks-approvisionnement/synthese', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/synthese-mensuelle/synthese-mensuelle.component').then(m => m.SyntheseMensuelleComponent) },
+
+            // Approvisionnement automatique
+            { path: 'stock-v2/stocks-approvisionnement/approvisionnement', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/approvisionnement-auto/approvisionnement-auto.component').then(m => m.ApprovisionnementAutoComponent) },
+
+            // Tableau de bord stocks
+            { path: 'stock-v2/stocks-approvisionnement/tableau-bord', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/tableau-bord-stocks/tableau-bord-stocks.component').then(m => m.TableauBordStocksComponent) },
+
         ]
     }
 ];

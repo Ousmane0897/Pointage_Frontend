@@ -53,4 +53,18 @@ export interface ModulesAutorises {
     phytosanitaire?: boolean;
     tableauBord?: boolean;
   };
+
+  // ─── Stock v2 — 7.3 Stocks & Approvisionnement ──────────────────────
+  // Optionnel pour rester rétrocompatible avec les JWT existants qui
+  // n'embarquent pas encore ce champ. Le backend devra ajouter
+  // `modules.stock` au claim JWT pour activer ce menu en production.
+  stock?: {
+    catalogue?: boolean;
+    mouvements?: boolean;
+    etatStock?: boolean;
+    inventaires?: boolean;
+    synthese?: boolean;
+    approvisionnement?: boolean;
+    tableauBord?: boolean;
+  };
 }
