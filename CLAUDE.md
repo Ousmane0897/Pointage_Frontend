@@ -334,7 +334,7 @@ Module de gestion des stocks, découpé en sous-modules. Toutes les interfaces s
 
 - Gestion des articles, niveaux de stock, seuils de réapprovisionnement et commandes fournisseurs.
 
-**Statut : ✅ Terminé (frontend)** — 7 fonctionnalités, 1 composant standalone par fonctionnalité.
+**Statut : ✅ Terminé (frontend)** — 7 fonctionnalités. Bilan : **14 composants** + **2 partagés**, **11 services**, **9 modèles**, 1 fichier de constantes. Reste à faire côté serveur (endpoints listés plus bas).
 
 | Sous-module | Composants | Rôle |
 |---|---|---|
@@ -370,11 +370,33 @@ Module de gestion des stocks, découpé en sous-modules. Toutes les interfaces s
 (catalogue, mouvements, etatStock, inventaires, synthese, approvisionnement, tableauBord). Backend doit
 ajouter `modules.stock` au claim JWT pour activer le menu en production.
 
-**Endpoints backend à prévoir** : `/stock-v2/produits` (+ `/actifs`, `/bulk`, upload photo+fiche,
-`/{id}/fiche-technique`, `/{id}/photo`), `/stock-v2/categories` (`/racines`, `/enfants`),
-`/stock-v2/mouvements`, `/stock-v2/etat-stock` (+ `/seuils`), `/stock-v2/inventaires`
-(+ transitions `/comptage`, `/validation`, `/cloture`), `/stock-v2/synthese-mensuelle`,
-`/stock-v2/approvisionnement/suggestions`, `/stock-v2/tableau-bord`.
+**Endpoints backend à prévoir** (⚠️ base réelle = `${environment.apiUrl}/stock/…`, soit `/api/stock/…` — **PAS** `/stock-v2/`. Les 8 services HTTP appellent ces routes ; les 3 services Excel/PDF — `stock-v2-import-excel`, `stock-v2-export`, `stock-v2-pdf` — sont **100 % client, aucun endpoint**) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Produits** (`stock-v2-produit`) | `GET /stock/produits` (filtres q, typeProduit, categorieId, fournisseur, sousSeuil, actif — paginé) · `GET /stock/produits/actifs` (liste légère) · `GET /stock/produits/{id}` · `POST /stock/produits` (multipart : blob JSON `produit` + `photo` + `ficheTechnique`) · `PUT /stock/produits/{id}` (multipart) · `DELETE /stock/produits/{id}` · `GET /stock/produits/{id}/fiche-technique` (blob) · `GET /stock/produits/{id}/photo` (blob) · `POST /stock/produits/bulk` (import **transactionnel all-or-nothing**) |
+| **Catégories** (`stock-v2-categorie`) | `GET /stock/categories/racines` · `GET /stock/categories/enfants?parentId=` (lazy) · `GET /stock/categories` (liste plate) · `GET /stock/categories/{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` |
+| **Mouvements** (`stock-v2-mouvement`) | `GET /stock/mouvements` (filtres q, produitId, type, motif, siteId, dateDebut, dateFin — paginé) · `GET /stock/mouvements/{id}` · `POST /stock/mouvements` (entrée/sortie/transfert ; serveur déduit l'utilisateur du JWT) |
+| **État stock** (`stock-v2-etat-stock`) | `GET /stock/etat-stock` (filtres q, categorieId, typeProduit, siteId, statut, parSite — paginé) · `PUT /stock/etat-stock/seuils` (seuil global produit ou raffiné par site) |
+| **Inventaires** (`stock-v2-inventaire`) | `GET /stock/inventaires` (paginé) · `GET /{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` · **transitions** : `POST /{id}/comptage` (fige les qtés théoriques), `PUT /{id}/comptage` (enregistre les comptages), `POST /{id}/validation`, `POST /{id}/cloture` (applique les écarts au stock) |
+| **Synthèse** (`stock-v2-synthese`) | `GET /stock/synthese-mensuelle?mois=YYYY-MM&siteId=&categorieId=` |
+| **Approvisionnement** (`stock-v2-approvisionnement`) | `GET /stock/approvisionnement/suggestions?nMois=&siteId=&categorieId=&fournisseur=` |
+| **Tableau de bord** (`stock-v2-tableau-bord`) | `GET /stock/tableau-bord?dateDebut=&dateFin=&siteId=&categorieId=&moisDormance=` |
+
+**Décisions de modélisation à respecter côté backend** (contrat figé par le frontend ; valeurs littérales exactes des enums dans [stock.constants.ts](src/app/constants/stock.constants.ts) et les modèles `stock-v2-*`) :
+
+- **Produit = référentiel global, sans site.** Le produit ne porte aucun `siteId`. Le stock est tenu **par couple (produitId, siteId)** dans l'état de stock ; un `siteId` absent ⇒ ligne consolidée tous sites. `EtatStock` est recalculé à chaque mouvement.
+- **Code produit : saisi manuellement, unique** (champ `code`, contrôle d'unicité serveur). Aucune génération auto imposée par le front.
+- **Types de produit (5)** : `PRODUIT_FINI | MATIERE_PREMIERE | CONSOMMABLE | EPI | MATERIEL`.
+- **Unités de mesure (10)** : `KG | G | L | ML | PIECE | M2 | M3 | METRE | CARTON | LOT`.
+- **Mouvements** : types `ENTREE | SORTIE | TRANSFERT` ; motifs `ACHAT | PRODUCTION | CONSOMMATION | VENTE | TRANSFERT | AJUSTEMENT | RETOUR | PERTE`. Combinaisons valides — ENTREE : ACHAT/PRODUCTION/RETOUR/AJUSTEMENT ; SORTIE : CONSOMMATION/VENTE/PERTE/AJUSTEMENT ; TRANSFERT : TRANSFERT seul. Multi-site via `siteSourceId` (requis SORTIE/TRANSFERT) + `siteDestinationId` (requis ENTREE/TRANSFERT).
+- **Catégories : arborescence par `parentId`** (`null` = racine) + `niveau` (0,1,2…). Pas de chemin matérialisé, lazy-load des enfants. Dénormalisés `nbEnfants` / `nbProduits` attendus pour l'affichage de l'arbre.
+- **Statut de stock (calculé serveur)** : `RUPTURE` (qté ≤ 0), `CRITIQUE` (0 < qté ≤ `seuilAlerte`), `OK` (qté > seuil).
+- **Inventaire** : workflow strict `BROUILLON → COMPTAGE → VALIDATION → CLOTURE` ; périmètre `TOUS | CATEGORIE | SELECTION` ; écart = `qtePhysique − qteTheorique` (calculé) ; `justification` requise si `|écart| > seuilEcartJustification` (**défaut 5**). La clôture applique les écarts au stock réel.
+- **Valorisation** : prix unitaire **fixe** porté par le produit (`prixUnitaire`, FCFA, sans décimales) ; valeur = qté × prixUnitaire. **CMUP/FIFO non implémenté ici**, renvoyé au sous-module 7.6.
+- **Import Excel** : `POST /stock/produits/bulk` **transactionnel all-or-nothing** ; validation fail-soft ligne-par-ligne **côté client** avant envoi ; le backend résout `categorieLibelle → id` (création si absente) et crée un mouvement `ENTREE` si `stockInitial` est fourni. Le champ photo n'est pas importable via Excel. 12 colonnes (cf. `COLONNES_TEMPLATE_PRODUIT`).
+- **Paramètres par défaut** (`PARAMETRES_STOCK`) : pagination 20 ; photo ≤ 5 Mo (jpeg/png/webp) ; fiche ≤ 10 Mo (pdf) ; horizon appro `nMois = 3` ; dormance tableau de bord `6` mois ; top consommations `10`.
+- **Sites en lecture seule** via `TerrainSiteClientService.listerActifs()` (shared `selecteur-site`) — aucune écriture, aucun référentiel agences propre au stock.
 
 ### 7.4 Contrôle des mouvements
 
