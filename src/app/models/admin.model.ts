@@ -78,5 +78,12 @@ export interface ModulesAutorises {
     plafonds?: boolean;              // plafonds de dotation
     dotation?: boolean;              // dotation prévue vs réelle
     rapportsConso?: boolean;         // rapports de consommation
+
+    // ─── Stock v2 — 7.5 Analyse des consommations (lecture seule) ────
+    analyseMensuelle?: boolean;      // vue mensuelle par site
+    chantiers?: boolean;             // consommations fin de chantier
+    dons?: boolean;                  // consommations dons
+    comparatif?: boolean;            // comparatif mensuel
+    filtresCroises?: boolean;        // analyse multidimensionnelle
   };
 }

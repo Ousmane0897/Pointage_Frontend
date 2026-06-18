@@ -12,9 +12,10 @@ import { StatutStock } from '../models/stock-v2-etat-stock.model';
 import { StatutInventaire } from '../models/stock-v2-inventaire.model';
 import { StatutBon, ActionWorkflow } from '../models/stock-v2-workflow.model';
 import { TypeEntree } from '../models/stock-v2-bon-entree.model';
-import { TypeSortie, TypeDestinataire } from '../models/stock-v2-bon-sortie.model';
+import { TypeSortie, TypeDestinataire, NatureDon } from '../models/stock-v2-bon-sortie.model';
 import { GranularitePlafond } from '../models/stock-v2-plafond.model';
 import { SensEcartDotation } from '../models/stock-v2-dotation.model';
+import { StatutChantier } from '../models/stock-v2-chantier.model';
 
 // ─── Types de produit ───────────────────────────────────────────────────────
 
@@ -196,6 +197,7 @@ export const LIBELLES_TYPE_SORTIE: Record<TypeSortie, string> = {
   DISTRIBUTION_CHANTIER: 'Distribution chantier',
   VENTE_PRODUIT: 'Vente de produit',
   CONSOMMATION_INTERNE: 'Consommation interne',
+  DON: 'Don',
 };
 
 export const DESCRIPTIONS_TYPE_SORTIE: Record<TypeSortie, string> = {
@@ -203,6 +205,7 @@ export const DESCRIPTIONS_TYPE_SORTIE: Record<TypeSortie, string> = {
   DISTRIBUTION_CHANTIER: 'Approvisionnement d’un chantier ou d’une intervention terrain.',
   VENTE_PRODUIT: 'Sortie liée à une vente (rattachement au module Vente — à venir).',
   CONSOMMATION_INTERNE: 'Consommation interne (siège, production, services généraux).',
+  DON: 'Produit donné (cadeau client, échantillon, action sociale, don interne).',
 };
 
 export const COULEURS_TYPE_SORTIE: Record<TypeSortie, { bg: string; text: string }> = {
@@ -210,10 +213,38 @@ export const COULEURS_TYPE_SORTIE: Record<TypeSortie, { bg: string; text: string
   DISTRIBUTION_CHANTIER:           { bg: 'bg-amber-100',  text: 'text-amber-700' },
   VENTE_PRODUIT:                   { bg: 'bg-rose-100',   text: 'text-rose-700' },
   CONSOMMATION_INTERNE:            { bg: 'bg-slate-200',  text: 'text-slate-700' },
+  DON:                             { bg: 'bg-purple-100', text: 'text-purple-700' },
 };
 
 export const ORDRE_TYPES_SORTIE: TypeSortie[] = [
-  'DISTRIBUTION_AGENCE_SITE_CLIENT', 'DISTRIBUTION_CHANTIER', 'VENTE_PRODUIT', 'CONSOMMATION_INTERNE',
+  'DISTRIBUTION_AGENCE_SITE_CLIENT', 'DISTRIBUTION_CHANTIER', 'VENTE_PRODUIT', 'CONSOMMATION_INTERNE', 'DON',
+];
+
+// ─── Nature des dons (7.5 — analyse des consommations) ──────────────────────
+
+export const LIBELLES_NATURE_DON: Record<NatureDon, string> = {
+  CADEAU_CLIENT: 'Cadeau client',
+  ECHANTILLON: 'Échantillon',
+  ACTION_SOCIALE: 'Action sociale',
+  DON_INTERNE_EMPLOYE: 'Don interne employé',
+};
+
+export const DESCRIPTIONS_NATURE_DON: Record<NatureDon, string> = {
+  CADEAU_CLIENT: 'Produit offert à un client dans le cadre de la relation commerciale.',
+  ECHANTILLON: 'Échantillon remis à des fins de démonstration ou d’essai.',
+  ACTION_SOCIALE: 'Don dans le cadre d’une action sociale ou caritative.',
+  DON_INTERNE_EMPLOYE: 'Produit offert à un employé (avantage en nature).',
+};
+
+export const COULEURS_NATURE_DON: Record<NatureDon, { bg: string; text: string }> = {
+  CADEAU_CLIENT:       { bg: 'bg-purple-100', text: 'text-purple-700' },
+  ECHANTILLON:         { bg: 'bg-fuchsia-100', text: 'text-fuchsia-700' },
+  ACTION_SOCIALE:      { bg: 'bg-pink-100',   text: 'text-pink-700' },
+  DON_INTERNE_EMPLOYE: { bg: 'bg-violet-100', text: 'text-violet-700' },
+};
+
+export const ORDRE_NATURES_DON: NatureDon[] = [
+  'CADEAU_CLIENT', 'ECHANTILLON', 'ACTION_SOCIALE', 'DON_INTERNE_EMPLOYE',
 ];
 
 // ─── Destinataire d'un bon de sortie ────────────────────────────────────────
@@ -306,5 +337,48 @@ export const PARAMETRES_CONTROLE_MOUVEMENTS = {
   seuilDepassementPlafondPct: 100,
   /** Nombre de mois affichés par défaut dans les courbes d'évolution. */
   nbMoisEvolutionDefaut: 12,
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// 7.5 Analyse des consommations
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── Statuts de chantier ────────────────────────────────────────────────────
+
+export const LIBELLES_STATUT_CHANTIER: Record<StatutChantier, string> = {
+  EN_COURS: 'En cours',
+  CLOTURE: 'Clôturé',
+};
+
+export const COULEURS_STATUT_CHANTIER: Record<StatutChantier, { bg: string; text: string; dot: string }> = {
+  EN_COURS: { bg: 'bg-blue-100',  text: 'text-blue-700',  dot: 'bg-blue-500' },
+  CLOTURE:  { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
+};
+
+export const ORDRE_STATUTS_CHANTIER: StatutChantier[] = ['EN_COURS', 'CLOTURE'];
+
+// ─── Axes d'analyse (filtres croisés & comparatif) ──────────────────────────
+
+/** Codes couleur d'un écart d'évolution (vert = baisse / OK, rouge = hausse / dérive). */
+export const COULEURS_ECART = {
+  hausse:  { bg: 'bg-red-50',    text: 'text-red-700',    cell: 'bg-red-100' },
+  alerte:  { bg: 'bg-amber-50',  text: 'text-amber-700',  cell: 'bg-amber-100' },
+  baisse:  { bg: 'bg-green-50',  text: 'text-green-700',  cell: 'bg-green-100' },
+  neutre:  { bg: 'bg-slate-50',  text: 'text-slate-600',  cell: 'bg-white' },
+};
+
+// ─── Paramètres de l'analyse des consommations ──────────────────────────────
+
+export const PARAMETRES_ANALYSE_CONSO = {
+  /** Au-delà de cet écart (%) vs mois précédent, on signale une surconsommation. */
+  seuilSurconsommationPct: 30,
+  /** Nombre d'éléments du top produits / bénéficiaires. */
+  topProduits: 10,
+  /** Nombre de mois affichés par défaut dans les courbes d'évolution. */
+  nbMoisDefaut: 12,
+  /** Pagination par défaut des tables analytiques. */
+  pageSize: 20,
+  /** Clé localStorage des requêtes favorites des filtres croisés. */
+  cleFavorisLocalStorage: 'stockv2.analyse.favoris',
 };
 

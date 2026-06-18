@@ -1,0 +1,141 @@
+<div class="p-4 sm:p-6 max-w-6xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center gap-3 mb-6">
+    <a routerLink="/admin/stock-v2/analyse-consommations/chantiers"
+      class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+      <lucide-icon name="ArrowLeft" [size]="20"></lucide-icon>
+    </a>
+    <div class="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+      <lucide-icon name="HardHat" [size]="22"></lucide-icon>
+    </div>
+    <div class="flex-1">
+      <h1 class="text-xl font-bold text-gray-800">{{ detail?.chantier?.nom ?? 'Chantier' }}</h1>
+      <p class="text-sm text-gray-500">{{ detail?.chantier?.reference }}</p>
+    </div>
+    @if (detail) {
+      <div class="flex items-center gap-2">
+        <button (click)="exporterExcel()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon> Excel
+        </button>
+        <button (click)="exporterPdf()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <lucide-icon name="FileText" [size]="16" class="text-red-600"></lucide-icon> Rapport PDF
+        </button>
+        @if (estEnCours) {
+          <button (click)="modifier()"
+            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <lucide-icon name="Pencil" [size]="16" class="text-indigo-600"></lucide-icon> Modifier
+          </button>
+          <button (click)="cloturer()" [disabled]="cloturing"
+            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
+            @if (cloturing) { <lucide-icon name="Loader2" [size]="16" class="animate-spin"></lucide-icon> }
+            @else { <lucide-icon name="Lock" [size]="16"></lucide-icon> }
+            Clôturer
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="h-64 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else if (detail) {
+
+    <!-- Informations + KPIs -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div class="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-5">
+        <div class="flex items-start justify-between mb-4">
+          <h2 class="text-sm font-semibold text-gray-700">Informations</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+            [ngClass]="[COULEURS_STATUT_CHANTIER[detail.chantier.statut].bg, COULEURS_STATUT_CHANTIER[detail.chantier.statut].text]">
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="COULEURS_STATUT_CHANTIER[detail.chantier.statut].dot"></span>
+            {{ LIBELLES_STATUT_CHANTIER[detail.chantier.statut] }}
+          </span>
+        </div>
+        <dl class="grid grid-cols-2 gap-4 text-sm">
+          <div><dt class="text-xs text-gray-500">Site</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.siteNom ?? '—' }}</dd></div>
+          <div><dt class="text-xs text-gray-500">Client</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.client ?? '—' }}</dd></div>
+          <div><dt class="text-xs text-gray-500">Date de début</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.dateDebut | date:'dd/MM/yyyy':'':'fr' }}</dd></div>
+          <div><dt class="text-xs text-gray-500">Date de fin</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.dateFin ? (detail.chantier.dateFin | date:'dd/MM/yyyy':'':'fr') : '—' }}</dd></div>
+          @if (detail.chantier.description) {
+            <div class="col-span-2"><dt class="text-xs text-gray-500">Description</dt><dd class="text-gray-700 mt-0.5">{{ detail.chantier.description }}</dd></div>
+          }
+        </dl>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-500">Coût total</p>
+            <lucide-icon name="Coins" [size]="18" class="text-amber-400"></lucide-icon>
+          </div>
+          <p class="text-2xl font-bold text-gray-800 mt-1">{{ detail.coutTotal | number:'1.0-0':'fr' }} <span class="text-sm font-normal text-gray-400">{{ DEVISE }}</span></p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl border border-gray-100 p-4">
+            <p class="text-xs text-gray-500">Produits</p>
+            <p class="text-xl font-bold text-gray-800 mt-1">{{ detail.nbProduits | number:'1.0-0':'fr' }}</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-4">
+            <p class="text-xs text-gray-500">Durée (jours)</p>
+            <p class="text-xl font-bold text-gray-800 mt-1">{{ detail.dureeJours ?? '—' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lignes consommées -->
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <h2 class="text-sm font-semibold text-gray-700 px-4 py-3 border-b border-gray-100">Produits consommés</h2>
+      @if (detail.lignes.length > 0) {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th class="px-4 py-3 font-semibold">Produit</th>
+                <th class="px-4 py-3 font-semibold text-right">Quantité</th>
+                <th class="px-4 py-3 font-semibold text-right">P.U. (FCFA)</th>
+                <th class="px-4 py-3 font-semibold text-right">Montant (FCFA)</th>
+                <th class="px-4 py-3 font-semibold">Période</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (l of detail.lignes; track trackByProduit($index, l)) {
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                  <td class="px-4 py-3">
+                    <span class="text-gray-800">{{ l.produitLibelle }}</span>
+                    <span class="text-xs text-gray-400 ml-2">{{ l.produitCode }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-right text-gray-700">
+                    {{ l.quantite | number:'1.0-0':'fr' }} <span class="text-xs text-gray-400">{{ l.unite ? LIBELLES_UNITE[l.unite] : '' }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-right text-gray-600">{{ (l.prixUnitaire ?? 0) | number:'1.0-0':'fr' }}</td>
+                  <td class="px-4 py-3 text-right font-medium text-gray-700">{{ l.montant | number:'1.0-0':'fr' }}</td>
+                  <td class="px-4 py-3 text-gray-500 text-xs">
+                    {{ l.premiereDate ? (l.premiereDate | date:'dd/MM/yy':'':'fr') : '—' }}
+                    @if (l.derniereDate && l.derniereDate !== l.premiereDate) { → {{ l.derniereDate | date:'dd/MM/yy':'':'fr' }} }
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="bg-amber-50/50 font-semibold text-gray-800">
+                <td class="px-4 py-2" colspan="3">Total</td>
+                <td class="px-4 py-2 text-right">{{ detail.coutTotal | number:'1.0-0':'fr' }} {{ DEVISE }}</td>
+                <td class="px-4 py-2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      } @else {
+        <div class="text-center py-12">
+          <lucide-icon name="PackageOpen" [size]="36" class="text-gray-200 mx-auto"></lucide-icon>
+          <p class="text-gray-500 font-medium mt-2">Aucune consommation rattachée</p>
+          <p class="text-sm text-gray-400 mt-1">Les bons de sortie « Distribution chantier » rattachés à ce chantier apparaîtront ici.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

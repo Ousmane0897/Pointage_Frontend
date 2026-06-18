@@ -453,11 +453,48 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 
 > Les services PDF/Excel (`stock-v2-pdf`, `stock-v2-export`) restent **100 % client** (aucun endpoint). Le backend doit publier sur `/topic/stock-validations` (soumission/décision) et `/user/queue/notifications-stock` (validateur ciblé), et ajouter les 8 sous-flags `modules.stock` au claim JWT.
 
-### 7.5 Analyse des consommations
+### 7.5 Analyse des consommations (`stock-v2/analyse-consommations/`)
 
 - Statistiques de consommation par article/site/période, graphiques et alertes de surconsommation.
 
-**Statut : 🔲 À faire**
+**Statut : ✅ Terminé (frontend)** — 5 fonctionnalités. Bilan : **9 composants** + **1 partagé**, **5 services**, **5 modèles** (4 DTOs analytiques + 1 entité Chantier). Module **analytique LECTURE SEULE** : aucune nouvelle donnée métier, agrège les sorties de 7.4 + le catalogue de 7.3. Seule exception : l'entité légère `Chantier`. Reste à faire côté serveur (endpoints listés plus bas).
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `vue-mensuelle-site/` | vue-mensuelle-site | KPIs + line (évolution) + bar (top 10 produits) + donut (catégories) + table triable ; filtres site + mois/plage |
+| `consommations-chantier/` | liste-chantiers, fiche-chantier, formulaire-chantier | CRUD léger Chantier + détail valorisé (lignes rattachées par `chantierId`), workflow de clôture (EN_COURS→CLOTURE figé), rapport PDF de fin de chantier |
+| `consommations-dons/` | consommations-dons | KPIs + donut (par nature) + bar (top bénéficiaires) + line (évolution) + table filtrée ; exports compta analytique |
+| `comparatif-mensuel/` | comparatif-mensuel | Matrice site/produit × mois colorisée (heatmap CSS vert/orange/rouge selon écart %), multi-courbes, seuil de surconsommation paramétrable |
+| `filtres-croises/` | filtres-croises | Pivot multidimensionnel (axe lignes × colonnes, mesure montant/quantité), totaux de marges, chart adaptatif, requêtes favorites en localStorage |
+
+**Composant partagé** (`analyse-consommations/shared/`) : `selecteur-chantier` (ControlValueAccessor sur `stock-v2-analyse-chantier`, réutilisé par le formulaire bon de sortie 7.4). Réutilise les `selecteur-site`/`selecteur-produit` de 7.3.
+
+**Services** (préfixe `stock-v2-analyse-`) : `stock-v2-analyse-mensuelle`, `stock-v2-analyse-chantier` (CRUD Chantier + détail), `stock-v2-analyse-don`, `stock-v2-analyse-comparatif`, `stock-v2-analyse-croisee` (+ favoris localStorage). Les `stock-v2-export` (XLSX) et `stock-v2-pdf` (jsPDF) ont été **enrichis** (mensuelle, chantier, dons, comparatif, croisé).
+
+**Modèles** : `stock-v2-chantier` (entité + DTO `DetailChantier`), `stock-v2-analyse-mensuelle`, `stock-v2-analyse-don`, `stock-v2-analyse-comparatif`, `stock-v2-analyse-croisee` (DTOs d'affichage).
+
+**Décisions de modélisation (validées, impactent 7.4 et le backend)** :
+- **Dons** : 5e valeur `'DON'` ajoutée au `TypeSortie` de 7.4 + champs `natureDon` (`CADEAU_CLIENT | ECHANTILLON | ACTION_SOCIALE | DON_INTERNE_EMPLOYE`) et `beneficiaireDon` sur `BonSortie`/`BonSortiePayload`. Le formulaire bon de sortie 7.4 capture ces champs (conditionnels si `type === 'DON'`).
+- **Chantier** : entité légère persistée `Chantier` (`reference, nom, siteId, dateDebut, dateFin?, statut EN_COURS|CLOTURE`) + champ `chantierId` sur le bon de sortie `DISTRIBUTION_CHANTIER`. **Seule entité persistée** de 7.5. À la validation, le mouvement SORTIE propage la nature du don / le `chantierId`.
+- **Favoris filtres croisés** : `localStorage` (clé `stockv2.analyse.favoris`), aucun endpoint.
+
+**Constantes** (ajouts dans [stock.constants.ts](src/app/constants/stock.constants.ts)) : `LIBELLES/COULEURS/DESCRIPTIONS_NATURE_DON` + `ORDRE_NATURES_DON`, `LIBELLES/COULEURS_STATUT_CHANTIER` + `ORDRE_STATUTS_CHANTIER`, `DON` ajouté aux maps `TypeSortie`, `COULEURS_ECART`, `PARAMETRES_ANALYSE_CONSO` (`seuilSurconsommationPct: 30`, `topProduits: 10`, `nbMoisDefaut: 12`, `pageSize: 20`, `cleFavorisLocalStorage`).
+
+**RBAC** : 5 sous-flags ajoutés dans `stock?` de [ModulesAutorises](src/app/models/admin.model.ts) : `analyseMensuelle`, `chantiers`, `dons`, `comparatif`, `filtresCroises`. Sidebar : section « Analyse consommations » gated par `accessAnalyseConsommations()` / `hasAccess('stock.xxx')`.
+
+**Dépendances en lecture seule** : `TerrainSiteClientService.listerActifs()` (sites, via `selecteur-site`), catalogue/catégories de 7.3, sorties de 7.4. Aucun appel à l'ancien `stock.service.ts`.
+
+**Endpoints backend à prévoir** (base réelle `${environment.apiUrl}/stock/…`, soit `/api/stock/…`) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Vue mensuelle** (`stock-v2-analyse-mensuelle`) | `GET /stock/analyse/mensuel?mois=YYYY-MM&moisFin=&siteId=&categorieId=` (KPIs + lignes + séries) |
+| **Chantiers** (`stock-v2-analyse-chantier`) | `GET /stock/chantiers` (paginé : q, statut, siteId, dates) · `GET /stock/chantiers/actifs` (sélecteur) · `GET /{id}` (→ `DetailChantier` agrégé) · `POST` · `PUT /{id}` · `POST /{id}/cloture` |
+| **Dons** (`stock-v2-analyse-don`) | `GET /stock/analyse/dons?dateDebut=&dateFin=&natureDon=&beneficiaire=&siteId=` |
+| **Comparatif** (`stock-v2-analyse-comparatif`) | `GET /stock/analyse/comparatif?axe=SITE\|PRODUIT&dateDebut=YYYY-MM&dateFin=YYYY-MM&siteId=&categorieId=&typeSortie=&seuilPct=` |
+| **Filtres croisés** (`stock-v2-analyse-croisee`) | `GET /stock/analyse/croise?axeLignes=&axeColonnes=&mesure=MONTANT\|QUANTITE&dateDebut=&dateFin=&siteId=&produitId=&categorieId=&typeSortie=` (axes : PRODUIT/CATEGORIE/SITE/TYPE_SORTIE/NATURE_DON/MOIS) |
+
+> Les services PDF/Excel restent **100 % client**. Le backend doit ajouter les 5 sous-flags `modules.stock.{analyseMensuelle,chantiers,dons,comparatif,filtresCroises}` au claim JWT, et faire porter au mouvement SORTIE la `natureDon` (bons DON) et le `chantierId` (bons DISTRIBUTION_CHANTIER) à la validation.
 
 ### 7.6 Valorisation financière
 

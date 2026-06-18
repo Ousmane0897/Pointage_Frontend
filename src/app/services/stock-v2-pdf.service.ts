@@ -10,6 +10,11 @@ import { BonEntree } from '../models/stock-v2-bon-entree.model';
 import { BonSortie } from '../models/stock-v2-bon-sortie.model';
 import { ComparatifDotation } from '../models/stock-v2-dotation.model';
 import { ConsommationDestinataire, RapportConsommation } from '../models/stock-v2-consommation.model';
+import { SyntheseConsoMensuelle } from '../models/stock-v2-analyse-mensuelle.model';
+import { DetailChantier } from '../models/stock-v2-chantier.model';
+import { SyntheseDons } from '../models/stock-v2-analyse-don.model';
+import { MatriceComparatif } from '../models/stock-v2-analyse-comparatif.model';
+import { ResultatCroise } from '../models/stock-v2-analyse-croisee.model';
 import {
   LIBELLES_STATUT_INVENTAIRE,
   LIBELLES_UNITE,
@@ -19,6 +24,8 @@ import {
   LIBELLES_STATUT_BON,
   LIBELLES_TYPE_DESTINATAIRE,
   LIBELLES_SENS_ECART_DOTATION,
+  LIBELLES_NATURE_DON,
+  LIBELLES_STATUT_CHANTIER,
 } from '../constants/stock.constants';
 import { Destinataire } from '../models/stock-v2-bon-sortie.model';
 
@@ -379,6 +386,204 @@ export class StockV2PdfService {
     });
 
     doc.save(`consommation-destinataires-${this.dateFichier()}.pdf`);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 7.5 Analyse des consommations
+  // ════════════════════════════════════════════════════════════════════════
+
+  /** Rapport mensuel de consommation par site. */
+  genererConsoMensuelle(synthese: SyntheseConsoMensuelle, contexte: { periode: string; siteNom?: string }): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONSOMMATION MENSUELLE', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${contexte.periode}`, 14, 28);
+    doc.text(`Site : ${contexte.siteNom ?? 'Tous sites'}`, 120, 28);
+
+    autoTable(doc, {
+      startY: 34,
+      head: [['Indicateur', 'Valeur']],
+      body: [
+        ['Coût total', `${this.fmtNombre(synthese.kpis.coutTotal)} ${DEVISE}`],
+        ['Quantité totale', this.fmtNombre(synthese.kpis.quantiteTotale)],
+        ['Nombre de produits', this.fmtNombre(synthese.kpis.nbProduits)],
+        ['Mouvements', this.fmtNombre(synthese.kpis.nbMouvements)],
+        ['Évolution coût', `${this.fmtNombre(synthese.kpis.evolutionCoutPct ?? 0)} %`],
+      ],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      styles: { fontSize: 9 },
+    });
+
+    autoTable(doc, {
+      startY: this.finalY(doc) + 8,
+      head: [['Code', 'Produit', 'Quantité', 'Coût (FCFA)', 'Évol. %']],
+      body: synthese.lignes.map(l => [
+        l.produitCode ?? '',
+        l.produitLibelle ?? l.produitId,
+        this.fmtQte(l.quantite, l.unite),
+        this.fmtNombre(l.cout),
+        l.evolutionPct == null ? '—' : `${this.fmtNombre(l.evolutionPct)} %`,
+      ]),
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      styles: { fontSize: 8 },
+      columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    });
+
+    doc.save(`consommation-mensuelle-${contexte.periode}.pdf`);
+  }
+
+  /** Rapport de fin de chantier (facturation / archivage). */
+  genererRapportChantier(detail: DetailChantier): void {
+    const c = detail.chantier;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RAPPORT DE FIN DE CHANTIER', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.text(c.reference, pageWidth / 2, 25, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Chantier : ${c.nom}`, 14, 36);
+    doc.text(`Site : ${c.siteNom ?? '—'}`, 14, 42);
+    doc.text(`Client : ${c.client ?? '—'}`, 14, 48);
+    doc.text(`Statut : ${LIBELLES_STATUT_CHANTIER[c.statut]}`, 120, 36);
+    doc.text(`Début : ${this.formatDate(c.dateDebut)}`, 120, 42);
+    doc.text(`Fin : ${c.dateFin ? this.formatDate(c.dateFin) : '—'}`, 120, 48);
+
+    autoTable(doc, {
+      startY: 56,
+      head: [['Code', 'Produit', 'Quantité', 'P.U. (FCFA)', 'Montant (FCFA)']],
+      body: detail.lignes.map(l => [
+        l.produitCode ?? '',
+        l.produitLibelle ?? l.produitId,
+        this.fmtQte(l.quantite, l.unite),
+        l.prixUnitaire == null ? '—' : this.fmtNombre(l.prixUnitaire),
+        this.fmtNombre(l.montant),
+      ]),
+      foot: [['', '', '', 'Total', `${this.fmtNombre(detail.coutTotal)} ${DEVISE}`]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    });
+
+    doc.save(`rapport-chantier-${c.reference}.pdf`);
+  }
+
+  /** Rapport des dons (comptabilité analytique). */
+  genererDons(synthese: SyntheseDons, periode: string): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONSOMMATIONS — DONS', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${periode}`, 14, 28);
+    doc.text(`Total : ${this.fmtNombre(synthese.kpis.montantTotal)} ${DEVISE}`, 120, 28);
+
+    autoTable(doc, {
+      startY: 34,
+      head: [['Référence', 'Date', 'Nature', 'Bénéficiaire', 'Quantité', 'Montant (FCFA)']],
+      body: synthese.lignes.map(l => [
+        l.reference ?? '',
+        this.formatDate(l.date),
+        LIBELLES_NATURE_DON[l.natureDon],
+        l.beneficiaire ?? '—',
+        this.fmtNombre(l.quantiteTotale),
+        this.fmtNombre(l.montant),
+      ]),
+      foot: [['', '', '', '', 'Total', `${this.fmtNombre(synthese.kpis.montantTotal)} ${DEVISE}`]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 8 },
+      columnStyles: { 4: { halign: 'right' }, 5: { halign: 'right' } },
+    });
+
+    doc.save(`dons-${periode}.pdf`);
+  }
+
+  /** Comparatif mensuel (matrice site/produit × mois) — paysage. */
+  genererComparatif(matrice: MatriceComparatif): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COMPARATIF MENSUEL', pageWidth / 2, 16, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Axe : ${matrice.axe === 'SITE' ? 'Par site' : 'Par produit'}`, 14, 26);
+    doc.text(`Alertes surconsommation : ${matrice.nbAlertes}`, 120, 26);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Libellé', ...matrice.mois, 'Total (FCFA)']],
+      body: matrice.lignes.map(l => [
+        l.libelle,
+        ...l.cellules.map(c => this.fmtNombre(c.valeur)),
+        this.fmtNombre(l.total),
+      ]),
+      foot: [[
+        'Totaux',
+        ...matrice.totauxParMois.map(t => this.fmtNombre(t)),
+        this.fmtNombre(matrice.totalGeneral),
+      ]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 7 },
+    });
+
+    doc.save(`comparatif-mensuel-${this.dateFichier()}.pdf`);
+  }
+
+  /** Résultat d'une analyse croisée (tableau pivot) — paysage. */
+  genererCroise(resultat: ResultatCroise, contexte: { periode: string }): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ANALYSE CROISÉE', pageWidth / 2, 16, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${contexte.periode}`, 14, 26);
+    doc.text(`Mesure : ${resultat.mesure === 'MONTANT' ? 'Montant (FCFA)' : 'Quantité'}`, 120, 26);
+
+    const aColonnes = resultat.entetesColonnes.length > 0;
+    autoTable(doc, {
+      startY: 32,
+      head: [['Libellé', ...(aColonnes ? resultat.entetesColonnes : ['Valeur']), 'Total']],
+      body: resultat.lignes.map(l => [
+        l.libelle,
+        ...(aColonnes ? l.valeurs.map(v => this.fmtNombre(v)) : [this.fmtNombre(l.total)]),
+        this.fmtNombre(l.total),
+      ]),
+      foot: [[
+        'Total',
+        ...(aColonnes ? resultat.totauxColonnes.map(t => this.fmtNombre(t)) : [this.fmtNombre(resultat.totalGeneral)]),
+        this.fmtNombre(resultat.totalGeneral),
+      ]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 7 },
+    });
+
+    doc.save(`analyse-croisee-${this.dateFichier()}.pdf`);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

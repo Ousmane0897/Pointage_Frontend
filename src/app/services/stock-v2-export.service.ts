@@ -14,6 +14,11 @@ import {
   RapportConsommation,
   StatistiqueCategorie,
 } from '../models/stock-v2-consommation.model';
+import { SyntheseConsoMensuelle } from '../models/stock-v2-analyse-mensuelle.model';
+import { DetailChantier } from '../models/stock-v2-chantier.model';
+import { SyntheseDons } from '../models/stock-v2-analyse-don.model';
+import { MatriceComparatif } from '../models/stock-v2-analyse-comparatif.model';
+import { ResultatCroise } from '../models/stock-v2-analyse-croisee.model';
 import {
   LIBELLES_TYPE_PRODUIT,
   LIBELLES_UNITE,
@@ -25,6 +30,8 @@ import {
   LIBELLES_STATUT_BON,
   LIBELLES_TYPE_DESTINATAIRE,
   LIBELLES_SENS_ECART_DOTATION,
+  LIBELLES_NATURE_DON,
+  LIBELLES_STATUT_CHANTIER,
 } from '../constants/stock.constants';
 
 /**
@@ -214,6 +221,113 @@ export class StockV2ExportService {
       'Montant (FCFA)': l.montant,
     }));
     this.ecrire(rows, 'Rapport conso.', `rapport-consommation-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  // ─── 7.5 Analyse des consommations ────────────────────────────────────────
+
+  exporterConsoMensuelle(synthese: SyntheseConsoMensuelle, periode: string): void {
+    const wb = XLSX.utils.book_new();
+    const kpis = [
+      { Indicateur: 'Coût total (FCFA)', Valeur: synthese.kpis.coutTotal },
+      { Indicateur: 'Quantité totale', Valeur: synthese.kpis.quantiteTotale },
+      { Indicateur: 'Nombre de produits', Valeur: synthese.kpis.nbProduits },
+      { Indicateur: 'Nombre de mouvements', Valeur: synthese.kpis.nbMouvements },
+      { Indicateur: 'Évolution coût (%)', Valeur: synthese.kpis.evolutionCoutPct ?? 0 },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpis), 'KPIs');
+
+    const lignes = synthese.lignes.map(l => ({
+      Code: l.produitCode ?? '',
+      Produit: l.produitLibelle ?? l.produitId,
+      Unité: l.unite ? LIBELLES_UNITE[l.unite] : '',
+      Quantité: l.quantite,
+      'Coût (FCFA)': l.cout,
+      'Évolution (%)': l.evolutionPct ?? '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lignes), 'Détail produits');
+
+    XLSX.writeFile(wb, `consommation-mensuelle-${periode}.xlsx`);
+  }
+
+  exporterDetailChantier(detail: DetailChantier): void {
+    const c = detail.chantier;
+    const wb = XLSX.utils.book_new();
+    const entete = [
+      { Champ: 'Référence', Valeur: c.reference },
+      { Champ: 'Nom', Valeur: c.nom },
+      { Champ: 'Site', Valeur: c.siteNom ?? '' },
+      { Champ: 'Client', Valeur: c.client ?? '' },
+      { Champ: 'Date début', Valeur: this.formatDate(c.dateDebut) },
+      { Champ: 'Date fin', Valeur: c.dateFin ? this.formatDate(c.dateFin) : '' },
+      { Champ: 'Statut', Valeur: LIBELLES_STATUT_CHANTIER[c.statut] },
+      { Champ: 'Coût total (FCFA)', Valeur: detail.coutTotal },
+      { Champ: 'Durée (jours)', Valeur: detail.dureeJours ?? '' },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(entete), 'Chantier');
+
+    const lignes = detail.lignes.map(l => ({
+      Code: l.produitCode ?? '',
+      Produit: l.produitLibelle ?? l.produitId,
+      Unité: l.unite ? LIBELLES_UNITE[l.unite] : '',
+      Quantité: l.quantite,
+      'Prix unitaire (FCFA)': l.prixUnitaire ?? '',
+      'Montant (FCFA)': l.montant,
+      'Première conso.': l.premiereDate ? this.formatDate(l.premiereDate) : '',
+      'Dernière conso.': l.derniereDate ? this.formatDate(l.derniereDate) : '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lignes), 'Consommations');
+
+    XLSX.writeFile(wb, `chantier-${this.slug(c.reference)}-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterDons(synthese: SyntheseDons, periode: string): void {
+    const wb = XLSX.utils.book_new();
+    const kpis = [
+      { Indicateur: 'Montant total (FCFA)', Valeur: synthese.kpis.montantTotal },
+      { Indicateur: 'Nombre de dons', Valeur: synthese.kpis.nbDons },
+      { Indicateur: 'Nombre de bénéficiaires', Valeur: synthese.kpis.nbBeneficiaires },
+      { Indicateur: 'Évolution (%)', Valeur: synthese.kpis.evolutionPct ?? 0 },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpis), 'KPIs');
+
+    const lignes = synthese.lignes.map(l => ({
+      Référence: l.reference ?? '',
+      Date: this.formatDate(l.date),
+      Nature: LIBELLES_NATURE_DON[l.natureDon],
+      Bénéficiaire: l.beneficiaire ?? '',
+      'Site source': l.siteSourceNom ?? '',
+      'Nb produits': l.nbProduits,
+      Quantité: l.quantiteTotale,
+      'Montant (FCFA)': l.montant,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lignes), 'Dons');
+
+    XLSX.writeFile(wb, `dons-${periode}.xlsx`);
+  }
+
+  exporterComparatif(matrice: MatriceComparatif): void {
+    const rows = matrice.lignes.map(l => {
+      const row: Record<string, string | number> = { Libellé: l.libelle };
+      matrice.mois.forEach((m, i) => { row[m] = l.cellules[i]?.valeur ?? 0; });
+      row['Total (FCFA)'] = l.total;
+      row['Évolution (%)'] = l.evolutionGlobalePct ?? '';
+      return row;
+    });
+    this.ecrire(rows, 'Comparatif', `comparatif-mensuel-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterCroise(resultat: ResultatCroise): void {
+    const rows = resultat.lignes.map(l => {
+      const row: Record<string, string | number> = { Libellé: l.libelle };
+      if (resultat.entetesColonnes.length > 0) {
+        resultat.entetesColonnes.forEach((c, i) => { row[c] = l.valeurs[i] ?? 0; });
+      } else {
+        row['Valeur'] = l.total;
+      }
+      row['Total'] = l.total;
+      return row;
+    });
+    this.ecrire(rows, 'Analyse croisée', `analyse-croisee-${this.dateAujourdhui()}.xlsx`);
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────

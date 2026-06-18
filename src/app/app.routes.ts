@@ -273,6 +273,16 @@ export const routes: Routes = [
             // Rapports de consommation
             { path: 'stock-v2/controle-mouvements/rapports', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/rapports-consommation/rapports-consommation.component').then(m => m.RapportsConsommationComponent) },
 
+            // ─── Stock v2 — 7.5 Analyse des consommations ───────────────────
+            { path: 'stock-v2/analyse-consommations/mensuel', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/vue-mensuelle-site/vue-mensuelle-site.component').then(m => m.VueMensuelleSiteComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/liste-chantiers/liste-chantiers.component').then(m => m.ListeChantiersComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers/nouveau', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/formulaire-chantier/formulaire-chantier.component').then(m => m.FormulaireChantierComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/formulaire-chantier/formulaire-chantier.component').then(m => m.FormulaireChantierComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers/:id', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/fiche-chantier/fiche-chantier.component').then(m => m.FicheChantierComponent) },
+            { path: 'stock-v2/analyse-consommations/dons', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-dons/consommations-dons.component').then(m => m.ConsommationsDonsComponent) },
+            { path: 'stock-v2/analyse-consommations/comparatif', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/comparatif-mensuel/comparatif-mensuel.component').then(m => m.ComparatifMensuelComponent) },
+            { path: 'stock-v2/analyse-consommations/filtres-croises', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/filtres-croises/filtres-croises.component').then(m => m.FiltresCroisesComponent) },
+
         ]
     }
 ];

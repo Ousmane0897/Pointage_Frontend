@@ -1,0 +1,167 @@
+<div class="p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div class="flex items-start gap-3">
+      <div class="p-2.5 rounded-xl bg-purple-100 text-purple-700">
+        <lucide-icon name="Gift" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Consommations dons</h1>
+        <p class="text-sm text-gray-500">Suivi et valorisation des produits donnés (cadeaux, échantillons, actions sociales).</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="exporterExcel()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon> Excel
+      </button>
+      <button (click)="exporterPdf()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileText" [size]="16" class="text-red-600"></lucide-icon> PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres globaux -->
+  <div [formGroup]="filtres" class="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+    <div class="flex flex-wrap items-end gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Du <span class="text-red-500">*</span></label>
+        <input type="date" formControlName="dateDebut"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Au <span class="text-red-500">*</span></label>
+        <input type="date" formControlName="dateFin"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Nature</label>
+        <select formControlName="natureDon"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          <option value="">Toutes</option>
+          @for (n of NATURES; track n) { <option [value]="n">{{ LIBELLES_NATURE_DON[n] }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Bénéficiaire</label>
+        <input type="text" formControlName="beneficiaire" placeholder="Nom…"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div class="min-w-[180px]">
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Site source</label>
+        <app-selecteur-site formControlName="siteId"></app-selecteur-site>
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      @for (i of [1,2,3,4]; track i) { <div class="h-24 rounded-xl bg-gray-100 animate-pulse"></div> }
+    </div>
+    <div class="h-80 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else if (synthese && synthese.lignes.length > 0) {
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Montant total (FCFA)</p>
+          <lucide-icon name="Coins" [size]="18" class="text-purple-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ synthese.kpis.montantTotal | number:'1.0-0':'fr' }}</p>
+        @if (synthese.kpis.evolutionPct != null) {
+          <p class="text-xs mt-1" [ngClass]="synthese.kpis.evolutionPct > 0 ? 'text-red-600' : 'text-green-600'">
+            {{ synthese.kpis.evolutionPct > 0 ? '▲' : '▼' }} {{ synthese.kpis.evolutionPct | number:'1.0-1':'fr' }}% vs période préc.
+          </p>
+        }
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Nombre de dons</p>
+          <lucide-icon name="Gift" [size]="18" class="text-fuchsia-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ synthese.kpis.nbDons | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Bénéficiaires</p>
+          <lucide-icon name="Users" [size]="18" class="text-pink-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ synthese.kpis.nbBeneficiaires | number:'1.0-0':'fr' }}</p>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Répartition par nature</h2>
+        @if (donutData) {
+          <div class="h-64"><canvas baseChart [type]="'doughnut'" [data]="donutData" [options]="donutOptions"></canvas></div>
+        } @else { <div class="h-64 flex items-center justify-center text-gray-300"><lucide-icon name="ChartPie" [size]="32"></lucide-icon></div> }
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Top bénéficiaires</h2>
+        @if (barData) {
+          <div class="h-64"><canvas baseChart [type]="'bar'" [data]="barData" [options]="barOptions"></canvas></div>
+        } @else { <div class="h-64 flex items-center justify-center text-gray-300"><lucide-icon name="ChartColumn" [size]="32"></lucide-icon></div> }
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Évolution mensuelle</h2>
+        @if (lineData) {
+          <div class="h-64"><canvas baseChart [type]="'line'" [data]="lineData" [options]="lineOptions"></canvas></div>
+        } @else { <div class="h-64 flex items-center justify-center text-gray-300"><lucide-icon name="TrendingUp" [size]="32"></lucide-icon></div> }
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+              <th class="px-4 py-3 font-semibold">Référence</th>
+              <th class="px-4 py-3 font-semibold">Date</th>
+              <th class="px-4 py-3 font-semibold">Nature</th>
+              <th class="px-4 py-3 font-semibold">Bénéficiaire</th>
+              <th class="px-4 py-3 font-semibold">Site source</th>
+              <th class="px-4 py-3 font-semibold text-right">Quantité</th>
+              <th class="px-4 py-3 font-semibold text-right">Montant (FCFA)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (l of synthese.lignes; track trackByLigne($index, l)) {
+              <tr class="hover:bg-gray-50/60 transition-colors">
+                <td class="px-4 py-3 font-medium text-gray-800">{{ l.reference ?? '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ l.date | date:'dd/MM/yyyy':'':'fr' }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                    [ngClass]="[COULEURS_NATURE_DON[l.natureDon].bg, COULEURS_NATURE_DON[l.natureDon].text]">
+                    {{ LIBELLES_NATURE_DON[l.natureDon] }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-gray-700">{{ l.beneficiaire ?? '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ l.siteSourceNom ?? '—' }}</td>
+                <td class="px-4 py-3 text-right text-gray-700">{{ l.quantiteTotale | number:'1.0-0':'fr' }}</td>
+                <td class="px-4 py-3 text-right font-medium text-gray-700">{{ l.montant | number:'1.0-0':'fr' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="bg-purple-50/50 font-semibold text-gray-800">
+              <td class="px-4 py-2" colspan="6">Total</td>
+              <td class="px-4 py-2 text-right">{{ synthese.kpis.montantTotal | number:'1.0-0':'fr' }} {{ DEVISE }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-gray-100 text-center py-16">
+      <lucide-icon name="Gift" [size]="40" class="text-gray-200 mx-auto"></lucide-icon>
+      <p class="text-gray-500 font-medium mt-3">Aucun don sur la période</p>
+      <p class="text-sm text-gray-400 mt-1">Les bons de sortie de type « Don » apparaîtront ici.</p>
+    </div>
+  }
+</div>

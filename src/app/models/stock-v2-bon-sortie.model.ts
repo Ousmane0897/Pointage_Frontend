@@ -18,7 +18,18 @@ export type TypeSortie =
   | 'DISTRIBUTION_AGENCE_SITE_CLIENT'
   | 'DISTRIBUTION_CHANTIER'
   | 'VENTE_PRODUIT'
-  | 'CONSOMMATION_INTERNE';
+  | 'CONSOMMATION_INTERNE'
+  | 'DON';
+
+/**
+ * Nature d'un don (renseignée uniquement si `type === 'DON'`).
+ * Permet l'agrégation analytique des dons en 7.5 (comptabilité analytique / fiscalité).
+ */
+export type NatureDon =
+  | 'CADEAU_CLIENT'
+  | 'ECHANTILLON'
+  | 'ACTION_SOCIALE'
+  | 'DON_INTERNE_EMPLOYE';
 
 export type TypeDestinataire = 'SITE' | 'AGENT' | 'CLIENT';
 
@@ -50,6 +61,10 @@ export interface BonSortie {
   siteSourceNom?: string;        // dénormalisé
   destinataire: Destinataire;
   motif?: string;                // motif de la sortie (texte libre)
+  natureDon?: NatureDon;         // si type === 'DON' — pour l'analyse 7.5
+  beneficiaireDon?: string;      // si type === 'DON' — bénéficiaire (texte libre)
+  chantierId?: string;           // si type === 'DISTRIBUTION_CHANTIER' — entité Chantier (7.5)
+  chantierReference?: string;    // dénormalisé
   lignes: LigneBonSortie[];
   statut: StatutBon;
   demandeurId?: string;
@@ -82,6 +97,9 @@ export interface BonSortiePayload {
   siteSourceId: string;
   destinataire: DestinatairePayload;
   motif?: string;
+  natureDon?: NatureDon;         // si type === 'DON'
+  beneficiaireDon?: string;      // si type === 'DON'
+  chantierId?: string;           // si type === 'DISTRIBUTION_CHANTIER'
   lignes: LigneBonSortiePayload[];
   demandeurId?: string;
   commentaire?: string;

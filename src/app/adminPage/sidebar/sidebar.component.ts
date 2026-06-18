@@ -168,6 +168,21 @@ export class SidebarComponent implements OnInit {
     );
   }
 
+  /** Accès à la section 7.5 Analyse des consommations (au moins un sous-flag). */
+  accessAnalyseConsommations(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.analyseMensuelle ||
+      s.chantiers ||
+      s.dons ||
+      s.comparatif ||
+      s.filtresCroises
+    );
+  }
+
   toggleSidebar() {
     this.isOpen = !this.isOpen;
   }

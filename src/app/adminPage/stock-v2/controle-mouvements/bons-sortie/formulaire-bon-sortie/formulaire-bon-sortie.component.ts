@@ -18,11 +18,13 @@ import {
   BonSortie,
   BonSortiePayload,
   DestinatairePayload,
+  NatureDon,
   TypeDestinataire,
   TypeSortie,
 } from '../../../../../models/stock-v2-bon-sortie.model';
 import { SelecteurSiteComponent } from '../../../stocks-approvisionnement/shared/selecteur-site/selecteur-site.component';
 import { SelecteurEmployeComponent } from '../../shared/selecteur-employe/selecteur-employe.component';
+import { SelecteurChantierComponent } from '../../../analyse-consommations/shared/selecteur-chantier/selecteur-chantier.component';
 import {
   EditeurLignesBonComponent,
   creerLigneBon,
@@ -32,6 +34,8 @@ import {
   ORDRE_TYPES_SORTIE,
   LIBELLES_TYPE_DESTINATAIRE,
   ORDRE_TYPES_DESTINATAIRE,
+  LIBELLES_NATURE_DON,
+  ORDRE_NATURES_DON,
 } from '../../../../../constants/stock.constants';
 
 /**
@@ -51,6 +55,7 @@ import {
     LucideAngularModule,
     SelecteurSiteComponent,
     SelecteurEmployeComponent,
+    SelecteurChantierComponent,
     EditeurLignesBonComponent,
   ],
   templateUrl: './formulaire-bon-sortie.component.html',
@@ -68,6 +73,8 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
   readonly TYPES = ORDRE_TYPES_SORTIE;
   readonly LIBELLES_TYPE_DESTINATAIRE = LIBELLES_TYPE_DESTINATAIRE;
   readonly TYPES_DESTINATAIRE = ORDRE_TYPES_DESTINATAIRE;
+  readonly LIBELLES_NATURE_DON = LIBELLES_NATURE_DON;
+  readonly NATURES_DON = ORDRE_NATURES_DON;
 
   private destroy$ = new Subject<void>();
 
@@ -89,6 +96,9 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
       destSiteId: [''],
       destAgentId: [''],
       destClientNom: [''],
+      natureDon: ['' as NatureDon | ''],
+      beneficiaireDon: [''],
+      chantierId: [''],
       motif: [''],
       demandeurId: [''],
       commentaire: [''],
@@ -99,6 +109,11 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
     this.form.get('destType')!.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((t: TypeDestinataire) => this.appliquerDestinataire(t));
+
+    this.appliquerType('DISTRIBUTION_AGENCE_SITE_CLIENT');
+    this.form.get('type')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((t: TypeSortie) => this.appliquerType(t));
 
     this.idEdition = this.route.snapshot.paramMap.get('id');
     if (this.idEdition) {
@@ -115,6 +130,30 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
 
   get lignes(): FormArray { return this.form.get('lignes') as FormArray; }
   get destType(): TypeDestinataire { return this.form.get('destType')!.value; }
+  get typeSortie(): TypeSortie { return this.form.get('type')!.value; }
+
+  /** Active les champs conditionnels selon le type de sortie (don / chantier). */
+  private appliquerType(type: TypeSortie): void {
+    const nature = this.form.get('natureDon')!;
+    const benef = this.form.get('beneficiaireDon')!;
+    const chantier = this.form.get('chantierId')!;
+    nature.clearValidators(); chantier.clearValidators();
+    if (type === 'DON') {
+      nature.setValidators(Validators.required);
+      chantier.setValue('', { emitEvent: false });
+    } else if (type === 'DISTRIBUTION_CHANTIER') {
+      chantier.setValidators(Validators.required);
+      nature.setValue('', { emitEvent: false });
+      benef.setValue('', { emitEvent: false });
+    } else {
+      nature.setValue('', { emitEvent: false });
+      benef.setValue('', { emitEvent: false });
+      chantier.setValue('', { emitEvent: false });
+    }
+    nature.updateValueAndValidity({ emitEvent: false });
+    chantier.updateValueAndValidity({ emitEvent: false });
+    this.cdr.markForCheck();
+  }
 
   /** Active le validateur requis selon le type de destinataire choisi. */
   private appliquerDestinataire(type: TypeDestinataire): void {
@@ -162,11 +201,15 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
       destSiteId: d?.siteId ?? '',
       destAgentId: d?.agentId ?? '',
       destClientNom: d?.clientNom ?? '',
+      natureDon: bon.natureDon ?? '',
+      beneficiaireDon: bon.beneficiaireDon ?? '',
+      chantierId: bon.chantierId ?? '',
       motif: bon.motif ?? '',
       demandeurId: bon.demandeurId ?? '',
       commentaire: bon.commentaire ?? '',
     });
     this.appliquerDestinataire(d?.type ?? 'SITE');
+    this.appliquerType(bon.type);
     this.lignes.clear();
     (bon.lignes ?? []).forEach(l => this.lignes.push(creerLigneBon({
       produitId: l.produitId,
@@ -197,6 +240,9 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
       siteSourceId: v.siteSourceId,
       destinataire,
       motif: v.motif || undefined,
+      natureDon: v.type === 'DON' ? (v.natureDon || undefined) : undefined,
+      beneficiaireDon: v.type === 'DON' ? (v.beneficiaireDon || undefined) : undefined,
+      chantierId: v.type === 'DISTRIBUTION_CHANTIER' ? (v.chantierId || undefined) : undefined,
       demandeurId: v.demandeurId || undefined,
       commentaire: v.commentaire || undefined,
       lignes: (v.lignes as { produitId: string; quantite: number }[])
