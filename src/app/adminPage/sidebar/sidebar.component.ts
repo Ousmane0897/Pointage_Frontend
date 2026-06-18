@@ -150,6 +150,24 @@ export class SidebarComponent implements OnInit {
     );
   }
 
+  /** Accès au module Stock v2 (7.4 Contrôle des mouvements) — au moins une fonctionnalité. */
+  accessControleMouvements(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.categorisation ||
+      s.bonsEntree ||
+      s.bonsSortie ||
+      s.workflowValidation ||
+      s.historiqueDestinataire ||
+      s.plafonds ||
+      s.dotation ||
+      s.rapportsConso
+    );
+  }
+
   toggleSidebar() {
     this.isOpen = !this.isOpen;
   }

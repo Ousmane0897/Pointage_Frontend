@@ -66,5 +66,17 @@ export interface ModulesAutorises {
     synthese?: boolean;
     approvisionnement?: boolean;
     tableauBord?: boolean;
+
+    // ─── Stock v2 — 7.4 Contrôle des mouvements ──────────────────────
+    // Sous-flags additionnels (rétrocompatibles). Le backend doit les
+    // ajouter au claim JWT `modules.stock` pour activer la section.
+    categorisation?: boolean;        // catégorisation entrées/sorties + stats
+    bonsEntree?: boolean;            // bons d'entrée numériques
+    bonsSortie?: boolean;            // bons de sortie numériques
+    workflowValidation?: boolean;    // tableau de workflow (Kanban)
+    historiqueDestinataire?: boolean;// historique consommation par destinataire
+    plafonds?: boolean;              // plafonds de dotation
+    dotation?: boolean;              // dotation prévue vs réelle
+    rapportsConso?: boolean;         // rapports de consommation
   };
 }

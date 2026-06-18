@@ -10,6 +10,11 @@ import { TypeProduit, UniteStock } from '../models/stock-v2-produit.model';
 import { TypeMouvement, MotifMouvement } from '../models/stock-v2-mouvement.model';
 import { StatutStock } from '../models/stock-v2-etat-stock.model';
 import { StatutInventaire } from '../models/stock-v2-inventaire.model';
+import { StatutBon, ActionWorkflow } from '../models/stock-v2-workflow.model';
+import { TypeEntree } from '../models/stock-v2-bon-entree.model';
+import { TypeSortie, TypeDestinataire } from '../models/stock-v2-bon-sortie.model';
+import { GranularitePlafond } from '../models/stock-v2-plafond.model';
+import { SensEcartDotation } from '../models/stock-v2-dotation.model';
 
 // ─── Types de produit ───────────────────────────────────────────────────────
 
@@ -152,3 +157,154 @@ export const PARAMETRES_STOCK = {
 
 /** Devise et formatage des montants (FCFA, sans décimales). */
 export const DEVISE = 'FCFA';
+
+// ════════════════════════════════════════════════════════════════════════════
+// 7.4 Contrôle des mouvements (entrées & sorties)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── Catégorisation des entrées (enums figés) ───────────────────────────────
+
+export const LIBELLES_TYPE_ENTREE: Record<TypeEntree, string> = {
+  ACHAT_FOURNISSEUR: 'Achat fournisseur',
+  RETOUR_PRODUCTION: 'Retour de production',
+  TRANSFERT_INTER_SITES: 'Transfert inter-sites',
+  REINTEGRATION: 'Réintégration',
+};
+
+export const DESCRIPTIONS_TYPE_ENTREE: Record<TypeEntree, string> = {
+  ACHAT_FOURNISSEUR: 'Réception de marchandises commandées auprès d’un fournisseur externe.',
+  RETOUR_PRODUCTION: 'Retour en stock de produits issus de la production interne.',
+  TRANSFERT_INTER_SITES: 'Entrée résultant d’un transfert depuis un autre site.',
+  REINTEGRATION: 'Réintégration en stock (retour terrain, annulation de sortie, surplus).',
+};
+
+export const COULEURS_TYPE_ENTREE: Record<TypeEntree, { bg: string; text: string }> = {
+  ACHAT_FOURNISSEUR:     { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  RETOUR_PRODUCTION:     { bg: 'bg-teal-100',    text: 'text-teal-700' },
+  TRANSFERT_INTER_SITES: { bg: 'bg-blue-100',    text: 'text-blue-700' },
+  REINTEGRATION:         { bg: 'bg-indigo-100',  text: 'text-indigo-700' },
+};
+
+export const ORDRE_TYPES_ENTREE: TypeEntree[] = [
+  'ACHAT_FOURNISSEUR', 'RETOUR_PRODUCTION', 'TRANSFERT_INTER_SITES', 'REINTEGRATION',
+];
+
+// ─── Catégorisation des sorties (enums figés) ───────────────────────────────
+
+export const LIBELLES_TYPE_SORTIE: Record<TypeSortie, string> = {
+  DISTRIBUTION_AGENCE_SITE_CLIENT: 'Distribution agence / site client',
+  DISTRIBUTION_CHANTIER: 'Distribution chantier',
+  VENTE_PRODUIT: 'Vente de produit',
+  CONSOMMATION_INTERNE: 'Consommation interne',
+};
+
+export const DESCRIPTIONS_TYPE_SORTIE: Record<TypeSortie, string> = {
+  DISTRIBUTION_AGENCE_SITE_CLIENT: 'Dotation envoyée vers une agence ou un site client.',
+  DISTRIBUTION_CHANTIER: 'Approvisionnement d’un chantier ou d’une intervention terrain.',
+  VENTE_PRODUIT: 'Sortie liée à une vente (rattachement au module Vente — à venir).',
+  CONSOMMATION_INTERNE: 'Consommation interne (siège, production, services généraux).',
+};
+
+export const COULEURS_TYPE_SORTIE: Record<TypeSortie, { bg: string; text: string }> = {
+  DISTRIBUTION_AGENCE_SITE_CLIENT: { bg: 'bg-sky-100',    text: 'text-sky-700' },
+  DISTRIBUTION_CHANTIER:           { bg: 'bg-amber-100',  text: 'text-amber-700' },
+  VENTE_PRODUIT:                   { bg: 'bg-rose-100',   text: 'text-rose-700' },
+  CONSOMMATION_INTERNE:            { bg: 'bg-slate-200',  text: 'text-slate-700' },
+};
+
+export const ORDRE_TYPES_SORTIE: TypeSortie[] = [
+  'DISTRIBUTION_AGENCE_SITE_CLIENT', 'DISTRIBUTION_CHANTIER', 'VENTE_PRODUIT', 'CONSOMMATION_INTERNE',
+];
+
+// ─── Destinataire d'un bon de sortie ────────────────────────────────────────
+
+export const LIBELLES_TYPE_DESTINATAIRE: Record<TypeDestinataire, string> = {
+  SITE: 'Site / agence',
+  AGENT: 'Agent',
+  CLIENT: 'Client externe',
+};
+
+export const ORDRE_TYPES_DESTINATAIRE: TypeDestinataire[] = ['SITE', 'AGENT', 'CLIENT'];
+
+// ─── Statuts de bon (workflow) ──────────────────────────────────────────────
+
+export const LIBELLES_STATUT_BON: Record<StatutBon, string> = {
+  BROUILLON: 'Brouillon',
+  SOUMIS: 'Soumis',
+  VALIDE: 'Validé',
+  EFFECTIF: 'Effectif',
+  REFUSE: 'Refusé',
+};
+
+export const COULEURS_STATUT_BON: Record<StatutBon, { bg: string; text: string; dot: string }> = {
+  BROUILLON: { bg: 'bg-slate-100',   text: 'text-slate-700',   dot: 'bg-slate-400' },
+  SOUMIS:    { bg: 'bg-amber-100',   text: 'text-amber-700',   dot: 'bg-amber-500' },
+  VALIDE:    { bg: 'bg-blue-100',    text: 'text-blue-700',    dot: 'bg-blue-500' },
+  EFFECTIF:  { bg: 'bg-green-100',   text: 'text-green-700',   dot: 'bg-green-500' },
+  REFUSE:    { bg: 'bg-red-100',     text: 'text-red-700',     dot: 'bg-red-500' },
+};
+
+/** Ordre d'affichage des colonnes du Kanban de workflow. */
+export const ORDRE_STATUTS_BON: StatutBon[] = [
+  'BROUILLON', 'SOUMIS', 'VALIDE', 'EFFECTIF', 'REFUSE',
+];
+
+export const LIBELLES_ACTION_WORKFLOW: Record<ActionWorkflow, string> = {
+  CREATION: 'Création',
+  MODIFICATION: 'Modification',
+  SOUMISSION: 'Soumission',
+  VALIDATION: 'Validation',
+  REFUS: 'Refus',
+  EFFECTIF: 'Mouvement effectif',
+};
+
+export const COULEURS_ACTION_WORKFLOW: Record<ActionWorkflow, string> = {
+  CREATION: 'bg-slate-400',
+  MODIFICATION: 'bg-slate-500',
+  SOUMISSION: 'bg-amber-500',
+  VALIDATION: 'bg-blue-500',
+  REFUS: 'bg-red-500',
+  EFFECTIF: 'bg-green-500',
+};
+
+// ─── Plafonds & dotation ────────────────────────────────────────────────────
+
+export const LIBELLES_GRANULARITE_PLAFOND: Record<GranularitePlafond, string> = {
+  PRODUIT: 'Produit',
+  CATEGORIE: 'Catégorie',
+};
+
+export const LIBELLES_SENS_ECART_DOTATION: Record<SensEcartDotation, string> = {
+  SUR_CONSOMMATION: 'Sur-consommation',
+  SOUS_CONSOMMATION: 'Sous-consommation',
+  CONFORME: 'Conforme',
+};
+
+export const COULEURS_SENS_ECART_DOTATION: Record<SensEcartDotation, { bg: string; text: string }> = {
+  SUR_CONSOMMATION:  { bg: 'bg-red-100',    text: 'text-red-700' },
+  SOUS_CONSOMMATION: { bg: 'bg-amber-100',  text: 'text-amber-700' },
+  CONFORME:          { bg: 'bg-green-100',  text: 'text-green-700' },
+};
+
+// ─── Topics WebSocket (validations stock) ───────────────────────────────────
+
+/** Broadcast : un bon est soumis / une décision est rendue. */
+export const TOPIC_STOCK_VALIDATIONS = '/topic/stock-validations';
+/** Notification ciblée vers le validateur (Responsable Achats) ou superviseur. */
+export const QUEUE_NOTIFICATIONS_STOCK = '/user/queue/notifications-stock';
+
+// ─── Paramètres du contrôle des mouvements ──────────────────────────────────
+
+export const PARAMETRES_CONTROLE_MOUVEMENTS = {
+  /** Préfixe des numéros de bon d'entrée (BE-AAAAMMJJ-XXX). */
+  prefixeBonEntree: 'BE',
+  /** Préfixe des numéros de bon de sortie (BS-AAAAMMJJ-XXX). */
+  prefixeBonSortie: 'BS',
+  /** Seuil (%) de consommation déclenchant une alerte « attention » sur une jauge. */
+  seuilAlertePlafondPct: 90,
+  /** Au-delà de ce seuil (%) la jauge passe en dépassement. */
+  seuilDepassementPlafondPct: 100,
+  /** Nombre de mois affichés par défaut dans les courbes d'évolution. */
+  nbMoisEvolutionDefaut: 12,
+};
+

@@ -1,0 +1,169 @@
+<div class="p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div class="flex items-start gap-3">
+      <div class="p-2.5 rounded-xl bg-emerald-100 text-emerald-700">
+        <lucide-icon name="FileInput" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Bons d'entrée</h1>
+        <p class="text-sm text-gray-500">Documents d'entrée numériques numérotés et leur cycle de validation.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="exporter()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon>
+        Exporter
+      </button>
+      <a routerLink="nouveau"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
+        <lucide-icon name="Plus" [size]="16"></lucide-icon>
+        Nouveau bon
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-xl border border-gray-100 p-4 mb-4">
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[220px]">
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Recherche</label>
+        <div class="relative">
+          <lucide-icon name="Search" [size]="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></lucide-icon>
+          <input type="text" [formControl]="qControl" placeholder="Référence, fournisseur…"
+            class="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Statut</label>
+        <select [formControl]="filtreStatut" (change)="appliquerFiltres()"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          <option value="">Tous</option>
+          @for (s of STATUTS; track s) { <option [value]="s">{{ LIBELLES_STATUT_BON[s] }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Type</label>
+        <select [formControl]="filtreType" (change)="appliquerFiltres()"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          <option value="">Tous</option>
+          @for (t of TYPES; track t) { <option [value]="t">{{ LIBELLES_TYPE_ENTREE[t] }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Du</label>
+        <input type="date" [formControl]="dateDebut" (change)="appliquerFiltres()"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Au</label>
+        <input type="date" [formControl]="dateFin" (change)="appliquerFiltres()"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <button (click)="reinitialiser()" title="Réinitialiser"
+        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="RotateCcw" [size]="16"></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    @if (loading) {
+      <div class="p-4 space-y-3">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="h-12 rounded-lg bg-gray-100 animate-pulse"></div>
+        }
+      </div>
+    } @else if (bons.length === 0) {
+      <div class="text-center py-16">
+        <lucide-icon name="FileInput" [size]="40" class="text-gray-200 mx-auto"></lucide-icon>
+        <p class="text-gray-500 font-medium mt-3">Aucun bon d'entrée</p>
+        <p class="text-sm text-gray-400 mt-1">Créez un premier bon d'entrée pour démarrer.</p>
+        <a routerLink="nouveau"
+          class="inline-flex items-center gap-2 px-4 py-2 mt-4 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
+          <lucide-icon name="Plus" [size]="16"></lucide-icon>
+          Nouveau bon
+        </a>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+              <th class="px-4 py-3 font-semibold">Référence</th>
+              <th class="px-4 py-3 font-semibold">Date</th>
+              <th class="px-4 py-3 font-semibold">Type</th>
+              <th class="px-4 py-3 font-semibold">Site destination</th>
+              <th class="px-4 py-3 font-semibold">Fournisseur</th>
+              <th class="px-4 py-3 font-semibold text-center">Lignes</th>
+              <th class="px-4 py-3 font-semibold text-right">Montant</th>
+              <th class="px-4 py-3 font-semibold">Statut</th>
+              <th class="px-4 py-3 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (b of bons; track trackById($index, b)) {
+              <tr class="hover:bg-gray-50/60 transition-colors">
+                <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ b.reference ?? '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ b.date | date:'dd/MM/yyyy' }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="[COULEURS_TYPE_ENTREE[b.type].bg, COULEURS_TYPE_ENTREE[b.type].text]">
+                    {{ LIBELLES_TYPE_ENTREE[b.type] }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-gray-600">{{ b.siteDestinationNom ?? '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ b.fournisseur ?? '—' }}</td>
+                <td class="px-4 py-3 text-center text-gray-600">{{ b.lignes.length }}</td>
+                <td class="px-4 py-3 text-right font-medium text-gray-700">{{ (b.montantTotal ?? 0) | number:'1.0-0':'fr' }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="[COULEURS_STATUT_BON[b.statut].bg, COULEURS_STATUT_BON[b.statut].text]">
+                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="COULEURS_STATUT_BON[b.statut].dot"></span>
+                    {{ LIBELLES_STATUT_BON[b.statut] }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center justify-end gap-1">
+                    <a [routerLink]="[b.id]" title="Voir"
+                      class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                      <lucide-icon name="Eye" [size]="16"></lucide-icon>
+                    </a>
+                    @if (estBrouillon(b)) {
+                      <a [routerLink]="[b.id, 'modifier']" title="Modifier"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                        <lucide-icon name="Pencil" [size]="16"></lucide-icon>
+                      </a>
+                      <button (click)="supprimer(b)" title="Supprimer"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                        <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        <p class="text-xs text-gray-500">{{ totalElements }} bon(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+        <div class="flex items-center gap-2">
+          <button (click)="pagePrecedente()" [disabled]="page === 0"
+            class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <lucide-icon name="ChevronLeft" [size]="16"></lucide-icon>
+          </button>
+          <button (click)="pageSuivante()" [disabled]="page >= totalPages - 1"
+            class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <lucide-icon name="ChevronRight" [size]="16"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

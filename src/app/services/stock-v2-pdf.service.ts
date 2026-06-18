@@ -6,11 +6,21 @@ import { Inventaire } from '../models/stock-v2-inventaire.model';
 import { BonCommandePrevisionnel } from '../models/stock-v2-approvisionnement.model';
 import { SyntheseMensuelle } from '../models/stock-v2-synthese.model';
 import { RapportTableauBordStock, FiltreTableauBordStock } from '../models/stock-v2-tableau-bord.model';
+import { BonEntree } from '../models/stock-v2-bon-entree.model';
+import { BonSortie } from '../models/stock-v2-bon-sortie.model';
+import { ComparatifDotation } from '../models/stock-v2-dotation.model';
+import { ConsommationDestinataire, RapportConsommation } from '../models/stock-v2-consommation.model';
 import {
   LIBELLES_STATUT_INVENTAIRE,
   LIBELLES_UNITE,
   DEVISE,
+  LIBELLES_TYPE_ENTREE,
+  LIBELLES_TYPE_SORTIE,
+  LIBELLES_STATUT_BON,
+  LIBELLES_TYPE_DESTINATAIRE,
+  LIBELLES_SENS_ECART_DOTATION,
 } from '../constants/stock.constants';
+import { Destinataire } from '../models/stock-v2-bon-sortie.model';
 
 const BLEU: [number, number, number] = [49, 46, 129]; // indigo-900
 
@@ -193,7 +203,230 @@ export class StockV2PdfService {
     doc.save(`tableau-bord-stocks-${this.dateFichier()}.pdf`);
   }
 
+  // ─── Bon d'entrée numérique (7.4) ─────────────────────────────────────────
+
+  genererBonEntree(bon: BonEntree): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text("BON D'ENTRÉE", pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.text(bon.reference ?? '—', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date : ${this.formatDate(bon.date)}`, 14, 36);
+    doc.text(`Type : ${LIBELLES_TYPE_ENTREE[bon.type]}`, 14, 42);
+    doc.text(`Site destination : ${bon.siteDestinationNom ?? '—'}`, 14, 48);
+    doc.text(`Statut : ${LIBELLES_STATUT_BON[bon.statut]}`, 120, 36);
+    doc.text(`Fournisseur / source : ${bon.fournisseur ?? '—'}`, 120, 42);
+    doc.text(`Réf. commande : ${bon.referenceCommande ?? '—'}`, 120, 48);
+
+    this.tableauLignesBon(doc, 56, bon.lignes, bon.montantTotal);
+    this.piedBon(doc, bon.demandeurNom, bon.validateurNom, bon.commentaire);
+
+    doc.save(`bon-entree-${bon.reference ?? bon.id ?? this.dateFichier()}.pdf`);
+  }
+
+  // ─── Bon de sortie numérique (7.4) ────────────────────────────────────────
+
+  genererBonSortie(bon: BonSortie): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BON DE SORTIE', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.text(bon.reference ?? '—', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date : ${this.formatDate(bon.date)}`, 14, 36);
+    doc.text(`Type : ${LIBELLES_TYPE_SORTIE[bon.type]}`, 14, 42);
+    doc.text(`Site source : ${bon.siteSourceNom ?? '—'}`, 14, 48);
+    doc.text(`Statut : ${LIBELLES_STATUT_BON[bon.statut]}`, 120, 36);
+    doc.text(`Destinataire : ${this.libelleDestinataire(bon.destinataire)}`, 120, 42);
+    doc.text(`Motif : ${bon.motif ?? '—'}`, 120, 48);
+
+    this.tableauLignesBon(doc, 56, bon.lignes, bon.montantTotal);
+    this.piedBon(doc, bon.demandeurNom, bon.validateurNom, bon.commentaire);
+
+    doc.save(`bon-sortie-${bon.reference ?? bon.id ?? this.dateFichier()}.pdf`);
+  }
+
+  // ─── Rapport de consommation (7.4 — fonctionnalité 9) ─────────────────────
+
+  genererRapportConsommation(rapport: RapportConsommation): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RAPPORT DE CONSOMMATION', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${this.formatDate(rapport.dateDebut)} → ${this.formatDate(rapport.dateFin)}`, 14, 28);
+    if (rapport.siteNom) doc.text(`Site : ${rapport.siteNom}`, 120, 28);
+    if (rapport.produitLibelle) doc.text(`Produit : ${rapport.produitLibelle}`, 120, 34);
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['Libellé', 'Quantité', 'Mouvements', 'Montant (FCFA)']],
+      body: rapport.lignes.map(l => [
+        l.libelle,
+        this.fmtNombre(l.quantite),
+        this.fmtNombre(l.nbMouvements),
+        this.fmtNombre(l.montant),
+      ]),
+      foot: [[
+        'Total',
+        this.fmtNombre(rapport.quantiteTotale),
+        this.fmtNombre(rapport.nbMouvementsTotal),
+        `${this.fmtNombre(rapport.montantTotal)} ${DEVISE}`,
+      ]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    });
+
+    let y = this.finalY(doc) + 10;
+    doc.setFontSize(10);
+    doc.text(`Coût moyen par mouvement : ${this.fmtNombre(rapport.coutMoyenParMouvement)} ${DEVISE}`, 14, y);
+
+    doc.save(`rapport-consommation-${this.dateFichier()}.pdf`);
+  }
+
+  // ─── Comparatif dotation prévue vs réelle (7.4 — fonctionnalité 8) ────────
+
+  genererComparatifDotation(comparatif: ComparatifDotation): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DOTATION PRÉVUE VS RÉELLE', pageWidth / 2, 16, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Mois : ${comparatif.mois}`, 14, 26);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Site', 'Produit', 'Prévu', 'Réel', 'Écart', 'Écart %', 'Statut']],
+      body: comparatif.lignes.map(l => [
+        l.siteNom ?? '',
+        l.produitLibelle ?? l.produitId,
+        this.fmtNombre(l.prevu),
+        this.fmtNombre(l.reel),
+        this.fmtNombre(l.ecart),
+        `${this.fmtNombre(l.pourcentageEcart)} %`,
+        LIBELLES_SENS_ECART_DOTATION[l.sens],
+      ]),
+      foot: [[
+        'Totaux', '',
+        this.fmtNombre(comparatif.totalPrevu),
+        this.fmtNombre(comparatif.totalReel),
+        '', '', '',
+      ]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 8 },
+      columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' } },
+    });
+
+    doc.save(`dotation-prevue-reelle-${comparatif.mois}.pdf`);
+  }
+
+  // ─── Historique de consommation par destinataire (7.4 — fonctionnalité 6) ─
+
+  genererHistoriqueDestinataire(
+    consommations: ConsommationDestinataire[],
+    periode?: { dateDebut?: string; dateFin?: string },
+  ): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONSOMMATION PAR DESTINATAIRE', pageWidth / 2, 18, { align: 'center' });
+
+    if (periode?.dateDebut || periode?.dateFin) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Période : ${this.formatDate(periode.dateDebut)} → ${this.formatDate(periode.dateFin)}`, 14, 28);
+    }
+
+    autoTable(doc, {
+      startY: 34,
+      head: [['Destinataire', 'Type', 'Sorties', 'Quantité', 'Montant (FCFA)']],
+      body: consommations.map(c => [
+        c.destinataireNom,
+        c.typeDestinataire,
+        this.fmtNombre(c.nbSorties),
+        this.fmtNombre(c.quantiteTotale),
+        this.fmtNombre(c.montantTotal),
+      ]),
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      styles: { fontSize: 9 },
+      columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    });
+
+    doc.save(`consommation-destinataires-${this.dateFichier()}.pdf`);
+  }
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private tableauLignesBon(
+    doc: jsPDF,
+    startY: number,
+    lignes: { produitCode?: string; produitLibelle?: string; produitId?: string; quantite: number; unite?: string; prixUnitaire?: number; montant?: number }[],
+    montantTotal?: number,
+  ): void {
+    autoTable(doc, {
+      startY,
+      head: [['Code', 'Produit', 'Quantité', 'Unité', 'P.U. (FCFA)', 'Montant (FCFA)']],
+      body: lignes.map(l => [
+        l.produitCode ?? '',
+        l.produitLibelle ?? l.produitId ?? '',
+        this.fmtNombre(l.quantite),
+        l.unite ? (LIBELLES_UNITE[l.unite as keyof typeof LIBELLES_UNITE] ?? l.unite) : '',
+        l.prixUnitaire == null ? '—' : this.fmtNombre(l.prixUnitaire),
+        l.montant == null ? '—' : this.fmtNombre(l.montant),
+      ]),
+      foot: montantTotal == null ? undefined : [['', '', '', '', 'Total', `${this.fmtNombre(montantTotal)} ${DEVISE}`]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      columnStyles: { 2: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' } },
+    });
+  }
+
+  private piedBon(doc: jsPDF, demandeur?: string, validateur?: string, commentaire?: string): void {
+    let y = this.finalY(doc) + 12;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (commentaire) {
+      doc.text(`Commentaire : ${commentaire}`, 14, y);
+      y += 10;
+    }
+    doc.text(`Demandeur : ${demandeur ?? '—'}`, 14, y);
+    doc.text(`Validateur : ${validateur ?? '—'}`, 120, y);
+    doc.line(14, y + 16, 80, y + 16);
+    doc.line(120, y + 16, 186, y + 16);
+  }
+
+  private libelleDestinataire(d: Destinataire): string {
+    const type = LIBELLES_TYPE_DESTINATAIRE[d.type];
+    const nom = d.siteNom ?? d.agentNom ?? d.clientNom ?? '—';
+    return `${nom} (${type})`;
+  }
 
   private finalY(doc: jsPDF): number {
     return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;

@@ -239,6 +239,40 @@ export const routes: Routes = [
             // Tableau de bord stocks
             { path: 'stock-v2/stocks-approvisionnement/tableau-bord', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/tableau-bord-stocks/tableau-bord-stocks.component').then(m => m.TableauBordStocksComponent) },
 
+            // ─── Stock v2 — 7.4 Contrôle des mouvements ──────────────────────────
+            // Catégorisation des entrées / sorties
+            { path: 'stock-v2/controle-mouvements/categorisation/entrees', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/categorisation/categorisation-entrees/categorisation-entrees.component').then(m => m.CategorisationEntreesComponent) },
+            { path: 'stock-v2/controle-mouvements/categorisation/sorties', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/categorisation/categorisation-sorties/categorisation-sorties.component').then(m => m.CategorisationSortiesComponent) },
+
+            // Bons d'entrée (ordre important : /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/controle-mouvements/bons-entree', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/liste-bons-entree/liste-bons-entree.component').then(m => m.ListeBonsEntreeComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-entree/nouveau', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/formulaire-bon-entree/formulaire-bon-entree.component').then(m => m.FormulaireBonEntreeComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-entree/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/formulaire-bon-entree/formulaire-bon-entree.component').then(m => m.FormulaireBonEntreeComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-entree/:id', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/fiche-bon-entree/fiche-bon-entree.component').then(m => m.FicheBonEntreeComponent) },
+
+            // Bons de sortie (ordre important : /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/controle-mouvements/bons-sortie', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/liste-bons-sortie/liste-bons-sortie.component').then(m => m.ListeBonsSortieComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-sortie/nouveau', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/formulaire-bon-sortie/formulaire-bon-sortie.component').then(m => m.FormulaireBonSortieComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-sortie/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/formulaire-bon-sortie/formulaire-bon-sortie.component').then(m => m.FormulaireBonSortieComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-sortie/:id', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/fiche-bon-sortie/fiche-bon-sortie.component').then(m => m.FicheBonSortieComponent) },
+
+            // Workflow de validation
+            { path: 'stock-v2/controle-mouvements/workflow', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/workflow-validation/tableau-workflow/tableau-workflow.component').then(m => m.TableauWorkflowComponent) },
+
+            // Historique par destinataire
+            { path: 'stock-v2/controle-mouvements/historique-destinataire', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/historique-destinataire/historique-destinataire.component').then(m => m.HistoriqueDestinataireComponent) },
+
+            // Plafonds de dotation (ordre important : /nouveau, /:id/modifier)
+            { path: 'stock-v2/controle-mouvements/plafonds', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/plafonds/liste-plafonds/liste-plafonds.component').then(m => m.ListePlafondsComponent) },
+            { path: 'stock-v2/controle-mouvements/plafonds/nouveau', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/plafonds/formulaire-plafond/formulaire-plafond.component').then(m => m.FormulairePlafondComponent) },
+            { path: 'stock-v2/controle-mouvements/plafonds/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/plafonds/formulaire-plafond/formulaire-plafond.component').then(m => m.FormulairePlafondComponent) },
+
+            // Dotation prévue vs réelle
+            { path: 'stock-v2/controle-mouvements/dotation', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/dotation/comparatif-dotation/comparatif-dotation.component').then(m => m.ComparatifDotationComponent) },
+
+            // Rapports de consommation
+            { path: 'stock-v2/controle-mouvements/rapports', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/rapports-consommation/rapports-consommation.component').then(m => m.RapportsConsommationComponent) },
+
         ]
     }
 ];

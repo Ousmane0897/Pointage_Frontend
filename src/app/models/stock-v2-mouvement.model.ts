@@ -7,6 +7,8 @@
  */
 
 import { UniteStock } from './stock-v2-produit.model';
+import { TypeEntree } from './stock-v2-bon-entree.model';
+import { TypeSortie } from './stock-v2-bon-sortie.model';
 
 export type TypeMouvement = 'ENTREE' | 'SORTIE' | 'TRANSFERT';
 
@@ -38,6 +40,16 @@ export interface MouvementStock {
   utilisateur?: string;          // dénormalisé (renseigné côté serveur via JWT)
   commentaire?: string;
   createdAt?: string;
+
+  // ─── Enrichissement 7.4 Contrôle des mouvements (optionnels) ───────────────
+  // Un mouvement peut être créé directement (origine DIRECT, comportement 7.3)
+  // ou généré par la validation d'un bon (origine BON). Ces champs sont
+  // renseignés côté serveur lors de la génération depuis un bon EFFECTIF.
+  origine?: 'DIRECT' | 'BON';
+  bonId?: string;                // id du bon d'entrée/sortie source
+  bonReference?: string;         // BE-/BS-AAAAMMJJ-XXX
+  categorieEntree?: TypeEntree;  // catégorie typée si type = ENTREE via bon
+  categorieSortie?: TypeSortie;  // catégorie typée si type = SORTIE via bon
 }
 
 /** Corps envoyé à la création (le serveur déduit l'utilisateur du JWT). */
@@ -60,4 +72,5 @@ export interface FiltreMouvement {
   siteId?: string;               // source OU destination
   dateDebut?: string;
   dateFin?: string;
+  bonId?: string;                // mouvements générés par un bon donné (7.4)
 }

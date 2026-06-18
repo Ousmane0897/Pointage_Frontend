@@ -6,12 +6,25 @@ import { MouvementStock } from '../models/stock-v2-mouvement.model';
 import { EtatStock } from '../models/stock-v2-etat-stock.model';
 import { SyntheseMensuelle } from '../models/stock-v2-synthese.model';
 import { RapportTableauBordStock } from '../models/stock-v2-tableau-bord.model';
+import { BonEntree } from '../models/stock-v2-bon-entree.model';
+import { BonSortie, Destinataire } from '../models/stock-v2-bon-sortie.model';
+import { ComparatifDotation } from '../models/stock-v2-dotation.model';
+import {
+  ConsommationDestinataire,
+  RapportConsommation,
+  StatistiqueCategorie,
+} from '../models/stock-v2-consommation.model';
 import {
   LIBELLES_TYPE_PRODUIT,
   LIBELLES_UNITE,
   LIBELLES_TYPE_MOUVEMENT,
   LIBELLES_MOTIF_MOUVEMENT,
   LIBELLES_STATUT_STOCK,
+  LIBELLES_TYPE_ENTREE,
+  LIBELLES_TYPE_SORTIE,
+  LIBELLES_STATUT_BON,
+  LIBELLES_TYPE_DESTINATAIRE,
+  LIBELLES_SENS_ECART_DOTATION,
 } from '../constants/stock.constants';
 
 /**
@@ -121,7 +134,103 @@ export class StockV2ExportService {
     XLSX.writeFile(wb, `tableau-bord-stocks-${this.dateAujourdhui()}.xlsx`);
   }
 
+  // ─── 7.4 Contrôle des mouvements ──────────────────────────────────────────
+
+  exporterBonsEntree(bons: BonEntree[]): void {
+    const rows = bons.map(b => ({
+      Référence: b.reference ?? '',
+      Date: this.formatDate(b.date),
+      Type: LIBELLES_TYPE_ENTREE[b.type],
+      'Site destination': b.siteDestinationNom ?? '',
+      'Fournisseur / source': b.fournisseur ?? '',
+      'Réf. commande': b.referenceCommande ?? '',
+      'Nb lignes': b.lignes?.length ?? 0,
+      Statut: LIBELLES_STATUT_BON[b.statut],
+      Demandeur: b.demandeurNom ?? '',
+      Validateur: b.validateurNom ?? '',
+      'Montant (FCFA)': b.montantTotal ?? 0,
+    }));
+    this.ecrire(rows, "Bons d'entrée", `bons-entree-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterBonsSortie(bons: BonSortie[]): void {
+    const rows = bons.map(b => ({
+      Référence: b.reference ?? '',
+      Date: this.formatDate(b.date),
+      Type: LIBELLES_TYPE_SORTIE[b.type],
+      'Site source': b.siteSourceNom ?? '',
+      Destinataire: this.libelleDestinataire(b.destinataire),
+      Motif: b.motif ?? '',
+      'Nb lignes': b.lignes?.length ?? 0,
+      Statut: LIBELLES_STATUT_BON[b.statut],
+      Demandeur: b.demandeurNom ?? '',
+      Validateur: b.validateurNom ?? '',
+      'Montant (FCFA)': b.montantTotal ?? 0,
+    }));
+    this.ecrire(rows, 'Bons de sortie', `bons-sortie-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterStatistiquesCategorie(stats: StatistiqueCategorie[], nomFeuille: string): void {
+    const rows = stats.map(s => ({
+      Catégorie: s.libelle,
+      'Nombre': s.nombre,
+      Volume: s.volume,
+      'Montant (FCFA)': s.montant,
+      'Part (%)': s.pourcentage,
+    }));
+    this.ecrire(rows, nomFeuille, `statistiques-${this.slug(nomFeuille)}-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterHistoriqueDestinataire(consommations: ConsommationDestinataire[]): void {
+    const rows = consommations.map(c => ({
+      Destinataire: c.destinataireNom,
+      Type: c.typeDestinataire,
+      'Nb sorties': c.nbSorties,
+      'Quantité totale': c.quantiteTotale,
+      'Montant total (FCFA)': c.montantTotal,
+    }));
+    this.ecrire(rows, 'Par destinataire', `consommation-destinataires-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterDotation(comparatif: ComparatifDotation): void {
+    const rows = comparatif.lignes.map(l => ({
+      Site: l.siteNom ?? '',
+      Produit: l.produitLibelle ?? l.produitId,
+      Unité: l.unite ? LIBELLES_UNITE[l.unite] : '',
+      Prévu: l.prevu,
+      Réel: l.reel,
+      Écart: l.ecart,
+      'Écart (%)': l.pourcentageEcart,
+      Statut: LIBELLES_SENS_ECART_DOTATION[l.sens],
+    }));
+    this.ecrire(rows, 'Dotation', `dotation-prevue-reelle-${comparatif.mois}.xlsx`);
+  }
+
+  exporterRapportConsommation(rapport: RapportConsommation): void {
+    const rows = rapport.lignes.map(l => ({
+      Libellé: l.libelle,
+      Quantité: l.quantite,
+      'Nb mouvements': l.nbMouvements,
+      'Montant (FCFA)': l.montant,
+    }));
+    this.ecrire(rows, 'Rapport conso.', `rapport-consommation-${this.dateAujourdhui()}.xlsx`);
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────────────
+
+  private libelleDestinataire(d: Destinataire): string {
+    const nom = d.siteNom ?? d.agentNom ?? d.clientNom ?? '';
+    return `${nom} (${LIBELLES_TYPE_DESTINATAIRE[d.type]})`;
+  }
+
+  private slug(s: string): string {
+    return s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
 
   private ecrire(rows: object[], nomFeuille: string, nomFichier: string): void {
     const ws = XLSX.utils.json_to_sheet(rows);

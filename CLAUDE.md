@@ -398,11 +398,60 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 - **Paramètres par défaut** (`PARAMETRES_STOCK`) : pagination 20 ; photo ≤ 5 Mo (jpeg/png/webp) ; fiche ≤ 10 Mo (pdf) ; horizon appro `nMois = 3` ; dormance tableau de bord `6` mois ; top consommations `10`.
 - **Sites en lecture seule** via `TerrainSiteClientService.listerActifs()` (shared `selecteur-site`) — aucune écriture, aucun référentiel agences propre au stock.
 
-### 7.4 Contrôle des mouvements
+### 7.4 Contrôle des mouvements (`stock-v2/controle-mouvements/`)
 
-- Suivi des entrées/sorties de stock, transferts inter-sites, traçabilité et inventaires.
+- Catégorisation stricte des entrées/sorties, workflow de validation des mouvements, bons numériques (entrée/sortie), pilotage des plafonds de dotation et analyse de consommation.
 
-**Statut : 🔲 À faire**
+**Statut : ✅ Terminé (frontend)** — 9 fonctionnalités. Bilan : **16 composants** + **3 partagés**, **6 services**, **6 modèles**. Reste à faire côté serveur (endpoints listés plus bas).
+
+> **Principe d'intégration (≠ duplication) :** 7.4 n'introduit PAS une nouvelle notion de mouvement. Le `MouvementStock` instantané de 7.3 reste l'**effet** en stock. 7.4 ajoute un document **« Bon » multi-lignes** porteur du workflow ; à la validation (EFFECTIF), le backend **génère les `MouvementStock` de 7.3** (un par ligne) qui mettent à jour `EtatStock` via le mécanisme existant. Aucun mouvement n'affecte le stock sans validation.
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `categorisation/` | categorisation-entrees, categorisation-sorties | Types figés d'entrée (4) / sortie (4) en lecture seule + statistiques d'usage (doughnut ng2-charts) |
+| `bons-entree/` | liste-bons-entree, formulaire-bon-entree, fiche-bon-entree | Bons d'entrée numérotés `BE-AAAAMMJJ-XXX`, édition brouillon, timeline workflow, PDF |
+| `bons-sortie/` | liste-bons-sortie, formulaire-bon-sortie, fiche-bon-sortie | Bons de sortie numérotés `BS-AAAAMMJJ-XXX`, destinataire site/agent/client, timeline, PDF |
+| `workflow-validation/` | tableau-workflow | Vue **Kanban** (BROUILLON→SOUMIS→VALIDE→EFFECTIF/REFUSE) + table filtrable, WebSocket temps réel, validation/refus (commentaire obligatoire) |
+| `plafonds/` | liste-plafonds, formulaire-plafond | Plafonds mensuels site × produit OU site × catégorie, **jauges** conso/plafond colorées, alerte dépassement (toast) |
+| `dotation/` | comparatif-dotation | Comparatif mensuel dotation prévue vs réelle, écarts code couleur, exports PDF/Excel |
+| `historique-destinataire/` | historique-destinataire | Consommation cumulée par site/agence/client, line chart d'évolution, exports PDF/Excel |
+| `rapports-consommation/` | rapports-consommation | Rapports par site/produit/période, KPIs synthétiques (coût moyen/mvt), bar chart, exports PDF/Excel |
+
+**Composants partagés** (`controle-mouvements/shared/`) : `selecteur-employe` (ControlValueAccessor sur `DossierEmployeService`, demandeur/validateur), `editeur-lignes-bon` (FormArray, réutilise le `selecteur-produit` de 7.3), `timeline-workflow` (présentational, historique des actions). Réutilisation directe des `selecteur-produit`/`selecteur-site` de 7.3.
+
+**Services** (préfixe `stock-v2-`) : `stock-v2-bon-entree`, `stock-v2-bon-sortie`, `stock-v2-workflow` (agrège les bons + délègue les transitions selon le sens), `stock-v2-plafond`, `stock-v2-dotation`, `stock-v2-consommation`. Les services `stock-v2-pdf` et `stock-v2-export` de 7.3 ont été **enrichis** (bons, rapports, dotation, historique).
+
+**Modèles** (préfixe `stock-v2-`) : `stock-v2-workflow` (`StatutBon`, `HistoriqueWorkflow`, `NotificationValidationStock`, `BonWorkflow`), `stock-v2-bon-entree` (+ `TypeEntree`), `stock-v2-bon-sortie` (+ `TypeSortie`, `Destinataire`), `stock-v2-plafond`, `stock-v2-dotation`, `stock-v2-consommation`. Le modèle `stock-v2-mouvement` de 7.3 a été enrichi de champs optionnels : `origine` (`DIRECT`|`BON`), `bonId`, `bonReference`, `categorieEntree`, `categorieSortie`.
+
+**Constantes** (ajouts dans [stock.constants.ts](src/app/constants/stock.constants.ts)) : libellés/couleurs/descriptions des `TypeEntree`/`TypeSortie`, `StatutBon` (+ ordre Kanban), actions workflow, granularité plafond, sens d'écart dotation, topics WebSocket, `PARAMETRES_CONTROLE_MOUVEMENTS` (préfixes bons, seuils d'alerte plafond 90 %/100 %).
+
+**WebSocket** : `websocket.service.ts` étendu — topic broadcast `/topic/stock-validations` + queue ciblée `/user/queue/notifications-stock` ; méthode `onStockValidations()`.
+
+**RBAC** : 8 sous-flags ajoutés dans `stock?` de [ModulesAutorises](src/app/models/admin.model.ts) : `categorisation`, `bonsEntree`, `bonsSortie`, `workflowValidation`, `historiqueDestinataire`, `plafonds`, `dotation`, `rapportsConso`. Sidebar : section « Contrôle mouvements » gated par `accessControleMouvements()` / `hasAccess('stock.xxx')`.
+
+**Dépendances en lecture seule** (aucune écriture) : `TerrainSiteClientService.listerActifs()` (sites, via `selecteur-site`) et `DossierEmployeService.getEmployes()` (employés demandeur/validateur, via `selecteur-employe`). Aucun appel à l'ancien `stock.service.ts`, aucun couplage `exploitation-v2`.
+
+**Décisions de modélisation à respecter côté backend** :
+
+- **Bon = document multi-lignes** (header + `lignes[]`) porteur du workflow `BROUILLON → SOUMIS → VALIDE → EFFECTIF` (ou `REFUSE`). Édition/suppression réservées au `BROUILLON`. La **validation génère les `MouvementStock` 7.3** (`origine = BON`, `bonId`/`bonReference` renseignés, catégorie typée) ; stock insuffisant en sortie ⇒ **422** à la validation. L'auteur de chaque action est déduit du JWT et dénormalisé dans `historique[]`.
+- **Numérotation atomique côté serveur** : `BE-AAAAMMJJ-XXX` / `BS-AAAAMMJJ-XXX` (compteur séquentiel quotidien).
+- **Types d'entrée (4, figés)** : `ACHAT_FOURNISSEUR | RETOUR_PRODUCTION | TRANSFERT_INTER_SITES | REINTEGRATION`. **Types de sortie (4, figés)** : `DISTRIBUTION_AGENCE_SITE_CLIENT | DISTRIBUTION_CHANTIER | VENTE_PRODUIT | CONSOMMATION_INTERNE`. Pas de CRUD (enums dans les constantes).
+- **Destinataire d'un bon de sortie** : `type` ∈ `SITE | AGENT | CLIENT` (`siteId` / `agentId` / `clientNom` selon le type).
+- **Plafonds** : `granularite` ∈ `PRODUIT | CATEGORIE`, `cibleId` = produitId ou categorieId, `plafondMensuel` (quantité/mois) par `siteId`. Consommation mensuelle agrégée depuis les sorties EFFECTIVES ; dépassement = alerte (toast front + notification WebSocket superviseur attendue côté serveur).
+
+**Endpoints backend à prévoir** (base réelle `${environment.apiUrl}/stock/…`, soit `/api/stock/…`) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Bons entrée** (`stock-v2-bon-entree`) | `GET /stock/bons-entree` (filtres q, statut, type, siteId, dateDebut, dateFin — paginé) · `GET /{id}` · `POST` · `PUT /{id}` (brouillon) · `DELETE /{id}` (brouillon) · `POST /{id}/soumettre` · `POST /{id}/valider` (→ génère mouvements ENTREE) · `POST /{id}/refuser` (commentaire requis) |
+| **Bons sortie** (`stock-v2-bon-sortie`) | mêmes routes sous `/stock/bons-sortie` (→ génère mouvements SORTIE, 422 si stock insuffisant) |
+| **Workflow** (`stock-v2-workflow`) | `GET /stock/workflow/bons` (filtres statut, sens, q — liste unifiée `BonWorkflow[]` pour le Kanban) |
+| **Catégorisation** (`stock-v2-consommation`) | `GET /stock/categorisation/stats?sens=ENTREE\|SORTIE&dateDebut=&dateFin=` |
+| **Plafonds** (`stock-v2-plafond`) | `GET /stock/plafonds` (filtres q, siteId, granularite, actif — paginé) · `GET /{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` · `GET /stock/plafonds/consommation?mois=YYYY-MM&siteId=` |
+| **Dotation** (`stock-v2-dotation`) | `GET /stock/dotation/comparatif?mois=YYYY-MM&siteId=&produitId=` |
+| **Consommation** (`stock-v2-consommation`) | `GET /stock/consommation/par-destinataire?siteId=&produitId=&dateDebut=&dateFin=` · `GET /stock/consommation/rapport?type=PAR_SITE\|PAR_PRODUIT\|PAR_PERIODE&dateDebut=&dateFin=&siteId=&produitId=&categorieId=` |
+
+> Les services PDF/Excel (`stock-v2-pdf`, `stock-v2-export`) restent **100 % client** (aucun endpoint). Le backend doit publier sur `/topic/stock-validations` (soumission/décision) et `/user/queue/notifications-stock` (validateur ciblé), et ajouter les 8 sous-flags `modules.stock` au claim JWT.
 
 ### 7.5 Analyse des consommations
 

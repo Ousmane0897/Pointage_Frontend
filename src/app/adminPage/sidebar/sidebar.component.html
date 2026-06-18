@@ -721,6 +721,104 @@
           </ul>
         </li>
 
+        <!-- Stock v2 — 7.4 Contrôle des mouvements -->
+        <li *ngIf="accessControleMouvements()">
+          <button (click)="toggleDropdownStock('controle-mouvements')"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/stock-v2/controle-mouvements'),
+              'justify-center px-0': !isOpen
+            }">
+            <lucide-icon name="ArrowUpDown"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/stock-v2/controle-mouvements') }"></lucide-icon>
+            <span *ngIf="isOpen" class="flex-1 truncate">Contrôle mouvements</span>
+            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
+              [ngClass]="{ 'rotate-180': openDropdownStock === 'controle-mouvements' }"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <ul *ngIf="openDropdownStock === 'controle-mouvements' && isOpen"
+            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+
+            <li *ngIf="hasAccess('stock.workflowValidation')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/workflow"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Workflow" class="w-3.5 h-3.5 text-violet-300"></lucide-icon>
+                <span class="flex-1 truncate">Workflow validation</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.bonsEntree')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/bons-entree"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="FileInput" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
+                <span class="flex-1 truncate">Bons d'entrée</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.bonsSortie')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/bons-sortie"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="FileOutput" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
+                <span class="flex-1 truncate">Bons de sortie</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.plafonds')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/plafonds"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="SlidersHorizontal" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
+                <span class="flex-1 truncate">Plafonds dotation</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.dotation')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/dotation"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Scale" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
+                <span class="flex-1 truncate">Dotation prévue/réelle</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.historiqueDestinataire')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/historique-destinataire"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Users" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
+                <span class="flex-1 truncate">Hist. destinataires</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.rapportsConso')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/rapports"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="FileBarChart" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
+                <span class="flex-1 truncate">Rapports conso.</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.categorisation')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/categorisation/entrees"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Tags" class="w-3.5 h-3.5 text-green-300"></lucide-icon>
+                <span class="flex-1 truncate">Catég. entrées</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.categorisation')">
+              <a routerLink="/admin/stock-v2/controle-mouvements/categorisation/sorties"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Tags" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
+                <span class="flex-1 truncate">Catég. sorties</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
       </ul>
     </nav>
 

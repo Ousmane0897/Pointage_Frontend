@@ -26,6 +26,8 @@ import {
   // ─── Stock v2 (7.3) ───
   Boxes, Warehouse, PackagePlus, PackageMinus, PackageSearch, PackageOpen,
   ShoppingCart, Truck, Container, FolderTree, ClipboardX, Scale, PackageX,
+  // ─── Stock v2 (7.4 Contrôle des mouvements) ───
+  FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck,
 } from 'lucide-angular';
 
 // Ajouter ici toute nouvelle icône référencée par <lucide-icon name="..."> dans les templates.
@@ -56,5 +58,7 @@ export const LucideIconsProvider = importProvidersFrom(
     // ─── Stock v2 (7.3) ───
     Boxes, Warehouse, PackagePlus, PackageMinus, PackageSearch, PackageOpen,
     ShoppingCart, Truck, Container, FolderTree, ClipboardX, Scale, PackageX,
+    // ─── Stock v2 (7.4 Contrôle des mouvements) ───
+    FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck,
   })
 );

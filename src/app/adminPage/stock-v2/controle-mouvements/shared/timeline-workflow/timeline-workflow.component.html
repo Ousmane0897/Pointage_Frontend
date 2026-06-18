@@ -1,0 +1,22 @@
+@if (historique && historique.length > 0) {
+  <ol class="relative border-l border-gray-200 ml-2">
+    @for (h of historique; track trackByIndex($index)) {
+      <li class="mb-5 ml-5">
+        <span class="absolute -left-[7px] flex h-3.5 w-3.5 items-center justify-center rounded-full ring-4 ring-white"
+          [ngClass]="COULEURS_ACTION_WORKFLOW[h.action]"></span>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-semibold text-gray-800">{{ LIBELLES_ACTION_WORKFLOW[h.action] }}</span>
+          <span class="text-xs text-gray-400">{{ formatDateHeure(h.date) }}</span>
+        </div>
+        @if (h.auteur) {
+          <p class="text-xs text-gray-500 mt-0.5">Par {{ h.auteur }}</p>
+        }
+        @if (h.commentaire) {
+          <p class="text-sm text-gray-600 mt-1 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">{{ h.commentaire }}</p>
+        }
+      </li>
+    }
+  </ol>
+} @else {
+  <p class="text-sm text-gray-400 italic">Aucun historique disponible.</p>
+}
