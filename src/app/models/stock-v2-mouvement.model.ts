@@ -50,6 +50,13 @@ export interface MouvementStock {
   bonReference?: string;         // BE-/BS-AAAAMMJJ-XXX
   categorieEntree?: TypeEntree;  // catégorie typée si type = ENTREE via bon
   categorieSortie?: TypeSortie;  // catégorie typée si type = SORTIE via bon
+
+  // ─── Enrichissement 7.6 Valorisation financière (optionnels) ───────────────
+  // Coût unitaire GELÉ au moment du mouvement (traçabilité financière historique,
+  // renseigné côté serveur). Les mouvements antérieurs à 7.6 n'ont pas de snapshot :
+  // les vues financières reconstituent alors le coût courant (drapeau `estEstime`).
+  coutUnitaireSnapshot?: number; // FCFA — coût unitaire au moment du mouvement
+  valeurMouvement?: number;      // FCFA = quantite × coutUnitaireSnapshot
 }
 
 /** Corps envoyé à la création (le serveur déduit l'utilisateur du JWT). */

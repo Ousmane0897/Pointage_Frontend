@@ -19,6 +19,11 @@ import { DetailChantier } from '../models/stock-v2-chantier.model';
 import { SyntheseDons } from '../models/stock-v2-analyse-don.model';
 import { MatriceComparatif } from '../models/stock-v2-analyse-comparatif.model';
 import { ResultatCroise } from '../models/stock-v2-analyse-croisee.model';
+import { LigneCoutMouvement, ValeurStock } from '../models/stock-v2-valorisation.model';
+import { ComparatifCoutSites } from '../models/stock-v2-cout-site.model';
+import { CoutRevientChantier } from '../models/stock-v2-cout-chantier.model';
+import { SyntheseMarges } from '../models/stock-v2-marge.model';
+import { RapportTableauBordFinancier } from '../models/stock-v2-tableau-bord-financier.model';
 import {
   LIBELLES_TYPE_PRODUIT,
   LIBELLES_UNITE,
@@ -328,6 +333,131 @@ export class StockV2ExportService {
       return row;
     });
     this.ecrire(rows, 'Analyse croisée', `analyse-croisee-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  // ─── 7.6 Valorisation financière ──────────────────────────────────────────
+
+  exporterCoutsMouvements(lignes: LigneCoutMouvement[]): void {
+    const rows = lignes.map(l => ({
+      Référence: l.mouvement.reference ?? '',
+      Date: this.formatDate(l.mouvement.date),
+      Produit: l.mouvement.produitLibelle ?? l.mouvement.produitId,
+      Code: l.mouvement.produitCode ?? '',
+      Type: LIBELLES_TYPE_MOUVEMENT[l.mouvement.type],
+      Quantité: l.mouvement.quantite,
+      'Coût unitaire (FCFA)': l.coutUnitaire,
+      'Valeur (FCFA)': l.valeur,
+      'Coût estimé': l.estEstime ? 'Oui' : 'Non',
+      'Bon': l.mouvement.bonReference ?? '',
+      Site: l.mouvement.siteSourceNom ?? l.mouvement.siteDestinationNom ?? '',
+    }));
+    this.ecrire(rows, 'Coûts mouvements', `couts-mouvements-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterValeurStock(valeur: ValeurStock): void {
+    const wb = XLSX.utils.book_new();
+    const kpis = [
+      { Indicateur: 'Valeur totale (FCFA)', Valeur: valeur.kpis.valeurTotale },
+      { Indicateur: 'Nombre de produits', Valeur: valeur.kpis.nbProduits },
+      { Indicateur: 'Valeur précédente (FCFA)', Valeur: valeur.kpis.valeurPrecedente ?? '' },
+      { Indicateur: 'Écart (FCFA)', Valeur: valeur.kpis.ecartValeur ?? '' },
+      { Indicateur: 'Écart (%)', Valeur: valeur.kpis.ecartPct ?? '' },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpis), 'KPIs');
+    const lignes = valeur.lignes.map(l => ({
+      Code: l.produitCode,
+      Produit: l.produitLibelle,
+      Catégorie: l.categorieLibelle ?? '',
+      Quantité: l.quantite,
+      'Coût unitaire (FCFA)': l.coutUnitaire,
+      'Valeur (FCFA)': l.valeur,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lignes), 'Valeur par produit');
+    XLSX.writeFile(wb, `valeur-stock-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterCoutSite(comparatif: ComparatifCoutSites): void {
+    const rows = comparatif.lignes.map(l => ({
+      Site: l.siteNom,
+      'Coût total (FCFA)': l.coutTotal,
+      'Nb sorties': l.nbSorties,
+      'Quantité': l.quantiteTotale,
+      'Part (%)': l.pourcentage,
+      'Écart (%)': l.ecartPct ?? '',
+      'Surconsommation': l.surconsommation ? 'Oui' : 'Non',
+    }));
+    this.ecrire(rows, 'Coût par site', `cout-consommation-sites-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterCoutRevientChantier(detail: CoutRevientChantier): void {
+    const c = detail.chantier;
+    const wb = XLSX.utils.book_new();
+    const entete = [
+      { Champ: 'Référence', Valeur: c.reference },
+      { Champ: 'Nom', Valeur: c.nom },
+      { Champ: 'Site', Valeur: c.siteNom ?? '' },
+      { Champ: 'Coût de revient total (FCFA)', Valeur: detail.coutTotal },
+      { Champ: 'Coût par jour (FCFA)', Valeur: detail.coutParJour ?? '' },
+      { Champ: 'Durée (jours)', Valeur: detail.dureeJours ?? '' },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(entete), 'Chantier');
+    const lignes = detail.lignes.map(l => ({
+      Code: l.produitCode ?? '',
+      Produit: l.produitLibelle ?? l.produitId,
+      Quantité: l.quantite,
+      'Coût unitaire (FCFA)': l.coutUnitaire,
+      'Montant (FCFA)': l.montant,
+      'Coût estimé': l.estEstime ? 'Oui' : 'Non',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lignes), 'Coût de revient');
+    XLSX.writeFile(wb, `cout-revient-chantier-${this.slug(c.reference)}-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterMarges(synthese: SyntheseMarges): void {
+    const wb = XLSX.utils.book_new();
+    const kpis = [
+      { Indicateur: 'Chiffre d’affaires (FCFA)', Valeur: synthese.chiffreAffaires },
+      { Indicateur: 'Coût total (FCFA)', Valeur: synthese.coutTotal },
+      { Indicateur: 'Marge globale (FCFA)', Valeur: synthese.margeGlobaleTotale },
+      { Indicateur: 'Taux de marge moyen (%)', Valeur: synthese.tauxMargeMoyen },
+      { Indicateur: 'Produits non rentables', Valeur: synthese.nbProduitsNonRentables },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpis), 'KPIs');
+    const lignes = synthese.lignes.map(l => ({
+      Code: l.produitCode,
+      Produit: l.produitLibelle,
+      'Prix de vente (FCFA)': l.prixVente,
+      'Coût de revient (FCFA)': l.coutRevient,
+      'Marge unitaire (FCFA)': l.margeUnitaire,
+      'Taux de marge (%)': l.tauxMarge,
+      'Qté vendue': l.quantiteVendue,
+      'Marge globale (FCFA)': l.margeGlobale,
+      'Rentable': l.rentable ? 'Oui' : 'Non',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lignes), 'Marges');
+    XLSX.writeFile(wb, `marges-produits-${this.dateAujourdhui()}.xlsx`);
+  }
+
+  exporterTableauBordFinancier(rapport: RapportTableauBordFinancier): void {
+    const wb = XLSX.utils.book_new();
+    const kpis = [
+      { Indicateur: 'Valeur du stock (FCFA)', Valeur: rapport.kpis.valeurStock },
+      { Indicateur: 'Valeur consommée (mois) (FCFA)', Valeur: rapport.kpis.valeurConsommeeMois },
+      { Indicateur: 'Coût moyen par site (FCFA)', Valeur: rapport.kpis.coutMoyenParSite },
+      { Indicateur: 'Marge globale (FCFA)', Valeur: rapport.kpis.margeGlobale },
+      { Indicateur: 'Taux de marge moyen (%)', Valeur: rapport.kpis.tauxMargeMoyen },
+      { Indicateur: 'Dérives détectées', Valeur: rapport.kpis.nbDerives },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpis), 'KPIs');
+    const coutSite = rapport.coutParSite.map(s => ({ Site: s.siteNom, 'Coût (FCFA)': s.cout }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(coutSite), 'Coût par site');
+    const derives = rapport.derives.map(d => ({
+      Cible: d.cible, Type: d.type,
+      'Valeur actuelle (FCFA)': d.valeurActuelle, 'Référence (FCFA)': d.valeurReference,
+      'Écart (%)': d.ecartPct, Gravité: d.gravite,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(derives), 'Dérives');
+    XLSX.writeFile(wb, `tableau-bord-financier-${this.dateAujourdhui()}.xlsx`);
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────

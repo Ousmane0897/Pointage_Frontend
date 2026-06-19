@@ -1,0 +1,162 @@
+<div class="p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div class="flex items-start gap-3">
+      <div class="p-2.5 rounded-xl bg-indigo-100 text-indigo-700">
+        <lucide-icon name="Percent" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Marge produits vendus</h1>
+        <p class="text-sm text-gray-500">Prix de vente, coût de revient et marge sur les produits vendus.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="exporterExcel()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon> Excel
+      </button>
+      <button (click)="exporterPdf()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileText" [size]="16" class="text-red-600"></lucide-icon> PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div [formGroup]="filtres" class="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+    <div class="flex flex-wrap items-end gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Du <span class="text-red-500">*</span></label>
+        <input type="date" formControlName="dateDebut"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Au <span class="text-red-500">*</span></label>
+        <input type="date" formControlName="dateFin"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Catégorie</label>
+        <select formControlName="categorieId"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          <option value="">Toutes</option>
+          @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
+        </select>
+      </div>
+      <button (click)="charger()"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
+        <lucide-icon name="Play" [size]="16"></lucide-icon> Générer
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="h-96 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else if (synthese && synthese.lignes.length > 0) {
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Chiffre d'affaires (FCFA)</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ synthese.chiffreAffaires | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Marge globale (FCFA)</p>
+        <p class="text-2xl font-bold mt-1" [ngClass]="synthese.margeGlobaleTotale >= 0 ? 'text-green-600' : 'text-red-600'">
+          {{ synthese.margeGlobaleTotale | number:'1.0-0':'fr' }}
+        </p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Taux de marge moyen</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ synthese.tauxMargeMoyen | number:'1.0-1':'fr' }}%</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Non rentables</p>
+        <p class="text-2xl font-bold mt-1" [ngClass]="synthese.nbProduitsNonRentables > 0 ? 'text-red-600' : 'text-green-600'">
+          {{ synthese.nbProduitsNonRentables }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+              <th class="px-4 py-3 font-semibold cursor-pointer" (click)="trier('produit')">Produit</th>
+              <th class="px-4 py-3 font-semibold text-right">Prix vente</th>
+              <th class="px-4 py-3 font-semibold text-right">Coût revient</th>
+              <th class="px-4 py-3 font-semibold text-right">Marge unit.</th>
+              <th class="px-4 py-3 font-semibold text-right cursor-pointer" (click)="trier('tauxMarge')">Taux</th>
+              <th class="px-4 py-3 font-semibold text-right cursor-pointer" (click)="trier('quantite')">Qté vendue</th>
+              <th class="px-4 py-3 font-semibold text-right cursor-pointer" (click)="trier('margeGlobale')">Marge globale</th>
+              <th class="px-4 py-3 font-semibold text-center">État</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (m of synthese.lignes; track trackById($index, m)) {
+              <tr class="hover:bg-gray-50/60 transition-colors" [ngClass]="!m.rentable ? 'bg-red-50/40' : ''">
+                <td class="px-4 py-3">
+                  <span class="text-gray-800">{{ m.produitLibelle }}</span>
+                  <span class="text-xs text-gray-400 ml-2">{{ m.produitCode }}</span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  @if (editId === m.produitId) {
+                    <span class="inline-flex items-center gap-1">
+                      <input type="number" min="0" [formControl]="editValeur"
+                        class="w-24 px-2 py-1 rounded border border-indigo-300 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                      <button (click)="enregistrerPrix(m)" class="p-1 rounded text-green-600 hover:bg-green-50" title="Enregistrer">
+                        <lucide-icon name="Check" [size]="15"></lucide-icon>
+                      </button>
+                      <button (click)="annulerEdition()" class="p-1 rounded text-gray-400 hover:bg-gray-50" title="Annuler">
+                        <lucide-icon name="X" [size]="15"></lucide-icon>
+                      </button>
+                    </span>
+                  } @else {
+                    <button (click)="editerPrix(m)" class="inline-flex items-center gap-1 text-gray-700 hover:text-indigo-600">
+                      {{ m.prixVente | number:'1.0-0':'fr' }}
+                      <lucide-icon name="Pencil" [size]="12" class="text-gray-300"></lucide-icon>
+                    </button>
+                  }
+                </td>
+                <td class="px-4 py-3 text-right text-gray-600">{{ m.coutRevient | number:'1.0-0':'fr' }}</td>
+                <td class="px-4 py-3 text-right font-medium" [ngClass]="m.margeUnitaire >= 0 ? 'text-gray-700' : 'text-red-600'">
+                  {{ m.margeUnitaire | number:'1.0-0':'fr' }}
+                </td>
+                <td class="px-4 py-3 text-right font-medium" [ngClass]="classeTaux(m)">{{ m.tauxMarge | number:'1.0-1':'fr' }}%</td>
+                <td class="px-4 py-3 text-right text-gray-600">{{ m.quantiteVendue | number:'1.0-0':'fr' }}</td>
+                <td class="px-4 py-3 text-right font-medium" [ngClass]="m.margeGlobale >= 0 ? 'text-gray-700' : 'text-red-600'">
+                  {{ m.margeGlobale | number:'1.0-0':'fr' }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  @if (m.rentable) {
+                    <span class="inline-flex items-center gap-1 text-xs text-green-600"><lucide-icon name="CircleCheck" [size]="13"></lucide-icon> Rentable</span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      <lucide-icon name="TriangleAlert" [size]="12"></lucide-icon> Non rentable
+                    </span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="bg-indigo-50/50 font-semibold text-gray-800">
+              <td class="px-4 py-2" colspan="6">Marge globale totale</td>
+              <td class="px-4 py-2 text-right">{{ synthese.margeGlobaleTotale | number:'1.0-0':'fr' }} {{ DEVISE }}</td>
+              <td class="px-4 py-2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-gray-100 text-center py-16">
+      <lucide-icon name="Percent" [size]="40" class="text-gray-200 mx-auto"></lucide-icon>
+      <p class="text-gray-500 font-medium mt-3">Aucune marge à afficher</p>
+      <p class="text-sm text-gray-400 mt-1">Définissez un prix de vente sur les produits et enregistrez des ventes.</p>
+    </div>
+  }
+</div>

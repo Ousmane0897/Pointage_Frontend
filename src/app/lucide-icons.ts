@@ -30,6 +30,8 @@ import {
   FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck,
   // ─── Stock v2 (7.5 Analyse des consommations) ───
   CalendarRange, ChartColumn, ChartPie, Grid3x3, HardHat, Gift, Coins, CircleCheck,
+  // ─── Stock v2 (7.6 Valorisation financière) ───
+  Percent, Receipt, ChevronUp,
 } from 'lucide-angular';
 
 // Ajouter ici toute nouvelle icône référencée par <lucide-icon name="..."> dans les templates.
@@ -64,5 +66,7 @@ export const LucideIconsProvider = importProvidersFrom(
     FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck,
     // ─── Stock v2 (7.5 Analyse des consommations) ───
     CalendarRange, ChartColumn, ChartPie, Grid3x3, HardHat, Gift, Coins, CircleCheck,
+    // ─── Stock v2 (7.6 Valorisation financière) ───
+    Percent, Receipt, ChevronUp,
   })
 );

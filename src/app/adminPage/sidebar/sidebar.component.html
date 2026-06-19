@@ -885,6 +885,88 @@
           </ul>
         </li>
 
+        <!-- Stock v2 — 7.6 Valorisation financière -->
+        <li *ngIf="accessValorisationFinanciere()">
+          <button (click)="toggleDropdownStock('valorisation-financiere')"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/stock-v2/valorisation-financiere'),
+              'justify-center px-0': !isOpen
+            }">
+            <lucide-icon name="Wallet"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/stock-v2/valorisation-financiere') }"></lucide-icon>
+            <span *ngIf="isOpen" class="flex-1 truncate">Valorisation financière</span>
+            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
+              [ngClass]="{ 'rotate-180': openDropdownStock === 'valorisation-financiere' }"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <ul *ngIf="openDropdownStock === 'valorisation-financiere' && isOpen"
+            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+
+            <li *ngIf="hasAccess('stock.tableauBordFinancier')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/tableau-bord"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Wallet" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
+                <span class="flex-1 truncate">Tableau de bord</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.coutUnitaire')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/cout-unitaire"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Calculator" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
+                <span class="flex-1 truncate">Coût unitaire</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.coutMouvements')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/mouvements"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Receipt" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
+                <span class="flex-1 truncate">Coût des mouvements</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.valeurStock')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/valeur-stock"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Banknote" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
+                <span class="flex-1 truncate">Valeur du stock</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.coutSite')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/cout-site"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Building2" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
+                <span class="flex-1 truncate">Coût par site</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.coutChantier')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/cout-chantier"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="HardHat" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
+                <span class="flex-1 truncate">Coût de revient chantier</span>
+              </a>
+            </li>
+            <li *ngIf="hasAccess('stock.marges')">
+              <a routerLink="/admin/stock-v2/valorisation-financiere/marges"
+                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                <lucide-icon name="Percent" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
+                <span class="flex-1 truncate">Marge produits</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
       </ul>
     </nav>
 

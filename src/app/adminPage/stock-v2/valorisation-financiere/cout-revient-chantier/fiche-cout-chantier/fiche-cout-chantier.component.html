@@ -1,0 +1,131 @@
+<div class="p-4 sm:p-6 max-w-6xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center gap-3 mb-6">
+    <a routerLink="/admin/stock-v2/valorisation-financiere/cout-chantier"
+      class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+      <lucide-icon name="ArrowLeft" [size]="20"></lucide-icon>
+    </a>
+    <div class="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+      <lucide-icon name="HardHat" [size]="22"></lucide-icon>
+    </div>
+    <div class="flex-1">
+      <h1 class="text-xl font-bold text-gray-800">{{ detail?.chantier?.nom ?? 'Coût de revient' }}</h1>
+      <p class="text-sm text-gray-500">{{ detail?.chantier?.reference }}</p>
+    </div>
+    @if (detail) {
+      <div class="flex items-center gap-2">
+        <button (click)="exporterExcel()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon> Excel
+        </button>
+        <button (click)="exporterPdf()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <lucide-icon name="FileText" [size]="16" class="text-red-600"></lucide-icon> Rapport PDF
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="h-64 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else if (detail) {
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-4 col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Coût de revient (FCFA)</p>
+          <lucide-icon name="Coins" [size]="18" class="text-amber-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ detail.coutTotal | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Coût / jour</p>
+        <p class="text-xl font-bold text-gray-800 mt-1">{{ (detail.coutParJour ?? 0) | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Produits</p>
+        <p class="text-xl font-bold text-gray-800 mt-1">{{ detail.nbProduits | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Vs similaires</p>
+        @if (detail.ecartPct != null) {
+          <p class="text-xl font-bold mt-1" [ngClass]="detail.ecartPct > 0 ? 'text-red-600' : 'text-green-600'">
+            {{ detail.ecartPct > 0 ? '+' : '' }}{{ detail.ecartPct | number:'1.0-1':'fr' }}%
+          </p>
+        } @else {
+          <p class="text-xl font-bold text-gray-400 mt-1">—</p>
+        }
+      </div>
+    </div>
+
+    <!-- Infos -->
+    <div class="bg-white rounded-xl border border-gray-100 p-5 mb-6">
+      <div class="flex items-start justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-700">Informations</h2>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+          [ngClass]="[COULEURS_STATUT_CHANTIER[detail.chantier.statut].bg, COULEURS_STATUT_CHANTIER[detail.chantier.statut].text]">
+          <span class="w-1.5 h-1.5 rounded-full" [ngClass]="COULEURS_STATUT_CHANTIER[detail.chantier.statut].dot"></span>
+          {{ LIBELLES_STATUT_CHANTIER[detail.chantier.statut] }}
+        </span>
+      </div>
+      <dl class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+        <div><dt class="text-xs text-gray-500">Site</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.siteNom ?? '—' }}</dd></div>
+        <div><dt class="text-xs text-gray-500">Client</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.client ?? '—' }}</dd></div>
+        <div><dt class="text-xs text-gray-500">Début</dt><dd class="text-gray-800 mt-0.5">{{ detail.chantier.dateDebut | date:'dd/MM/yyyy':'':'fr' }}</dd></div>
+        <div><dt class="text-xs text-gray-500">Durée</dt><dd class="text-gray-800 mt-0.5">{{ detail.dureeJours ?? '—' }} jour(s)</dd></div>
+      </dl>
+    </div>
+
+    <!-- Lignes valorisées -->
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <h2 class="text-sm font-semibold text-gray-700 px-4 py-3 border-b border-gray-100">Produits consommés (coût de revient)</h2>
+      @if (detail.lignes.length > 0) {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th class="px-4 py-3 font-semibold">Produit</th>
+                <th class="px-4 py-3 font-semibold text-right">Quantité</th>
+                <th class="px-4 py-3 font-semibold text-right">Coût unit. (FCFA)</th>
+                <th class="px-4 py-3 font-semibold text-right">Montant (FCFA)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (l of detail.lignes; track trackByProduit($index, l)) {
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                  <td class="px-4 py-3">
+                    <span class="text-gray-800">{{ l.produitLibelle }}</span>
+                    <span class="text-xs text-gray-400 ml-2">{{ l.produitCode }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-right text-gray-700">
+                    {{ l.quantite | number:'1.0-0':'fr' }} <span class="text-xs text-gray-400">{{ l.unite ? LIBELLES_UNITE[l.unite] : '' }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-right text-gray-600">
+                    {{ l.coutUnitaire | number:'1.0-0':'fr' }}
+                    @if (l.estEstime) {
+                      <span class="inline-flex items-center ml-1 text-amber-500" title="Coût estimé (pas de snapshot)"><lucide-icon name="TriangleAlert" [size]="12"></lucide-icon></span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-right font-medium text-gray-700">{{ l.montant | number:'1.0-0':'fr' }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="bg-amber-50/50 font-semibold text-gray-800">
+                <td class="px-4 py-2" colspan="3">Coût de revient total</td>
+                <td class="px-4 py-2 text-right">{{ detail.coutTotal | number:'1.0-0':'fr' }} {{ DEVISE }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      } @else {
+        <div class="text-center py-12">
+          <lucide-icon name="PackageOpen" [size]="36" class="text-gray-200 mx-auto"></lucide-icon>
+          <p class="text-gray-500 font-medium mt-2">Aucune consommation valorisée</p>
+        </div>
+      }
+    </div>
+  }
+</div>

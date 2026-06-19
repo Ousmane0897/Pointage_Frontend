@@ -85,5 +85,14 @@ export interface ModulesAutorises {
     dons?: boolean;                  // consommations dons
     comparatif?: boolean;            // comparatif mensuel
     filtresCroises?: boolean;        // analyse multidimensionnelle
+
+    // ─── Stock v2 — 7.6 Valorisation financière ──────────────────────
+    coutUnitaire?: boolean;          // coût unitaire par produit
+    coutMouvements?: boolean;        // coût de chaque mouvement
+    valeurStock?: boolean;           // valeur du stock temps réel
+    coutSite?: boolean;              // coût de consommation par site
+    coutChantier?: boolean;          // coût de revient par chantier
+    marges?: boolean;                // marge produits vendus
+    tableauBordFinancier?: boolean;  // tableau de bord financier
   };
 }

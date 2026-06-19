@@ -1,0 +1,149 @@
+<div class="p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div class="flex items-start gap-3">
+      <div class="p-2.5 rounded-xl bg-indigo-100 text-indigo-700">
+        <lucide-icon name="Banknote" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Valeur du stock temps réel</h1>
+        <p class="text-sm text-gray-500">
+          Valorisation globale du stock.
+          @if (valeur) { <span class="text-gray-400">· maj {{ valeur.dateCalcul | date:'HH:mm:ss':'':'fr' }}</span> }
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="rafraichir()" [disabled]="rafraichissement"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="RefreshCw" [size]="16" [class.animate-spin]="rafraichissement"></lucide-icon> Rafraîchir
+      </button>
+      <button (click)="exporterExcel()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon> Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div [formGroup]="filtres" class="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+    <div class="flex flex-wrap items-end gap-4">
+      <div class="min-w-[200px]">
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Site</label>
+        <app-selecteur-site formControlName="siteId"></app-selecteur-site>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Catégorie</label>
+        <select formControlName="categorieId"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          <option value="">Toutes</option>
+          @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Comparer à</label>
+        <select formControlName="comparer"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          @for (c of COMPARAISONS; track c.value) { <option [value]="c.value">{{ c.libelle }}</option> }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      @for (i of [1,2,3,4]; track i) { <div class="h-24 rounded-xl bg-gray-100 animate-pulse"></div> }
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 h-80 rounded-xl bg-gray-100 animate-pulse"></div>
+      <div class="h-80 rounded-xl bg-gray-100 animate-pulse"></div>
+    </div>
+  } @else if (valeur && valeur.lignes.length > 0) {
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-4 col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Valeur totale (FCFA)</p>
+          <lucide-icon name="Banknote" [size]="18" class="text-indigo-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ valeur.kpis.valeurTotale | number:'1.0-0':'fr' }}</p>
+        @if (valeur.kpis.ecartPct != null) {
+          <p class="text-xs mt-1" [ngClass]="classeEcart(valeur.kpis.ecartPct)">
+            {{ valeur.kpis.ecartPct > 0 ? '▲' : (valeur.kpis.ecartPct < 0 ? '▼' : '') }}
+            {{ valeur.kpis.ecartPct | number:'1.0-1':'fr' }}%
+            ({{ valeur.kpis.ecartValeur | number:'1.0-0':'fr' }} FCFA)
+          </p>
+        }
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Produits</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ valeur.kpis.nbProduits | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Valeur précédente</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ (valeur.kpis.valeurPrecedente ?? 0) | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <p class="text-xs text-gray-500">Catégories</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ valeur.repartitionCategorie.length }}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Table -->
+      <div class="lg:col-span-2 bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto max-h-[28rem]">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0">
+              <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th class="px-4 py-3 font-semibold">Produit</th>
+                <th class="px-4 py-3 font-semibold">Catégorie</th>
+                <th class="px-4 py-3 font-semibold text-right">Quantité</th>
+                <th class="px-4 py-3 font-semibold text-right">Coût unit.</th>
+                <th class="px-4 py-3 font-semibold text-right">Valeur (FCFA)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (l of valeur.lignes; track trackByProduit($index, l)) {
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                  <td class="px-4 py-3">
+                    <span class="text-gray-800">{{ l.produitLibelle }}</span>
+                    <span class="text-xs text-gray-400 ml-2">{{ l.produitCode }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600">{{ l.categorieLibelle ?? '—' }}</td>
+                  <td class="px-4 py-3 text-right text-gray-700">{{ l.quantite | number:'1.0-0':'fr' }}</td>
+                  <td class="px-4 py-3 text-right text-gray-600">{{ l.coutUnitaire | number:'1.0-0':'fr' }}</td>
+                  <td class="px-4 py-3 text-right font-medium text-gray-700">{{ l.valeur | number:'1.0-0':'fr' }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="bg-indigo-50/50 font-semibold text-gray-800">
+                <td class="px-4 py-2" colspan="4">Valeur totale</td>
+                <td class="px-4 py-2 text-right">{{ valeur.kpis.valeurTotale | number:'1.0-0':'fr' }} {{ DEVISE }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Donut -->
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Répartition par catégorie</h2>
+        @if (donutData) {
+          <div class="h-80"><canvas baseChart [type]="'doughnut'" [data]="donutData" [options]="donutOptions"></canvas></div>
+        } @else {
+          <div class="h-80 flex items-center justify-center text-gray-300"><lucide-icon name="ChartPie" [size]="32"></lucide-icon></div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-gray-100 text-center py-16">
+      <lucide-icon name="Banknote" [size]="40" class="text-gray-200 mx-auto"></lucide-icon>
+      <p class="text-gray-500 font-medium mt-3">Aucune valeur de stock</p>
+      <p class="text-sm text-gray-400 mt-1">Aucun produit en stock pour les filtres sélectionnés.</p>
+    </div>
+  }
+</div>

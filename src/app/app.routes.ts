@@ -283,6 +283,16 @@ export const routes: Routes = [
             { path: 'stock-v2/analyse-consommations/comparatif', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/comparatif-mensuel/comparatif-mensuel.component').then(m => m.ComparatifMensuelComponent) },
             { path: 'stock-v2/analyse-consommations/filtres-croises', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/filtres-croises/filtres-croises.component').then(m => m.FiltresCroisesComponent) },
 
+            // ─── Stock v2 — 7.6 Valorisation financière ─────────────────────
+            { path: 'stock-v2/valorisation-financiere/cout-unitaire', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-unitaire-produit/cout-unitaire-produit.component').then(m => m.CoutUnitaireProduitComponent) },
+            { path: 'stock-v2/valorisation-financiere/mouvements', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-mouvements/cout-mouvements.component').then(m => m.CoutMouvementsComponent) },
+            { path: 'stock-v2/valorisation-financiere/valeur-stock', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/valeur-stock/valeur-stock.component').then(m => m.ValeurStockComponent) },
+            { path: 'stock-v2/valorisation-financiere/cout-site', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-consommation-site/cout-consommation-site.component').then(m => m.CoutConsommationSiteComponent) },
+            { path: 'stock-v2/valorisation-financiere/cout-chantier', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-revient-chantier/liste-cout-chantiers/liste-cout-chantiers.component').then(m => m.ListeCoutChantiersComponent) },
+            { path: 'stock-v2/valorisation-financiere/cout-chantier/:id', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-revient-chantier/fiche-cout-chantier/fiche-cout-chantier.component').then(m => m.FicheCoutChantierComponent) },
+            { path: 'stock-v2/valorisation-financiere/marges', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/marge-produits/marge-produits.component').then(m => m.MargeProduitsComponent) },
+            { path: 'stock-v2/valorisation-financiere/tableau-bord', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/tableau-bord-financier/tableau-bord-financier.component').then(m => m.TableauBordFinancierComponent) },
+
         ]
     }
 ];

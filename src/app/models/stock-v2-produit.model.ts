@@ -38,7 +38,11 @@ export interface Produit {
   unite: UniteStock;
   fournisseurPrincipal?: string;
   seuilAlerte: number;           // seuil d'alerte global (peut être affiné par site dans EtatStock)
-  prixUnitaire: number;          // FCFA — base de valorisation 7.3 (CMUP/FIFO → 7.6)
+  prixUnitaire: number;          // FCFA — coût unitaire courant (statique si FIXE, calculé si CUMP/DERNIER_PRIX en 7.6)
+  // ─── Valorisation financière 7.6 (optionnels, rétrocompatibles) ───
+  // Écrits via les endpoints dédiés 7.6 (PATCH), jamais via le formulaire produit.
+  methodeValorisation?: 'CUMP' | 'DERNIER_PRIX' | 'FIXE';  // override produit ; absent ⇒ hérite du global (FIXE par défaut)
+  prixVente?: number;            // FCFA — prix de vente unitaire (marges 7.6)
   photoUrl?: string;
   photoNom?: string;
   ficheTechniqueUrl?: string;

@@ -15,6 +15,10 @@ import { DetailChantier } from '../models/stock-v2-chantier.model';
 import { SyntheseDons } from '../models/stock-v2-analyse-don.model';
 import { MatriceComparatif } from '../models/stock-v2-analyse-comparatif.model';
 import { ResultatCroise } from '../models/stock-v2-analyse-croisee.model';
+import { ComparatifCoutSites } from '../models/stock-v2-cout-site.model';
+import { CoutRevientChantier } from '../models/stock-v2-cout-chantier.model';
+import { SyntheseMarges } from '../models/stock-v2-marge.model';
+import { RapportTableauBordFinancier } from '../models/stock-v2-tableau-bord-financier.model';
 import {
   LIBELLES_STATUT_INVENTAIRE,
   LIBELLES_UNITE,
@@ -584,6 +588,169 @@ export class StockV2PdfService {
     });
 
     doc.save(`analyse-croisee-${this.dateFichier()}.pdf`);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 7.6 Valorisation financière
+  // ════════════════════════════════════════════════════════════════════════
+
+  /** Coût de consommation par site (comparatif inter-sites). */
+  genererCoutSite(comparatif: ComparatifCoutSites): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COÛT DE CONSOMMATION PAR SITE', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${this.formatDate(comparatif.dateDebut)} → ${this.formatDate(comparatif.dateFin)}`, 14, 28);
+    doc.text(`Coût moyen / site : ${this.fmtNombre(comparatif.coutMoyenParSite)} ${DEVISE}`, 120, 28);
+
+    autoTable(doc, {
+      startY: 34,
+      head: [['Site', 'Coût (FCFA)', 'Sorties', 'Part %', 'Écart %', 'Surconso.']],
+      body: comparatif.lignes.map(l => [
+        l.siteNom,
+        this.fmtNombre(l.coutTotal),
+        this.fmtNombre(l.nbSorties),
+        `${this.fmtNombre(l.pourcentage)} %`,
+        l.ecartPct == null ? '—' : `${this.fmtNombre(l.ecartPct)} %`,
+        l.surconsommation ? 'Oui' : 'Non',
+      ]),
+      foot: [['Total', `${this.fmtNombre(comparatif.coutTotalGlobal)} ${DEVISE}`, '', '', '', '']],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    });
+
+    doc.save(`cout-consommation-sites-${this.dateFichier()}.pdf`);
+  }
+
+  /** Rapport de coût de revient d'un chantier (facturation client). */
+  genererCoutRevientChantier(detail: CoutRevientChantier): void {
+    const c = detail.chantier;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COÛT DE REVIENT — CHANTIER', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.text(c.reference, pageWidth / 2, 25, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Chantier : ${c.nom}`, 14, 36);
+    doc.text(`Site : ${c.siteNom ?? '—'}`, 14, 42);
+    doc.text(`Coût total : ${this.fmtNombre(detail.coutTotal)} ${DEVISE}`, 120, 36);
+    doc.text(`Coût / jour : ${detail.coutParJour == null ? '—' : this.fmtNombre(detail.coutParJour) + ' ' + DEVISE}`, 120, 42);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [['Code', 'Produit', 'Quantité', 'Coût unit. (FCFA)', 'Montant (FCFA)']],
+      body: detail.lignes.map(l => [
+        l.produitCode ?? '',
+        l.produitLibelle ?? l.produitId,
+        this.fmtQte(l.quantite, l.unite),
+        this.fmtNombre(l.coutUnitaire),
+        this.fmtNombre(l.montant),
+      ]),
+      foot: [['', '', '', 'Total', `${this.fmtNombre(detail.coutTotal)} ${DEVISE}`]],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    });
+
+    doc.save(`cout-revient-chantier-${c.reference}.pdf`);
+  }
+
+  /** Marges produits vendus — paysage. */
+  genererMarges(synthese: SyntheseMarges): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MARGES — PRODUITS VENDUS', pageWidth / 2, 16, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${this.formatDate(synthese.dateDebut)} → ${this.formatDate(synthese.dateFin)}`, 14, 26);
+    doc.text(`Marge globale : ${this.fmtNombre(synthese.margeGlobaleTotale)} ${DEVISE} (${this.fmtNombre(synthese.tauxMargeMoyen)} %)`, 120, 26);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Code', 'Produit', 'P. vente', 'Coût', 'Marge unit.', 'Taux %', 'Qté', 'Marge globale', 'Rentable']],
+      body: synthese.lignes.map(l => [
+        l.produitCode,
+        l.produitLibelle,
+        this.fmtNombre(l.prixVente),
+        this.fmtNombre(l.coutRevient),
+        this.fmtNombre(l.margeUnitaire),
+        `${this.fmtNombre(l.tauxMarge)} %`,
+        this.fmtNombre(l.quantiteVendue),
+        this.fmtNombre(l.margeGlobale),
+        l.rentable ? 'Oui' : 'Non',
+      ]),
+      foot: [['', 'Total', '', '', '', '', '', `${this.fmtNombre(synthese.margeGlobaleTotale)} ${DEVISE}`, '']],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+      styles: { fontSize: 8 },
+      columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' }, 7: { halign: 'right' } },
+    });
+
+    doc.save(`marges-produits-${this.dateFichier()}.pdf`);
+  }
+
+  /** Tableau de bord financier complet. */
+  genererTableauBordFinancier(rapport: RapportTableauBordFinancier, periode: { dateDebut: string; dateFin: string }): void {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TABLEAU DE BORD FINANCIER', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Période : ${this.formatDate(periode.dateDebut)} → ${this.formatDate(periode.dateFin)}`, 14, 28);
+
+    autoTable(doc, {
+      startY: 34,
+      head: [['Indicateur', 'Valeur']],
+      body: [
+        ['Valeur du stock', `${this.fmtNombre(rapport.kpis.valeurStock)} ${DEVISE}`],
+        ['Valeur consommée (mois)', `${this.fmtNombre(rapport.kpis.valeurConsommeeMois)} ${DEVISE}`],
+        ['Coût moyen par site', `${this.fmtNombre(rapport.kpis.coutMoyenParSite)} ${DEVISE}`],
+        ['Marge globale', `${this.fmtNombre(rapport.kpis.margeGlobale)} ${DEVISE}`],
+        ['Taux de marge moyen', `${this.fmtNombre(rapport.kpis.tauxMargeMoyen)} %`],
+        ['Dérives détectées', this.fmtNombre(rapport.kpis.nbDerives)],
+      ],
+      headStyles: { fillColor: BLEU, textColor: 255 },
+      styles: { fontSize: 10 },
+    });
+
+    if (rapport.derives.length > 0) {
+      autoTable(doc, {
+        startY: this.finalY(doc) + 8,
+        head: [['Cible', 'Type', 'Actuel (FCFA)', 'Référence (FCFA)', 'Écart %', 'Gravité']],
+        body: rapport.derives.map(d => [
+          d.cible, d.type,
+          this.fmtNombre(d.valeurActuelle), this.fmtNombre(d.valeurReference),
+          `${this.fmtNombre(d.ecartPct)} %`, d.gravite,
+        ]),
+        headStyles: { fillColor: BLEU, textColor: 255 },
+        styles: { fontSize: 8 },
+        columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+      });
+    }
+
+    doc.save(`tableau-bord-financier-${this.dateFichier()}.pdf`);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

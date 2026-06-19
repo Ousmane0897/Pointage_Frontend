@@ -496,11 +496,52 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 
 > Les services PDF/Excel restent **100 % client**. Le backend doit ajouter les 5 sous-flags `modules.stock.{analyseMensuelle,chantiers,dons,comparatif,filtresCroises}` au claim JWT, et faire porter au mouvement SORTIE la `natureDon` (bons DON) et le `chantierId` (bons DISTRIBUTION_CHANTIER) à la validation.
 
-### 7.6 Valorisation financière
+### 7.6 Valorisation financière (`stock-v2/valorisation-financiere/`)
 
-- Valorisation du stock (FCFA), méthodes de calcul (CMUP/FIFO), états de stock valorisés et exports comptables.
+- Valorisation du stock (FCFA), méthode de calcul du coût unitaire (CUMP / dernier prix), coût des mouvements, valeur de stock temps réel, coûts par site/chantier, marges, pilotage financier.
 
-**Statut : 🔲 À faire**
+**Statut : ✅ Terminé (frontend)** — 7 fonctionnalités. Bilan : **8 composants**, **6 services** (dont 2 purs testables `cump`/`marge`), **5 modèles DTO financiers**, 1 fichier de constantes, 2 modèles 7.3 enrichis. Module **FINANCIER** : calcule/valorise mais reste lecture seule sur les entités métier (sauf paramétrage financier produit via endpoints dédiés). Build OK, **26 tests unitaires verts**. Reste à faire côté serveur (endpoints listés plus bas).
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `cout-unitaire-produit/` | cout-unitaire-produit | Paramétrage global (méthode défaut) + override par produit, coût courant, alertes, line chart historique des coûts |
+| `cout-mouvements/` | cout-mouvements | Liste filtrable des mouvements valorisés (coût snapshot + valeur + badge `estEstime`), export Excel |
+| `valeur-stock/` | valeur-stock | KPIs + donut catégories + table ; **polling auto-refresh** (30 s) + comparaison instant T précédent |
+| `cout-consommation-site/` | cout-consommation-site | Comparatif inter-sites (table + bar ranking), détection surconsommation, exports PDF/Excel |
+| `cout-revient-chantier/` | liste-cout-chantiers, fiche-cout-chantier | Chantiers valorisés au coût de revient, détail + coût/jour + comparaison + rapport PDF |
+| `marge-produits/` | marge-produits | Marge (prix vente − coût), taux, marge globale, non-rentables ; édition inline `prixVente` (PATCH) ; exports |
+| `tableau-bord-financier/` | tableau-bord-financier | KPIs (valeur, conso, marge, dérives) + line/bar/donut + panneau dérives budgétaires ; exports PDF/Excel |
+
+**Services** (préfixe `stock-v2-`) : `stock-v2-cump` (PUR testable : CUMP/dernier prix/écart), `stock-v2-marge` (calc pur + HTTP synthèse), `stock-v2-valorisation` (paramétrage, coûts produits, historique, valeur stock, mouvements valorisés, PATCH méthode/prix-vente), `stock-v2-cout-site`, `stock-v2-cout-chantier`, `stock-v2-tableau-bord-financier`. Specs : `stock-v2-cump.service.spec`, `stock-v2-marge.service.spec` (26 tests). `stock-v2-export` (XLSX) et `stock-v2-pdf` (jsPDF) **enrichis**.
+
+**Modèles** : `stock-v2-valorisation` (`MethodeValorisation`, `ParametrageValorisation`, `CoutProduit`, `HistoriqueCoutProduit`, `LigneCoutMouvement`, `ValeurStock`), `stock-v2-cout-site`, `stock-v2-cout-chantier`, `stock-v2-marge`, `stock-v2-tableau-bord-financier`.
+
+**Constantes :** [src/app/constants/stock-v2-valorisation.constants.ts](src/app/constants/stock-v2-valorisation.constants.ts) — libellés/couleurs des méthodes, couleurs de marge, `PARAMETRES_VALORISATION` (`seuilDeriveBudgetPct: 20`, `seuilMargeMinPct: 15`, `intervalRefreshMs: 30000`, `nbMoisEvolution: 12`, `ecartCoutAnormalPct: 50`).
+
+**Décisions de modélisation (validées, impactent 7.3 et le backend)** :
+- **Méthode hybride** : `ParametrageValorisation.methodeDefaut` global + `Produit.methodeValorisation?` (override ; `null` ⇒ hérite du global). Valeurs `CUMP | DERNIER_PRIX | FIXE`. `Produit.prixUnitaire` devient le **coût courant** (statique si FIXE, calculé serveur sinon). `Produit.prixVente?` ajouté (marges). **Édition via endpoints PATCH dédiés** (`/valorisation`, `/prix-vente`) — le formulaire produit 7.3 n'est PAS modifié.
+- **Snapshot mouvement** : `MouvementStock.coutUnitaireSnapshot?` + `valeurMouvement?` (coût gelé à l'instant du mouvement, serveur). Mouvements antérieurs sans snapshot ⇒ **fallback** coût courant avec drapeau `estEstime` (badge orange).
+- **Rétrocompatibilité** : `methodeValorisation` absente ⇒ FIXE (comportement actuel inchangé). **7.5 et EtatStock non modifiés** — la valeur stock temps réel passe par un DTO financier dédié.
+- **Temps réel = polling** (rafraîchissement auto + bouton), pas de WebSocket.
+
+**RBAC** : 7 sous-flags ajoutés dans `stock?` de [ModulesAutorises](src/app/models/admin.model.ts) : `coutUnitaire`, `coutMouvements`, `valeurStock`, `coutSite`, `coutChantier`, `marges`, `tableauBordFinancier`. Sidebar : section « Valorisation financière » gated par `accessValorisationFinanciere()` / `hasAccess('stock.xxx')`.
+
+**Dépendances en lecture seule** : catalogue/mouvements 7.3, chantiers 7.5 (`/stock/valorisation/chantiers`), sites via `TerrainSiteClientService`. Aucun appel à l'ancien `stock.service.ts`.
+
+**Endpoints backend à prévoir** (base `${environment.apiUrl}/stock/…`, calculs serveur) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Paramétrage** (`stock-v2-valorisation`) | `GET/PUT /stock/valorisation/parametrage` (`{ methodeDefaut }`) |
+| **Coût produit** (`stock-v2-valorisation`) | `GET /stock/valorisation/couts-produits` (paginé, filtres) · `GET /{id}/historique` · `PATCH /stock/produits/{id}/valorisation` (`{ methodeValorisation }`) · `PATCH /stock/produits/{id}/prix-vente` (`{ prixVente }`) |
+| **Mouvements valorisés** (`stock-v2-valorisation`) | `GET /stock/valorisation/mouvements` (filtres q/produit/type/site/dates ; renvoie `coutUnitaireSnapshot`, `valeurMouvement`, `estEstime`) |
+| **Valeur stock** (`stock-v2-valorisation`) | `GET /stock/valorisation/valeur-stock?siteId=&categorieId=&comparer=JOUR\|SEMAINE\|MOIS` |
+| **Coût/site** (`stock-v2-cout-site`) | `GET /stock/valorisation/cout-site?dateDebut=&dateFin=&categorieId=` |
+| **Coût de revient chantier** (`stock-v2-cout-chantier`) | `GET /stock/valorisation/chantiers` (paginé) · `GET /stock/valorisation/chantiers/{id}` |
+| **Marges** (`stock-v2-marge`) | `GET /stock/valorisation/marges?dateDebut=&dateFin=&categorieId=` |
+| **Tableau de bord** (`stock-v2-tableau-bord-financier`) | `GET /stock/valorisation/tableau-bord?dateDebut=&dateFin=&siteId=&categorieId=` |
+
+> Règles serveur : recalcul CUMP à chaque ENTREE (`nouveauCout = (stock×ancienCout + qté×prixAchat)/(stock+qté)`), mise à jour dernier prix si `DERNIER_PRIX`, `methodeValorisation=null ⇒ FIXE` ; stocker `coutUnitaireSnapshot` sur chaque mouvement ; quantité vendue = sorties EFFECTIVES `type=VENTE_PRODUIT` ; PDF/Excel 100 % client ; ajouter les 7 sous-flags `modules.stock.{...}` au claim JWT.
 
 ### Conventions module Stock
 

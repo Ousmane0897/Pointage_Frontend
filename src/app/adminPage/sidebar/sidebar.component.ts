@@ -183,6 +183,23 @@ export class SidebarComponent implements OnInit {
     );
   }
 
+  /** Accès à la section 7.6 Valorisation financière (au moins un sous-flag). */
+  accessValorisationFinanciere(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.coutUnitaire ||
+      s.coutMouvements ||
+      s.valeurStock ||
+      s.coutSite ||
+      s.coutChantier ||
+      s.marges ||
+      s.tableauBordFinancier
+    );
+  }
+
   toggleSidebar() {
     this.isOpen = !this.isOpen;
   }
