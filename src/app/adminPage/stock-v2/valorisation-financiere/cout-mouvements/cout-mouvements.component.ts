@@ -62,7 +62,7 @@ export class CoutMouvementsComponent implements OnInit, OnDestroy {
   readonly LIBELLES_TYPE_MOUVEMENT = LIBELLES_TYPE_MOUVEMENT;
   readonly COULEURS_TYPE_MOUVEMENT = COULEURS_TYPE_MOUVEMENT;
   readonly LIBELLES_UNITE = LIBELLES_UNITE;
-  readonly TYPES: TypeMouvement[] = ['ENTREE', 'SORTIE', 'TRANSFERT'];
+  readonly TYPES: TypeMouvement[] = ['ENTREE', 'SORTIE'];
   readonly DEVISE = DEVISE;
 
   private destroy$ = new Subject<void>();

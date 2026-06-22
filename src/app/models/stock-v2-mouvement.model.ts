@@ -1,23 +1,22 @@
 /**
  * Modèles des Mouvements de stock — Module Stock v2 / 7.3 Stocks & Approvisionnement.
  *
- * Entrées (achats, production), sorties (consommation, vente) et transferts
- * inter-sites. Les sites sont des `SiteClient` consommés en LECTURE SEULE
- * depuis `TerrainSiteClientService` (référencés par id, dénormalisés en nom).
+ * Entrées (achats, production) et sorties (consommation, vente). Les noms de
+ * site éventuellement portés par un mouvement (historique / bons 7.4) sont
+ * dénormalisés à titre informatif et consommés en LECTURE SEULE.
  */
 
 import { UniteStock } from './stock-v2-produit.model';
 import { TypeEntree } from './stock-v2-bon-entree.model';
 import { TypeSortie } from './stock-v2-bon-sortie.model';
 
-export type TypeMouvement = 'ENTREE' | 'SORTIE' | 'TRANSFERT';
+export type TypeMouvement = 'ENTREE' | 'SORTIE';
 
 export type MotifMouvement =
   | 'ACHAT'
   | 'PRODUCTION'
   | 'CONSOMMATION'
   | 'VENTE'
-  | 'TRANSFERT'
   | 'AJUSTEMENT'
   | 'RETOUR'
   | 'PERTE';
@@ -32,9 +31,9 @@ export interface MouvementStock {
   type: TypeMouvement;
   motif: MotifMouvement;
   quantite: number;
-  siteSourceId?: string;         // requis pour SORTIE / TRANSFERT
+  siteSourceId?: string;         // informatif (historique / bons 7.4)
   siteSourceNom?: string;        // dénormalisé
-  siteDestinationId?: string;    // requis pour ENTREE / TRANSFERT
+  siteDestinationId?: string;    // informatif (historique / bons 7.4)
   siteDestinationNom?: string;   // dénormalisé
   date: string;                  // ISO yyyy-MM-dd ou complet
   utilisateur?: string;          // dénormalisé (renseigné côté serveur via JWT)
@@ -65,8 +64,6 @@ export interface MouvementPayload {
   type: TypeMouvement;
   motif: MotifMouvement;
   quantite: number;
-  siteSourceId?: string;
-  siteDestinationId?: string;
   date: string;
   commentaire?: string;
 }

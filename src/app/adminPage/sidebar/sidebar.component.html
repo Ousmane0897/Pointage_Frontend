@@ -88,12 +88,6 @@
           </a>
         </li>
 
-
-        <li *ngIf="isOpen && accessRessourcesHumaines()"
-          class="px-3 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-slate-500">
-          Ressources humaines
-        </li>
-
         <!-- Ressources humaines (top-level) -->
         <li *ngIf="accessRessourcesHumaines()">
           <button (click)="toggleDropdownRessourcesHumaines('ressourcesHumaines')"
@@ -394,10 +388,6 @@
         <!-- ============================================================ -->
         <!-- Exploitation v2 — Production Chimie (5.1)                     -->
         <!-- ============================================================ -->
-        <li *ngIf="isOpen && accessExploitationV2()"
-          class="px-3 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-slate-500">
-          Exploitation v2
-        </li>
 
         <li *ngIf="accessExploitationV2()">
           <button (click)="toggleDropdownExploitationV2('exploitationV2')"
@@ -410,7 +400,7 @@
             <lucide-icon name="FlaskConical"
               class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
               [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/exploitation-v2') }"></lucide-icon>
-            <span *ngIf="isOpen" class="flex-1 truncate">Exploitation v2</span>
+            <span *ngIf="isOpen" class="flex-1 truncate">Exploitation</span>
             <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
               [ngClass]="{ 'rotate-180': openDropdownExploitationV2 === 'exploitationV2' }"
               fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -525,7 +515,7 @@
                     isActivePrefix('/admin/exploitation-v2/terrain')
                 }">
                 <lucide-icon name="MapPinned" class="w-3.5 h-3.5 text-cyan-300"></lucide-icon>
-                <span class="flex-1 truncate">Exploitation Terrain</span>
+                <span class="flex-1 truncate">Opérations</span>
                 <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
                   [ngClass]="{ 'rotate-180': openDropdownTerrain === 'terrain' }"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -633,15 +623,11 @@
         </li>
 
         <!-- ============================================================ -->
-        <!-- Stock v2 — 7.3 Stocks & Approvisionnement                     -->
+        <!-- Stock — parent regroupant 7.3 → 7.6                           -->
         <!-- ============================================================ -->
-        <li *ngIf="isOpen && accessStock()"
-          class="px-3 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-slate-500">
-          Stock
-        </li>
 
-        <li *ngIf="accessStock()">
-          <button (click)="toggleDropdownStock('stock')"
+        <li *ngIf="accessStockV2()">
+          <button (click)="toggleDropdownStockV2('stockV2')"
             class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
                    hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
             [ngClass]="{
@@ -651,21 +637,41 @@
             <lucide-icon name="Boxes"
               class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
               [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/stock-v2') }"></lucide-icon>
-            <span *ngIf="isOpen" class="flex-1 truncate">Stocks &amp; Appro.</span>
+            <span *ngIf="isOpen" class="flex-1 truncate">Stock</span>
             <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
-              [ngClass]="{ 'rotate-180': openDropdownStock === 'stock' }"
+              [ngClass]="{ 'rotate-180': openDropdownStockV2 === 'stockV2' }"
               fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          <ul *ngIf="openDropdownStock === 'stock' && isOpen"
+          <ul *ngIf="openDropdownStockV2 === 'stockV2' && isOpen"
             class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+
+            <!-- 7.3 Stocks & Approvisionnement -->
+            <li *ngIf="accessStock()">
+              <button (click)="toggleDropdownStock('stock')"
+                class="group flex items-center gap-2 w-full px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{
+                  'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold': isActivePrefix('/admin/stock-v2/stocks-approvisionnement')
+                }">
+                <lucide-icon name="Boxes" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
+                <span class="flex-1 truncate">Stocks &amp; Appro.</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownStock === 'stock' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <ul *ngIf="openDropdownStock === 'stock' && isOpen"
+                class="ml-3 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
 
             <li *ngIf="hasAccess('stock.tableauBord')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/tableau-bord"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Gauge" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
                 <span class="flex-1 truncate">Tableau de bord</span>
               </a>
@@ -673,7 +679,7 @@
             <li *ngIf="hasAccess('stock.catalogue')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/produits"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Package" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
                 <span class="flex-1 truncate">Catalogue produits</span>
               </a>
@@ -681,7 +687,7 @@
             <li *ngIf="hasAccess('stock.mouvements')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/mouvements"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="ArrowLeftRight" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
                 <span class="flex-1 truncate">Mouvements</span>
               </a>
@@ -689,7 +695,7 @@
             <li *ngIf="hasAccess('stock.etatStock')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/etat"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Warehouse" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
                 <span class="flex-1 truncate">État du stock</span>
               </a>
@@ -697,7 +703,7 @@
             <li *ngIf="hasAccess('stock.inventaires')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/inventaires"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="ClipboardList" class="w-3.5 h-3.5 text-violet-300"></lucide-icon>
                 <span class="flex-1 truncate">Inventaires</span>
               </a>
@@ -705,7 +711,7 @@
             <li *ngIf="hasAccess('stock.synthese')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/synthese"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="FileBarChart" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
                 <span class="flex-1 truncate">Synthèse mensuelle</span>
               </a>
@@ -713,7 +719,7 @@
             <li *ngIf="hasAccess('stock.approvisionnement')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/approvisionnement"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="ShoppingCart" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
                 <span class="flex-1 truncate">Approvisionnement</span>
               </a>
@@ -721,33 +727,30 @@
           </ul>
         </li>
 
-        <!-- Stock v2 — 7.4 Contrôle des mouvements -->
-        <li *ngIf="accessControleMouvements()">
-          <button (click)="toggleDropdownStock('controle-mouvements')"
-            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
-                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
-            [ngClass]="{
-              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/stock-v2/controle-mouvements'),
-              'justify-center px-0': !isOpen
-            }">
-            <lucide-icon name="ArrowUpDown"
-              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
-              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/stock-v2/controle-mouvements') }"></lucide-icon>
-            <span *ngIf="isOpen" class="flex-1 truncate">Contrôle mouvements</span>
-            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
-              [ngClass]="{ 'rotate-180': openDropdownStock === 'controle-mouvements' }"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+            <!-- 7.4 Contrôle des mouvements -->
+            <li *ngIf="accessControleMouvements()">
+              <button (click)="toggleDropdownStock('controle-mouvements')"
+                class="group flex items-center gap-2 w-full px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{
+                  'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold': isActivePrefix('/admin/stock-v2/controle-mouvements')
+                }">
+                <lucide-icon name="ArrowUpDown" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
+                <span class="flex-1 truncate">Contrôle mouvements</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownStock === 'controle-mouvements' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-          <ul *ngIf="openDropdownStock === 'controle-mouvements' && isOpen"
-            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+              <ul *ngIf="openDropdownStock === 'controle-mouvements' && isOpen"
+                class="ml-3 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
 
             <li *ngIf="hasAccess('stock.workflowValidation')">
               <a routerLink="/admin/stock-v2/controle-mouvements/workflow"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Workflow" class="w-3.5 h-3.5 text-violet-300"></lucide-icon>
                 <span class="flex-1 truncate">Workflow validation</span>
               </a>
@@ -755,7 +758,7 @@
             <li *ngIf="hasAccess('stock.bonsEntree')">
               <a routerLink="/admin/stock-v2/controle-mouvements/bons-entree"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="FileInput" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
                 <span class="flex-1 truncate">Bons d'entrée</span>
               </a>
@@ -763,7 +766,7 @@
             <li *ngIf="hasAccess('stock.bonsSortie')">
               <a routerLink="/admin/stock-v2/controle-mouvements/bons-sortie"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="FileOutput" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
                 <span class="flex-1 truncate">Bons de sortie</span>
               </a>
@@ -771,7 +774,7 @@
             <li *ngIf="hasAccess('stock.plafonds')">
               <a routerLink="/admin/stock-v2/controle-mouvements/plafonds"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="SlidersHorizontal" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
                 <span class="flex-1 truncate">Plafonds dotation</span>
               </a>
@@ -779,7 +782,7 @@
             <li *ngIf="hasAccess('stock.dotation')">
               <a routerLink="/admin/stock-v2/controle-mouvements/dotation"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Scale" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
                 <span class="flex-1 truncate">Dotation prévue/réelle</span>
               </a>
@@ -787,7 +790,7 @@
             <li *ngIf="hasAccess('stock.historiqueDestinataire')">
               <a routerLink="/admin/stock-v2/controle-mouvements/historique-destinataire"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Users" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
                 <span class="flex-1 truncate">Hist. destinataires</span>
               </a>
@@ -795,7 +798,7 @@
             <li *ngIf="hasAccess('stock.rapportsConso')">
               <a routerLink="/admin/stock-v2/controle-mouvements/rapports"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="FileBarChart" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
                 <span class="flex-1 truncate">Rapports conso.</span>
               </a>
@@ -803,7 +806,7 @@
             <li *ngIf="hasAccess('stock.categorisation')">
               <a routerLink="/admin/stock-v2/controle-mouvements/categorisation/entrees"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Tags" class="w-3.5 h-3.5 text-green-300"></lucide-icon>
                 <span class="flex-1 truncate">Catég. entrées</span>
               </a>
@@ -811,7 +814,7 @@
             <li *ngIf="hasAccess('stock.categorisation')">
               <a routerLink="/admin/stock-v2/controle-mouvements/categorisation/sorties"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Tags" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
                 <span class="flex-1 truncate">Catég. sorties</span>
               </a>
@@ -819,33 +822,30 @@
           </ul>
         </li>
 
-        <!-- Stock v2 — 7.5 Analyse des consommations -->
-        <li *ngIf="accessAnalyseConsommations()">
-          <button (click)="toggleDropdownStock('analyse-consommations')"
-            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
-                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
-            [ngClass]="{
-              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/stock-v2/analyse-consommations'),
-              'justify-center px-0': !isOpen
-            }">
-            <lucide-icon name="ChartColumn"
-              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
-              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/stock-v2/analyse-consommations') }"></lucide-icon>
-            <span *ngIf="isOpen" class="flex-1 truncate">Analyse consommations</span>
-            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
-              [ngClass]="{ 'rotate-180': openDropdownStock === 'analyse-consommations' }"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+            <!-- 7.5 Analyse des consommations -->
+            <li *ngIf="accessAnalyseConsommations()">
+              <button (click)="toggleDropdownStock('analyse-consommations')"
+                class="group flex items-center gap-2 w-full px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{
+                  'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold': isActivePrefix('/admin/stock-v2/analyse-consommations')
+                }">
+                <lucide-icon name="ChartColumn" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
+                <span class="flex-1 truncate">Analyse consommations</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownStock === 'analyse-consommations' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-          <ul *ngIf="openDropdownStock === 'analyse-consommations' && isOpen"
-            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+              <ul *ngIf="openDropdownStock === 'analyse-consommations' && isOpen"
+                class="ml-3 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
 
             <li *ngIf="hasAccess('stock.analyseMensuelle')">
               <a routerLink="/admin/stock-v2/analyse-consommations/mensuel"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="CalendarRange" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
                 <span class="flex-1 truncate">Vue mensuelle</span>
               </a>
@@ -853,7 +853,7 @@
             <li *ngIf="hasAccess('stock.chantiers')">
               <a routerLink="/admin/stock-v2/analyse-consommations/chantiers"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="HardHat" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
                 <span class="flex-1 truncate">Fin de chantier</span>
               </a>
@@ -861,7 +861,7 @@
             <li *ngIf="hasAccess('stock.dons')">
               <a routerLink="/admin/stock-v2/analyse-consommations/dons"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Gift" class="w-3.5 h-3.5 text-purple-300"></lucide-icon>
                 <span class="flex-1 truncate">Dons</span>
               </a>
@@ -869,7 +869,7 @@
             <li *ngIf="hasAccess('stock.comparatif')">
               <a routerLink="/admin/stock-v2/analyse-consommations/comparatif"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Grid3x3" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
                 <span class="flex-1 truncate">Comparatif mensuel</span>
               </a>
@@ -877,7 +877,7 @@
             <li *ngIf="hasAccess('stock.filtresCroises')">
               <a routerLink="/admin/stock-v2/analyse-consommations/filtres-croises"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Filter" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
                 <span class="flex-1 truncate">Filtres croisés</span>
               </a>
@@ -885,33 +885,30 @@
           </ul>
         </li>
 
-        <!-- Stock v2 — 7.6 Valorisation financière -->
-        <li *ngIf="accessValorisationFinanciere()">
-          <button (click)="toggleDropdownStock('valorisation-financiere')"
-            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
-                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
-            [ngClass]="{
-              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/stock-v2/valorisation-financiere'),
-              'justify-center px-0': !isOpen
-            }">
-            <lucide-icon name="Wallet"
-              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
-              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/stock-v2/valorisation-financiere') }"></lucide-icon>
-            <span *ngIf="isOpen" class="flex-1 truncate">Valorisation financière</span>
-            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
-              [ngClass]="{ 'rotate-180': openDropdownStock === 'valorisation-financiere' }"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+            <!-- 7.6 Valorisation financière -->
+            <li *ngIf="accessValorisationFinanciere()">
+              <button (click)="toggleDropdownStock('valorisation-financiere')"
+                class="group flex items-center gap-2 w-full px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300
+                       hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+                [ngClass]="{
+                  'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold': isActivePrefix('/admin/stock-v2/valorisation-financiere')
+                }">
+                <lucide-icon name="Wallet" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
+                <span class="flex-1 truncate">Valorisation financière</span>
+                <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
+                  [ngClass]="{ 'rotate-180': openDropdownStock === 'valorisation-financiere' }"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-          <ul *ngIf="openDropdownStock === 'valorisation-financiere' && isOpen"
-            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
+              <ul *ngIf="openDropdownStock === 'valorisation-financiere' && isOpen"
+                class="ml-3 mt-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5">
 
             <li *ngIf="hasAccess('stock.tableauBordFinancier')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/tableau-bord"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Wallet" class="w-3.5 h-3.5 text-indigo-300"></lucide-icon>
                 <span class="flex-1 truncate">Tableau de bord</span>
               </a>
@@ -919,7 +916,7 @@
             <li *ngIf="hasAccess('stock.coutUnitaire')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/cout-unitaire"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Calculator" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
                 <span class="flex-1 truncate">Coût unitaire</span>
               </a>
@@ -927,7 +924,7 @@
             <li *ngIf="hasAccess('stock.coutMouvements')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/mouvements"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Receipt" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
                 <span class="flex-1 truncate">Coût des mouvements</span>
               </a>
@@ -935,7 +932,7 @@
             <li *ngIf="hasAccess('stock.valeurStock')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/valeur-stock"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Banknote" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
                 <span class="flex-1 truncate">Valeur du stock</span>
               </a>
@@ -943,7 +940,7 @@
             <li *ngIf="hasAccess('stock.coutSite')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/cout-site"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Building2" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
                 <span class="flex-1 truncate">Coût par site</span>
               </a>
@@ -951,7 +948,7 @@
             <li *ngIf="hasAccess('stock.coutChantier')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/cout-chantier"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="HardHat" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
                 <span class="flex-1 truncate">Coût de revient chantier</span>
               </a>
@@ -959,10 +956,12 @@
             <li *ngIf="hasAccess('stock.marges')">
               <a routerLink="/admin/stock-v2/valorisation-financiere/marges"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.82rem] text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="Percent" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
                 <span class="flex-1 truncate">Marge produits</span>
               </a>
+            </li>
+              </ul>
             </li>
           </ul>
         </li>

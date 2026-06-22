@@ -63,13 +63,11 @@ export const ORDRE_UNITES: UniteStock[] = [
 export const LIBELLES_TYPE_MOUVEMENT: Record<TypeMouvement, string> = {
   ENTREE: 'Entrée',
   SORTIE: 'Sortie',
-  TRANSFERT: 'Transfert',
 };
 
 export const COULEURS_TYPE_MOUVEMENT: Record<TypeMouvement, { bg: string; text: string }> = {
   ENTREE:    { bg: 'bg-green-100',  text: 'text-green-700' },
   SORTIE:    { bg: 'bg-red-100',    text: 'text-red-700' },
-  TRANSFERT: { bg: 'bg-blue-100',   text: 'text-blue-700' },
 };
 
 // ─── Motifs de mouvement ────────────────────────────────────────────────────
@@ -79,7 +77,6 @@ export const LIBELLES_MOTIF_MOUVEMENT: Record<MotifMouvement, string> = {
   PRODUCTION: 'Production',
   CONSOMMATION: 'Consommation',
   VENTE: 'Vente',
-  TRANSFERT: 'Transfert inter-sites',
   AJUSTEMENT: 'Ajustement',
   RETOUR: 'Retour',
   PERTE: 'Perte / casse',
@@ -89,7 +86,6 @@ export const LIBELLES_MOTIF_MOUVEMENT: Record<MotifMouvement, string> = {
 export const MOTIFS_PAR_TYPE: Record<TypeMouvement, MotifMouvement[]> = {
   ENTREE: ['ACHAT', 'PRODUCTION', 'RETOUR', 'AJUSTEMENT'],
   SORTIE: ['CONSOMMATION', 'VENTE', 'PERTE', 'AJUSTEMENT'],
-  TRANSFERT: ['TRANSFERT'],
 };
 
 // ─── Statuts d'état de stock ────────────────────────────────────────────────
@@ -168,26 +164,23 @@ export const DEVISE = 'FCFA';
 export const LIBELLES_TYPE_ENTREE: Record<TypeEntree, string> = {
   ACHAT_FOURNISSEUR: 'Achat fournisseur',
   RETOUR_PRODUCTION: 'Retour de production',
-  TRANSFERT_INTER_SITES: 'Transfert inter-sites',
   REINTEGRATION: 'Réintégration',
 };
 
 export const DESCRIPTIONS_TYPE_ENTREE: Record<TypeEntree, string> = {
   ACHAT_FOURNISSEUR: 'Réception de marchandises commandées auprès d’un fournisseur externe.',
   RETOUR_PRODUCTION: 'Retour en stock de produits issus de la production interne.',
-  TRANSFERT_INTER_SITES: 'Entrée résultant d’un transfert depuis un autre site.',
   REINTEGRATION: 'Réintégration en stock (retour terrain, annulation de sortie, surplus).',
 };
 
 export const COULEURS_TYPE_ENTREE: Record<TypeEntree, { bg: string; text: string }> = {
   ACHAT_FOURNISSEUR:     { bg: 'bg-emerald-100', text: 'text-emerald-700' },
   RETOUR_PRODUCTION:     { bg: 'bg-teal-100',    text: 'text-teal-700' },
-  TRANSFERT_INTER_SITES: { bg: 'bg-blue-100',    text: 'text-blue-700' },
   REINTEGRATION:         { bg: 'bg-indigo-100',  text: 'text-indigo-700' },
 };
 
 export const ORDRE_TYPES_ENTREE: TypeEntree[] = [
-  'ACHAT_FOURNISSEUR', 'RETOUR_PRODUCTION', 'TRANSFERT_INTER_SITES', 'REINTEGRATION',
+  'ACHAT_FOURNISSEUR', 'RETOUR_PRODUCTION', 'REINTEGRATION',
 ];
 
 // ─── Catégorisation des sorties (enums figés) ───────────────────────────────

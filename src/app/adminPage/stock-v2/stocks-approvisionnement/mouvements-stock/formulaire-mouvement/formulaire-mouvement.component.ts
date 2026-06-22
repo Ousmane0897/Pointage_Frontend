@@ -21,7 +21,6 @@ import {
 } from '../../../../../models/stock-v2-mouvement.model';
 import { Produit } from '../../../../../models/stock-v2-produit.model';
 import { SelecteurProduitComponent } from '../../shared/selecteur-produit/selecteur-produit.component';
-import { SelecteurSiteComponent } from '../../shared/selecteur-site/selecteur-site.component';
 import {
   LIBELLES_TYPE_MOUVEMENT,
   LIBELLES_MOTIF_MOUVEMENT,
@@ -38,7 +37,6 @@ import {
     RouterModule,
     LucideAngularModule,
     SelecteurProduitComponent,
-    SelecteurSiteComponent,
   ],
   templateUrl: './formulaire-mouvement.component.html',
   styleUrl: './formulaire-mouvement.component.scss',
@@ -53,7 +51,7 @@ export class FormulaireMouvementComponent implements OnInit, OnDestroy {
   readonly LIBELLES_TYPE_MOUVEMENT = LIBELLES_TYPE_MOUVEMENT;
   readonly LIBELLES_MOTIF_MOUVEMENT = LIBELLES_MOTIF_MOUVEMENT;
   readonly LIBELLES_UNITE = LIBELLES_UNITE;
-  readonly TYPES: TypeMouvement[] = ['ENTREE', 'SORTIE', 'TRANSFERT'];
+  readonly TYPES: TypeMouvement[] = ['ENTREE', 'SORTIE'];
   motifsDisponibles: MotifMouvement[] = MOTIFS_PAR_TYPE['ENTREE'];
 
   private destroy$ = new Subject<void>();
@@ -72,8 +70,6 @@ export class FormulaireMouvementComponent implements OnInit, OnDestroy {
       type: ['ENTREE' as TypeMouvement, Validators.required],
       motif: ['ACHAT' as MotifMouvement, Validators.required],
       quantite: [null as number | null, [Validators.required, Validators.min(0.0001)]],
-      siteSourceId: [''],
-      siteDestinationId: [''],
       date: [this.aujourdhui(), Validators.required],
       commentaire: [''],
     });
@@ -90,32 +86,13 @@ export class FormulaireMouvementComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /** Met à jour motifs proposés + validateurs des sites selon le type. */
+  /** Met à jour les motifs proposés selon le type sélectionné. */
   private appliquerContraintesType(type: TypeMouvement): void {
     this.motifsDisponibles = MOTIFS_PAR_TYPE[type];
     const motifCtrl = this.form.get('motif')!;
     if (!this.motifsDisponibles.includes(motifCtrl.value)) {
       motifCtrl.setValue(this.motifsDisponibles[0], { emitEvent: false });
     }
-
-    const source = this.form.get('siteSourceId')!;
-    const destination = this.form.get('siteDestinationId')!;
-
-    source.clearValidators();
-    destination.clearValidators();
-
-    if (type === 'ENTREE') {
-      destination.setValidators(Validators.required);
-      source.setValue('', { emitEvent: false });
-    } else if (type === 'SORTIE') {
-      source.setValidators(Validators.required);
-      destination.setValue('', { emitEvent: false });
-    } else { // TRANSFERT
-      source.setValidators(Validators.required);
-      destination.setValidators(Validators.required);
-    }
-    source.updateValueAndValidity({ emitEvent: false });
-    destination.updateValueAndValidity({ emitEvent: false });
     this.cdr.markForCheck();
   }
 
@@ -133,18 +110,12 @@ export class FormulaireMouvementComponent implements OnInit, OnDestroy {
       return;
     }
     const v = this.form.value;
-    if (v.type === 'TRANSFERT' && v.siteSourceId === v.siteDestinationId) {
-      this.toastr.warning('Les sites source et destination doivent être différents.');
-      return;
-    }
 
     const payload: MouvementPayload = {
       produitId: v.produitId,
       type: v.type,
       motif: v.motif,
       quantite: v.quantite,
-      siteSourceId: v.type === 'ENTREE' ? undefined : (v.siteSourceId || undefined),
-      siteDestinationId: v.type === 'SORTIE' ? undefined : (v.siteDestinationId || undefined),
       date: v.date,
       commentaire: v.commentaire || undefined,
     };
@@ -158,7 +129,7 @@ export class FormulaireMouvementComponent implements OnInit, OnDestroy {
           this.router.navigate(['/admin/stock-v2/stocks-approvisionnement/mouvements']);
         },
         error: err => {
-          if (err?.status === 422) this.toastr.error('Stock insuffisant pour cette sortie/ce transfert.');
+          if (err?.status === 422) this.toastr.error('Stock insuffisant pour cette sortie.');
           else this.toastr.error("Erreur lors de l'enregistrement du mouvement.");
         },
       });

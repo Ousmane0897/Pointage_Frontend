@@ -83,14 +83,32 @@ export class SaisieInventaireComponent implements OnInit, OnDestroy {
   }
 
   private construireForm(inv: Inventaire): void {
-    this.lignes.clear();
-    inv.lignes.forEach(l => {
-      this.lignes.push(this.fb.group({
-        qtePhysique: [l.qtePhysique ?? null],
-        justification: [l.justification ?? ''],
-      }));
-    });
-    if (inv.statut !== 'COMPTAGE') this.lignes.disable({ emitEvent: false });
+    // (Re)construit la structure uniquement si le jeu de lignes a changé ;
+    // sinon patche les valeurs des contrôles existants (préserve les directives
+    // liées pour que enable()/disable() resynchronise bien le DOM sous OnPush).
+    if (this.lignes.length !== inv.lignes.length) {
+      this.lignes.clear();
+      inv.lignes.forEach(l => {
+        this.lignes.push(this.fb.group({
+          qtePhysique: [l.qtePhysique ?? null],
+          justification: [l.justification ?? ''],
+        }));
+      });
+    } else {
+      inv.lignes.forEach((l, i) => {
+        this.lignes.at(i).patchValue(
+          { qtePhysique: l.qtePhysique ?? null, justification: l.justification ?? '' },
+          { emitEvent: false },
+        );
+      });
+    }
+
+    // Activation explicite et idempotente (resynchronise le DOM via les directives).
+    if (inv.statut === 'COMPTAGE') {
+      this.lignes.enable({ emitEvent: false });
+    } else {
+      this.lignes.disable({ emitEvent: false });
+    }
   }
 
   // ─── Calculs d'écart ──────────────────────────────────────────────────────

@@ -12,8 +12,7 @@ import { PageResponse } from '../models/pageResponse.model';
 /**
  * Service des Mouvements de stock — Module Stock v2 / 7.3.
  *
- * Entrées / sorties / transferts inter-sites. L'utilisateur créateur est
- * déduit du JWT côté serveur.
+ * Entrées / sorties. L'utilisateur créateur est déduit du JWT côté serveur.
  */
 @Injectable({ providedIn: 'root' })
 export class StockV2MouvementService {

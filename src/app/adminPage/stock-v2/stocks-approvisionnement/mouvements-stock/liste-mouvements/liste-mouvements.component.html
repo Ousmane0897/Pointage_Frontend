@@ -12,7 +12,7 @@
           <lucide-icon name="ArrowLeftRight" [size]="24" class="text-indigo-600"></lucide-icon>
           Mouvements de stock
         </h1>
-        <p class="text-sm text-gray-500 mt-1">Entrées, sorties et transferts inter-sites — historique complet.</p>
+        <p class="text-sm text-gray-500 mt-1">Entrées et sorties — historique complet.</p>
       </div>
       <div class="flex items-center gap-2">
         <button type="button" (click)="exporter()"
@@ -75,7 +75,7 @@
             <lucide-icon name="ArrowLeftRight" [size]="32" class="text-indigo-500"></lucide-icon>
           </div>
           <h3 class="text-base font-semibold text-gray-800">Aucun mouvement</h3>
-          <p class="text-sm text-gray-500 mt-1 max-w-md">Enregistrez une entrée, une sortie ou un transfert pour alimenter l'historique.</p>
+          <p class="text-sm text-gray-500 mt-1 max-w-md">Enregistrez une entrée ou une sortie pour alimenter l'historique.</p>
           <a routerLink="nouveau"
             class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
             <lucide-icon name="Plus" [size]="16"></lucide-icon>
@@ -115,13 +115,11 @@
                   <td class="px-4 py-3 text-gray-600">{{ LIBELLES_MOTIF_MOUVEMENT[m.motif] }}</td>
                   <td class="px-4 py-3 text-right tabular-nums font-medium"
                     [class.text-green-600]="m.type === 'ENTREE'" [class.text-red-600]="m.type === 'SORTIE'">
-                    {{ m.type === 'SORTIE' ? '−' : (m.type === 'ENTREE' ? '+' : '') }}{{ m.quantite | number:'1.0-2':'fr' }}
+                    {{ m.type === 'SORTIE' ? '−' : '+' }}{{ m.quantite | number:'1.0-2':'fr' }}
                     <span class="text-gray-400 font-normal">{{ m.unite ? LIBELLES_UNITE[m.unite] : '' }}</span>
                   </td>
                   <td class="px-4 py-3 text-gray-600 text-xs">
-                    @if (m.type === 'TRANSFERT') {
-                      {{ m.siteSourceNom || '—' }} <lucide-icon name="ArrowRight" [size]="12" class="inline mx-1"></lucide-icon> {{ m.siteDestinationNom || '—' }}
-                    } @else if (m.type === 'ENTREE') {
+                    @if (m.type === 'ENTREE') {
                       {{ m.siteDestinationNom || '—' }}
                     } @else {
                       {{ m.siteSourceNom || '—' }}

@@ -7,8 +7,6 @@
  * du client. Exportable en PDF pour archivage et envoi.
  */
 
-import { PositionGps } from './terrain-pointage.model';
-
 export type StatutIntervention =
   | 'BROUILLON'
   | 'EN_COURS'
@@ -63,8 +61,6 @@ export interface FicheIntervention {
   dateDebut: string;          // ISO
   dateFin?: string;
   duree?: number;             // minutes
-  positionDebut?: PositionGps;
-  positionFin?: PositionGps;
 
   taches: TacheChecklist[];
   produits: ProduitUtilise[];

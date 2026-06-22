@@ -30,7 +30,8 @@ export class SidebarComponent implements OnInit {
   openDropdownExploitationV2: string | null = null; // Variable pour la nouvelle section Exploitation v2
   openDropdownProductionChimie: string | null = null; // Sous-menu Production Chimie
   openDropdownTerrain: string | null = null; // Sous-menu Exploitation Terrain (5.2)
-  openDropdownStock: string | null = null; // Sous-menu Stock v2 (7.3)
+  openDropdownStockV2: string | null = null; // Parent regroupant les 4 sous-modules Stock (7.3 → 7.6)
+  openDropdownStock: string | null = null; // Sous-menu actif parmi les 4 sous-modules Stock (accordéon)
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -200,6 +201,14 @@ export class SidebarComponent implements OnInit {
     );
   }
 
+  /** Accès au menu Stock parent (au moins un des 4 sous-modules accessible). */
+  accessStockV2(): boolean {
+    return this.accessStock()
+      || this.accessControleMouvements()
+      || this.accessAnalyseConsommations()
+      || this.accessValorisationFinanciere();
+  }
+
   toggleSidebar() {
     this.isOpen = !this.isOpen;
   }
@@ -270,6 +279,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownTerrain(menu: string) {
     this.openDropdownTerrain = this.openDropdownTerrain === menu ? null : menu;
+  }
+
+  toggleDropdownStockV2(menu: string) {
+    this.openDropdownStockV2 = this.openDropdownStockV2 === menu ? null : menu;
   }
 
   toggleDropdownStock(menu: string) {

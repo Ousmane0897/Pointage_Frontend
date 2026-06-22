@@ -13,7 +13,6 @@ import { StatutBon, HistoriqueWorkflow } from './stock-v2-workflow.model';
 export type TypeEntree =
   | 'ACHAT_FOURNISSEUR'
   | 'RETOUR_PRODUCTION'
-  | 'TRANSFERT_INTER_SITES'
   | 'REINTEGRATION';
 
 export interface LigneBonEntree {

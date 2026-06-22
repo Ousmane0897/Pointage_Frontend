@@ -57,7 +57,7 @@ export class ListeMouvementsComponent implements OnInit, OnDestroy {
   readonly COULEURS_TYPE_MOUVEMENT = COULEURS_TYPE_MOUVEMENT;
   readonly LIBELLES_MOTIF_MOUVEMENT = LIBELLES_MOTIF_MOUVEMENT;
   readonly LIBELLES_UNITE = LIBELLES_UNITE;
-  readonly TYPES: TypeMouvement[] = ['ENTREE', 'SORTIE', 'TRANSFERT'];
+  readonly TYPES: TypeMouvement[] = ['ENTREE', 'SORTIE'];
 
   private destroy$ = new Subject<void>();
 
