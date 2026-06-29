@@ -42,6 +42,7 @@ export class PageCodePinComponent implements OnInit {
   toastMessage: string | null = null;
   toastTimeout: any;
   pointage!: Pointage;
+  isSubmitting = false;
 
 
   async ngOnInit() {
@@ -121,6 +122,12 @@ export class PageCodePinComponent implements OnInit {
       return;
     }
 
+    // 🔒 Verrou anti double-clic : on bloque tant qu'un pointage est en cours
+    if (this.isSubmitting) {
+      return;
+    }
+    this.isSubmitting = true;
+
     let location;
 
     // 🔵 1️⃣ GPS AVANT TOUT
@@ -151,6 +158,7 @@ export class PageCodePinComponent implements OnInit {
         );
       }
 
+      this.isSubmitting = false; // 🔓 réarme le bouton après échec GPS
       return; // ❌ STOP TOTAL
     }
 
@@ -180,6 +188,7 @@ export class PageCodePinComponent implements OnInit {
       error: (err) => {
 
         this.spinner.hide();
+        this.isSubmitting = false; // 🔓 réarme le bouton pour permettre un nouvel essai
 
         console.error('API ERROR:', err);
 
