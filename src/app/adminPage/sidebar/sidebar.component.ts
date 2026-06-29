@@ -30,6 +30,8 @@ export class SidebarComponent implements OnInit {
   openDropdownExploitationV2: string | null = null; // Variable pour la nouvelle section Exploitation v2
   openDropdownProductionChimie: string | null = null; // Sous-menu Production Chimie
   openDropdownTerrain: string | null = null; // Sous-menu Exploitation Terrain (5.2)
+  openDropdownStockV2: string | null = null; // Parent regroupant les 4 sous-modules Stock (7.3 → 7.6)
+  openDropdownStock: string | null = null; // Sous-menu actif parmi les 4 sous-modules Stock (accordéon)
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
@@ -132,6 +134,81 @@ export class SidebarComponent implements OnInit {
     );
   }
 
+  /** Accès au module Stock v2 (7.3) — au moins une fonctionnalité autorisée. */
+  accessStock(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.catalogue ||
+      s.mouvements ||
+      s.etatStock ||
+      s.inventaires ||
+      s.synthese ||
+      s.approvisionnement ||
+      s.tableauBord
+    );
+  }
+
+  /** Accès au module Stock v2 (7.4 Contrôle des mouvements) — au moins une fonctionnalité. */
+  accessControleMouvements(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.categorisation ||
+      s.bonsEntree ||
+      s.bonsSortie ||
+      s.workflowValidation ||
+      s.historiqueDestinataire ||
+      s.plafonds ||
+      s.dotation ||
+      s.rapportsConso
+    );
+  }
+
+  /** Accès à la section 7.5 Analyse des consommations (au moins un sous-flag). */
+  accessAnalyseConsommations(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.analyseMensuelle ||
+      s.chantiers ||
+      s.dons ||
+      s.comparatif ||
+      s.filtresCroises
+    );
+  }
+
+  /** Accès à la section 7.6 Valorisation financière (au moins un sous-flag). */
+  accessValorisationFinanciere(): boolean {
+    if (this.role === 'SUPERADMIN') return true;
+    const m: ModulesAutorises = this.modulesAutorises;
+    if (!m || !m.stock) return false;
+    const s = m.stock;
+    return !!(
+      s.coutUnitaire ||
+      s.coutMouvements ||
+      s.valeurStock ||
+      s.coutSite ||
+      s.coutChantier ||
+      s.marges ||
+      s.tableauBordFinancier
+    );
+  }
+
+  /** Accès au menu Stock parent (au moins un des 4 sous-modules accessible). */
+  accessStockV2(): boolean {
+    return this.accessStock()
+      || this.accessControleMouvements()
+      || this.accessAnalyseConsommations()
+      || this.accessValorisationFinanciere();
+  }
+
   toggleSidebar() {
     this.isOpen = !this.isOpen;
   }
@@ -202,6 +279,14 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownTerrain(menu: string) {
     this.openDropdownTerrain = this.openDropdownTerrain === menu ? null : menu;
+  }
+
+  toggleDropdownStockV2(menu: string) {
+    this.openDropdownStockV2 = this.openDropdownStockV2 === menu ? null : menu;
+  }
+
+  toggleDropdownStock(menu: string) {
+    this.openDropdownStock = this.openDropdownStock === menu ? null : menu;
   }
 
 

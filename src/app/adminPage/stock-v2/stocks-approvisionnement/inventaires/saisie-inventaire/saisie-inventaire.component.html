@@ -1,0 +1,154 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-5xl mx-auto">
+
+    <a routerLink="/admin/stock-v2/stocks-approvisionnement/inventaires"
+      class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-4">
+      <lucide-icon name="ArrowLeft" [size]="16"></lucide-icon>
+      Retour aux inventaires
+    </a>
+
+    @if (loading) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-4">
+        @for (_ of [0,1,2,3]; track $index) { <div class="h-10 rounded-lg bg-gray-100 animate-pulse"></div> }
+      </div>
+    } @else if (inventaire) {
+
+      <!-- En-tête + stepper -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{{ inventaire.reference || 'Brouillon' }}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                [ngClass]="[COULEURS_STATUT_INVENTAIRE[inventaire.statut].bg, COULEURS_STATUT_INVENTAIRE[inventaire.statut].text]">
+                {{ LIBELLES_STATUT_INVENTAIRE[inventaire.statut] }}
+              </span>
+            </div>
+            <h1 class="text-xl font-bold text-gray-800">{{ inventaire.libelle }}</h1>
+            <p class="text-sm text-gray-500 mt-0.5">
+              {{ inventaire.datePlanifiee | date:'dd/MM/yyyy':'':'fr' }} · {{ inventaire.siteNom || 'Tous sites' }} ·
+              seuil écart {{ inventaire.seuilEcartJustification }}
+            </p>
+          </div>
+          @if (inventaire.statut === 'CLOTURE') {
+            <button type="button" (click)="telechargerPv()"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 transition-colors">
+              <lucide-icon name="FileDown" [size]="16"></lucide-icon>
+              PV (PDF)
+            </button>
+          }
+        </div>
+
+        <!-- Stepper -->
+        <div class="flex items-center">
+          @for (etape of ETAPES; track etape; let last = $last) {
+            <div class="flex items-center" [class.flex-1]="!last">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                  [class.bg-indigo-600]="estEtapeAtteinte(etape)" [class.text-white]="estEtapeAtteinte(etape)"
+                  [class.bg-gray-100]="!estEtapeAtteinte(etape)" [class.text-gray-400]="!estEtapeAtteinte(etape)">
+                  @if (estEtapeAtteinte(etape)) { <lucide-icon name="Check" [size]="14"></lucide-icon> }
+                  @else { {{ $index + 1 }} }
+                </span>
+                <span class="text-xs font-medium" [class.text-indigo-700]="estEtapeAtteinte(etape)" [class.text-gray-400]="!estEtapeAtteinte(etape)">
+                  {{ LIBELLES_STATUT_INVENTAIRE[etape] }}
+                </span>
+              </div>
+              @if (!last) {
+                <div class="flex-1 h-0.5 mx-2" [class.bg-indigo-300]="estEtapeAtteinte(etape)" [class.bg-gray-200]="!estEtapeAtteinte(etape)"></div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Lignes -->
+      <form [formGroup]="form">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Code</th>
+                  <th class="px-4 py-3 text-left">Produit</th>
+                  <th class="px-4 py-3 text-right">Théorique</th>
+                  <th class="px-4 py-3 text-right">Physique</th>
+                  <th class="px-4 py-3 text-right">Écart</th>
+                  <th class="px-4 py-3 text-left">Justification</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" formArrayName="lignes">
+                @for (l of inventaire.lignes; track l.produitId; let i = $index) {
+                  <tr [formGroupName]="i" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ l.produitCode }}</td>
+                    <td class="px-4 py-3 text-gray-800">{{ l.produitLibelle }}</td>
+                    <td class="px-4 py-3 text-right tabular-nums text-gray-600">
+                      {{ l.qteTheorique | number:'1.0-2':'fr' }} {{ l.unite ? LIBELLES_UNITE[l.unite] : '' }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <input type="number" step="any" formControlName="qtePhysique"
+                        class="w-24 px-2 py-1 rounded border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:bg-gray-50 disabled:text-gray-500">
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums font-medium"
+                      [class.text-red-600]="(ecart(i) ?? 0) < 0" [class.text-green-600]="(ecart(i) ?? 0) > 0" [class.text-gray-400]="ecart(i) === null">
+                      @if (ecart(i) === null) { — }
+                      @else {
+                        {{ (ecart(i) ?? 0) > 0 ? '+' : '' }}{{ ecart(i) | number:'1.0-2':'fr' }}
+                        @if (ecartHorsSeuil(i)) { <lucide-icon name="AlertTriangle" [size]="14" class="inline ml-1 text-amber-500"></lucide-icon> }
+                      }
+                    </td>
+                    <td class="px-4 py-3">
+                      <input type="text" formControlName="justification"
+                        [placeholder]="ecartHorsSeuil(i) ? 'Justification requise…' : '—'"
+                        class="w-full px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:bg-gray-50 disabled:text-gray-500"
+                        [class.border-red-300]="justificationManquante(i)" [class.border-gray-200]="!justificationManquante(i)">
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </form>
+
+      <!-- Barre d'actions selon le statut -->
+      <div class="flex items-center justify-end gap-3 mt-4">
+        @if (inventaire.statut === 'BROUILLON') {
+          <button type="button" (click)="demarrerComptage()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm">
+            <lucide-icon name="Play" [size]="16"></lucide-icon>
+            Démarrer le comptage
+          </button>
+        } @else if (inventaire.statut === 'COMPTAGE') {
+          <button type="button" (click)="enregistrerComptage()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-60 transition-colors">
+            <lucide-icon name="Save" [size]="16"></lucide-icon>
+            Enregistrer
+          </button>
+          <button type="button" (click)="soumettreValidation()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm">
+            <lucide-icon name="Send" [size]="16"></lucide-icon>
+            Soumettre à validation
+          </button>
+        } @else if (inventaire.statut === 'VALIDATION') {
+          <button type="button" (click)="cloturer()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-60 transition-colors shadow-sm">
+            <lucide-icon name="CheckCircle2" [size]="16"></lucide-icon>
+            Clôturer &amp; appliquer au stock
+          </button>
+        } @else {
+          <span class="inline-flex items-center gap-2 text-sm text-green-700">
+            <lucide-icon name="CheckCircle2" [size]="16"></lucide-icon>
+            Inventaire clôturé le {{ inventaire.dateCloture | date:'dd/MM/yyyy':'':'fr' }}
+          </span>
+        }
+      </div>
+
+    } @else {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+        <lucide-icon name="ClipboardX" [size]="40" class="text-gray-300 mx-auto mb-3"></lucide-icon>
+        <p class="text-sm text-gray-500">Inventaire introuvable.</p>
+      </div>
+    }
+  </div>
+</div>

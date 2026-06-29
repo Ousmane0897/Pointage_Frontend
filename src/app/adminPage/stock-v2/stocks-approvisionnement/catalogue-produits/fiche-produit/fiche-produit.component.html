@@ -1,0 +1,121 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+
+    <a routerLink="/admin/stock-v2/stocks-approvisionnement/produits"
+      class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-4">
+      <lucide-icon name="ArrowLeft" [size]="16"></lucide-icon>
+      Retour au catalogue
+    </a>
+
+    @if (loading) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-4">
+        @for (_ of [0,1,2,3]; track $index) {
+          <div class="h-10 rounded-lg bg-gray-100 animate-pulse"></div>
+        }
+      </div>
+    } @else if (produit) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+        <!-- En-tête -->
+        <div class="p-6 flex flex-col sm:flex-row gap-6 border-b border-gray-100">
+          <div class="w-28 h-28 rounded-xl bg-indigo-50 flex items-center justify-center overflow-hidden shrink-0">
+            @if (photoUrl) {
+              <img [src]="photoUrl" [alt]="produit.libelle" class="w-full h-full object-cover">
+            } @else {
+              <lucide-icon name="Package" [size]="40" class="text-indigo-300"></lucide-icon>
+            }
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <span class="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{{ produit.code }}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="[COULEURS_TYPE_PRODUIT[produit.typeProduit].bg, COULEURS_TYPE_PRODUIT[produit.typeProduit].text]">
+                {{ LIBELLES_TYPE_PRODUIT[produit.typeProduit] }}
+              </span>
+              @if (produit.actif) {
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Actif</span>
+              } @else {
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-600">Inactif</span>
+              }
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ produit.libelle }}</h1>
+            @if (produit.remarque) {
+              <p class="text-sm text-gray-500 mt-1">{{ produit.remarque }}</p>
+            }
+          </div>
+          <a [routerLink]="['..', produit.id, 'modifier']"
+            class="inline-flex items-center gap-2 h-fit px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
+            <lucide-icon name="Pencil" [size]="16"></lucide-icon>
+            Modifier
+          </a>
+        </div>
+
+        <!-- Détails -->
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-100">
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Catégorie</dt>
+            <dd class="text-sm text-gray-800 mt-1">{{ produit.categorieLibelle || '—' }}</dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Sous-catégorie</dt>
+            <dd class="text-sm text-gray-800 mt-1">{{ produit.sousCategorie || '—' }}</dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Unité</dt>
+            <dd class="text-sm text-gray-800 mt-1">{{ LIBELLES_UNITE[produit.unite] }}</dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Fournisseur principal</dt>
+            <dd class="text-sm text-gray-800 mt-1">{{ produit.fournisseurPrincipal || '—' }}</dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Stock total</dt>
+            <dd class="text-sm mt-1 tabular-nums" [class.text-red-600]="estSousSeuil()" [class.font-semibold]="estSousSeuil()">
+              {{ (produit.quantiteTotale ?? 0) | number:'1.0-2':'fr' }} {{ LIBELLES_UNITE[produit.unite] }}
+              @if (estSousSeuil()) {
+                <lucide-icon name="AlertTriangle" [size]="14" class="inline ml-1 text-red-500"></lucide-icon>
+              }
+            </dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Seuil d'alerte</dt>
+            <dd class="text-sm text-gray-800 mt-1 tabular-nums">{{ produit.seuilAlerte | number:'1.0-2':'fr' }} {{ LIBELLES_UNITE[produit.unite] }}</dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Prix unitaire</dt>
+            <dd class="text-sm text-gray-800 mt-1 tabular-nums">{{ produit.prixUnitaire | number:'1.0-0':'fr' }} FCFA</dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Valeur stock</dt>
+            <dd class="text-sm text-gray-800 mt-1 tabular-nums">
+              {{ ((produit.quantiteTotale ?? 0) * produit.prixUnitaire) | number:'1.0-0':'fr' }} FCFA
+            </dd>
+          </div>
+          <div class="bg-white p-4">
+            <dt class="text-xs uppercase tracking-wide text-gray-400">Fiche technique</dt>
+            <dd class="text-sm mt-1">
+              @if (produit.ficheTechniqueNom) {
+                <button type="button" (click)="telechargerFiche()" [disabled]="telechargementFiche"
+                  class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 disabled:opacity-60">
+                  @if (telechargementFiche) {
+                    <lucide-icon name="Loader2" [size]="14" class="animate-spin"></lucide-icon>
+                  } @else {
+                    <lucide-icon name="FileDown" [size]="14"></lucide-icon>
+                  }
+                  Télécharger
+                </button>
+              } @else {
+                <span class="text-gray-400">—</span>
+              }
+            </dd>
+          </div>
+        </dl>
+      </div>
+    } @else {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+        <lucide-icon name="PackageX" [size]="40" class="text-gray-300 mx-auto mb-3"></lucide-icon>
+        <p class="text-sm text-gray-500">Produit introuvable.</p>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="p-4 sm:p-6 max-w-3xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center gap-3 mb-6">
+    <a routerLink="/admin/stock-v2/analyse-consommations/chantiers"
+      class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+      <lucide-icon name="ArrowLeft" [size]="20"></lucide-icon>
+    </a>
+    <div class="flex items-center gap-3">
+      <div class="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+        <lucide-icon name="HardHat" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">{{ idEdition ? 'Modifier le chantier' : 'Nouveau chantier' }}</h1>
+        <p class="text-sm text-gray-500">Les consommations sont rattachées via les bons de sortie « Distribution chantier ».</p>
+      </div>
+    </div>
+  </div>
+
+  @if (chargement) {
+    <div class="h-64 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="enregistrer()" class="space-y-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Référence <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="reference" placeholder="Ex : CH-2026-014"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          @if (f['reference'].touched && f['reference'].invalid) { <p class="text-xs text-red-600 mt-1">Référence requise.</p> }
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Nom du chantier <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="nom" placeholder="Ex : Nettoyage tour Almadies"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          @if (f['nom'].touched && f['nom'].invalid) { <p class="text-xs text-red-600 mt-1">Nom requis.</p> }
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Site rattaché</label>
+          <app-selecteur-site formControlName="siteId"></app-selecteur-site>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Client</label>
+          <input type="text" formControlName="client" placeholder="Client final (optionnel)"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Date de début <span class="text-red-500">*</span></label>
+          <input type="date" formControlName="dateDebut"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Observations (optionnel)"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <button type="button" (click)="annuler()"
+          class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          Annuler
+        </button>
+        <button type="submit" [disabled]="submitting"
+          class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+          @if (submitting) { <lucide-icon name="Loader2" [size]="16" class="animate-spin"></lucide-icon> }
+          @else { <lucide-icon name="Save" [size]="16"></lucide-icon> }
+          Enregistrer
+        </button>
+      </div>
+    </form>
+  }
+</div>

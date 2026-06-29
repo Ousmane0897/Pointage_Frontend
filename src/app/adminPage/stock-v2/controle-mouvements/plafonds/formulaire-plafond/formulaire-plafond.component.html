@@ -1,0 +1,100 @@
+<div class="p-4 sm:p-6 max-w-3xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center gap-3 mb-6">
+    <a routerLink="/admin/stock-v2/controle-mouvements/plafonds"
+      class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+      <lucide-icon name="ArrowLeft" [size]="20"></lucide-icon>
+    </a>
+    <div class="flex items-center gap-3">
+      <div class="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+        <lucide-icon name="SlidersHorizontal" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">{{ idEdition ? 'Modifier le plafond' : 'Nouveau plafond' }}</h1>
+        <p class="text-sm text-gray-500">Seuil mensuel de dotation par site.</p>
+      </div>
+    </div>
+  </div>
+
+  @if (chargement) {
+    <div class="h-64 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="enregistrer()" class="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Site <span class="text-red-500">*</span></label>
+        <app-selecteur-site formControlName="siteId"></app-selecteur-site>
+        @if (f['siteId'].touched && f['siteId'].invalid) { <p class="text-xs text-red-600 mt-1">Site requis.</p> }
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-2">Granularité <span class="text-red-500">*</span></label>
+        <div class="flex flex-wrap gap-2">
+          <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors"
+            [ngClass]="granularite === 'PRODUIT' ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            <input type="radio" formControlName="granularite" value="PRODUIT" class="accent-indigo-600">
+            {{ LIBELLES_GRANULARITE_PLAFOND['PRODUIT'] }}
+          </label>
+          <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors"
+            [ngClass]="granularite === 'CATEGORIE' ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            <input type="radio" formControlName="granularite" value="CATEGORIE" class="accent-indigo-600">
+            {{ LIBELLES_GRANULARITE_PLAFOND['CATEGORIE'] }}
+          </label>
+        </div>
+      </div>
+
+      @if (granularite === 'PRODUIT') {
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Produit ciblé <span class="text-red-500">*</span></label>
+          <app-selecteur-produit formControlName="cibleProduitId"></app-selecteur-produit>
+          @if (f['cibleProduitId'].touched && f['cibleProduitId'].invalid) { <p class="text-xs text-red-600 mt-1">Produit requis.</p> }
+        </div>
+      } @else {
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Catégorie ciblée <span class="text-red-500">*</span></label>
+          <select formControlName="cibleCategorieId"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+            <option value="">— Sélectionner —</option>
+            @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
+          </select>
+          @if (f['cibleCategorieId'].touched && f['cibleCategorieId'].invalid) { <p class="text-xs text-red-600 mt-1">Catégorie requise.</p> }
+        </div>
+      }
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Plafond mensuel (quantité) <span class="text-red-500">*</span></label>
+          <input type="number" formControlName="plafondMensuel" min="0" step="any"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          @if (f['plafondMensuel'].touched && f['plafondMensuel'].invalid) { <p class="text-xs text-red-600 mt-1">Valeur &gt; 0 requise.</p> }
+        </div>
+        <div class="flex items-end">
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" formControlName="actif" class="accent-indigo-600 w-4 h-4">
+            Plafond actif
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Commentaire</label>
+        <textarea formControlName="commentaire" rows="2" placeholder="Note libre (optionnel)"
+          class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" (click)="annuler()"
+          class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          Annuler
+        </button>
+        <button type="submit" [disabled]="submitting"
+          class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+          @if (submitting) { <lucide-icon name="Loader2" [size]="16" class="animate-spin"></lucide-icon> }
+          @else { <lucide-icon name="Save" [size]="16"></lucide-icon> }
+          Enregistrer
+        </button>
+      </div>
+    </form>
+  }
+</div>

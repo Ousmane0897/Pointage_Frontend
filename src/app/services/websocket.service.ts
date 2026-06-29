@@ -9,6 +9,11 @@ import {
   TOPIC_POINTAGES_TERRAIN,
   QUEUE_NOTIFICATIONS_TERRAIN,
 } from '../constants/terrain.constants';
+import {
+  TOPIC_STOCK_VALIDATIONS,
+  QUEUE_NOTIFICATIONS_STOCK,
+} from '../constants/stock.constants';
+import { NotificationValidationStock } from '../models/stock-v2-workflow.model';
 
 /**
  * Charge utile pour les notifications ciblées du module Exploitation Terrain
@@ -34,6 +39,10 @@ export class WebsocketService {
   private alertesTerrain$ = new Subject<AlerteTerrain>();
   private pointagesTerrain$ = new Subject<any>();
   private notificationsTerrain$ = new Subject<NotificationTerrain>();
+
+  // ─── Module Stock v2 (7.4 Contrôle des mouvements) ─────────────────────
+  private stockValidations$ = new Subject<NotificationValidationStock>();
+  private notificationsStock$ = new Subject<NotificationValidationStock>();
 
   constructor() {
     const token = localStorage.getItem('token'); // Récupère le JWT depuis le localStorage
@@ -94,6 +103,23 @@ export class WebsocketService {
           console.error('Payload notification terrain invalide', e);
         }
       });
+
+      // ─── Module Stock v2 (7.4 Contrôle des mouvements) ─────────────────
+      this.client.subscribe(TOPIC_STOCK_VALIDATIONS, (msg: IMessage) => {
+        try {
+          this.stockValidations$.next(JSON.parse(msg.body) as NotificationValidationStock);
+        } catch (e) {
+          console.error('Payload validation stock invalide', e);
+        }
+      });
+
+      this.client.subscribe(QUEUE_NOTIFICATIONS_STOCK, (msg: IMessage) => {
+        try {
+          this.notificationsStock$.next(JSON.parse(msg.body) as NotificationValidationStock);
+        } catch (e) {
+          console.error('Payload notification stock invalide', e);
+        }
+      });
     };
 
     this.client.onStompError = (frame) => {
@@ -133,5 +159,17 @@ export class WebsocketService {
   /** Notifications ciblées (queue utilisateur) — escalade vers le destinataire. */
   onNotificationsTerrain(): Observable<NotificationTerrain> {
     return this.notificationsTerrain$.asObservable();
+  }
+
+  // ─── Module Stock v2 (7.4 Contrôle des mouvements) ───────────────────────
+
+  /** Flux temps réel des validations de bons (broadcast — soumission/décision). */
+  onStockValidations(): Observable<NotificationValidationStock> {
+    return this.stockValidations$.asObservable();
+  }
+
+  /** Notifications ciblées (queue utilisateur) — validateur / superviseur stock. */
+  onNotificationsStock(): Observable<NotificationValidationStock> {
+    return this.notificationsStock$.asObservable();
   }
 }

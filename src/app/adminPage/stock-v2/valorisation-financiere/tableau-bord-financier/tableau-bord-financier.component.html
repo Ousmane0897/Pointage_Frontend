@@ -1,0 +1,166 @@
+<div class="p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div class="flex items-start gap-3">
+      <div class="p-2.5 rounded-xl bg-indigo-100 text-indigo-700">
+        <lucide-icon name="Wallet" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Tableau de bord financier</h1>
+        <p class="text-sm text-gray-500">Pilotage financier global du stock : valeur, coûts, marges et dérives.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="exporterExcel()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileSpreadsheet" [size]="16" class="text-emerald-600"></lucide-icon> Excel
+      </button>
+      <button (click)="exporterPdf()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <lucide-icon name="FileText" [size]="16" class="text-red-600"></lucide-icon> PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres globaux -->
+  <div [formGroup]="filtres" class="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+    <div class="flex flex-wrap items-end gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Du <span class="text-red-500">*</span></label>
+        <input type="date" formControlName="dateDebut"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Au <span class="text-red-500">*</span></label>
+        <input type="date" formControlName="dateFin"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+      </div>
+      <div class="min-w-[180px]">
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Site</label>
+        <app-selecteur-site formControlName="siteId"></app-selecteur-site>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Catégorie</label>
+        <select formControlName="categorieId"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+          <option value="">Toutes</option>
+          @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
+        </select>
+      </div>
+      <button (click)="charger()"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
+        <lucide-icon name="Play" [size]="16"></lucide-icon> Actualiser
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      @for (i of [1,2,3,4]; track i) { <div class="h-24 rounded-xl bg-gray-100 animate-pulse"></div> }
+    </div>
+    <div class="h-80 rounded-xl bg-gray-100 animate-pulse"></div>
+  } @else if (rapport) {
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Valeur du stock (FCFA)</p>
+          <lucide-icon name="Banknote" [size]="18" class="text-indigo-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ rapport.kpis.valeurStock | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Consommé (mois)</p>
+          <lucide-icon name="Receipt" [size]="18" class="text-blue-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold text-gray-800 mt-1">{{ rapport.kpis.valeurConsommeeMois | number:'1.0-0':'fr' }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Marge globale (FCFA)</p>
+          <lucide-icon name="Percent" [size]="18" class="text-teal-400"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold mt-1" [ngClass]="rapport.kpis.margeGlobale >= 0 ? 'text-green-600' : 'text-red-600'">
+          {{ rapport.kpis.margeGlobale | number:'1.0-0':'fr' }}
+        </p>
+        <p class="text-xs text-gray-400 mt-1">{{ rapport.kpis.tauxMargeMoyen | number:'1.0-1':'fr' }}% moyen</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Dérives détectées</p>
+          <lucide-icon name="TriangleAlert" [size]="18" [ngClass]="rapport.kpis.nbDerives > 0 ? 'text-red-400' : 'text-green-400'"></lucide-icon>
+        </div>
+        <p class="text-2xl font-bold mt-1" [ngClass]="rapport.kpis.nbDerives > 0 ? 'text-red-600' : 'text-green-600'">
+          {{ rapport.kpis.nbDerives }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Charts ligne 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div class="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Évolution de la valeur du stock</h2>
+        @if (lineData) {
+          <div class="h-72"><canvas baseChart [type]="'line'" [data]="lineData" [options]="lineOptions"></canvas></div>
+        } @else {
+          <div class="h-72 flex items-center justify-center text-gray-300"><lucide-icon name="TrendingUp" [size]="32"></lucide-icon></div>
+        }
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Répartition par catégorie</h2>
+        @if (donutData) {
+          <div class="h-72"><canvas baseChart [type]="'doughnut'" [data]="donutData" [options]="donutOptions"></canvas></div>
+        } @else {
+          <div class="h-72 flex items-center justify-center text-gray-300"><lucide-icon name="ChartPie" [size]="32"></lucide-icon></div>
+        }
+      </div>
+    </div>
+
+    <!-- Charts ligne 2 + dérives -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Coût moyen par site (top 10)</h2>
+        @if (barData) {
+          <div class="h-80"><canvas baseChart [type]="'bar'" [data]="barData" [options]="barOptions"></canvas></div>
+        } @else {
+          <div class="h-80 flex items-center justify-center text-gray-300"><lucide-icon name="ChartColumn" [size]="32"></lucide-icon></div>
+        }
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Dérives budgétaires</h2>
+        @if (rapport.derives.length > 0) {
+          <div class="space-y-2 max-h-80 overflow-auto">
+            @for (d of rapport.derives; track trackByIndex($index)) {
+              <div class="rounded-lg border p-3" [ngClass]="classeDerive(d)">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-800">{{ d.cible }}</span>
+                  <span class="text-xs font-semibold" [ngClass]="d.gravite === 'CRITIQUE' ? 'text-red-700' : 'text-amber-700'">
+                    {{ d.ecartPct > 0 ? '+' : '' }}{{ d.ecartPct | number:'1.0-1':'fr' }}%
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ d.type === 'SITE' ? 'Site' : 'Produit' }} ·
+                  {{ d.valeurActuelle | number:'1.0-0':'fr' }} vs {{ d.valeurReference | number:'1.0-0':'fr' }} {{ DEVISE }}
+                </p>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="h-80 flex flex-col items-center justify-center text-gray-300">
+            <lucide-icon name="CircleCheck" [size]="32" class="text-green-300"></lucide-icon>
+            <p class="text-sm mt-2 text-gray-400">Aucune dérive détectée.</p>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-gray-100 text-center py-16">
+      <lucide-icon name="Wallet" [size]="40" class="text-gray-200 mx-auto"></lucide-icon>
+      <p class="text-gray-500 font-medium mt-3">Aucune donnée financière</p>
+      <p class="text-sm text-gray-400 mt-1">Choisissez une période et cliquez sur « Actualiser ».</p>
+    </div>
+  }
+</div>

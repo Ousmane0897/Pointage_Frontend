@@ -1,0 +1,151 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+      <div>
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+          <lucide-icon name="Boxes" [size]="14"></lucide-icon>
+          <span>Stocks &amp; Approvisionnement</span>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <lucide-icon name="ArrowLeftRight" [size]="24" class="text-indigo-600"></lucide-icon>
+          Mouvements de stock
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Entrées et sorties — historique complet.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="exporter()"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 transition-colors">
+          <lucide-icon name="FileSpreadsheet" [size]="16"></lucide-icon>
+          Exporter
+        </button>
+        <a routerLink="nouveau"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
+          <lucide-icon name="Plus" [size]="16"></lucide-icon>
+          Nouveau mouvement
+        </a>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="relative flex-1 min-w-[220px]">
+          <lucide-icon name="Search" [size]="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></lucide-icon>
+          <input type="text" [formControl]="qControl" placeholder="Rechercher (référence, produit)…"
+            class="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Type</label>
+          <select [formControl]="filtreType" (change)="appliquerFiltres()"
+            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+            <option value="">Tous</option>
+            @for (t of TYPES; track t) { <option [value]="t">{{ LIBELLES_TYPE_MOUVEMENT[t] }}</option> }
+          </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Du</label>
+          <input type="date" [formControl]="dateDebut" (change)="appliquerFiltres()"
+            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">Au</label>
+          <input type="date" [formControl]="dateFin" (change)="appliquerFiltres()"
+            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+        </div>
+        <button type="button" (click)="reinitialiser()" title="Réinitialiser"
+          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+          <lucide-icon name="RotateCcw" [size]="14"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tableau / états -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      @if (loading) {
+        <div class="p-6 space-y-3">
+          @for (_ of [0,1,2,3,4,5]; track $index) {
+            <div class="h-12 rounded-lg bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 animate-pulse"></div>
+          }
+        </div>
+      } @else if (mouvements.length === 0) {
+        <div class="flex flex-col items-center justify-center py-20 px-6 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+            <lucide-icon name="ArrowLeftRight" [size]="32" class="text-indigo-500"></lucide-icon>
+          </div>
+          <h3 class="text-base font-semibold text-gray-800">Aucun mouvement</h3>
+          <p class="text-sm text-gray-500 mt-1 max-w-md">Enregistrez une entrée ou une sortie pour alimenter l'historique.</p>
+          <a routerLink="nouveau"
+            class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+            <lucide-icon name="Plus" [size]="16"></lucide-icon>
+            Nouveau mouvement
+          </a>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+              <tr>
+                <th class="px-4 py-3 text-left">Date</th>
+                <th class="px-4 py-3 text-left">Référence</th>
+                <th class="px-4 py-3 text-left">Produit</th>
+                <th class="px-4 py-3 text-center">Type</th>
+                <th class="px-4 py-3 text-left">Motif</th>
+                <th class="px-4 py-3 text-right">Quantité</th>
+                <th class="px-4 py-3 text-left">Source → Destination</th>
+                <th class="px-4 py-3 text-left">Utilisateur</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (m of mouvements; track trackById($index, m)) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ m.date | date:'dd/MM/yyyy':'':'fr' }}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ m.reference || '—' }}</td>
+                  <td class="px-4 py-3">
+                    <div class="font-medium text-gray-800">{{ m.produitLibelle || m.produitId }}</div>
+                    <div class="text-xs text-gray-400">{{ m.produitCode }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                      [ngClass]="[COULEURS_TYPE_MOUVEMENT[m.type].bg, COULEURS_TYPE_MOUVEMENT[m.type].text]">
+                      {{ LIBELLES_TYPE_MOUVEMENT[m.type] }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600">{{ LIBELLES_MOTIF_MOUVEMENT[m.motif] }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums font-medium"
+                    [class.text-green-600]="m.type === 'ENTREE'" [class.text-red-600]="m.type === 'SORTIE'">
+                    {{ m.type === 'SORTIE' ? '−' : '+' }}{{ m.quantite | number:'1.0-2':'fr' }}
+                    <span class="text-gray-400 font-normal">{{ m.unite ? LIBELLES_UNITE[m.unite] : '' }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 text-xs">
+                    @if (m.type === 'ENTREE') {
+                      {{ m.siteDestinationNom || '—' }}
+                    } @else {
+                      {{ m.siteSourceNom || '—' }}
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-gray-500 text-xs">{{ m.utilisateur || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-4 py-3 flex items-center justify-between border-t border-gray-100">
+          <p class="text-xs text-gray-500">{{ totalElements }} mouvement(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+          <div class="flex items-center gap-1">
+            <button type="button" (click)="pagePrecedente()" [disabled]="page === 0"
+              class="p-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">
+              <lucide-icon name="ChevronLeft" [size]="16"></lucide-icon>
+            </button>
+            <button type="button" (click)="pageSuivante()" [disabled]="page >= totalPages - 1"
+              class="p-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">
+              <lucide-icon name="ChevronRight" [size]="16"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

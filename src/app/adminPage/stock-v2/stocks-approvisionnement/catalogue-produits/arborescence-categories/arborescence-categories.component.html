@@ -1,0 +1,149 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+      <div>
+        <a routerLink="/admin/stock-v2/stocks-approvisionnement/produits"
+          class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-2">
+          <lucide-icon name="ArrowLeft" [size]="16"></lucide-icon>
+          Retour au catalogue
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <lucide-icon name="FolderTree" [size]="24" class="text-indigo-600"></lucide-icon>
+          Catégories de produits
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+          Catégorisation multi-niveaux. Cliquez sur une catégorie pour déplier ses sous-catégories.
+        </p>
+      </div>
+      <button type="button" (click)="nouvelleRacine()"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
+        <lucide-icon name="Plus" [size]="16"></lucide-icon>
+        Nouvelle catégorie
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- Arbre -->
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+        @if (loading) {
+          <div class="p-3 space-y-2">
+            @for (_ of [0,1,2,3]; track $index) {
+              <div class="h-9 rounded-lg bg-gray-100 animate-pulse"></div>
+            }
+          </div>
+        } @else if (racines.length === 0) {
+          <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mb-3">
+              <lucide-icon name="FolderTree" [size]="28" class="text-indigo-500"></lucide-icon>
+            </div>
+            <h3 class="text-base font-semibold text-gray-800">Aucune catégorie</h3>
+            <p class="text-sm text-gray-500 mt-1">Créez votre première catégorie racine.</p>
+          </div>
+        } @else {
+          <ul>
+            @for (n of racines; track trackById($index, n)) {
+              <ng-container *ngTemplateOutlet="noeudTpl; context: { $implicit: n, profondeur: 0 }"></ng-container>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- Panneau création / édition -->
+      <div class="lg:col-span-1">
+        @if (panneauOuvert) {
+          <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-5 sticky top-4">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-gray-700">
+                {{ editionId ? 'Modifier la catégorie' : (parentCible ? 'Sous-catégorie de « ' + parentCible.libelle + ' »' : 'Nouvelle catégorie racine') }}
+              </h2>
+              <button type="button" (click)="fermerPanneau()" class="p-1 rounded text-gray-400 hover:text-gray-700">
+                <lucide-icon name="X" [size]="16"></lucide-icon>
+              </button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="enregistrer()" class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Libellé <span class="text-red-500">*</span></label>
+                <input type="text" formControlName="libelle"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Description</label>
+                <textarea formControlName="description" rows="3"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"></textarea>
+              </div>
+              <button type="submit" [disabled]="submitting"
+                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors">
+                @if (submitting) { <lucide-icon name="Loader2" [size]="16" class="animate-spin"></lucide-icon> }
+                @else { <lucide-icon name="Save" [size]="16"></lucide-icon> }
+                Enregistrer
+              </button>
+            </form>
+          </div>
+        } @else {
+          <div class="bg-indigo-50/60 rounded-2xl border border-dashed border-indigo-200 p-5 text-center">
+            <lucide-icon name="Info" [size]="20" class="text-indigo-400 mx-auto mb-2"></lucide-icon>
+            <p class="text-sm text-indigo-700">Sélectionnez une action sur une catégorie, ou créez-en une nouvelle.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Template récursif d'un nœud ═══ -->
+<ng-template #noeudTpl let-n let-profondeur="profondeur">
+  <li>
+    <div class="group flex items-center gap-1 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+      [style.padding-left.px]="8 + profondeur * 18">
+      <button type="button" (click)="basculer(n)"
+        class="p-1 rounded text-gray-400 hover:text-indigo-600 shrink-0"
+        [class.invisible]="(n.nbEnfants ?? 0) === 0 && n.charge">
+        @if (n.chargement) {
+          <lucide-icon name="Loader2" [size]="14" class="animate-spin"></lucide-icon>
+        } @else if (n.deplie) {
+          <lucide-icon name="ChevronDown" [size]="14"></lucide-icon>
+        } @else {
+          <lucide-icon name="ChevronRight" [size]="14"></lucide-icon>
+        }
+      </button>
+
+      <lucide-icon [name]="n.deplie ? 'FolderOpen' : 'Archive'" [size]="16" class="text-amber-500 shrink-0"></lucide-icon>
+      <span class="text-sm text-gray-800 flex-1 truncate">{{ n.libelle }}</span>
+
+      @if (n.nbProduits) {
+        <span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{{ n.nbProduits }}</span>
+      }
+
+      <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button type="button" (click)="nouvelleSousCategorie(n)" title="Ajouter une sous-catégorie"
+          class="p-1 rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50">
+          <lucide-icon name="Plus" [size]="14"></lucide-icon>
+        </button>
+        <button type="button" (click)="editer(n)" title="Modifier"
+          class="p-1 rounded text-gray-400 hover:text-amber-600 hover:bg-amber-50">
+          <lucide-icon name="Pencil" [size]="14"></lucide-icon>
+        </button>
+        <button type="button" (click)="supprimer(n)" title="Supprimer"
+          class="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50">
+          <lucide-icon name="Trash2" [size]="14"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    @if (n.deplie && n.enfants && n.enfants.length > 0) {
+      <ul>
+        @for (enfant of n.enfants; track trackById($index, enfant)) {
+          <ng-container *ngTemplateOutlet="noeudTpl; context: { $implicit: enfant, profondeur: profondeur + 1 }"></ng-container>
+        }
+      </ul>
+    }
+    @if (n.deplie && n.charge && (n.enfants?.length ?? 0) === 0) {
+      <p class="text-xs text-gray-400 italic py-1" [style.padding-left.px]="8 + (profondeur + 1) * 18 + 24">
+        Aucune sous-catégorie.
+      </p>
+    }
+  </li>
+</ng-template>

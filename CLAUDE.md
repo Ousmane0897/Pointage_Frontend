@@ -72,6 +72,8 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 | `exploitation-v2/` | Module Exploitation (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
 | `gestion-privilege/` | Permission management |
 | `notification/` | Notification system |
+| `stock/` | ⚠️ ANCIEN module Stock (legacy, à supprimer après bascule sur stock-v2/) |
+| `stock-v2/` | NOUVEAU module Stock complet (Stocks & Approvisionnement, Contrôle des mouvements, Analyse des consommations, Valorisation financière) |
 
 ---
 
@@ -309,6 +311,239 @@ materiel, phytosanitaire, tableauBord). Backend doit ajouter
 `modules.terrain` au claim JWT pour activer le menu en production.
 
 ### Conventions nouveau module Exploitation
+
+- **Standalone Components** (pas de NgModules) — Angular 19
+- **ReactiveFormsModule** exclusivement (pas de `FormsModule` / `ngModel`)
+- **ng2-charts + Chart.js** pour les graphiques (déjà installés)
+- **Localisation fr-FR** — dates au format `dd/MM/yyyy`
+- **Montants en FCFA**, pas de décimales
+- **Lucide icons** — enregistrer toute icône utilisée dans [src/app/lucide-icons.ts](src/app/lucide-icons.ts) (PascalCase strict)
+- Services dans [src/app/services/](src/app/services/), modèles dans [src/app/models/](src/app/models/)
+- Routes lazy-loadées via `loadComponent()` dans [app.routes.ts](src/app/app.routes.ts)
+- RBAC via `ModulesAutorises` + propagation réactive `BehaviorSubject`
+
+---
+
+## Module Stock (`src/app/adminPage/stock-v2/`)
+
+> **Module Stock en construction dans `stock-v2/`. L'ancien `stock/` sera supprimé après bascule complète.**
+
+Module de gestion des stocks, découpé en sous-modules. Toutes les interfaces sont en français.
+
+### 7.3 Stocks & Approvisionnement (`stock-v2/stocks-approvisionnement/`)
+
+- Gestion des articles, niveaux de stock, seuils de réapprovisionnement et commandes fournisseurs.
+
+**Statut : ✅ Terminé (frontend)** — 7 fonctionnalités. Bilan : **14 composants** + **2 partagés**, **11 services**, **9 modèles**, 1 fichier de constantes. Reste à faire côté serveur (endpoints listés plus bas).
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `catalogue-produits/` | liste-produits, formulaire-produit, fiche-produit, arborescence-categories, import-produits-modal | Référentiel produits (5 types), catégories arborescentes (lazy expand), upload photo + fiche technique PDF, import/export Excel |
+| `mouvements-stock/` | liste-mouvements, formulaire-mouvement | Entrées / sorties / transferts inter-sites, saisie rapide avec autocompletes, historique filtrable exportable |
+| `etat-stock/` | etat-stock | État temps réel par produit/site, alertes RUPTURE/CRITIQUE/OK, édition inline des seuils, export Excel |
+| `inventaires/` | liste-inventaires, planification-inventaire, saisie-inventaire | Workflow BROUILLON→COMPTAGE→VALIDATION→CLOTURE, écart auto, justification au-delà du seuil, PV PDF |
+| `synthese-mensuelle/` | synthese-mensuelle | Stock initial/entrées/sorties/final par produit, chart ng2-charts, exports PDF/Excel |
+| `approvisionnement-auto/` | approvisionnement-auto | Suggestions (seuil + conso moyenne sur N mois), quantités éditables, bon de commande prévisionnel PDF |
+| `tableau-bord-stocks/` | tableau-bord-stocks | KPIs (valeur FCFA, ruptures, alertes, rotation, dormants) + 4 charts (donut, line, bar, table dormants), exports PDF/Excel |
+
+**Composants partagés** (`stocks-approvisionnement/shared/`) : `selecteur-produit`, `selecteur-site` (ControlValueAccessor, autocompletes).
+
+**Services** (préfixe `stock-v2-`, dans [src/app/services/](src/app/services/)) :
+`stock-v2-produit`, `stock-v2-categorie`, `stock-v2-mouvement`, `stock-v2-etat-stock`,
+`stock-v2-inventaire`, `stock-v2-synthese`, `stock-v2-approvisionnement`,
+`stock-v2-tableau-bord`, `stock-v2-import-excel`, `stock-v2-export` (XLSX), `stock-v2-pdf` (jsPDF).
+
+**Modèles** (préfixe `stock-v2-`, dans [src/app/models/](src/app/models/)) :
+`stock-v2-produit`, `stock-v2-categorie`, `stock-v2-mouvement`, `stock-v2-etat-stock`,
+`stock-v2-inventaire`, `stock-v2-synthese`, `stock-v2-approvisionnement`,
+`stock-v2-tableau-bord`, `stock-v2-import`.
+
+**Constantes :** [src/app/constants/stock.constants.ts](src/app/constants/stock.constants.ts).
+
+**Dépendance externe encadrée** : `TerrainSiteClientService.listerActifs()` en **lecture seule**
+(via le shared `selecteur-site`) pour référencer les sites des mouvements/transferts. Aucune
+écriture, aucun couplage avec l'ancien `stock/` ni avec `stock-chimie`.
+
+**Valorisation** : champ `prixUnitaire` (FCFA) sur le produit (KPIs dashboard 7.3) ; CMUP/FIFO renvoyé à 7.6.
+
+**RBAC** : flag `stock?` optionnel dans [ModulesAutorises](src/app/models/admin.model.ts) avec 7 sous-flags
+(catalogue, mouvements, etatStock, inventaires, synthese, approvisionnement, tableauBord). Backend doit
+ajouter `modules.stock` au claim JWT pour activer le menu en production.
+
+**Endpoints backend à prévoir** (⚠️ base réelle = `${environment.apiUrl}/stock/…`, soit `/api/stock/…` — **PAS** `/stock-v2/`. Les 8 services HTTP appellent ces routes ; les 3 services Excel/PDF — `stock-v2-import-excel`, `stock-v2-export`, `stock-v2-pdf` — sont **100 % client, aucun endpoint**) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Produits** (`stock-v2-produit`) | `GET /stock/produits` (filtres q, typeProduit, categorieId, fournisseur, sousSeuil, actif — paginé) · `GET /stock/produits/actifs` (liste légère) · `GET /stock/produits/{id}` · `POST /stock/produits` (multipart : blob JSON `produit` + `photo` + `ficheTechnique`) · `PUT /stock/produits/{id}` (multipart) · `DELETE /stock/produits/{id}` · `GET /stock/produits/{id}/fiche-technique` (blob) · `GET /stock/produits/{id}/photo` (blob) · `POST /stock/produits/bulk` (import **transactionnel all-or-nothing**) |
+| **Catégories** (`stock-v2-categorie`) | `GET /stock/categories/racines` · `GET /stock/categories/enfants?parentId=` (lazy) · `GET /stock/categories` (liste plate) · `GET /stock/categories/{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` |
+| **Mouvements** (`stock-v2-mouvement`) | `GET /stock/mouvements` (filtres q, produitId, type, motif, siteId, dateDebut, dateFin — paginé) · `GET /stock/mouvements/{id}` · `POST /stock/mouvements` (entrée/sortie/transfert ; serveur déduit l'utilisateur du JWT) |
+| **État stock** (`stock-v2-etat-stock`) | `GET /stock/etat-stock` (filtres q, categorieId, typeProduit, siteId, statut, parSite — paginé) · `PUT /stock/etat-stock/seuils` (seuil global produit ou raffiné par site) |
+| **Inventaires** (`stock-v2-inventaire`) | `GET /stock/inventaires` (paginé) · `GET /{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` · **transitions** : `POST /{id}/comptage` (fige les qtés théoriques), `PUT /{id}/comptage` (enregistre les comptages), `POST /{id}/validation`, `POST /{id}/cloture` (applique les écarts au stock) |
+| **Synthèse** (`stock-v2-synthese`) | `GET /stock/synthese-mensuelle?mois=YYYY-MM&siteId=&categorieId=` |
+| **Approvisionnement** (`stock-v2-approvisionnement`) | `GET /stock/approvisionnement/suggestions?nMois=&siteId=&categorieId=&fournisseur=` |
+| **Tableau de bord** (`stock-v2-tableau-bord`) | `GET /stock/tableau-bord?dateDebut=&dateFin=&siteId=&categorieId=&moisDormance=` |
+
+**Décisions de modélisation à respecter côté backend** (contrat figé par le frontend ; valeurs littérales exactes des enums dans [stock.constants.ts](src/app/constants/stock.constants.ts) et les modèles `stock-v2-*`) :
+
+- **Produit = référentiel global, sans site.** Le produit ne porte aucun `siteId`. Le stock est tenu **par couple (produitId, siteId)** dans l'état de stock ; un `siteId` absent ⇒ ligne consolidée tous sites. `EtatStock` est recalculé à chaque mouvement.
+- **Code produit : saisi manuellement, unique** (champ `code`, contrôle d'unicité serveur). Aucune génération auto imposée par le front.
+- **Types de produit (5)** : `PRODUIT_FINI | MATIERE_PREMIERE | CONSOMMABLE | EPI | MATERIEL`.
+- **Unités de mesure (10)** : `KG | G | L | ML | PIECE | M2 | M3 | METRE | CARTON | LOT`.
+- **Mouvements** : types `ENTREE | SORTIE | TRANSFERT` ; motifs `ACHAT | PRODUCTION | CONSOMMATION | VENTE | TRANSFERT | AJUSTEMENT | RETOUR | PERTE`. Combinaisons valides — ENTREE : ACHAT/PRODUCTION/RETOUR/AJUSTEMENT ; SORTIE : CONSOMMATION/VENTE/PERTE/AJUSTEMENT ; TRANSFERT : TRANSFERT seul. Multi-site via `siteSourceId` (requis SORTIE/TRANSFERT) + `siteDestinationId` (requis ENTREE/TRANSFERT).
+- **Catégories : arborescence par `parentId`** (`null` = racine) + `niveau` (0,1,2…). Pas de chemin matérialisé, lazy-load des enfants. Dénormalisés `nbEnfants` / `nbProduits` attendus pour l'affichage de l'arbre.
+- **Statut de stock (calculé serveur)** : `RUPTURE` (qté ≤ 0), `CRITIQUE` (0 < qté ≤ `seuilAlerte`), `OK` (qté > seuil).
+- **Inventaire** : workflow strict `BROUILLON → COMPTAGE → VALIDATION → CLOTURE` ; périmètre `TOUS | CATEGORIE | SELECTION` ; écart = `qtePhysique − qteTheorique` (calculé) ; `justification` requise si `|écart| > seuilEcartJustification` (**défaut 5**). La clôture applique les écarts au stock réel.
+- **Valorisation** : prix unitaire **fixe** porté par le produit (`prixUnitaire`, FCFA, sans décimales) ; valeur = qté × prixUnitaire. **CMUP/FIFO non implémenté ici**, renvoyé au sous-module 7.6.
+- **Import Excel** : `POST /stock/produits/bulk` **transactionnel all-or-nothing** ; validation fail-soft ligne-par-ligne **côté client** avant envoi ; le backend résout `categorieLibelle → id` (création si absente) et crée un mouvement `ENTREE` si `stockInitial` est fourni. Le champ photo n'est pas importable via Excel. 12 colonnes (cf. `COLONNES_TEMPLATE_PRODUIT`).
+- **Paramètres par défaut** (`PARAMETRES_STOCK`) : pagination 20 ; photo ≤ 5 Mo (jpeg/png/webp) ; fiche ≤ 10 Mo (pdf) ; horizon appro `nMois = 3` ; dormance tableau de bord `6` mois ; top consommations `10`.
+- **Sites en lecture seule** via `TerrainSiteClientService.listerActifs()` (shared `selecteur-site`) — aucune écriture, aucun référentiel agences propre au stock.
+
+### 7.4 Contrôle des mouvements (`stock-v2/controle-mouvements/`)
+
+- Catégorisation stricte des entrées/sorties, workflow de validation des mouvements, bons numériques (entrée/sortie), pilotage des plafonds de dotation et analyse de consommation.
+
+**Statut : ✅ Terminé (frontend)** — 9 fonctionnalités. Bilan : **16 composants** + **3 partagés**, **6 services**, **6 modèles**. Reste à faire côté serveur (endpoints listés plus bas).
+
+> **Principe d'intégration (≠ duplication) :** 7.4 n'introduit PAS une nouvelle notion de mouvement. Le `MouvementStock` instantané de 7.3 reste l'**effet** en stock. 7.4 ajoute un document **« Bon » multi-lignes** porteur du workflow ; à la validation (EFFECTIF), le backend **génère les `MouvementStock` de 7.3** (un par ligne) qui mettent à jour `EtatStock` via le mécanisme existant. Aucun mouvement n'affecte le stock sans validation.
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `categorisation/` | categorisation-entrees, categorisation-sorties | Types figés d'entrée (4) / sortie (4) en lecture seule + statistiques d'usage (doughnut ng2-charts) |
+| `bons-entree/` | liste-bons-entree, formulaire-bon-entree, fiche-bon-entree | Bons d'entrée numérotés `BE-AAAAMMJJ-XXX`, édition brouillon, timeline workflow, PDF |
+| `bons-sortie/` | liste-bons-sortie, formulaire-bon-sortie, fiche-bon-sortie | Bons de sortie numérotés `BS-AAAAMMJJ-XXX`, destinataire site/agent/client, timeline, PDF |
+| `workflow-validation/` | tableau-workflow | Vue **Kanban** (BROUILLON→SOUMIS→VALIDE→EFFECTIF/REFUSE) + table filtrable, WebSocket temps réel, validation/refus (commentaire obligatoire) |
+| `plafonds/` | liste-plafonds, formulaire-plafond | Plafonds mensuels site × produit OU site × catégorie, **jauges** conso/plafond colorées, alerte dépassement (toast) |
+| `dotation/` | comparatif-dotation | Comparatif mensuel dotation prévue vs réelle, écarts code couleur, exports PDF/Excel |
+| `historique-destinataire/` | historique-destinataire | Consommation cumulée par site/agence/client, line chart d'évolution, exports PDF/Excel |
+| `rapports-consommation/` | rapports-consommation | Rapports par site/produit/période, KPIs synthétiques (coût moyen/mvt), bar chart, exports PDF/Excel |
+
+**Composants partagés** (`controle-mouvements/shared/`) : `selecteur-employe` (ControlValueAccessor sur `DossierEmployeService`, demandeur/validateur), `editeur-lignes-bon` (FormArray, réutilise le `selecteur-produit` de 7.3), `timeline-workflow` (présentational, historique des actions). Réutilisation directe des `selecteur-produit`/`selecteur-site` de 7.3.
+
+**Services** (préfixe `stock-v2-`) : `stock-v2-bon-entree`, `stock-v2-bon-sortie`, `stock-v2-workflow` (agrège les bons + délègue les transitions selon le sens), `stock-v2-plafond`, `stock-v2-dotation`, `stock-v2-consommation`. Les services `stock-v2-pdf` et `stock-v2-export` de 7.3 ont été **enrichis** (bons, rapports, dotation, historique).
+
+**Modèles** (préfixe `stock-v2-`) : `stock-v2-workflow` (`StatutBon`, `HistoriqueWorkflow`, `NotificationValidationStock`, `BonWorkflow`), `stock-v2-bon-entree` (+ `TypeEntree`), `stock-v2-bon-sortie` (+ `TypeSortie`, `Destinataire`), `stock-v2-plafond`, `stock-v2-dotation`, `stock-v2-consommation`. Le modèle `stock-v2-mouvement` de 7.3 a été enrichi de champs optionnels : `origine` (`DIRECT`|`BON`), `bonId`, `bonReference`, `categorieEntree`, `categorieSortie`.
+
+**Constantes** (ajouts dans [stock.constants.ts](src/app/constants/stock.constants.ts)) : libellés/couleurs/descriptions des `TypeEntree`/`TypeSortie`, `StatutBon` (+ ordre Kanban), actions workflow, granularité plafond, sens d'écart dotation, topics WebSocket, `PARAMETRES_CONTROLE_MOUVEMENTS` (préfixes bons, seuils d'alerte plafond 90 %/100 %).
+
+**WebSocket** : `websocket.service.ts` étendu — topic broadcast `/topic/stock-validations` + queue ciblée `/user/queue/notifications-stock` ; méthode `onStockValidations()`.
+
+**RBAC** : 8 sous-flags ajoutés dans `stock?` de [ModulesAutorises](src/app/models/admin.model.ts) : `categorisation`, `bonsEntree`, `bonsSortie`, `workflowValidation`, `historiqueDestinataire`, `plafonds`, `dotation`, `rapportsConso`. Sidebar : section « Contrôle mouvements » gated par `accessControleMouvements()` / `hasAccess('stock.xxx')`.
+
+**Dépendances en lecture seule** (aucune écriture) : `TerrainSiteClientService.listerActifs()` (sites, via `selecteur-site`) et `DossierEmployeService.getEmployes()` (employés demandeur/validateur, via `selecteur-employe`). Aucun appel à l'ancien `stock.service.ts`, aucun couplage `exploitation-v2`.
+
+**Décisions de modélisation à respecter côté backend** :
+
+- **Bon = document multi-lignes** (header + `lignes[]`) porteur du workflow `BROUILLON → SOUMIS → VALIDE → EFFECTIF` (ou `REFUSE`). Édition/suppression réservées au `BROUILLON`. La **validation génère les `MouvementStock` 7.3** (`origine = BON`, `bonId`/`bonReference` renseignés, catégorie typée) ; stock insuffisant en sortie ⇒ **422** à la validation. L'auteur de chaque action est déduit du JWT et dénormalisé dans `historique[]`.
+- **Numérotation atomique côté serveur** : `BE-AAAAMMJJ-XXX` / `BS-AAAAMMJJ-XXX` (compteur séquentiel quotidien).
+- **Types d'entrée (4, figés)** : `ACHAT_FOURNISSEUR | RETOUR_PRODUCTION | TRANSFERT_INTER_SITES | REINTEGRATION`. **Types de sortie (4, figés)** : `DISTRIBUTION_AGENCE_SITE_CLIENT | DISTRIBUTION_CHANTIER | VENTE_PRODUIT | CONSOMMATION_INTERNE`. Pas de CRUD (enums dans les constantes).
+- **Destinataire d'un bon de sortie** : `type` ∈ `SITE | AGENT | CLIENT` (`siteId` / `agentId` / `clientNom` selon le type).
+- **Plafonds** : `granularite` ∈ `PRODUIT | CATEGORIE`, `cibleId` = produitId ou categorieId, `plafondMensuel` (quantité/mois) par `siteId`. Consommation mensuelle agrégée depuis les sorties EFFECTIVES ; dépassement = alerte (toast front + notification WebSocket superviseur attendue côté serveur).
+
+**Endpoints backend à prévoir** (base réelle `${environment.apiUrl}/stock/…`, soit `/api/stock/…`) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Bons entrée** (`stock-v2-bon-entree`) | `GET /stock/bons-entree` (filtres q, statut, type, siteId, dateDebut, dateFin — paginé) · `GET /{id}` · `POST` · `PUT /{id}` (brouillon) · `DELETE /{id}` (brouillon) · `POST /{id}/soumettre` · `POST /{id}/valider` (→ génère mouvements ENTREE) · `POST /{id}/refuser` (commentaire requis) |
+| **Bons sortie** (`stock-v2-bon-sortie`) | mêmes routes sous `/stock/bons-sortie` (→ génère mouvements SORTIE, 422 si stock insuffisant) |
+| **Workflow** (`stock-v2-workflow`) | `GET /stock/workflow/bons` (filtres statut, sens, q — liste unifiée `BonWorkflow[]` pour le Kanban) |
+| **Catégorisation** (`stock-v2-consommation`) | `GET /stock/categorisation/stats?sens=ENTREE\|SORTIE&dateDebut=&dateFin=` |
+| **Plafonds** (`stock-v2-plafond`) | `GET /stock/plafonds` (filtres q, siteId, granularite, actif — paginé) · `GET /{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` · `GET /stock/plafonds/consommation?mois=YYYY-MM&siteId=` |
+| **Dotation** (`stock-v2-dotation`) | `GET /stock/dotation/comparatif?mois=YYYY-MM&siteId=&produitId=` |
+| **Consommation** (`stock-v2-consommation`) | `GET /stock/consommation/par-destinataire?siteId=&produitId=&dateDebut=&dateFin=` · `GET /stock/consommation/rapport?type=PAR_SITE\|PAR_PRODUIT\|PAR_PERIODE&dateDebut=&dateFin=&siteId=&produitId=&categorieId=` |
+
+> Les services PDF/Excel (`stock-v2-pdf`, `stock-v2-export`) restent **100 % client** (aucun endpoint). Le backend doit publier sur `/topic/stock-validations` (soumission/décision) et `/user/queue/notifications-stock` (validateur ciblé), et ajouter les 8 sous-flags `modules.stock` au claim JWT.
+
+### 7.5 Analyse des consommations (`stock-v2/analyse-consommations/`)
+
+- Statistiques de consommation par article/site/période, graphiques et alertes de surconsommation.
+
+**Statut : ✅ Terminé (frontend)** — 5 fonctionnalités. Bilan : **9 composants** + **1 partagé**, **5 services**, **5 modèles** (4 DTOs analytiques + 1 entité Chantier). Module **analytique LECTURE SEULE** : aucune nouvelle donnée métier, agrège les sorties de 7.4 + le catalogue de 7.3. Seule exception : l'entité légère `Chantier`. Reste à faire côté serveur (endpoints listés plus bas).
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `vue-mensuelle-site/` | vue-mensuelle-site | KPIs + line (évolution) + bar (top 10 produits) + donut (catégories) + table triable ; filtres site + mois/plage |
+| `consommations-chantier/` | liste-chantiers, fiche-chantier, formulaire-chantier | CRUD léger Chantier + détail valorisé (lignes rattachées par `chantierId`), workflow de clôture (EN_COURS→CLOTURE figé), rapport PDF de fin de chantier |
+| `consommations-dons/` | consommations-dons | KPIs + donut (par nature) + bar (top bénéficiaires) + line (évolution) + table filtrée ; exports compta analytique |
+| `comparatif-mensuel/` | comparatif-mensuel | Matrice site/produit × mois colorisée (heatmap CSS vert/orange/rouge selon écart %), multi-courbes, seuil de surconsommation paramétrable |
+| `filtres-croises/` | filtres-croises | Pivot multidimensionnel (axe lignes × colonnes, mesure montant/quantité), totaux de marges, chart adaptatif, requêtes favorites en localStorage |
+
+**Composant partagé** (`analyse-consommations/shared/`) : `selecteur-chantier` (ControlValueAccessor sur `stock-v2-analyse-chantier`, réutilisé par le formulaire bon de sortie 7.4). Réutilise les `selecteur-site`/`selecteur-produit` de 7.3.
+
+**Services** (préfixe `stock-v2-analyse-`) : `stock-v2-analyse-mensuelle`, `stock-v2-analyse-chantier` (CRUD Chantier + détail), `stock-v2-analyse-don`, `stock-v2-analyse-comparatif`, `stock-v2-analyse-croisee` (+ favoris localStorage). Les `stock-v2-export` (XLSX) et `stock-v2-pdf` (jsPDF) ont été **enrichis** (mensuelle, chantier, dons, comparatif, croisé).
+
+**Modèles** : `stock-v2-chantier` (entité + DTO `DetailChantier`), `stock-v2-analyse-mensuelle`, `stock-v2-analyse-don`, `stock-v2-analyse-comparatif`, `stock-v2-analyse-croisee` (DTOs d'affichage).
+
+**Décisions de modélisation (validées, impactent 7.4 et le backend)** :
+- **Dons** : 5e valeur `'DON'` ajoutée au `TypeSortie` de 7.4 + champs `natureDon` (`CADEAU_CLIENT | ECHANTILLON | ACTION_SOCIALE | DON_INTERNE_EMPLOYE`) et `beneficiaireDon` sur `BonSortie`/`BonSortiePayload`. Le formulaire bon de sortie 7.4 capture ces champs (conditionnels si `type === 'DON'`).
+- **Chantier** : entité légère persistée `Chantier` (`reference, nom, siteId, dateDebut, dateFin?, statut EN_COURS|CLOTURE`) + champ `chantierId` sur le bon de sortie `DISTRIBUTION_CHANTIER`. **Seule entité persistée** de 7.5. À la validation, le mouvement SORTIE propage la nature du don / le `chantierId`.
+- **Favoris filtres croisés** : `localStorage` (clé `stockv2.analyse.favoris`), aucun endpoint.
+
+**Constantes** (ajouts dans [stock.constants.ts](src/app/constants/stock.constants.ts)) : `LIBELLES/COULEURS/DESCRIPTIONS_NATURE_DON` + `ORDRE_NATURES_DON`, `LIBELLES/COULEURS_STATUT_CHANTIER` + `ORDRE_STATUTS_CHANTIER`, `DON` ajouté aux maps `TypeSortie`, `COULEURS_ECART`, `PARAMETRES_ANALYSE_CONSO` (`seuilSurconsommationPct: 30`, `topProduits: 10`, `nbMoisDefaut: 12`, `pageSize: 20`, `cleFavorisLocalStorage`).
+
+**RBAC** : 5 sous-flags ajoutés dans `stock?` de [ModulesAutorises](src/app/models/admin.model.ts) : `analyseMensuelle`, `chantiers`, `dons`, `comparatif`, `filtresCroises`. Sidebar : section « Analyse consommations » gated par `accessAnalyseConsommations()` / `hasAccess('stock.xxx')`.
+
+**Dépendances en lecture seule** : `TerrainSiteClientService.listerActifs()` (sites, via `selecteur-site`), catalogue/catégories de 7.3, sorties de 7.4. Aucun appel à l'ancien `stock.service.ts`.
+
+**Endpoints backend à prévoir** (base réelle `${environment.apiUrl}/stock/…`, soit `/api/stock/…`) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Vue mensuelle** (`stock-v2-analyse-mensuelle`) | `GET /stock/analyse/mensuel?mois=YYYY-MM&moisFin=&siteId=&categorieId=` (KPIs + lignes + séries) |
+| **Chantiers** (`stock-v2-analyse-chantier`) | `GET /stock/chantiers` (paginé : q, statut, siteId, dates) · `GET /stock/chantiers/actifs` (sélecteur) · `GET /{id}` (→ `DetailChantier` agrégé) · `POST` · `PUT /{id}` · `POST /{id}/cloture` |
+| **Dons** (`stock-v2-analyse-don`) | `GET /stock/analyse/dons?dateDebut=&dateFin=&natureDon=&beneficiaire=&siteId=` |
+| **Comparatif** (`stock-v2-analyse-comparatif`) | `GET /stock/analyse/comparatif?axe=SITE\|PRODUIT&dateDebut=YYYY-MM&dateFin=YYYY-MM&siteId=&categorieId=&typeSortie=&seuilPct=` |
+| **Filtres croisés** (`stock-v2-analyse-croisee`) | `GET /stock/analyse/croise?axeLignes=&axeColonnes=&mesure=MONTANT\|QUANTITE&dateDebut=&dateFin=&siteId=&produitId=&categorieId=&typeSortie=` (axes : PRODUIT/CATEGORIE/SITE/TYPE_SORTIE/NATURE_DON/MOIS) |
+
+> Les services PDF/Excel restent **100 % client**. Le backend doit ajouter les 5 sous-flags `modules.stock.{analyseMensuelle,chantiers,dons,comparatif,filtresCroises}` au claim JWT, et faire porter au mouvement SORTIE la `natureDon` (bons DON) et le `chantierId` (bons DISTRIBUTION_CHANTIER) à la validation.
+
+### 7.6 Valorisation financière (`stock-v2/valorisation-financiere/`)
+
+- Valorisation du stock (FCFA), méthode de calcul du coût unitaire (CUMP / dernier prix), coût des mouvements, valeur de stock temps réel, coûts par site/chantier, marges, pilotage financier.
+
+**Statut : ✅ Terminé (frontend)** — 7 fonctionnalités. Bilan : **8 composants**, **6 services** (dont 2 purs testables `cump`/`marge`), **5 modèles DTO financiers**, 1 fichier de constantes, 2 modèles 7.3 enrichis. Module **FINANCIER** : calcule/valorise mais reste lecture seule sur les entités métier (sauf paramétrage financier produit via endpoints dédiés). Build OK, **26 tests unitaires verts**. Reste à faire côté serveur (endpoints listés plus bas).
+
+| Sous-module | Composants | Rôle |
+|---|---|---|
+| `cout-unitaire-produit/` | cout-unitaire-produit | Paramétrage global (méthode défaut) + override par produit, coût courant, alertes, line chart historique des coûts |
+| `cout-mouvements/` | cout-mouvements | Liste filtrable des mouvements valorisés (coût snapshot + valeur + badge `estEstime`), export Excel |
+| `valeur-stock/` | valeur-stock | KPIs + donut catégories + table ; **polling auto-refresh** (30 s) + comparaison instant T précédent |
+| `cout-consommation-site/` | cout-consommation-site | Comparatif inter-sites (table + bar ranking), détection surconsommation, exports PDF/Excel |
+| `cout-revient-chantier/` | liste-cout-chantiers, fiche-cout-chantier | Chantiers valorisés au coût de revient, détail + coût/jour + comparaison + rapport PDF |
+| `marge-produits/` | marge-produits | Marge (prix vente − coût), taux, marge globale, non-rentables ; édition inline `prixVente` (PATCH) ; exports |
+| `tableau-bord-financier/` | tableau-bord-financier | KPIs (valeur, conso, marge, dérives) + line/bar/donut + panneau dérives budgétaires ; exports PDF/Excel |
+
+**Services** (préfixe `stock-v2-`) : `stock-v2-cump` (PUR testable : CUMP/dernier prix/écart), `stock-v2-marge` (calc pur + HTTP synthèse), `stock-v2-valorisation` (paramétrage, coûts produits, historique, valeur stock, mouvements valorisés, PATCH méthode/prix-vente), `stock-v2-cout-site`, `stock-v2-cout-chantier`, `stock-v2-tableau-bord-financier`. Specs : `stock-v2-cump.service.spec`, `stock-v2-marge.service.spec` (26 tests). `stock-v2-export` (XLSX) et `stock-v2-pdf` (jsPDF) **enrichis**.
+
+**Modèles** : `stock-v2-valorisation` (`MethodeValorisation`, `ParametrageValorisation`, `CoutProduit`, `HistoriqueCoutProduit`, `LigneCoutMouvement`, `ValeurStock`), `stock-v2-cout-site`, `stock-v2-cout-chantier`, `stock-v2-marge`, `stock-v2-tableau-bord-financier`.
+
+**Constantes :** [src/app/constants/stock-v2-valorisation.constants.ts](src/app/constants/stock-v2-valorisation.constants.ts) — libellés/couleurs des méthodes, couleurs de marge, `PARAMETRES_VALORISATION` (`seuilDeriveBudgetPct: 20`, `seuilMargeMinPct: 15`, `intervalRefreshMs: 30000`, `nbMoisEvolution: 12`, `ecartCoutAnormalPct: 50`).
+
+**Décisions de modélisation (validées, impactent 7.3 et le backend)** :
+- **Méthode hybride** : `ParametrageValorisation.methodeDefaut` global + `Produit.methodeValorisation?` (override ; `null` ⇒ hérite du global). Valeurs `CUMP | DERNIER_PRIX | FIXE`. `Produit.prixUnitaire` devient le **coût courant** (statique si FIXE, calculé serveur sinon). `Produit.prixVente?` ajouté (marges). **Édition via endpoints PATCH dédiés** (`/valorisation`, `/prix-vente`) — le formulaire produit 7.3 n'est PAS modifié.
+- **Snapshot mouvement** : `MouvementStock.coutUnitaireSnapshot?` + `valeurMouvement?` (coût gelé à l'instant du mouvement, serveur). Mouvements antérieurs sans snapshot ⇒ **fallback** coût courant avec drapeau `estEstime` (badge orange).
+- **Rétrocompatibilité** : `methodeValorisation` absente ⇒ FIXE (comportement actuel inchangé). **7.5 et EtatStock non modifiés** — la valeur stock temps réel passe par un DTO financier dédié.
+- **Temps réel = polling** (rafraîchissement auto + bouton), pas de WebSocket.
+
+**RBAC** : 7 sous-flags ajoutés dans `stock?` de [ModulesAutorises](src/app/models/admin.model.ts) : `coutUnitaire`, `coutMouvements`, `valeurStock`, `coutSite`, `coutChantier`, `marges`, `tableauBordFinancier`. Sidebar : section « Valorisation financière » gated par `accessValorisationFinanciere()` / `hasAccess('stock.xxx')`.
+
+**Dépendances en lecture seule** : catalogue/mouvements 7.3, chantiers 7.5 (`/stock/valorisation/chantiers`), sites via `TerrainSiteClientService`. Aucun appel à l'ancien `stock.service.ts`.
+
+**Endpoints backend à prévoir** (base `${environment.apiUrl}/stock/…`, calculs serveur) :
+
+| Domaine (service) | Endpoints attendus |
+|---|---|
+| **Paramétrage** (`stock-v2-valorisation`) | `GET/PUT /stock/valorisation/parametrage` (`{ methodeDefaut }`) |
+| **Coût produit** (`stock-v2-valorisation`) | `GET /stock/valorisation/couts-produits` (paginé, filtres) · `GET /{id}/historique` · `PATCH /stock/produits/{id}/valorisation` (`{ methodeValorisation }`) · `PATCH /stock/produits/{id}/prix-vente` (`{ prixVente }`) |
+| **Mouvements valorisés** (`stock-v2-valorisation`) | `GET /stock/valorisation/mouvements` (filtres q/produit/type/site/dates ; renvoie `coutUnitaireSnapshot`, `valeurMouvement`, `estEstime`) |
+| **Valeur stock** (`stock-v2-valorisation`) | `GET /stock/valorisation/valeur-stock?siteId=&categorieId=&comparer=JOUR\|SEMAINE\|MOIS` |
+| **Coût/site** (`stock-v2-cout-site`) | `GET /stock/valorisation/cout-site?dateDebut=&dateFin=&categorieId=` |
+| **Coût de revient chantier** (`stock-v2-cout-chantier`) | `GET /stock/valorisation/chantiers` (paginé) · `GET /stock/valorisation/chantiers/{id}` |
+| **Marges** (`stock-v2-marge`) | `GET /stock/valorisation/marges?dateDebut=&dateFin=&categorieId=` |
+| **Tableau de bord** (`stock-v2-tableau-bord-financier`) | `GET /stock/valorisation/tableau-bord?dateDebut=&dateFin=&siteId=&categorieId=` |
+
+> Règles serveur : recalcul CUMP à chaque ENTREE (`nouveauCout = (stock×ancienCout + qté×prixAchat)/(stock+qté)`), mise à jour dernier prix si `DERNIER_PRIX`, `methodeValorisation=null ⇒ FIXE` ; stocker `coutUnitaireSnapshot` sur chaque mouvement ; quantité vendue = sorties EFFECTIVES `type=VENTE_PRODUIT` ; PDF/Excel 100 % client ; ajouter les 7 sous-flags `modules.stock.{...}` au claim JWT.
+
+### Conventions module Stock
 
 - **Standalone Components** (pas de NgModules) — Angular 19
 - **ReactiveFormsModule** exclusivement (pas de `FormsModule` / `ngModel`)

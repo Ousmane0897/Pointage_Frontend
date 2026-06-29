@@ -209,6 +209,90 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/phytosanitaire/applications/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
             { path: 'exploitation-v2/terrain/phytosanitaire/applications/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/phytosanitaire/formulaire-application/formulaire-application.component').then(m => m.FormulaireApplicationComponent) },
 
+            // ─── Stock v2 — 7.3 Stocks & Approvisionnement ───────────────────────
+            // Catalogue produits (ordre important : /categories, /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/stocks-approvisionnement/produits', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/liste-produits/liste-produits.component').then(m => m.ListeProduitsComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/categories', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/arborescence-categories/arborescence-categories.component').then(m => m.ArborescenceCategoriesComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/produits/:id', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/fiche-produit/fiche-produit.component').then(m => m.FicheProduitComponent) },
+
+            // Mouvements de stock
+            { path: 'stock-v2/stocks-approvisionnement/mouvements', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/liste-mouvements/liste-mouvements.component').then(m => m.ListeMouvementsComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/mouvements/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/formulaire-mouvement/formulaire-mouvement.component').then(m => m.FormulaireMouvementComponent) },
+
+            // État du stock temps réel
+            { path: 'stock-v2/stocks-approvisionnement/etat', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/etat-stock/etat-stock.component').then(m => m.EtatStockComponent) },
+
+            // Inventaires (ordre important : /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/stocks-approvisionnement/inventaires', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/liste-inventaires/liste-inventaires.component').then(m => m.ListeInventairesComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/inventaires/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/planification-inventaire/planification-inventaire.component').then(m => m.PlanificationInventaireComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/inventaires/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/planification-inventaire/planification-inventaire.component').then(m => m.PlanificationInventaireComponent) },
+            { path: 'stock-v2/stocks-approvisionnement/inventaires/:id', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/saisie-inventaire/saisie-inventaire.component').then(m => m.SaisieInventaireComponent) },
+
+            // Synthèse mensuelle
+            { path: 'stock-v2/stocks-approvisionnement/synthese', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/synthese-mensuelle/synthese-mensuelle.component').then(m => m.SyntheseMensuelleComponent) },
+
+            // Approvisionnement automatique
+            { path: 'stock-v2/stocks-approvisionnement/approvisionnement', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/approvisionnement-auto/approvisionnement-auto.component').then(m => m.ApprovisionnementAutoComponent) },
+
+            // Tableau de bord stocks
+            { path: 'stock-v2/stocks-approvisionnement/tableau-bord', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/tableau-bord-stocks/tableau-bord-stocks.component').then(m => m.TableauBordStocksComponent) },
+
+            // ─── Stock v2 — 7.4 Contrôle des mouvements ──────────────────────────
+            // Catégorisation des entrées / sorties
+            { path: 'stock-v2/controle-mouvements/categorisation/entrees', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/categorisation/categorisation-entrees/categorisation-entrees.component').then(m => m.CategorisationEntreesComponent) },
+            { path: 'stock-v2/controle-mouvements/categorisation/sorties', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/categorisation/categorisation-sorties/categorisation-sorties.component').then(m => m.CategorisationSortiesComponent) },
+
+            // Bons d'entrée (ordre important : /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/controle-mouvements/bons-entree', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/liste-bons-entree/liste-bons-entree.component').then(m => m.ListeBonsEntreeComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-entree/nouveau', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/formulaire-bon-entree/formulaire-bon-entree.component').then(m => m.FormulaireBonEntreeComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-entree/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/formulaire-bon-entree/formulaire-bon-entree.component').then(m => m.FormulaireBonEntreeComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-entree/:id', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-entree/fiche-bon-entree/fiche-bon-entree.component').then(m => m.FicheBonEntreeComponent) },
+
+            // Bons de sortie (ordre important : /nouveau, /:id/modifier AVANT /:id)
+            { path: 'stock-v2/controle-mouvements/bons-sortie', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/liste-bons-sortie/liste-bons-sortie.component').then(m => m.ListeBonsSortieComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-sortie/nouveau', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/formulaire-bon-sortie/formulaire-bon-sortie.component').then(m => m.FormulaireBonSortieComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-sortie/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/formulaire-bon-sortie/formulaire-bon-sortie.component').then(m => m.FormulaireBonSortieComponent) },
+            { path: 'stock-v2/controle-mouvements/bons-sortie/:id', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/bons-sortie/fiche-bon-sortie/fiche-bon-sortie.component').then(m => m.FicheBonSortieComponent) },
+
+            // Workflow de validation
+            { path: 'stock-v2/controle-mouvements/workflow', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/workflow-validation/tableau-workflow/tableau-workflow.component').then(m => m.TableauWorkflowComponent) },
+
+            // Historique par destinataire
+            { path: 'stock-v2/controle-mouvements/historique-destinataire', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/historique-destinataire/historique-destinataire.component').then(m => m.HistoriqueDestinataireComponent) },
+
+            // Plafonds de dotation (ordre important : /nouveau, /:id/modifier)
+            { path: 'stock-v2/controle-mouvements/plafonds', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/plafonds/liste-plafonds/liste-plafonds.component').then(m => m.ListePlafondsComponent) },
+            { path: 'stock-v2/controle-mouvements/plafonds/nouveau', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/plafonds/formulaire-plafond/formulaire-plafond.component').then(m => m.FormulairePlafondComponent) },
+            { path: 'stock-v2/controle-mouvements/plafonds/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/plafonds/formulaire-plafond/formulaire-plafond.component').then(m => m.FormulairePlafondComponent) },
+
+            // Dotation prévue vs réelle
+            { path: 'stock-v2/controle-mouvements/dotation', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/dotation/comparatif-dotation/comparatif-dotation.component').then(m => m.ComparatifDotationComponent) },
+
+            // Rapports de consommation
+            { path: 'stock-v2/controle-mouvements/rapports', loadComponent: () => import('./adminPage/stock-v2/controle-mouvements/rapports-consommation/rapports-consommation.component').then(m => m.RapportsConsommationComponent) },
+
+            // ─── Stock v2 — 7.5 Analyse des consommations ───────────────────
+            { path: 'stock-v2/analyse-consommations/mensuel', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/vue-mensuelle-site/vue-mensuelle-site.component').then(m => m.VueMensuelleSiteComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/liste-chantiers/liste-chantiers.component').then(m => m.ListeChantiersComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers/nouveau', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/formulaire-chantier/formulaire-chantier.component').then(m => m.FormulaireChantierComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/formulaire-chantier/formulaire-chantier.component').then(m => m.FormulaireChantierComponent) },
+            { path: 'stock-v2/analyse-consommations/chantiers/:id', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-chantier/fiche-chantier/fiche-chantier.component').then(m => m.FicheChantierComponent) },
+            { path: 'stock-v2/analyse-consommations/dons', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/consommations-dons/consommations-dons.component').then(m => m.ConsommationsDonsComponent) },
+            { path: 'stock-v2/analyse-consommations/comparatif', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/comparatif-mensuel/comparatif-mensuel.component').then(m => m.ComparatifMensuelComponent) },
+            { path: 'stock-v2/analyse-consommations/filtres-croises', loadComponent: () => import('./adminPage/stock-v2/analyse-consommations/filtres-croises/filtres-croises.component').then(m => m.FiltresCroisesComponent) },
+
+            // ─── Stock v2 — 7.6 Valorisation financière ─────────────────────
+            { path: 'stock-v2/valorisation-financiere/cout-unitaire', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-unitaire-produit/cout-unitaire-produit.component').then(m => m.CoutUnitaireProduitComponent) },
+            { path: 'stock-v2/valorisation-financiere/mouvements', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-mouvements/cout-mouvements.component').then(m => m.CoutMouvementsComponent) },
+            { path: 'stock-v2/valorisation-financiere/valeur-stock', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/valeur-stock/valeur-stock.component').then(m => m.ValeurStockComponent) },
+            { path: 'stock-v2/valorisation-financiere/cout-site', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-consommation-site/cout-consommation-site.component').then(m => m.CoutConsommationSiteComponent) },
+            { path: 'stock-v2/valorisation-financiere/cout-chantier', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-revient-chantier/liste-cout-chantiers/liste-cout-chantiers.component').then(m => m.ListeCoutChantiersComponent) },
+            { path: 'stock-v2/valorisation-financiere/cout-chantier/:id', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/cout-revient-chantier/fiche-cout-chantier/fiche-cout-chantier.component').then(m => m.FicheCoutChantierComponent) },
+            { path: 'stock-v2/valorisation-financiere/marges', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/marge-produits/marge-produits.component').then(m => m.MargeProduitsComponent) },
+            { path: 'stock-v2/valorisation-financiere/tableau-bord', loadComponent: () => import('./adminPage/stock-v2/valorisation-financiere/tableau-bord-financier/tableau-bord-financier.component').then(m => m.TableauBordFinancierComponent) },
+
         ]
     }
 ];

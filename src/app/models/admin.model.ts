@@ -53,4 +53,46 @@ export interface ModulesAutorises {
     phytosanitaire?: boolean;
     tableauBord?: boolean;
   };
+
+  // ─── Stock v2 — 7.3 Stocks & Approvisionnement ──────────────────────
+  // Optionnel pour rester rétrocompatible avec les JWT existants qui
+  // n'embarquent pas encore ce champ. Le backend devra ajouter
+  // `modules.stock` au claim JWT pour activer ce menu en production.
+  stock?: {
+    catalogue?: boolean;
+    mouvements?: boolean;
+    etatStock?: boolean;
+    inventaires?: boolean;
+    synthese?: boolean;
+    approvisionnement?: boolean;
+    tableauBord?: boolean;
+
+    // ─── Stock v2 — 7.4 Contrôle des mouvements ──────────────────────
+    // Sous-flags additionnels (rétrocompatibles). Le backend doit les
+    // ajouter au claim JWT `modules.stock` pour activer la section.
+    categorisation?: boolean;        // catégorisation entrées/sorties + stats
+    bonsEntree?: boolean;            // bons d'entrée numériques
+    bonsSortie?: boolean;            // bons de sortie numériques
+    workflowValidation?: boolean;    // tableau de workflow (Kanban)
+    historiqueDestinataire?: boolean;// historique consommation par destinataire
+    plafonds?: boolean;              // plafonds de dotation
+    dotation?: boolean;              // dotation prévue vs réelle
+    rapportsConso?: boolean;         // rapports de consommation
+
+    // ─── Stock v2 — 7.5 Analyse des consommations (lecture seule) ────
+    analyseMensuelle?: boolean;      // vue mensuelle par site
+    chantiers?: boolean;             // consommations fin de chantier
+    dons?: boolean;                  // consommations dons
+    comparatif?: boolean;            // comparatif mensuel
+    filtresCroises?: boolean;        // analyse multidimensionnelle
+
+    // ─── Stock v2 — 7.6 Valorisation financière ──────────────────────
+    coutUnitaire?: boolean;          // coût unitaire par produit
+    coutMouvements?: boolean;        // coût de chaque mouvement
+    valeurStock?: boolean;           // valeur du stock temps réel
+    coutSite?: boolean;              // coût de consommation par site
+    coutChantier?: boolean;          // coût de revient par chantier
+    marges?: boolean;                // marge produits vendus
+    tableauBordFinancier?: boolean;  // tableau de bord financier
+  };
 }
