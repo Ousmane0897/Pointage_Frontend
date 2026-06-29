@@ -113,11 +113,11 @@
           </td>
           <td class="px-4 py-3 text-right font-medium text-gray-800">{{ formaterFCFA(cat.salaireBase) }}</td>
           <td class="px-4 py-3 text-right text-gray-600">
-            <span class="text-xs text-gray-400 mr-1">({{ cat.primes?.length || 0 }})</span>
+            <span class="text-xs text-gray-400 mr-1">({{ cat.primes.length }})</span>
             {{ formaterFCFA(totalPrimes(cat)) }}
           </td>
           <td class="px-4 py-3 text-right text-gray-600">
-            <span class="text-xs text-gray-400 mr-1">({{ cat.indemnites?.length || 0 }})</span>
+            <span class="text-xs text-gray-400 mr-1">({{ cat.indemnites.length }})</span>
             {{ formaterFCFA(totalIndemnites(cat)) }}
           </td>
           <td class="px-4 py-3">
