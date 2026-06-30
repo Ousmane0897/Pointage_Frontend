@@ -115,7 +115,7 @@
                    animate-[fadeIn_0.22s_ease]">
 
             <!-- Gestion du Personnel (sous-menu) -->
-            <li>
+            <li *ngIf="accessGestionPersonnel()">
               <button (click)="toggleDropdownGestionPersonnel('gestionPersonnel')"
                 class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
                        hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
@@ -131,7 +131,7 @@
 
               <ul *ngIf="openDropdownGestionPersonnel === 'gestionPersonnel'"
                 class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
-                <li>
+                <li *ngIf="accessRh('dossierEmploye')">
                   <a routerLink="/admin/rh/gestion-du-personnel/dossier-employe"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -141,7 +141,7 @@
                     <span class="flex-1 truncate">Dossiers employés</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('contrats')">
                   <a routerLink="/admin/rh/gestion-du-personnel/contrats"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -151,7 +151,7 @@
                     <span class="flex-1 truncate">Contrats de travail</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('organigramme')">
                   <a routerLink="/admin/rh/gestion-du-personnel/organigramme"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -161,7 +161,7 @@
                     <span class="flex-1 truncate">Organigramme</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('periodeEssai')">
                   <a routerLink="/admin/rh/gestion-du-personnel/periode-essai"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -171,7 +171,7 @@
                     <span class="flex-1 truncate">Périodes d'essai</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('titularisations')">
                   <a routerLink="/admin/rh/gestion-du-personnel/periode-essai/validation"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -181,7 +181,7 @@
                     <span class="flex-1 truncate">Titularisations</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('documents')">
                   <a routerLink="/admin/rh/gestion-du-personnel/documents"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -195,7 +195,7 @@
             </li>
 
             <!-- Temps & Présences (sous-menu) -->
-            <li>
+            <li *ngIf="accessTempsPresences()">
               <button (click)="toggleDropdownTempsPresences('tempsPresences')"
                 class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
                        hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
@@ -211,7 +211,7 @@
 
               <ul *ngIf="openDropdownTempsPresences === 'tempsPresences'"
                 class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
-                <li>
+                <li *ngIf="accessRh('pointageCentralise')">
                   <a routerLink="/admin/rh/temps-et-presences/pointage-centralise"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -221,7 +221,7 @@
                     <span class="flex-1 truncate">Pointage centralisé</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('absences')">
                   <a routerLink="/admin/rh/temps-et-presences/absences"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -231,7 +231,7 @@
                     <span class="flex-1 truncate">Absences</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('conges')">
                   <a routerLink="/admin/rh/temps-et-presences/conges"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -241,7 +241,7 @@
                     <span class="flex-1 truncate">Calendrier des congés</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('heuresSupplementaires')">
                   <a routerLink="/admin/rh/temps-et-presences/heures-supplementaires"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -251,7 +251,7 @@
                     <span class="flex-1 truncate">Heures supplémentaires</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('recapitulatif')">
                   <a routerLink="/admin/rh/temps-et-presences/recapitulatif"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -265,7 +265,7 @@
             </li>
 
             <!-- Paie (sous-menu) -->
-            <li>
+            <li *ngIf="accessPaie()">
               <button (click)="toggleDropdownPaie('paie')"
                 class="group flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[0.82rem] font-medium text-slate-400
                        hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
@@ -281,7 +281,7 @@
 
               <ul *ngIf="openDropdownPaie === 'paie'"
                 class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
-                <li>
+                <li *ngIf="accessRh('grilleSalariale')">
                   <a routerLink="/admin/rh/paie/grille-salariale"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -291,7 +291,7 @@
                     <span class="flex-1 truncate">Grille salariale</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('calculBulletin')">
                   <a routerLink="/admin/rh/paie/calcul-bulletin"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -301,7 +301,7 @@
                     <span class="flex-1 truncate">Calcul bulletin</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('historiquePaies')">
                   <a routerLink="/admin/rh/paie/historique"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -311,7 +311,7 @@
                     <span class="flex-1 truncate">Historique des paies</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('declarations')">
                   <a routerLink="/admin/rh/paie/declarations"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -325,7 +325,7 @@
             </li>
 
             <!-- Développement RH (sous-menu) -->
-            <li>
+            <li *ngIf="accessDeveloppementRh()">
               <button (click)="toggleDropdownDeveloppementRh('devRh')"
                 class="group flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl text-[0.8rem] font-medium text-slate-400
                        hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
@@ -340,7 +340,7 @@
               </button>
               <ul *ngIf="openDropdownDeveloppementRh === 'devRh'"
                 class="ml-3 mt-1 pl-3 border-l border-slate-500/15 flex flex-col gap-0.5">
-                <li>
+                <li *ngIf="accessRh('formations')">
                   <a routerLink="/admin/rh/developpement-rh/formations"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -350,7 +350,7 @@
                     <span class="flex-1 truncate">Plan de formation</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('evaluations')">
                   <a routerLink="/admin/rh/developpement-rh/evaluations"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -360,7 +360,7 @@
                     <span class="flex-1 truncate">Évaluations</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('sanctions')">
                   <a routerLink="/admin/rh/developpement-rh/sanctions"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -370,7 +370,7 @@
                     <span class="flex-1 truncate">Sanctions</span>
                   </a>
                 </li>
-                <li>
+                <li *ngIf="accessRh('tableauBordRh')">
                   <a routerLink="/admin/rh/developpement-rh/tableau-de-bord"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -386,29 +386,29 @@
         </li>
 
         <!-- ============================================================ -->
-        <!-- Exploitation v2 — Production Chimie (5.1)                     -->
+        <!-- Industrie — Production Chimie (5.1)                           -->
         <!-- ============================================================ -->
 
-        <li *ngIf="accessExploitationV2()">
-          <button (click)="toggleDropdownExploitationV2('exploitationV2')"
+        <li *ngIf="accessIndustrie()">
+          <button (click)="toggleDropdownIndustrie('industrie')"
             class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
                    hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
             [ngClass]="{
-              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/exploitation-v2'),
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/exploitation-v2/production-chimie'),
               'justify-center px-0': !isOpen
             }">
-            <lucide-icon name="FlaskConical"
+            <lucide-icon name="Factory"
               class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
-              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/exploitation-v2') }"></lucide-icon>
-            <span *ngIf="isOpen" class="flex-1 truncate">Exploitation</span>
+              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/exploitation-v2/production-chimie') }"></lucide-icon>
+            <span *ngIf="isOpen" class="flex-1 truncate">Industrie</span>
             <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
-              [ngClass]="{ 'rotate-180': openDropdownExploitationV2 === 'exploitationV2' }"
+              [ngClass]="{ 'rotate-180': openDropdownIndustrie === 'industrie' }"
               fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          <ul *ngIf="openDropdownExploitationV2 === 'exploitationV2' && isOpen"
+          <ul *ngIf="openDropdownIndustrie === 'industrie' && isOpen"
             class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
 
             <!-- Production Chimie -->
@@ -504,6 +504,34 @@
                 </li>
               </ul>
             </li>
+          </ul>
+        </li>
+
+        <!-- ============================================================ -->
+        <!-- Exploitation v2 — Opérations terrain (5.2)                   -->
+        <!-- ============================================================ -->
+
+        <li *ngIf="accessTerrain()">
+          <button (click)="toggleDropdownExploitationV2('exploitationV2')"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/exploitation-v2/terrain'),
+              'justify-center px-0': !isOpen
+            }">
+            <lucide-icon name="MapPinned"
+              class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': isActivePrefix('/admin/exploitation-v2/terrain') }"></lucide-icon>
+            <span *ngIf="isOpen" class="flex-1 truncate">Exploitation</span>
+            <svg *ngIf="isOpen" class="w-4 h-4 text-slate-500 transition-transform duration-300"
+              [ngClass]="{ 'rotate-180': openDropdownExploitationV2 === 'exploitationV2' }"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <ul *ngIf="openDropdownExploitationV2 === 'exploitationV2' && isOpen"
+            class="ml-3.5 mt-1 mb-1 pl-3 border-l border-slate-500/20 flex flex-col gap-0.5 animate-[fadeIn_0.22s_ease]">
 
             <!-- Exploitation Terrain (5.2) -->
             <li *ngIf="accessTerrain()">

@@ -12,6 +12,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
 import { NgxSpinnerService } from 'ngx-spinner';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-gestion-privilege',
@@ -22,7 +23,8 @@ import { NgxSpinnerService } from 'ngx-spinner';
     // Please refactor the code to add `provideHttpClient()` call to the provider list in the
     // application bootstrap logic and remove the `HttpClientModule` import from this component.
     HttpClientModule,
-    RouterOutlet
+    RouterOutlet,
+    LucideAngularModule
   ],
   templateUrl: './gestion-privilege.component.html',
   styleUrl: './gestion-privilege.component.scss'
@@ -46,7 +48,31 @@ export class GestionPrivilegeComponent implements OnInit {
     modulesAutorises: {
       dashboard: false,
       admin: false,
-      rh: false,
+      rh: {
+        // 6.1 Gestion du Personnel
+        dossierEmploye: false,
+        contrats: false,
+        organigramme: false,
+        periodeEssai: false,
+        titularisations: false,
+        documents: false,
+        // 6.2 Temps & Présences
+        pointageCentralise: false,
+        absences: false,
+        conges: false,
+        heuresSupplementaires: false,
+        recapitulatif: false,
+        // 6.3 Paie
+        grilleSalariale: false,
+        calculBulletin: false,
+        historiquePaies: false,
+        declarations: false,
+        // 6.4 Développement RH
+        formations: false,
+        evaluations: false,
+        sanctions: false,
+        tableauBordRh: false
+      },
 
       productionChimie: {
         formulations: false,
@@ -67,6 +93,39 @@ export class GestionPrivilegeComponent implements OnInit {
         materiel: false,
         phytosanitaire: false,
         tableauBord: false
+      },
+      stock: {
+        // 7.3 Stocks & Approvisionnement
+        catalogue: false,
+        mouvements: false,
+        etatStock: false,
+        inventaires: false,
+        synthese: false,
+        approvisionnement: false,
+        tableauBord: false,
+        // 7.4 Contrôle des mouvements
+        categorisation: false,
+        bonsEntree: false,
+        bonsSortie: false,
+        workflowValidation: false,
+        historiqueDestinataire: false,
+        plafonds: false,
+        dotation: false,
+        rapportsConso: false,
+        // 7.5 Analyse des consommations
+        analyseMensuelle: false,
+        chantiers: false,
+        dons: false,
+        comparatif: false,
+        filtresCroises: false,
+        // 7.6 Valorisation financière
+        coutUnitaire: false,
+        coutMouvements: false,
+        valeurStock: false,
+        coutSite: false,
+        coutChantier: false,
+        marges: false,
+        tableauBordFinancier: false
       }
 
     },
@@ -105,7 +164,31 @@ export class GestionPrivilegeComponent implements OnInit {
       prenom: '', nom: '', email: '', password: '', poste: '', role: '', modulesAutorises: {
         dashboard: false,
         admin: false,
-        rh: false,
+        rh: {
+          // 6.1 Gestion du Personnel
+          dossierEmploye: false,
+          contrats: false,
+          organigramme: false,
+          periodeEssai: false,
+          titularisations: false,
+          documents: false,
+          // 6.2 Temps & Présences
+          pointageCentralise: false,
+          absences: false,
+          conges: false,
+          heuresSupplementaires: false,
+          recapitulatif: false,
+          // 6.3 Paie
+          grilleSalariale: false,
+          calculBulletin: false,
+          historiquePaies: false,
+          declarations: false,
+          // 6.4 Développement RH
+          formations: false,
+          evaluations: false,
+          sanctions: false,
+          tableauBordRh: false
+        },
         productionChimie: {
           formulations: false,
           ordresFabrication: false,
@@ -126,6 +209,39 @@ export class GestionPrivilegeComponent implements OnInit {
           phytosanitaire: false,
           tableauBord: false
         },
+        stock: {
+          // 7.3 Stocks & Approvisionnement
+          catalogue: false,
+          mouvements: false,
+          etatStock: false,
+          inventaires: false,
+          synthese: false,
+          approvisionnement: false,
+          tableauBord: false,
+          // 7.4 Contrôle des mouvements
+          categorisation: false,
+          bonsEntree: false,
+          bonsSortie: false,
+          workflowValidation: false,
+          historiqueDestinataire: false,
+          plafonds: false,
+          dotation: false,
+          rapportsConso: false,
+          // 7.5 Analyse des consommations
+          analyseMensuelle: false,
+          chantiers: false,
+          dons: false,
+          comparatif: false,
+          filtresCroises: false,
+          // 7.6 Valorisation financière
+          coutUnitaire: false,
+          coutMouvements: false,
+          valeurStock: false,
+          coutSite: false,
+          coutChantier: false,
+          marges: false,
+          tableauBordFinancier: false
+        },
 
       }, motifDesactivation: '', active: true
     };
@@ -137,12 +253,42 @@ export class GestionPrivilegeComponent implements OnInit {
   openEditModal(admin: Admin) {
     this.isEditMode = true;
 
+    // Rétrocompat : un ancien compte stockait `rh` comme booléen unique.
+    // Si `rh === true`, on coche toutes les fonctionnalités RH pour préserver
+    // l'accès complet après ré-enregistrement.
+    const rhLegacyFull = (admin.modulesAutorises?.rh as any) === true;
+    const rhSrc: any = admin.modulesAutorises?.rh;
+
     this.modalData = {
       ...admin,
       modulesAutorises: {
         dashboard: !!admin.modulesAutorises?.dashboard,
         admin: !!admin.modulesAutorises?.admin,
-        rh: !!admin.modulesAutorises?.rh,
+        rh: {
+          // 6.1 Gestion du Personnel
+          dossierEmploye: rhLegacyFull || !!rhSrc?.dossierEmploye,
+          contrats: rhLegacyFull || !!rhSrc?.contrats,
+          organigramme: rhLegacyFull || !!rhSrc?.organigramme,
+          periodeEssai: rhLegacyFull || !!rhSrc?.periodeEssai,
+          titularisations: rhLegacyFull || !!rhSrc?.titularisations,
+          documents: rhLegacyFull || !!rhSrc?.documents,
+          // 6.2 Temps & Présences
+          pointageCentralise: rhLegacyFull || !!rhSrc?.pointageCentralise,
+          absences: rhLegacyFull || !!rhSrc?.absences,
+          conges: rhLegacyFull || !!rhSrc?.conges,
+          heuresSupplementaires: rhLegacyFull || !!rhSrc?.heuresSupplementaires,
+          recapitulatif: rhLegacyFull || !!rhSrc?.recapitulatif,
+          // 6.3 Paie
+          grilleSalariale: rhLegacyFull || !!rhSrc?.grilleSalariale,
+          calculBulletin: rhLegacyFull || !!rhSrc?.calculBulletin,
+          historiquePaies: rhLegacyFull || !!rhSrc?.historiquePaies,
+          declarations: rhLegacyFull || !!rhSrc?.declarations,
+          // 6.4 Développement RH
+          formations: rhLegacyFull || !!rhSrc?.formations,
+          evaluations: rhLegacyFull || !!rhSrc?.evaluations,
+          sanctions: rhLegacyFull || !!rhSrc?.sanctions,
+          tableauBordRh: rhLegacyFull || !!rhSrc?.tableauBordRh
+        },
         productionChimie: {
           formulations: !!admin.modulesAutorises?.productionChimie?.formulations,
           ordresFabrication: !!admin.modulesAutorises?.productionChimie?.ordresFabrication,
@@ -162,6 +308,39 @@ export class GestionPrivilegeComponent implements OnInit {
           materiel: !!admin.modulesAutorises?.terrain?.materiel,
           phytosanitaire: !!admin.modulesAutorises?.terrain?.phytosanitaire,
           tableauBord: !!admin.modulesAutorises?.terrain?.tableauBord
+        },
+        stock: {
+          // 7.3 Stocks & Approvisionnement
+          catalogue: !!admin.modulesAutorises?.stock?.catalogue,
+          mouvements: !!admin.modulesAutorises?.stock?.mouvements,
+          etatStock: !!admin.modulesAutorises?.stock?.etatStock,
+          inventaires: !!admin.modulesAutorises?.stock?.inventaires,
+          synthese: !!admin.modulesAutorises?.stock?.synthese,
+          approvisionnement: !!admin.modulesAutorises?.stock?.approvisionnement,
+          tableauBord: !!admin.modulesAutorises?.stock?.tableauBord,
+          // 7.4 Contrôle des mouvements
+          categorisation: !!admin.modulesAutorises?.stock?.categorisation,
+          bonsEntree: !!admin.modulesAutorises?.stock?.bonsEntree,
+          bonsSortie: !!admin.modulesAutorises?.stock?.bonsSortie,
+          workflowValidation: !!admin.modulesAutorises?.stock?.workflowValidation,
+          historiqueDestinataire: !!admin.modulesAutorises?.stock?.historiqueDestinataire,
+          plafonds: !!admin.modulesAutorises?.stock?.plafonds,
+          dotation: !!admin.modulesAutorises?.stock?.dotation,
+          rapportsConso: !!admin.modulesAutorises?.stock?.rapportsConso,
+          // 7.5 Analyse des consommations
+          analyseMensuelle: !!admin.modulesAutorises?.stock?.analyseMensuelle,
+          chantiers: !!admin.modulesAutorises?.stock?.chantiers,
+          dons: !!admin.modulesAutorises?.stock?.dons,
+          comparatif: !!admin.modulesAutorises?.stock?.comparatif,
+          filtresCroises: !!admin.modulesAutorises?.stock?.filtresCroises,
+          // 7.6 Valorisation financière
+          coutUnitaire: !!admin.modulesAutorises?.stock?.coutUnitaire,
+          coutMouvements: !!admin.modulesAutorises?.stock?.coutMouvements,
+          valeurStock: !!admin.modulesAutorises?.stock?.valeurStock,
+          coutSite: !!admin.modulesAutorises?.stock?.coutSite,
+          coutChantier: !!admin.modulesAutorises?.stock?.coutChantier,
+          marges: !!admin.modulesAutorises?.stock?.marges,
+          tableauBordFinancier: !!admin.modulesAutorises?.stock?.tableauBordFinancier
         }
       }
     };

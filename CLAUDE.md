@@ -69,7 +69,7 @@ REST API at `http://localhost:8080/api` (dev) — configured in `src/environment
 | Path segment | Purpose |
 |---|---|
 | `ressources-humaines/` | Module RH complet (voir section dédiée ci-dessous) |
-| `exploitation-v2/` | Module Exploitation (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire) |
+| `exploitation-v2/` | Module Exploitation (5.1 Production Chimie + 5.2 Terrain Nettoyage/Phytosanitaire). ⚠️ Dans la sidebar, 5.1 est présenté sous le menu **Industrie** et 5.2 sous le menu **Exploitation** — les routes restent `exploitation-v2/` pour les deux (voir note Navigation ci-dessous) |
 | `gestion-privilege/` | Permission management |
 | `notification/` | Notification system |
 | `stock/` | ⚠️ ANCIEN module Stock (legacy, à supprimer après bascule sur stock-v2/) |
@@ -201,6 +201,19 @@ Module en construction, découpé en 2 sous-modules :
   phytosanitaire, tableau de bord
 
 **Statut : ✅ Terminé (2/2 sous-modules livrés)**
+
+> **Navigation (sidebar) :** depuis la réorganisation du menu, les deux sous-modules
+> n'apparaissent plus sous un même parent « Exploitation ». Désormais :
+> - **5.1 Production Chimie** est présenté sous un menu de premier niveau **Industrie**
+>   (icône `Factory`, gate `accessIndustrie()` → délègue à `accessProductionChimie()`,
+>   dropdown `openDropdownIndustrie`).
+> - **5.2 Terrain** reste sous le menu **Exploitation** (icône `MapPinned`, gate
+>   `accessTerrain()`, sous-menu « Opérations »).
+>
+> Ce regroupement est **purement visuel** : les routes restent `/admin/exploitation-v2/production-chimie/*`
+> et `/admin/exploitation-v2/terrain/*`, et la RBAC (`ModulesAutorises.productionChimie` /
+> `.terrain`) est inchangée. Voir [sidebar.component.html](src/app/adminPage/sidebar/sidebar.component.html)
+> et [sidebar.component.ts](src/app/adminPage/sidebar/sidebar.component.ts).
 
 #### 5.1 Production Chimie (`exploitation-v2/production-chimie/`)
 

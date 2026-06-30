@@ -28,6 +28,7 @@ export class SidebarComponent implements OnInit {
   openDropdownPaie: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Paie
   openDropdownDeveloppementRh: string | null = null; // Variable pour suivre quel dropdown est ouvert dans Développement RH
   openDropdownExploitationV2: string | null = null; // Variable pour la nouvelle section Exploitation v2
+  openDropdownIndustrie: string | null = null; // Section Industrie (regroupe Production Chimie)
   openDropdownProductionChimie: string | null = null; // Sous-menu Production Chimie
   openDropdownTerrain: string | null = null; // Sous-menu Exploitation Terrain (5.2)
   openDropdownStockV2: string | null = null; // Parent regroupant les 4 sous-modules Stock (7.3 → 7.6)
@@ -83,19 +84,68 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  accessRessourcesHumaines(): boolean {
+  /**
+   * Accès à une fonctionnalité RH précise. Rétrocompatible : un ancien
+   * claim `rh: true` (booléen) accorde l'accès à toutes les fonctionnalités.
+   */
+  accessRh(feature: string): boolean {
     if (this.role === 'SUPERADMIN' || this.role === 'RH') return true;
     const m: ModulesAutorises = this.modulesAutorises;
     if (!m) return false;
-    return m.rh;
+    const rh: any = m.rh;
+    if (rh === true) return true;          // legacy booléen
+    if (!rh) return false;
+    return !!rh[feature];
   }
 
-  /** Accès à la nouvelle section Exploitation v2 (au moins une fonctionnalité Production Chimie OU Terrain). */
-  accessExploitationV2(): boolean {
+  /** Accès au sous-module 6.1 Gestion du Personnel (au moins une fonctionnalité). */
+  accessGestionPersonnel(): boolean {
+    return this.accessRh('dossierEmploye')
+      || this.accessRh('contrats')
+      || this.accessRh('organigramme')
+      || this.accessRh('periodeEssai')
+      || this.accessRh('titularisations')
+      || this.accessRh('documents');
+  }
+
+  /** Accès au sous-module 6.2 Temps & Présences (au moins une fonctionnalité). */
+  accessTempsPresences(): boolean {
+    return this.accessRh('pointageCentralise')
+      || this.accessRh('absences')
+      || this.accessRh('conges')
+      || this.accessRh('heuresSupplementaires')
+      || this.accessRh('recapitulatif');
+  }
+
+  /** Accès au sous-module 6.3 Paie (au moins une fonctionnalité). */
+  accessPaie(): boolean {
+    return this.accessRh('grilleSalariale')
+      || this.accessRh('calculBulletin')
+      || this.accessRh('historiquePaies')
+      || this.accessRh('declarations');
+  }
+
+  /** Accès au sous-module 6.4 Développement RH (au moins une fonctionnalité). */
+  accessDeveloppementRh(): boolean {
+    return this.accessRh('formations')
+      || this.accessRh('evaluations')
+      || this.accessRh('sanctions')
+      || this.accessRh('tableauBordRh');
+  }
+
+  /** Accès au menu Ressources humaines parent (au moins un sous-module accessible). */
+  accessRessourcesHumaines(): boolean {
+    if (this.role === 'SUPERADMIN' || this.role === 'RH') return true;
+    return this.accessGestionPersonnel()
+      || this.accessTempsPresences()
+      || this.accessPaie()
+      || this.accessDeveloppementRh();
+  }
+
+  /** Accès à la section Industrie (regroupe Production Chimie). */
+  accessIndustrie(): boolean {
     if (this.role === 'SUPERADMIN') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-    if (!m) return false;
-    return this.accessProductionChimie() || this.accessTerrain();
+    return this.accessProductionChimie();
   }
 
   /** Accès au sous-module Production Chimie (5.1). */
@@ -271,6 +321,10 @@ export class SidebarComponent implements OnInit {
 
   toggleDropdownExploitationV2(menu: string) {
     this.openDropdownExploitationV2 = this.openDropdownExploitationV2 === menu ? null : menu;
+  }
+
+  toggleDropdownIndustrie(menu: string) {
+    this.openDropdownIndustrie = this.openDropdownIndustrie === menu ? null : menu;
   }
 
   toggleDropdownProductionChimie(menu: string) {

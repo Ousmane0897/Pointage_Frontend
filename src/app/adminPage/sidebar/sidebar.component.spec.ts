@@ -151,9 +151,9 @@ describe('SidebarComponent', () => {
     expect(component.accessRessourcesHumaines()).toBeTrue();
   });
 
-  it('should expose Exploitation v2 when a Production Chimie sub-flag is set', () => {
+  it('should expose Industrie when a Production Chimie sub-flag is set', () => {
     expect(component.accessProductionChimie()).toBeTrue();
-    expect(component.accessExploitationV2()).toBeTrue();
+    expect(component.accessIndustrie()).toBeTrue();
   });
 
   it('should hide Terrain when no terrain sub-flag is set', () => {

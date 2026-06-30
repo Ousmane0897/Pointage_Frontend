@@ -23,7 +23,40 @@ export interface ModulesAutorises {
 
   dashboard: boolean;
   admin: boolean;
-  rh: boolean;
+
+  // ─── Ressources Humaines (6.x) ──────────────────────────────────────
+  // Auparavant un simple booléen `rh`. Désormais objet optionnel avec
+  // sous-flags par fonctionnalité (un par écran RH), sur le modèle de
+  // `stock?`/`terrain?`. Rétrocompatible : un ancien claim `rh: true` est
+  // traité comme « accès RH complet » par les helpers de la sidebar.
+  rh?: {
+    // 6.1 Gestion du Personnel
+    dossierEmploye?: boolean;
+    contrats?: boolean;
+    organigramme?: boolean;
+    periodeEssai?: boolean;
+    titularisations?: boolean;
+    documents?: boolean;
+
+    // 6.2 Temps & Présences
+    pointageCentralise?: boolean;
+    absences?: boolean;
+    conges?: boolean;
+    heuresSupplementaires?: boolean;
+    recapitulatif?: boolean;
+
+    // 6.3 Paie
+    grilleSalariale?: boolean;
+    calculBulletin?: boolean;
+    historiquePaies?: boolean;
+    declarations?: boolean;
+
+    // 6.4 Développement RH
+    formations?: boolean;
+    evaluations?: boolean;
+    sanctions?: boolean;
+    tableauBordRh?: boolean;
+  };
 
   // ─── Exploitation v2 — Production Chimie (5.1) ──────────────────────
   // Optionnel pour rester rétrocompatible avec les JWT existants qui
