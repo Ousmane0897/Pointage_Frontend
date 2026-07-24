@@ -32,6 +32,8 @@ import {
   CalendarRange, ChartColumn, ChartPie, Grid3x3, HardHat, Gift, Coins, CircleCheck,
   // ─── Stock v2 (7.6 Valorisation financière) ───
   Percent, Receipt, ChevronUp,
+  // ─── Terrain (5.2 Planning — annulation d'affectation) ───
+  CircleX,
 } from 'lucide-angular';
 
 // Ajouter ici toute nouvelle icône référencée par <lucide-icon name="..."> dans les templates.
@@ -68,5 +70,7 @@ export const LucideIconsProvider = importProvidersFrom(
     CalendarRange, ChartColumn, ChartPie, Grid3x3, HardHat, Gift, Coins, CircleCheck,
     // ─── Stock v2 (7.6 Valorisation financière) ───
     Percent, Receipt, ChevronUp,
+    // ─── Terrain (5.2 Planning — annulation d'affectation) ───
+    CircleX,
   })
 );

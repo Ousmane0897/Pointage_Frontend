@@ -3,47 +3,28 @@
   <!-- EN-TÊTE -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Pointage centralisé</h1>
+      <h1 class="text-2xl font-bold text-gray-800">Historique des pointages</h1>
       <p class="text-sm text-gray-500 mt-1">
-        Vue globale du pointage terrain, tous départements confondus
+        Consultation des pointages sur une plage de dates, tous départements confondus
       </p>
     </div>
-    <a routerLink="/admin/rh/temps-et-presences/pointage-centralise/historique"
+    <a routerLink="/admin/rh/temps-et-presences/pointage-centralise"
       class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
-      <lucide-icon name="History" class="w-4 h-4"></lucide-icon> Historique
+      <lucide-icon name="Users" class="w-4 h-4"></lucide-icon> Vue du jour
     </a>
-  </div>
-
-  <!-- RÉSUMÉ JOURNÉE -->
-  <div *ngIf="resume" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <p class="text-xs text-gray-500 uppercase tracking-wide">Total</p>
-      <p class="text-2xl font-bold text-gray-800 mt-1">{{ resume.totalEmployes }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4">
-      <p class="text-xs text-green-700 uppercase tracking-wide">Présents</p>
-      <p class="text-2xl font-bold text-green-700 mt-1">{{ resume.presents }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
-      <p class="text-xs text-red-700 uppercase tracking-wide">Absents</p>
-      <p class="text-2xl font-bold text-red-700 mt-1">{{ resume.absents }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-amber-100 p-4">
-      <p class="text-xs text-amber-700 uppercase tracking-wide">Retards</p>
-      <p class="text-2xl font-bold text-amber-700 mt-1">{{ resume.retards }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-4">
-      <p class="text-xs text-blue-700 uppercase tracking-wide">En congé</p>
-      <p class="text-2xl font-bold text-blue-700 mt-1">{{ resume.enConge }}</p>
-    </div>
   </div>
 
   <!-- FILTRES -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
       <div>
-        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Date</label>
-        <input type="date" [(ngModel)]="filtres.date"
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Date début</label>
+        <input type="date" [(ngModel)]="filtres.dateDebut"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Date fin</label>
+        <input type="date" [(ngModel)]="filtres.dateFin"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       </div>
       <div>
@@ -101,6 +82,7 @@
       <table class="min-w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Date</th>
             <th class="px-4 py-3">Matricule</th>
             <th class="px-4 py-3">Employé</th>
             <th class="px-4 py-3">Département</th>
@@ -113,6 +95,7 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           <tr *ngFor="let p of pointages; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.date | date:'dd/MM/yyyy' }}</td>
             <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ p.matricule }}</td>
             <td class="px-4 py-3 font-medium text-gray-800">{{ p.prenom }} {{ p.nom }}</td>
             <td class="px-4 py-3 text-gray-600">{{ p.departement }}</td>

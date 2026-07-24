@@ -36,9 +36,19 @@ export interface AffectationAgent {
   remplaceAffectationId?: string;     // si remplacement, id de l'affectation initiale
   motifRemplacement?: string;
 
+  // Annulation (renseignés par le serveur lors de l'annulation)
+  motifAnnulation?: string;
+  annuleParNom?: string;              // dénormalisation (déduit du JWT côté serveur)
+  dateAnnulation?: string;            // ISO
+
   commentaire?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Corps de la requête d'annulation d'une affectation. */
+export interface AnnulationAffectationPayload {
+  motif: string;
 }
 
 export interface ConflitAffectation {

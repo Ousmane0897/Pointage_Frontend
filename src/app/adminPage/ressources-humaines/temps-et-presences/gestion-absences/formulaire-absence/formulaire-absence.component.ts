@@ -159,7 +159,7 @@ export class FormulaireAbsenceComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
     ).subscribe(res => {
       if (!res) return;
-      this.toastr.success(this.isEdit ? 'Absence modifiée.' : 'Absence déclarée.', 'Succès');
+      this.toastr.success(this.isEdit ? 'Congé modifié.' : 'Congé déclaré.', 'Succès');
       this.router.navigate(['/admin/rh/temps-et-presences/absences']);
     });
   }

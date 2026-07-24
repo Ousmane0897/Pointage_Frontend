@@ -84,6 +84,21 @@ export const COULEURS_STATUT_AFFECTATION: Record<
   REMPLACEE: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
 };
 
+/** Ordre d'affichage des statuts (onglets de la liste, options des selects). */
+export const ORDRE_STATUTS_AFFECTATION: StatutAffectation[] = [
+  'PLANIFIEE',
+  'EN_COURS',
+  'EFFECTUEE',
+  'ANNULEE',
+  'REMPLACEE',
+];
+
+/** Statuts sur lesquels l'action « Annuler » est proposée. */
+export const STATUTS_AFFECTATION_ANNULABLES: StatutAffectation[] = [
+  'PLANIFIEE',
+  'EN_COURS',
+];
+
 // ─── Pointage terrain ──────────────────────────────────────────────────────
 export const LIBELLES_TYPE_POINTAGE: Record<TypePointage, string> = {
   ENTREE: 'Arrivée',

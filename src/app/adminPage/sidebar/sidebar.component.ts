@@ -38,26 +38,18 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
 
-    console.log('ROLE =', this.role);
-    console.log('TYPE ROLE =', typeof this.role);
-    console.log('PERMISSIONS RAW =', this.modulesAutorises);
-
-    Object.entries(this.modulesAutorises || {}).forEach(([k, v]) => {
-      console.log(k, v, typeof v);
-    });
-
-
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
 
     // ✅ récupérer les permissions sauvegardées
     this.modulesAutorises = this.loginService.getUserPermissions();
 
-    console.log("Permissions chargées :", this.modulesAutorises);
-
-    // optionnel : écouter les changements en live
+    // écouter les changements en live (on ignore une émission vide pour ne
+    // pas écraser les permissions déjà chargées, ex. au rafraîchissement)
     this.loginService.permissions$.subscribe(modules => {
-      this.modulesAutorises = modules;
+      if (modules && Object.keys(modules).length > 0) {
+        this.modulesAutorises = modules;
+      }
     });
 
     this.role = this.loginService.getUserRole();
@@ -103,8 +95,6 @@ export class SidebarComponent implements OnInit {
     return this.accessRh('dossierEmploye')
       || this.accessRh('contrats')
       || this.accessRh('organigramme')
-      || this.accessRh('periodeEssai')
-      || this.accessRh('titularisations')
       || this.accessRh('documents');
   }
 

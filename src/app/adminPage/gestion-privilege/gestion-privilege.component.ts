@@ -13,6 +13,7 @@ import { } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { LucideAngularModule } from 'lucide-angular';
+import { normaliserTexte } from '../../shared/text-normalize.util';
 
 @Component({
   selector: 'app-gestion-privilege',
@@ -53,8 +54,6 @@ export class GestionPrivilegeComponent implements OnInit {
         dossierEmploye: false,
         contrats: false,
         organigramme: false,
-        periodeEssai: false,
-        titularisations: false,
         documents: false,
         // 6.2 Temps & Présences
         pointageCentralise: false,
@@ -169,8 +168,6 @@ export class GestionPrivilegeComponent implements OnInit {
           dossierEmploye: false,
           contrats: false,
           organigramme: false,
-          periodeEssai: false,
-          titularisations: false,
           documents: false,
           // 6.2 Temps & Présences
           pointageCentralise: false,
@@ -269,8 +266,6 @@ export class GestionPrivilegeComponent implements OnInit {
           dossierEmploye: rhLegacyFull || !!rhSrc?.dossierEmploye,
           contrats: rhLegacyFull || !!rhSrc?.contrats,
           organigramme: rhLegacyFull || !!rhSrc?.organigramme,
-          periodeEssai: rhLegacyFull || !!rhSrc?.periodeEssai,
-          titularisations: rhLegacyFull || !!rhSrc?.titularisations,
           documents: rhLegacyFull || !!rhSrc?.documents,
           // 6.2 Temps & Présences
           pointageCentralise: rhLegacyFull || !!rhSrc?.pointageCentralise,
@@ -453,11 +448,11 @@ export class GestionPrivilegeComponent implements OnInit {
   }
 
   get filteredAdmins() {
-    const term = this.searchText.toLowerCase();
+    const term = normaliserTexte(this.searchText);
     return this.admins.filter(employe =>
-      ` ${employe.prenom} ${employe.nom} ${employe.email} ${employe.password} ${employe.poste} ${employe.role} ${employe.motifDesactivation} ${employe.active}`
-        .toLowerCase()
-        .includes(term)
+      normaliserTexte(
+        ` ${employe.prenom} ${employe.nom} ${employe.email} ${employe.password} ${employe.poste} ${employe.role} ${employe.motifDesactivation} ${employe.active}`
+      ).includes(term)
     );
   }
   toggleStatus(admin: Admin): void {

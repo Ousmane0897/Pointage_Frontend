@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   AffectationAgent,
+  AnnulationAffectationPayload,
   ConflitAffectation,
   FiltrePlanning,
 } from '../models/terrain-planning.model';
@@ -76,6 +77,20 @@ export class TerrainPlanningService {
 
   supprimerAffectation(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/affectations/${id}`);
+  }
+
+  /**
+   * Annule une affectation en conservant la trace (motif obligatoire).
+   * Le serveur passe le statut à ANNULEE, persiste motifAnnulation /
+   * dateAnnulation / annuleParNom, et refuse (409/422) si le statut courant
+   * n'est ni PLANIFIEE ni EN_COURS.
+   */
+  annulerAffectation(id: string, motif: string): Observable<AffectationAgent> {
+    const payload: AnnulationAffectationPayload = { motif };
+    return this.http.post<AffectationAgent>(
+      `${this.baseUrl}/affectations/${id}/annuler`,
+      payload,
+    );
   }
 
   /** Détection serveur des conflits (un agent affecté à 2 sites se chevauchant). */

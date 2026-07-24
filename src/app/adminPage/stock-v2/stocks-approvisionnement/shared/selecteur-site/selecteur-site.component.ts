@@ -22,6 +22,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
 import { SiteClient } from '../../../../../models/terrain-site-client.model';
+import { normaliserTexte } from '../../../../../shared/text-normalize.util';
 
 /**
  * Sélecteur de site (autocomplete) — Module Stock v2 / 7.3.
@@ -125,8 +126,8 @@ export class SelecteurSiteComponent implements OnInit, OnDestroy, ControlValueAc
   // ─── Recherche (client-side) ────────────────────────────────────────────
 
   private filtrer(q: string): void {
-    const terme = (q ?? '').trim().toLowerCase();
-    if (terme === this.libelleCourant().toLowerCase()) return;
+    const terme = normaliserTexte(q);
+    if (terme === normaliserTexte(this.libelleCourant())) return;
     if (!terme) {
       this.resultats = [];
       this.afficherDropdown = false;
@@ -135,9 +136,9 @@ export class SelecteurSiteComponent implements OnInit, OnDestroy, ControlValueAc
     }
     this.resultats = this.tousLesSites
       .filter(s =>
-        s.nom.toLowerCase().includes(terme) ||
-        s.code.toLowerCase().includes(terme) ||
-        (s.ville ?? '').toLowerCase().includes(terme))
+        normaliserTexte(s.nom).includes(terme) ||
+        normaliserTexte(s.code).includes(terme) ||
+        normaliserTexte(s.ville).includes(terme))
       .slice(0, 20);
     this.afficherDropdown = true;
     this.cdr.markForCheck();
