@@ -142,7 +142,7 @@ export class ProductionFichePdfService {
       .map((ing, idx) => [
         String(idx + 1),
         ing.matierePremiereNom ?? ing.matierePremiereId,
-        this.formatDosage(ing.dosage),
+        ing.ingredientComplement ? 'qsp' : ing.qs ? 'q.s.' : this.formatDosage(ing.dosage ?? 0),
         LIBELLES_UNITE[ing.unite],
         ing.remarque ?? '',
       ]);

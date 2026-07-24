@@ -14,10 +14,30 @@ export type StatutFormulation = 'BROUILLON' | 'VALIDEE' | 'ARCHIVEE';
 export interface IngredientFormulation {
   matierePremiereId: string;
   matierePremiereNom?: string;   // dénormalisé pour affichage rapide
-  dosage: number;                // quantité pour le lot de référence (voir quantiteRef sur FicheFormulation)
+  dosage?: number;               // quantité pour le lot de référence ; optionnel si qs ou ingredientComplement
   unite: Unite;
   ordre: number;
   remarque?: string;
+  ingredientComplement?: boolean; // ligne « qsp » (ex. eau) : quantité calculée automatiquement (Fonction B)
+  qs?: boolean;                   // ligne « quantité suffisante » (ex. soude) : ignorée par tous les calculs
+}
+
+/**
+ * Synthèse dérivée d'une fiche (MA, eau qsp, contrôle du total).
+ *
+ * ⚠️ Valeurs CALCULÉES, jamais persistées : renvoyées par le backend dans les DTO
+ * de lecture et recalculées à la volée côté front. Voir FormulationCalculService (backend)
+ * et production-formulation-calcul.ts (frontend).
+ */
+export interface SyntheseFormulation {
+  maTotaleKg: number | null;      // Σ(dosage × matiereActivePct/100) des lignes comptées
+  maPct: number | null;           // maTotaleKg / quantiteRef × 100 (null si quantiteRef absent/0)
+  eauQspKg: number | null;        // quantiteRef − Σ(autres lignes) ; null si aucune ligne qsp ou si négatif
+  totalSaisiKg: number;           // Σ(dosage des lignes non-qs), eau qsp incluse
+  ecartTolerancePct: number | null; // |totalSaisi − quantiteRef| / quantiteRef × 100 (null si quantiteRef absent/0)
+  totalConforme: boolean;         // écart ≤ tolérance
+  nbLignesComplement: number;     // nombre de lignes marquées qsp (doit être ≤ 1)
+  warnings: string[];             // avertissements non bloquants (MP cochée sans MA, eau négative…)
 }
 
 export interface EtapeProcessus {
@@ -54,6 +74,7 @@ export interface FicheFormulation {
   uniteProduction: Unite;        // unité de la quantité cible des OF référençant cette fiche
   statut: StatutFormulation;
   versions: VersionFormulation[];
+  synthese?: SyntheseFormulation; // ⚠️ calculé côté serveur, jamais persisté (lecture seule)
   createdAt?: string;
   createdBy?: string;
   updatedAt?: string;

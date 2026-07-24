@@ -16,6 +16,8 @@ export interface MatierePremiere {
   unite: Unite;
   seuilCritique: number;         // alerte si quantité en stock passe sous ce seuil
   fournisseur?: string;
+  matiereActivePct?: number;     // concentration en actif (%, 0–100) — nombre, jamais texte
+  compterDansMa?: boolean;       // la MP entre dans le calcul de matière active d'une formule (Fonction A)
   ficheSecuriteUrl?: string;
   ficheSecuriteNom?: string;
   quantiteEnStock: number;       // dénormalisé pour affichage rapide

@@ -26,6 +26,13 @@ export const FORMAT_NUMERO_LOT = 'AAAAMMJJ-XXX';
 
 export const DUREE_PEREMPTION_DEFAUT_JOURS = 365;
 
+// ─── Contrôle du total d'une formulation (Fonction C) ───────────────────────
+// Tolérance par défaut (± %) entre la somme des dosages saisis et la taille du
+// lot. Valeur de repli si le paramétrage global n'est pas encore chargé ; la
+// valeur effective provient de ProductionParametresService (singleton serveur).
+
+export const TOLERANCE_TOTAL_DEFAUT_PCT = 0.1;
+
 // ─── Statuts des Ordres de Fabrication ──────────────────────────────────────
 
 export const LIBELLES_STATUT_OF: Record<StatutOf, string> = {
