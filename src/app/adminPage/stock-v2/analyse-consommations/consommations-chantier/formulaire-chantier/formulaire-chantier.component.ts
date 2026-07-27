@@ -51,7 +51,7 @@ export class FormulaireChantierComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      reference: ['', Validators.required],
+      reference: [{ value: '', disabled: true }],
       nom: ['', Validators.required],
       siteId: [''],
       client: [''],
@@ -60,7 +60,11 @@ export class FormulaireChantierComponent implements OnInit, OnDestroy {
     });
 
     this.idEdition = this.route.snapshot.paramMap.get('id');
-    if (this.idEdition) this.charger(this.idEdition);
+    if (this.idEdition) {
+      this.charger(this.idEdition);
+    } else {
+      this.chargerProchaineReference();
+    }
   }
 
   ngOnDestroy(): void {
@@ -69,6 +73,16 @@ export class FormulaireChantierComponent implements OnInit, OnDestroy {
   }
 
   get f() { return this.form.controls as { [key: string]: any }; }
+
+  /** Aperçu (indicatif) de la prochaine référence CH-AAAA-NNN en création. */
+  private chargerProchaineReference(): void {
+    this.service.prochaineReference()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: r => { this.f['reference'].setValue(r.reference); this.cdr.markForCheck(); },
+        error: () => { this.f['reference'].setValue('Générée à l\'enregistrement'); this.cdr.markForCheck(); },
+      });
+  }
 
   private charger(id: string): void {
     this.chargement = true;
@@ -106,8 +120,8 @@ export class FormulaireChantierComponent implements OnInit, OnDestroy {
       return;
     }
     const v = this.form.getRawValue();
+    // La référence est générée/gérée par le serveur (CH-AAAA-NNN) — non envoyée.
     const payload: ChantierPayload = {
-      reference: v.reference,
       nom: v.nom,
       siteId: v.siteId || undefined,
       client: v.client || undefined,

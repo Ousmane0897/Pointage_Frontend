@@ -16,7 +16,12 @@ export class LoginService {
 
   private baseUrl = environment.apiUrl
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private http: HttpClient, private router: Router) {
+    // Réhydrate les permissions depuis le stockage local au démarrage
+    // (sinon permissions$ reste vide après un rafraîchissement de page et
+    // le sidebar se vide tant que l'utilisateur ne se reconnecte pas).
+    this.permissions$.next(this.getUserPermissions());
+  }
 
   permissionsChanged = new Subject<void>();
 

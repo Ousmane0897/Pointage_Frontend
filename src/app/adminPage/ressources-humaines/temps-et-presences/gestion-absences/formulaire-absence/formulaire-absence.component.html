@@ -7,7 +7,7 @@
     </button>
     <div>
       <h1 class="text-2xl font-bold text-gray-800">
-        {{ isEdit ? 'Modifier une absence' : 'Déclarer une absence' }}
+        {{ isEdit ? 'Modifier un congé' : 'Déclarer un congé' }}
       </h1>
       <p class="text-sm text-gray-500 mt-1">Catégorisation et justificatif</p>
     </div>
@@ -36,15 +36,14 @@
 
       <div>
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
-          Type d'absence <span class="text-red-500">*</span>
+          Type de congé <span class="text-red-500">*</span>
         </label>
         <select formControlName="type"
           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
           <option value="">-- Choisir --</option>
           <option value="CONGE_PAYE">Congé payé</option>
-          <option value="MALADIE">Maladie</option>
-          <option value="PERMISSION">Permission</option>
-          <option value="INJUSTIFIEE">Absence injustifiée</option>
+          <option value="ANNUEL">Annuel</option>
+          <option value="SANS_SOLDE">Sans solde</option>
           <option value="AUTRE">Autre</option>
         </select>
       </div>
@@ -52,7 +51,7 @@
       <!-- Précision (visible uniquement si type = AUTRE) -->
       <div *ngIf="form.get('type')?.value === 'AUTRE'">
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
-          Précisez le type d'absence <span class="text-red-500">*</span>
+          Précisez le type de congé <span class="text-red-500">*</span>
         </label>
         <input type="text" formControlName="typeAutrePrecision"
           placeholder="Ex. Formation externe"
@@ -85,7 +84,7 @@
       <div class="sm:col-span-2">
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Motif</label>
         <textarea formControlName="motif" rows="3"
-          placeholder="Précisions sur le motif de l'absence..."
+          placeholder="Précisions sur le motif du congé..."
           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></textarea>
       </div>
     </div>
@@ -127,7 +126,7 @@
       <button type="submit" [disabled]="submitting"
         class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-60">
         <lucide-icon [name]="submitting ? 'Loader' : 'Save'" [class.animate-spin]="submitting" class="w-4 h-4"></lucide-icon>
-        {{ isEdit ? 'Enregistrer' : 'Déclarer' }}
+        {{ isEdit ? 'Enregistrer' : 'Déclarer le congé' }}
       </button>
     </div>
   </form>

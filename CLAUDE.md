@@ -256,6 +256,16 @@ ordres-fabrication, lots, controle-qualite, matieres-premieres, formats,
 tableau-bord). Photos contrôle qualité chargées via HttpClient blob +
 DomSanitizer (JWT obligatoire — voir [fiche-controle.component.ts](src/app/adminPage/exploitation-v2/production-chimie/controle-qualite/fiche-controle/fiche-controle.component.ts)).
 
+**Corrections ultérieures (Formulation — automatisations MA / eau qsp / contrôle du total) :**
+Trois calculs automatiques ajoutés au formulaire de formulation, **dérivés des ingrédients saisis, jamais persistés** (recalculés à la lecture côté serveur et à la volée côté client via [production-formulation-calcul.ts](src/app/services/production-formulation-calcul.ts), miroir du `FormulationCalculService` backend en `BigDecimal`).
+- **Matière première** — 2 champs ajoutés à [MatierePremiere](src/app/models/production-matiere-premiere.model.ts) : `matiereActivePct?` (concentration en actif, nombre 0–100) et `compterDansMa?` (booléen : c'est la case qui décide, pas la valeur de MA — eau/sel/parfum exclus même à MA=100). Édités dans [formulaire-matiere](src/app/adminPage/exploitation-v2/production-chimie/matieres-premieres/formulaire-matiere/), colonne « Mat. active » dans la liste.
+- **Ligne d'ingrédient** — 2 booléens ajoutés à `IngredientFormulation` : `ingredientComplement?` (ligne « qsp », ex. eau : quantité **calculée**, dosage en lecture seule, **≤ 1 par formule** sinon 422) et `qs?` (« quantité suffisante », ex. soude : ignorée par tous les calculs). `dosage` devient **optionnel**. Bandeau de synthèse (MA kg + %, eau qsp, total saisi vs lot avec code couleur **vert/rouge**, avertissements) recalculé sur `valueChanges`.
+- **A. Matière active** : `MA(kg) = Σ(dosage × matiereActivePct/100)` des lignes comptées ; `%MA = MA/quantiteRef × 100` (base = **taille du lot**). MP cochée sans MA → comptée 0 + avertissement (non bloquant).
+- **B. Eau qsp** : `eau = quantiteRef − Σ(autres lignes non-qs)` ; eau négative → non affichée + avertissement. La quantité d'une ligne complément n'est **jamais stockée** (le backend la remet à `null` avant save).
+- **C. Contrôle du total** : **informatif** (jamais bloquant sauf ≥ 2 lignes qsp). Tolérance (défaut ± 0,1 %) via le **paramétrage global** singleton serveur `GET/PUT /production-chimie/parametres` ([ProductionParametresService](src/app/services/production-parametres.service.ts)), repli `TOLERANCE_TOTAL_DEFAUT_PCT` dans [production-chimie.constants.ts](src/app/constants/production-chimie.constants.ts).
+- ⚠️ **Le jeu de référence Détergent V5 du cahier des charges annonce eau = 813 kg par erreur** : la somme des 8 ingrédients non-eau vaut 181 kg → eau exacte = **819 kg** (1000 − 181). L'implémentation et les tests retiennent 819. Le reste du CDC est correct (MA = 111,16 kg → 111,2 ; %MA = 11,12 %).
+- Formats `fr-FR` : kg à 1 décimale, % à 2 décimales. Backend séparé ([Pointage-Cleanic-Backend](../Pointage-Cleanic-Backend), branche `feature/formulation-automatisations`).
+
 #### 5.2 Exploitation Terrain (`exploitation-v2/terrain/`)
 
 **Statut : ✅ Terminé** (livré par PR à venir, branche `feature/exploitation-v2-terrain`)
@@ -270,7 +280,7 @@ contrôle qualité terrain → matériel & maintenance → phytosanitaire
 |---|---|---|
 | `sites-clients/` | liste, formulaire, fiche, import-modal | CRUD sites + carte Google Maps + import Excel transactionnel (template + drag&drop + rapport d'erreurs) |
 | `shared/` | selecteur-site, selecteur-agent, signature-pad, photo-uploader, geolocation-button, carte-google | Briques transverses : autocompletes, canvas signature `signature_pad`, upload + compression `browser-image-compression`, GPS, Google Maps singleton |
-| `planning/` | calendrier-planning, liste-affectations, formulaire-affectation, fiche-affectation, detection-conflits | FullCalendar drag&drop CDK + détection conflits temps réel |
+| `planning/` | calendrier-planning, liste-affectations, formulaire-affectation, fiche-affectation, detection-conflits + `dialogs/annuler-affectation-dialog` | FullCalendar drag&drop CDK + détection conflits temps réel + suivi des affectations par statut et annulation motivée (voir ci-dessous) |
 | `pointage/` | suivi-pointages, historique-pointages, fiche-pointage | Le pointage réel est saisi par l'agent depuis la page d'accueil (boutons Arrivée/Départ → code-PIN, modèle `Pointage` via `PointageService`) — pas de création depuis le terrain. `suivi-pointages` affiche les pointages du jour (table de l'ancien module, recherche + pagination, rafraîchissement auto 30 s). `historique-pointages`/`fiche-pointage` restent sur l'ancien modèle GPS `PointageTerrain` (en sursis) |
 | `alertes/` | tableau-alertes, recapitulatif-quotidien, parametres-escalade | Alertes WebSocket (topics `/topic/alertes-terrain`, `/user/queue/notifications-terrain`) + workflow escalade superviseur → responsable → DG |
 | `fiches-intervention/` | liste, formulaire, detail | Rapport de passage avec checklist, produits, photos `moment` AVANT/APRES/AUTRE, signature client `signature_pad`, géoloc, export PDF jsPDF |
@@ -278,6 +288,34 @@ contrôle qualité terrain → matériel & maintenance → phytosanitaire
 | `materiel/` | liste, formulaire, suivi-maintenance, historique-materiel + 3 dialogs (Affecter, Programmer, Déclarer) | Inventaire avec alertes maintenance préventive 3 niveaux (CRITIQUE/ATTENTION/INFO), FullCalendar maintenances, timeline événements |
 | `phytosanitaire/` | calendrier-phyto, produits, formulaire-application, registre, alertes-delais | Référentiel produits homologués (n° AMM), calendrier coloré par catégorie, registre exportable PDF/Excel pour audits, alertes délais réentrée et nouvelle application |
 | `tableau-bord/` | tableau-bord-terrain | KPIs (couverture, satisfaction, incidents) + 4 charts ng2-charts (bar, line × 2, doughnut) + comparaison N vs N-1 + exports Excel/PDF |
+
+**Corrections ultérieures (Planning) :**
+- **Suivi des affectations par statut** — la page `liste-affectations` (route
+  `planning/affectations`, désormais exposée dans la sidebar sous « Affectations »,
+  même garde RBAC `terrain.planning` que « Planning ») remplace le `<select>` statut
+  par des **onglets à compteurs** (Toutes / Planifiées / En cours / Effectuées /
+  Annulées / Remplacées). Les compteurs proviennent d'un `forkJoin` de 6 appels
+  `listerAffectations(0, 1, …)` dont seul `totalElements` est lu ; ils ne sont
+  rechargés que lorsque les **dates** changent (le changement d'onglet ne recharge
+  que la liste). Optimisation possible côté serveur : un
+  `GET /terrain/planning/affectations/stats?dateDebut&dateFin` renvoyant
+  `Record<StatutAffectation, number>` en un seul appel.
+- **Annulation motivée** — nouvelle action « Annuler » (icône `CircleX`) sur la liste
+  et la fiche, visible uniquement pour les statuts `PLANIFIEE` / `EN_COURS`
+  (constante `STATUTS_AFFECTATION_ANNULABLES`). Elle ouvre le dialog
+  `planning/dialogs/annuler-affectation-dialog` qui impose un motif d'au moins
+  5 caractères, puis appelle `TerrainPlanningService.annulerAffectation(id, motif)`.
+  L'affectation est **conservée** (statut `ANNULEE`), contrairement à la suppression
+  qui reste disponible séparément. La fiche affiche un panneau « Annulation »
+  (motif, date, auteur) calqué sur le panneau « Remplacement ».
+  ⚠️ **Endpoint backend à implémenter** : `POST /api/terrain/planning/affectations/{id}/annuler`
+  body `{ motif: string }` → passe `statut` à `ANNULEE`, persiste `motifAnnulation`,
+  `dateAnnulation` et `annuleParNom` (déduit du JWT), renvoie l'affectation mise à jour,
+  et refuse en **409/422** si le statut courant n'est ni `PLANIFIEE` ni `EN_COURS`.
+  Champs correspondants ajoutés à `AffectationAgent` + payload `AnnulationAffectationPayload`.
+- L'ordre des statuts est centralisé dans `ORDRE_STATUTS_AFFECTATION`
+  ([terrain.constants.ts](src/app/constants/terrain.constants.ts)) — les tableaux
+  `STATUTS` qui étaient dupliqués dans liste / calendrier / formulaire ont été supprimés.
 
 **Services** (dans [src/app/services/](src/app/services/)) :
 `terrain-site-client.service`, `terrain-planning.service`,
@@ -502,7 +540,7 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 | Domaine (service) | Endpoints attendus |
 |---|---|
 | **Vue mensuelle** (`stock-v2-analyse-mensuelle`) | `GET /stock/analyse/mensuel?mois=YYYY-MM&moisFin=&siteId=&categorieId=` (KPIs + lignes + séries) |
-| **Chantiers** (`stock-v2-analyse-chantier`) | `GET /stock/chantiers` (paginé : q, statut, siteId, dates) · `GET /stock/chantiers/actifs` (sélecteur) · `GET /{id}` (→ `DetailChantier` agrégé) · `POST` · `PUT /{id}` · `POST /{id}/cloture` |
+| **Chantiers** (`stock-v2-analyse-chantier`) | `GET /stock/chantiers` (paginé : q, statut, siteId, dates) · `GET /stock/chantiers/actifs` (sélecteur) · `GET /stock/chantiers/prochaine-reference` (aperçu `{ reference }` — indicatif) · `GET /{id}` (→ `DetailChantier` agrégé) · `POST` (**référence `CH-AAAA-NNN` générée serveur, atomique, séquence par année** — toute `reference` client ignorée ; `siteId` optionnel) · `PUT /{id}` · `POST /{id}/cloture` |
 | **Dons** (`stock-v2-analyse-don`) | `GET /stock/analyse/dons?dateDebut=&dateFin=&natureDon=&beneficiaire=&siteId=` |
 | **Comparatif** (`stock-v2-analyse-comparatif`) | `GET /stock/analyse/comparatif?axe=SITE\|PRODUIT&dateDebut=YYYY-MM&dateFin=YYYY-MM&siteId=&categorieId=&typeSortie=&seuilPct=` |
 | **Filtres croisés** (`stock-v2-analyse-croisee`) | `GET /stock/analyse/croise?axeLignes=&axeColonnes=&mesure=MONTANT\|QUANTITE&dateDebut=&dateFin=&siteId=&produitId=&categorieId=&typeSortie=` (axes : PRODUIT/CATEGORIE/SITE/TYPE_SORTIE/NATURE_DON/MOIS) |

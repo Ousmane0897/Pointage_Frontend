@@ -379,30 +379,105 @@
               </p>
             </div>
 
-            <!-- Site affecté -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Site affecté <span class="text-red-500">*</span>
-              </label>
-              <input
-                *ngIf="sites.length === 0"
-                type="text"
-                formControlName="siteAffecte"
-                placeholder="Ex. Siège Dakar"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('siteAffecte')?.invalid && posteGroup.get('siteAffecte')?.touched }"
-              />
-              <select
-                *ngIf="sites.length > 0"
-                formControlName="siteAffecte"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('siteAffecte')?.invalid && posteGroup.get('siteAffecte')?.touched }"
+            <!-- Site(s) affecté(s) — liste dynamique + tranche horaire par site -->
+            <div class="sm:col-span-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-sm font-medium text-gray-700">
+                  Site(s) affecté(s) <span class="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  (click)="ajouterAffectation()"
+                  class="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg transition"
+                >
+                  <lucide-icon name="Plus" [size]="16"></lucide-icon>
+                  Ajouter un site
+                </button>
+              </div>
+
+              <!-- État vide -->
+              <p
+                *ngIf="affectations.length === 0"
+                class="text-sm text-gray-400 border border-gray-200 rounded-lg p-3"
+                [ngClass]="{ 'border-red-400 bg-red-50 text-red-500': affectations.invalid && affectations.touched }"
               >
-                <option value="">— Sélectionner —</option>
-                <option *ngFor="let s of sites" [value]="s">{{ s }}</option>
-              </select>
-              <p *ngIf="posteGroup.get('siteAffecte')?.invalid && posteGroup.get('siteAffecte')?.touched" class="text-xs text-red-500 mt-1">
-                Le site est obligatoire.
+                Aucun site affecté. Cliquez sur « Ajouter un site ».
+              </p>
+
+              <!-- Lignes d'affectation -->
+              <div formArrayName="affectations" class="space-y-3">
+                <div
+                  *ngFor="let a of affectations.controls; let i = index"
+                  [formGroupName]="i"
+                  class="p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                >
+                  <div class="grid grid-cols-12 gap-3 items-end">
+                    <!-- Site -->
+                    <div class="col-span-12 sm:col-span-5">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Site</label>
+                      <select
+                        formControlName="site"
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                        [ngClass]="{ 'border-red-400 bg-red-50': a.get('site')?.invalid && a.get('site')?.touched }"
+                      >
+                        <option value="">— Sélectionner —</option>
+                        <option *ngFor="let s of sitesDisponibles" [value]="s">{{ s }}</option>
+                      </select>
+                      <p
+                        *ngIf="siteObsolete(a.get('site')?.value)"
+                        class="text-[10px] font-medium text-amber-700 mt-1"
+                        title="Ce site n'existe plus dans le référentiel « Sites clients » (renommé ou supprimé)."
+                      >
+                        site retiré du référentiel
+                      </p>
+                    </div>
+
+                    <!-- Heure de début -->
+                    <div class="col-span-5 sm:col-span-3">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Début</label>
+                      <input
+                        type="time"
+                        formControlName="horaireDebut"
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      />
+                    </div>
+
+                    <!-- Heure de fin -->
+                    <div class="col-span-5 sm:col-span-3">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Fin</label>
+                      <input
+                        type="time"
+                        formControlName="horaireFin"
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      />
+                    </div>
+
+                    <!-- Suppression -->
+                    <div class="col-span-2 sm:col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        (click)="retirerAffectation(i)"
+                        title="Retirer ce site"
+                        class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                      >
+                        <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Erreur cohérence horaire -->
+                  <p *ngIf="a.errors?.['horaireIncoherent']" class="text-xs text-red-500 mt-1">
+                    L'heure de fin doit être postérieure à l'heure de début.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Erreur globale : au moins un site -->
+              <p
+                *ngIf="affectations.errors?.['aucunSite'] && affectations.touched"
+                class="text-xs text-red-500 mt-1"
+              >
+                Au moins un site est obligatoire.
               </p>
             </div>
 
@@ -437,6 +512,23 @@
               </select>
               <p *ngIf="posteGroup.get('statut')?.invalid && posteGroup.get('statut')?.touched" class="text-xs text-red-500 mt-1">
                 Le statut est obligatoire.
+              </p>
+            </div>
+
+            <!-- Jours de travail -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Jours de travail <span class="text-red-500">*</span>
+              </label>
+              <select
+                formControlName="joursTravail"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('joursTravail')?.invalid && posteGroup.get('joursTravail')?.touched }"
+              >
+                <option *ngFor="let j of joursTravailOptions" [value]="j.valeur">{{ j.libelle }}</option>
+              </select>
+              <p *ngIf="posteGroup.get('joursTravail')?.invalid && posteGroup.get('joursTravail')?.touched" class="text-xs text-red-500 mt-1">
+                Les jours de travail sont obligatoires.
               </p>
             </div>
 
@@ -604,9 +696,126 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════════
-           ÉTAPE 4 — Récapitulatif
+           ÉTAPE 4 — Documents (optionnelle)
            ══════════════════════════════════════════════════════ -->
       <div *ngIf="etapeActuelle === 4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <lucide-icon name="FolderArchive" [size]="20" class="text-emerald-500"></lucide-icon>
+            Documents
+            <span class="text-xs font-medium text-gray-400">(étape optionnelle)</span>
+          </h2>
+          <p class="text-sm text-gray-500 mb-6">
+            Ajoutez les pièces de l'employé (CNI, diplômes, certificats…). Vous pourrez
+            aussi les compléter plus tard depuis la fiche de l'employé.
+          </p>
+
+          <!-- Sous-formulaire d'ajout d'un document -->
+          <div [formGroup]="documentForm" class="rounded-xl border border-gray-100 bg-gray-50 p-4 mb-6">
+
+            <!-- Zone de dépôt du fichier -->
+            <div
+              (dragover)="onDocDragOver($event)"
+              (dragleave)="onDocDragLeave()"
+              (drop)="onDocDrop($event)"
+              [ngClass]="{ 'border-emerald-400 bg-emerald-50': dragOverDoc }"
+              class="border-2 border-dashed border-gray-300 rounded-xl px-4 py-6 text-center transition mb-4">
+              <lucide-icon name="UploadCloud" [size]="28" class="text-gray-400 mx-auto mb-2"></lucide-icon>
+              <p *ngIf="!documentFile" class="text-sm text-gray-500">
+                Glissez-déposez un fichier ici, ou
+                <label class="text-emerald-600 font-medium cursor-pointer hover:underline">
+                  parcourez
+                  <input type="file" class="hidden"
+                    accept=".pdf,.doc,.docx,image/*"
+                    (change)="onDocFileSelected($event)" />
+                </label>
+              </p>
+              <p *ngIf="documentFile" class="text-sm text-gray-700 flex items-center justify-center gap-2">
+                <lucide-icon name="FileText" [size]="16" class="text-emerald-500"></lucide-icon>
+                <span class="font-medium">{{ documentFile.name }}</span>
+                <button type="button" (click)="documentFile = null"
+                  class="text-red-500 hover:text-red-700" title="Retirer le fichier">
+                  <lucide-icon name="X" [size]="16"></lucide-icon>
+                </button>
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Nom -->
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">
+                  Nom <span class="text-red-500">*</span>
+                </label>
+                <input type="text" formControlName="nom"
+                  placeholder="Ex. Carte d'identité"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition" />
+              </div>
+              <!-- Catégorie -->
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">
+                  Catégorie <span class="text-red-500">*</span>
+                </label>
+                <select formControlName="categorie"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition">
+                  <option value="">— Choisir —</option>
+                  <option *ngFor="let c of categoriesDocument" [value]="c.valeur">{{ c.libelle }}</option>
+                </select>
+              </div>
+              <!-- Date d'expiration -->
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">
+                  Date d'expiration
+                </label>
+                <input type="date" formControlName="dateExpiration"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition" />
+              </div>
+            </div>
+
+            <div class="flex justify-end mt-4">
+              <button type="button" (click)="ajouterDocument()"
+                class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                <lucide-icon name="Plus" [size]="16"></lucide-icon>
+                Ajouter le document
+              </button>
+            </div>
+          </div>
+
+          <!-- Liste des documents ajoutés -->
+          <div *ngIf="documentsAjoutes.length > 0">
+            <h3 class="text-sm font-semibold text-gray-600 mb-3">
+              Documents ajoutés ({{ documentsAjoutes.length }})
+            </h3>
+            <ul class="space-y-2">
+              <li *ngFor="let doc of documentsAjoutes; let i = index"
+                class="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-white px-4 py-2.5">
+                <div class="flex items-center gap-3 min-w-0">
+                  <lucide-icon name="FileText" [size]="18" class="text-emerald-500 shrink-0"></lucide-icon>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-700 truncate">{{ doc.nom }}</p>
+                    <p class="text-xs text-gray-400 truncate">
+                      {{ libelleCategorieDocument(doc.categorie) }} · {{ doc.fichier.name }}
+                    </p>
+                  </div>
+                </div>
+                <button type="button" (click)="retirerDocument(i)"
+                  class="p-1.5 rounded-lg text-red-600 hover:bg-red-100 transition-colors duration-150 shrink-0"
+                  title="Retirer">
+                  <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <p *ngIf="documentsAjoutes.length === 0" class="text-sm text-gray-400 italic">
+            Aucun document ajouté. Vous pouvez passer directement au récapitulatif.
+          </p>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           ÉTAPE 5 — Récapitulatif
+           ══════════════════════════════════════════════════════ -->
+      <div *ngIf="etapeActuelle === 5">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="text-lg font-semibold text-gray-700 mb-5 flex items-center gap-2">
             <lucide-icon name="ClipboardList" [size]="20" class="text-indigo-500"></lucide-icon>
@@ -693,9 +902,18 @@
                   <span class="text-gray-500">Département</span>
                   <span class="font-medium text-gray-700">{{ posteGroup.get('departement')?.value }}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Site</span>
-                  <span class="font-medium text-gray-700">{{ posteGroup.get('siteAffecte')?.value }}</span>
+                <div class="flex justify-between gap-4">
+                  <span class="text-gray-500 shrink-0">Site(s)</span>
+                  <span class="font-medium text-gray-700 text-right">
+                    <ng-container *ngIf="affectations.length > 0; else aucunSiteRecap">
+                      <span *ngFor="let a of affectations.controls; let last = last" class="block">
+                        {{ a.get('site')?.value }}<ng-container
+                          *ngIf="a.get('horaireDebut')?.value && a.get('horaireFin')?.value"
+                        > ({{ a.get('horaireDebut')?.value }} - {{ a.get('horaireFin')?.value }})</ng-container>
+                      </span>
+                    </ng-container>
+                    <ng-template #aucunSiteRecap>—</ng-template>
+                  </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Date d'entrée</span>
@@ -716,6 +934,10 @@
                   >
                     {{ libelleStatut }}
                   </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Jours de travail</span>
+                  <span class="font-medium text-gray-700">{{ libelleJoursTravail }}</span>
                 </div>
                 <div *ngIf="posteGroup.get('statut')?.value === 'EN_PERIODE_ESSAI'" class="flex justify-between">
                   <span class="text-gray-500">Durée d'essai</span>
@@ -780,6 +1002,24 @@
                   </span>
                 </div>
               </div>
+            </div>
+
+            <!-- Carte : Documents -->
+            <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+              <h4 class="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-3 flex items-center gap-1">
+                <lucide-icon name="FolderArchive" [size]="13"></lucide-icon>
+                Documents
+              </h4>
+              <p *ngIf="documentsAjoutes.length === 0" class="text-sm text-gray-500 italic">
+                Aucun document joint.
+              </p>
+              <ul *ngIf="documentsAjoutes.length > 0" class="space-y-1.5 text-sm">
+                <li *ngFor="let doc of documentsAjoutes" class="flex items-center gap-2">
+                  <lucide-icon name="FileText" [size]="14" class="text-emerald-500 shrink-0"></lucide-icon>
+                  <span class="font-medium text-gray-700 truncate">{{ doc.nom }}</span>
+                  <span class="text-gray-400 text-xs">· {{ libelleCategorieDocument(doc.categorie) }}</span>
+                </li>
+              </ul>
             </div>
 
           </div>

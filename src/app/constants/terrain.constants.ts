@@ -32,6 +32,12 @@ import {
 // « Opération »).
 export const DEPARTEMENT_EXPLOITATION = 'Opération';
 
+// Horaire de repli utilisé par le calendrier du planning quand le dossier
+// employé ne renseigne aucune tranche horaire : tout employé doit figurer au
+// calendrier, même si son dossier est incomplet.
+export const HORAIRE_DEFAUT_DEBUT = '08:00';
+export const HORAIRE_DEFAUT_FIN = '17:00';
+
 // ─── Pointage GPS ──────────────────────────────────────────────────────────
 // Rayon de tolérance par défaut (mètres). Surchargeable par site via
 // SiteClient.rayonToleranceM.
@@ -80,9 +86,33 @@ export const COULEURS_STATUT_AFFECTATION: Record<
   PLANIFIEE: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
   EN_COURS: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300' },
   EFFECTUEE: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' },
-  ANNULEE: { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300' },
+  ANNULEE: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300' },
   REMPLACEE: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
 };
+
+/** Ordre d'affichage des statuts (onglets de la liste, options des selects). */
+export const ORDRE_STATUTS_AFFECTATION: StatutAffectation[] = [
+  'PLANIFIEE',
+  'EN_COURS',
+  'EFFECTUEE',
+  'ANNULEE',
+  'REMPLACEE',
+];
+
+/** Statuts sur lesquels l'action « Annuler » est proposée. */
+export const STATUTS_AFFECTATION_ANNULABLES: StatutAffectation[] = [
+  'PLANIFIEE',
+  'EN_COURS',
+];
+
+/** Statuts sur lesquels la modification est autorisée (EFFECTUEE/ANNULEE/REMPLACEE sont figés). */
+export const STATUTS_AFFECTATION_MODIFIABLES: StatutAffectation[] = [
+  'PLANIFIEE',
+  'EN_COURS',
+];
+
+/** Cadence de rafraîchissement auto des vues planning (ms) — aligne l'UI sur la bascule serveur (cron 1 min). */
+export const INTERVALLE_RAFRAICHISSEMENT_PLANNING_MS = 60_000;
 
 // ─── Pointage terrain ──────────────────────────────────────────────────────
 export const LIBELLES_TYPE_POINTAGE: Record<TypePointage, string> = {

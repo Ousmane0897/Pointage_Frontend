@@ -22,6 +22,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { StockV2AnalyseChantierService } from '../../../../../services/stock-v2-analyse-chantier.service';
 import { Chantier } from '../../../../../models/stock-v2-chantier.model';
+import { normaliserTexte } from '../../../../../shared/text-normalize.util';
 
 /**
  * Sélecteur de chantier (autocomplete) — Module Stock v2 / 7.5.
@@ -122,8 +123,8 @@ export class SelecteurChantierComponent implements OnInit, OnDestroy, ControlVal
   // ─── Recherche (client-side) ────────────────────────────────────────────
 
   private filtrer(q: string): void {
-    const terme = (q ?? '').trim().toLowerCase();
-    if (terme === this.libelleCourant().toLowerCase()) return;
+    const terme = normaliserTexte(q);
+    if (terme === normaliserTexte(this.libelleCourant())) return;
     if (!terme) {
       this.resultats = [];
       this.afficherDropdown = false;
@@ -132,9 +133,9 @@ export class SelecteurChantierComponent implements OnInit, OnDestroy, ControlVal
     }
     this.resultats = this.tousLesChantiers
       .filter(c =>
-        c.nom.toLowerCase().includes(terme) ||
-        c.reference.toLowerCase().includes(terme) ||
-        (c.client ?? '').toLowerCase().includes(terme))
+        normaliserTexte(c.nom).includes(terme) ||
+        normaliserTexte(c.reference).includes(terme) ||
+        normaliserTexte(c.client).includes(terme))
       .slice(0, 20);
     this.afficherDropdown = true;
     this.cdr.markForCheck();

@@ -18,6 +18,7 @@ import {
 import { LucideAngularModule } from 'lucide-angular';
 
 import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
+import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
 import { DossierEmploye, FiltreEmploye } from '../../../../../models/dossier-employe.model';
 import { PageResponse } from '../../../../../models/pageResponse.model';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
@@ -72,6 +73,7 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
 
   constructor(
     private dossierEmployeService: DossierEmployeService,
+    private terrainSiteClientService: TerrainSiteClientService,
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
@@ -84,16 +86,30 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
 
   // ─── Chargement des options de filtres ────────────────────────────────────
   private loadFilterOptions(): void {
+    // Départements et postes restent dérivés des employés existants.
     this.dossierEmployeService
       .getValeursFiltres()
       .pipe(
         catchError(() => of({ departements: [], sites: [], postes: [] })),
         takeUntil(this.destroy$),
       )
-      .subscribe(({ departements, sites, postes }) => {
+      .subscribe(({ departements, postes }) => {
         this.departements = departements;
-        this.sites = sites;
         this.postes = postes;
+      });
+
+    // Les sites du filtre proviennent du référentiel unique « Sites clients »
+    // (module Exploitation) → le déroulant suit les renommages/suppressions.
+    this.terrainSiteClientService
+      .listerActifs()
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((sites) => {
+        this.sites = [...new Set(
+          sites.map(s => (s.nom ?? '').trim()).filter(Boolean),
+        )].sort((a, b) => a.localeCompare(b, 'fr'));
       });
   }
 

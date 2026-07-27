@@ -34,8 +34,6 @@ export interface ModulesAutorises {
     dossierEmploye?: boolean;
     contrats?: boolean;
     organigramme?: boolean;
-    periodeEssai?: boolean;
-    titularisations?: boolean;
     documents?: boolean;
 
     // 6.2 Temps & Présences

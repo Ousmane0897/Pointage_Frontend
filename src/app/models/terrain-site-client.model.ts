@@ -50,6 +50,7 @@ export interface SiteClient {
 
   // Caractéristiques techniques
   surfaceM2?: number;
+  nombreMaxEmployes?: number;         // plafond d'effectif du site (absent = pas de plafond)
   frequencePassage: FrequencePassage;
   frequencePersonnalisee?: string;    // si PERSONNALISE — texte libre (ex: "lundi/mercredi/vendredi")
   specificites?: string;              // observations techniques libres
@@ -57,6 +58,12 @@ export interface SiteClient {
   actif: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Effectif d'un site à un instant donné, renvoyé par l'endpoint /effectif. */
+export interface EffectifSite {
+  nombreActuel: number;
+  nombreMax: number | null;    // null = pas de plafond configuré sur le site
 }
 
 export interface FiltreSiteClient {

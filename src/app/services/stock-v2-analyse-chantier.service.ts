@@ -39,6 +39,15 @@ export class StockV2AnalyseChantierService {
     return this.http.get<Chantier[]>(`${this.baseUrl}/actifs`);
   }
 
+  /**
+   * Aperçu de la prochaine référence chantier (CH-AAAA-NNN) de l'année en cours.
+   * Indicatif : la référence définitive est assignée atomiquement par le serveur
+   * à la création (POST).
+   */
+  prochaineReference(): Observable<{ reference: string }> {
+    return this.http.get<{ reference: string }>(`${this.baseUrl}/prochaine-reference`);
+  }
+
   /** Détail agrégé d'un chantier (entité + lignes de consommation valorisées). */
   getDetail(id: string): Observable<DetailChantier> {
     return this.http.get<DetailChantier>(`${this.baseUrl}/${id}`);

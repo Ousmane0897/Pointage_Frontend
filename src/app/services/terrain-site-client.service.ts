@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { SiteClient, FiltreSiteClient } from '../models/terrain-site-client.model';
+import { SiteClient, FiltreSiteClient, EffectifSite } from '../models/terrain-site-client.model';
 import { PageResponse } from '../models/pageResponse.model';
 
 /**
@@ -55,5 +55,22 @@ export class TerrainSiteClientService {
     return this.http.get(`${this.baseUrl}/${id}/cahier-charges`, {
       responseType: 'blob',
     });
+  }
+
+  /**
+   * Effectif courant d'un site, pour le contrôle du plafond `nombreMaxEmployes`.
+   * - `perimetre = 'RH'`     → employés dont le dossier est rattaché au site.
+   * - `perimetre = 'TERRAIN'`→ affectations de planning actives (statut ≠ ANNULEE).
+   * `nombreMax = null` ⇒ aucun plafond configuré sur le site.
+   */
+  compterEffectif(
+    siteId: string,
+    perimetre: 'RH' | 'TERRAIN',
+    opts?: { excludeEmployeId?: string; excludeAffectationId?: string },
+  ): Observable<EffectifSite> {
+    let params = new HttpParams().set('perimetre', perimetre);
+    if (opts?.excludeEmployeId) params = params.set('excludeEmployeId', opts.excludeEmployeId);
+    if (opts?.excludeAffectationId) params = params.set('excludeAffectationId', opts.excludeAffectationId);
+    return this.http.get<EffectifSite>(`${this.baseUrl}/${siteId}/effectif`, { params });
   }
 }

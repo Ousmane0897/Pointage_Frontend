@@ -120,14 +120,14 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
     if (!a.id) return;
     const ref = this.dialog.open(ConfirmDialogComponent, {
       width: '420px',
-      data: { message: `Supprimer cette absence (${this.getTypeLabel(a.type)}) ? Cette action est irréversible.` },
+      data: { message: `Supprimer ce congé (${this.getTypeLabel(a.type)}) ? Cette action est irréversible.` },
     });
 
     ref.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (!confirmed) return;
       this.absenceService.supprimer(a.id!).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
-          this.toastr.success('Absence supprimée.', 'Succès');
+          this.toastr.success('Congé supprimé.', 'Succès');
           if (this.absences.length === 1 && this.page > 0) this.page--;
           this.loadAbsences();
         },
@@ -140,9 +140,8 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
   getTypeLabel(t: TypeAbsence): string {
     const map: Record<TypeAbsence, string> = {
       CONGE_PAYE: 'Congé payé',
-      MALADIE: 'Maladie',
-      PERMISSION: 'Permission',
-      INJUSTIFIEE: 'Injustifiée',
+      ANNUEL: 'Annuel',
+      SANS_SOLDE: 'Sans solde',
       AUTRE: 'Autre',
     };
     return map[t] ?? t;
@@ -159,9 +158,8 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
   getTypeClasses(t: TypeAbsence): string {
     const map: Record<TypeAbsence, string> = {
       CONGE_PAYE: 'bg-blue-100 text-blue-700 border border-blue-200',
-      MALADIE: 'bg-purple-100 text-purple-700 border border-purple-200',
-      PERMISSION: 'bg-green-100 text-green-700 border border-green-200',
-      INJUSTIFIEE: 'bg-red-100 text-red-700 border border-red-200',
+      ANNUEL: 'bg-green-100 text-green-700 border border-green-200',
+      SANS_SOLDE: 'bg-amber-100 text-amber-700 border border-amber-200',
       AUTRE: 'bg-gray-100 text-gray-600 border border-gray-200',
     };
     return map[t];

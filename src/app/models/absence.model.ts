@@ -4,9 +4,8 @@
 
 export type TypeAbsence =
   | 'CONGE_PAYE'
-  | 'MALADIE'
-  | 'PERMISSION'
-  | 'INJUSTIFIEE'
+  | 'ANNUEL'
+  | 'SANS_SOLDE'
   | 'AUTRE';
 
 export type StatutAbsence = 'DECLAREE' | 'JUSTIFIEE' | 'REFUSEE';

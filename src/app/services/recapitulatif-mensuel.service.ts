@@ -54,7 +54,7 @@ export class RecapitulatifMensuelService {
       'Jours absence': r.joursAbsence,
       'Jours congé': r.joursConge,
       'Nb retards': r.nombreRetards,
-      'Retard (min)': r.minutesRetardTotal,
+      'Minutes de retard': r.minutesRetardTotal,
       'HS total (h)': r.heuresSupTotal,
       'HS majorées équiv. (h)': r.heuresSupMajoreesEquivalent,
     }));
@@ -80,7 +80,7 @@ export class RecapitulatifMensuelService {
       head: [[
         'Matricule', 'Nom', 'Prénom', 'Département',
         'J. ouvr.', 'J. trav.', 'Absences', 'Congés',
-        'Retards', 'Min. retard', 'HS (h)', 'HS maj. équiv.',
+        'Nb retards', 'Minutes de retard', 'HS (h)', 'HS maj. équiv.',
       ]],
       body: recaps.map(r => [
         r.matricule,

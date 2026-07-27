@@ -10,7 +10,6 @@ import { PointageCentraliseService } from '../../../../services/pointage-central
 import {
   PointageCentralise,
   FiltrePointage,
-  ResumeJournee,
   StatutPresence,
 } from '../../../../models/pointage-centralise.model';
 import { PageResponse } from '../../../../models/pageResponse.model';
@@ -21,17 +20,16 @@ import {
 } from '../pointage-retard.util';
 
 @Component({
-  selector: 'app-pointage-centralise',
+  selector: 'app-historique-pointage-centralise',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
-  templateUrl: './pointage-centralise.component.html',
-  styleUrl: './pointage-centralise.component.scss',
+  templateUrl: './historique-pointage-centralise.component.html',
+  styleUrl: './historique-pointage-centralise.component.scss',
 })
-export class PointageCentraliseComponent implements OnInit, OnDestroy {
+export class HistoriquePointageCentraliseComponent implements OnInit, OnDestroy {
 
   // ─── Données ─────────────────────────────────────────────────────────────
   pointages: PointageCentralise[] = [];
-  resume: ResumeJournee | null = null;
   total = 0;
   totalPages = 0;
 
@@ -41,7 +39,8 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
 
   // ─── Filtres ─────────────────────────────────────────────────────────────
   filtres: FiltrePointage = {
-    date: this.today(),
+    dateDebut: this.firstDayOfMonth(),
+    dateFin: this.today(),
     departement: '',
     site: '',
     statut: undefined,
@@ -50,7 +49,6 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
 
   // ─── États UI ────────────────────────────────────────────────────────────
   loading = false;
-  loadingResume = false;
 
   // ─── Retard : tolérance appliquée à l'affichage ──────────────────────────
   protected readonly TOLERANCE_RETARD_MINUTES = TOLERANCE_RETARD_MINUTES;
@@ -66,14 +64,14 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPointages();
-    this.loadResume();
   }
 
   // ─── Chargement ──────────────────────────────────────────────────────────
   loadPointages(): void {
     this.loading = true;
     const cleanFiltres: FiltrePointage = {
-      date: this.filtres.date || undefined,
+      dateDebut: this.filtres.dateDebut || undefined,
+      dateFin: this.filtres.dateFin || undefined,
       departement: this.filtres.departement || undefined,
       site: this.filtres.site || undefined,
       statut: this.filtres.statut || undefined,
@@ -97,29 +95,16 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadResume(): void {
-    if (!this.filtres.date) return;
-    this.loadingResume = true;
-    this.pointageService
-      .getResumeJournee(this.filtres.date)
-      .pipe(
-        catchError(() => of(null)),
-        finalize(() => (this.loadingResume = false)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe(r => (this.resume = r));
-  }
-
   // ─── Filtres ─────────────────────────────────────────────────────────────
   applyFilters(): void {
     this.page = 0;
     this.loadPointages();
-    this.loadResume();
   }
 
   resetFilters(): void {
     this.filtres = {
-      date: this.today(),
+      dateDebut: this.firstDayOfMonth(),
+      dateFin: this.today(),
       departement: '',
       site: '',
       statut: undefined,
@@ -127,7 +112,6 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
     };
     this.page = 0;
     this.loadPointages();
-    this.loadResume();
   }
 
   // ─── Helpers badges ──────────────────────────────────────────────────────
@@ -168,16 +152,15 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
   prevPage(): void {
     if (this.page > 0) { this.page--; this.loadPointages(); }
   }
-  goToPage(p: number): void {
-    if (p >= 0 && p < this.totalPages) { this.page = p; this.loadPointages(); }
-  }
-  get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i);
-  }
 
   // ─── Utilitaires ─────────────────────────────────────────────────────────
   private today(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  private firstDayOfMonth(): string {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
   }
 
   trackById(_: number, p: PointageCentralise): string {
@@ -185,7 +168,7 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
   }
 
   private handleError(err: any): void {
-    console.error('Erreur pointage centralisé:', err);
+    console.error('Erreur historique pointage centralisé:', err);
     if (err?.status === 0) {
       this.toastr.error('Impossible de contacter le serveur.', 'Erreur réseau');
     } else if (err?.status === 403) {

@@ -9,34 +9,37 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
-import { forkJoin, interval, Subject } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 
-import { TerrainPlanningService } from '../../../../../services/terrain-planning.service';
+import { TerrainPlanningService } from '../../../../services/terrain-planning.service';
 import {
   AffectationAgent,
   StatutAffectation,
-} from '../../../../../models/terrain-planning.model';
+} from '../../../../models/terrain-planning.model';
 import {
   COULEURS_STATUT_AFFECTATION,
-  INTERVALLE_RAFRAICHISSEMENT_PLANNING_MS,
   LIBELLES_STATUT_AFFECTATION,
   ORDRE_STATUTS_AFFECTATION,
-  STATUTS_AFFECTATION_ANNULABLES,
-  STATUTS_AFFECTATION_MODIFIABLES,
-} from '../../../../../constants/terrain.constants';
-import {
-  AnnulerAffectationDialogComponent,
-  AnnulerAffectationDialogResult,
-} from '../dialogs/annuler-affectation-dialog.component';
+} from '../../../../constants/terrain.constants';
+import { SelecteurAgentComponent } from '../../../exploitation-v2/terrain/shared/selecteur-agent/selecteur-agent.component';
+import { SelecteurSiteComponent } from '../../../exploitation-v2/terrain/shared/selecteur-site/selecteur-site.component';
 
 /** Valeur de l'onglet « Toutes » (aucun filtre de statut). */
 type OngletStatut = StatutAffectation | '';
 
+/**
+ * Historique des affectations des employés — Module RH, 6.1 Gestion du
+ * Personnel.
+ *
+ * Page de CONSULTATION EN LECTURE SEULE : elle réutilise l'historique des
+ * affectations terrain (`AffectationAgent`) exposé par `TerrainPlanningService`
+ * — aucune écriture (création / modification / annulation / suppression) et
+ * aucun export. Filtrable par employé, site, statut et plage de dates.
+ */
 @Component({
-  selector: 'app-liste-affectations',
+  selector: 'app-historique-affectations',
   standalone: true,
   imports: [
     CommonModule,
@@ -44,12 +47,14 @@ type OngletStatut = StatutAffectation | '';
     RouterModule,
     LucideAngularModule,
     DatePipe,
+    SelecteurAgentComponent,
+    SelecteurSiteComponent,
   ],
-  templateUrl: './liste-affectations.component.html',
-  styleUrl: './liste-affectations.component.scss',
+  templateUrl: './historique-affectations.component.html',
+  styleUrl: './historique-affectations.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListeAffectationsComponent implements OnInit, OnDestroy {
+export class HistoriqueAffectationsComponent implements OnInit, OnDestroy {
 
   affectations: AffectationAgent[] = [];
   loading = false;
@@ -59,6 +64,8 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
   totalElements = 0;
   totalPages = 0;
 
+  employeIdControl = new FormControl<string | null>(null);
+  siteIdControl = new FormControl<string | null>(null);
   dateDebutControl = new FormControl<string>('', { nonNullable: true });
   dateFinControl = new FormControl<string>('', { nonNullable: true });
   statutControl = new FormControl<OngletStatut>('', { nonNullable: true });
@@ -66,8 +73,6 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
   readonly LIBELLES_STATUT = LIBELLES_STATUT_AFFECTATION;
   readonly COULEURS_STATUT = COULEURS_STATUT_AFFECTATION;
   readonly STATUTS = ORDRE_STATUTS_AFFECTATION;
-  readonly STATUTS_ANNULABLES = STATUTS_AFFECTATION_ANNULABLES;
-  readonly STATUTS_MODIFIABLES = STATUTS_AFFECTATION_MODIFIABLES;
 
   /** Compteurs des onglets, indexés par statut ('' = toutes). */
   compteurs: Record<OngletStatut, number> = this.compteursVides();
@@ -76,39 +81,32 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: TerrainPlanningService,
-    private dialog: MatDialog,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
-    // Les dates changent le périmètre : liste ET compteurs sont rechargés.
-    [this.dateDebutControl, this.dateFinControl].forEach((ctrl) =>
-      ctrl.valueChanges
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => {
-          this.page = 0;
-          this.charger();
-          this.chargerCompteurs();
-        }),
+    // Les filtres de périmètre (employé, site, dates) rechargent liste ET
+    // compteurs pour que les onglets restent cohérents avec le périmètre.
+    [
+      this.employeIdControl,
+      this.siteIdControl,
+      this.dateDebutControl,
+      this.dateFinControl,
+    ].forEach((ctrl) =>
+      ctrl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+        this.page = 0;
+        this.charger();
+        this.chargerCompteurs();
+      }),
     );
-    // Le changement d'onglet ne recharge que la liste.
+    // Le changement d'onglet (statut) ne recharge que la liste.
     this.statutControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         this.page = 0;
         this.charger();
       });
-    // Rafraîchissement auto : la bascule des statuts est faite côté serveur (cron 1 min),
-    // ce polling la fait apparaître sans rechargement de la page.
-    interval(INTERVALLE_RAFRAICHISSEMENT_PLANNING_MS)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        if (document.hidden) return; // pas de requêtes en onglet masqué
-        this.charger(true); // liste courante, sans spinner
-        this.chargerCompteurs();
-      });
-
     this.charger();
     this.chargerCompteurs();
   }
@@ -118,14 +116,12 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  charger(silencieux = false): void {
-    if (!silencieux) this.loading = true;
+  charger(): void {
+    this.loading = true;
     this.service
-      .listerAffectations(this.page, this.size, {
-        dateDebut: this.dateDebutControl.value || undefined,
-        dateFin: this.dateFinControl.value || undefined,
+      .listerAffectations(this.page, this.size, this.filtresPerimetre({
         statut: (this.statutControl.value || undefined) as StatutAffectation | undefined,
-      })
+      }))
       .pipe(
         finalize(() => {
           this.loading = false;
@@ -140,27 +136,26 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
           this.totalPages = Math.max(1, Math.ceil(res.totalElements / this.size));
           this.cdr.markForCheck();
         },
-        error: () => this.toastr.error('Impossible de charger les affectations.'),
+        error: () =>
+          this.toastr.error("Impossible de charger l'historique des affectations."),
       });
   }
 
   /**
    * Recharge les compteurs des onglets : un appel par statut (+ « toutes »)
-   * en `size = 1`, dont seul `totalElements` est exploité.
+   * en `size = 1`, dont seul `totalElements` est exploité. Chaque appel
+   * reprend les filtres de périmètre courants (employé, site, dates).
    */
   chargerCompteurs(): void {
-    const filtresDates = {
-      dateDebut: this.dateDebutControl.value || undefined,
-      dateFin: this.dateFinControl.value || undefined,
-    };
     const onglets: OngletStatut[] = ['', ...this.STATUTS];
 
     forkJoin(
       onglets.map((statut) =>
-        this.service.listerAffectations(0, 1, {
-          ...filtresDates,
-          statut: statut || undefined,
-        }),
+        this.service.listerAffectations(
+          0,
+          1,
+          this.filtresPerimetre({ statut: statut || undefined }),
+        ),
       ),
     )
       .pipe(takeUntil(this.destroy$))
@@ -179,6 +174,17 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  /** Construit le filtre commun (employé, site, dates) + le statut fourni. */
+  private filtresPerimetre(extra: { statut?: StatutAffectation }) {
+    return {
+      dateDebut: this.dateDebutControl.value || undefined,
+      dateFin: this.dateFinControl.value || undefined,
+      employeId: this.employeIdControl.value || undefined,
+      siteId: this.siteIdControl.value || undefined,
+      statut: extra.statut,
+    };
   }
 
   choisirStatut(statut: OngletStatut): void {
@@ -212,68 +218,15 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
   }
 
   resetFiltres(): void {
-    // Un seul rechargement : les deux premiers setValue sont silencieux.
+    // Un seul rechargement : les setValue préalables sont silencieux.
+    this.employeIdControl.setValue(null, { emitEvent: false });
+    this.siteIdControl.setValue(null, { emitEvent: false });
     this.dateDebutControl.setValue('', { emitEvent: false });
     this.dateFinControl.setValue('', { emitEvent: false });
     this.statutControl.setValue('', { emitEvent: false });
     this.page = 0;
     this.charger();
     this.chargerCompteurs();
-  }
-
-  estAnnulable(a: AffectationAgent): boolean {
-    return !!a.id && this.STATUTS_ANNULABLES.includes(a.statut);
-  }
-
-  estModifiable(a: AffectationAgent): boolean {
-    return !!a.id && this.STATUTS_MODIFIABLES.includes(a.statut);
-  }
-
-  annuler(a: AffectationAgent): void {
-    if (!this.estAnnulable(a) || !a.id) return;
-    const id = a.id;
-    this.dialog
-      .open(AnnulerAffectationDialogComponent, {
-        width: '480px',
-        data: {
-          employeNom: a.employeNom ?? a.employeMatricule,
-          siteNom: a.siteNom ?? a.siteCode,
-          creneau: this.creneauLisible(a),
-        },
-      })
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((res: AnnulerAffectationDialogResult | null | undefined) => {
-        if (!res) return;
-        this.service
-          .annulerAffectation(id, res.motif)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.toastr.success('Affectation annulée.');
-              this.charger();
-              this.chargerCompteurs();
-            },
-            error: (err) =>
-              this.toastr.error(
-                err?.status === 409 || err?.status === 422
-                  ? "Cette affectation n'est plus annulable."
-                  : "L'annulation a échoué.",
-              ),
-          });
-      });
-  }
-
-  private creneauLisible(a: AffectationAgent): string {
-    const fmt = (iso: string) =>
-      new Date(iso).toLocaleString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    return `${fmt(a.dateDebut)} → ${fmt(a.dateFin)}`;
   }
 
   trackById(_: number, a: AffectationAgent): string {
