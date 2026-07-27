@@ -75,10 +75,6 @@ export class TerrainPlanningService {
     );
   }
 
-  supprimerAffectation(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/affectations/${id}`);
-  }
-
   /**
    * Annule une affectation en conservant la trace (motif obligatoire).
    * Le serveur passe le statut à ANNULEE, persiste motifAnnulation /
