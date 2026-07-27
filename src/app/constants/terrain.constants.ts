@@ -32,6 +32,12 @@ import {
 // « Opération »).
 export const DEPARTEMENT_EXPLOITATION = 'Opération';
 
+// Horaire de repli utilisé par le calendrier du planning quand le dossier
+// employé ne renseigne aucune tranche horaire : tout employé doit figurer au
+// calendrier, même si son dossier est incomplet.
+export const HORAIRE_DEFAUT_DEBUT = '08:00';
+export const HORAIRE_DEFAUT_FIN = '17:00';
+
 // ─── Pointage GPS ──────────────────────────────────────────────────────────
 // Rayon de tolérance par défaut (mètres). Surchargeable par site via
 // SiteClient.rayonToleranceM.
