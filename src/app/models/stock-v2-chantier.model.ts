@@ -36,7 +36,7 @@ export interface Chantier {
 
 /** Payload de création / modification d'un chantier. */
 export interface ChantierPayload {
-  reference: string;
+  reference?: string;            // générée serveur (CH-AAAA-NNN) — non envoyée en création
   nom: string;
   siteId?: string;
   client?: string;

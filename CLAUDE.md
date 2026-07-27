@@ -540,7 +540,7 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 | Domaine (service) | Endpoints attendus |
 |---|---|
 | **Vue mensuelle** (`stock-v2-analyse-mensuelle`) | `GET /stock/analyse/mensuel?mois=YYYY-MM&moisFin=&siteId=&categorieId=` (KPIs + lignes + séries) |
-| **Chantiers** (`stock-v2-analyse-chantier`) | `GET /stock/chantiers` (paginé : q, statut, siteId, dates) · `GET /stock/chantiers/actifs` (sélecteur) · `GET /{id}` (→ `DetailChantier` agrégé) · `POST` · `PUT /{id}` · `POST /{id}/cloture` |
+| **Chantiers** (`stock-v2-analyse-chantier`) | `GET /stock/chantiers` (paginé : q, statut, siteId, dates) · `GET /stock/chantiers/actifs` (sélecteur) · `GET /stock/chantiers/prochaine-reference` (aperçu `{ reference }` — indicatif) · `GET /{id}` (→ `DetailChantier` agrégé) · `POST` (**référence `CH-AAAA-NNN` générée serveur, atomique, séquence par année** — toute `reference` client ignorée ; `siteId` optionnel) · `PUT /{id}` · `POST /{id}/cloture` |
 | **Dons** (`stock-v2-analyse-don`) | `GET /stock/analyse/dons?dateDebut=&dateFin=&natureDon=&beneficiaire=&siteId=` |
 | **Comparatif** (`stock-v2-analyse-comparatif`) | `GET /stock/analyse/comparatif?axe=SITE\|PRODUIT&dateDebut=YYYY-MM&dateFin=YYYY-MM&siteId=&categorieId=&typeSortie=&seuilPct=` |
 | **Filtres croisés** (`stock-v2-analyse-croisee`) | `GET /stock/analyse/croise?axeLignes=&axeColonnes=&mesure=MONTANT\|QUANTITE&dateDebut=&dateFin=&siteId=&produitId=&categorieId=&typeSortie=` (axes : PRODUIT/CATEGORIE/SITE/TYPE_SORTIE/NATURE_DON/MOIS) |
