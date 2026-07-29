@@ -15,6 +15,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2BonSortieService } from '../../../../../services/stock-v2-bon-sortie.service';
+import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-bon-permissions.service';
 import { StockV2ExportService } from '../../../../../services/stock-v2-export.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import {
@@ -74,6 +75,7 @@ export class ListeBonsSortieComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: StockV2BonSortieService,
+    readonly perms: StockV2BonPermissionsService,
     private exportService: StockV2ExportService,
     private dialog: MatDialog,
     private toastr: ToastrService,
@@ -137,7 +139,7 @@ export class ListeBonsSortieComponent implements OnInit, OnDestroy {
   }
 
   supprimer(b: BonSortie): void {
-    if (!b.id || !this.estBrouillon(b)) return;
+    if (!b.id || !this.perms.peutSupprimer(b)) return;
     this.dialog.open(ConfirmDialogComponent, {
       width: '420px',
       data: {

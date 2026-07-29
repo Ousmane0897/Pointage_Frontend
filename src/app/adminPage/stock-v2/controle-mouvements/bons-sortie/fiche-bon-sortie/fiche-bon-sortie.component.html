@@ -42,18 +42,22 @@
           PDF
         </button>
         @if (bon.statut === 'BROUILLON') {
-          <a [routerLink]="['/admin/stock-v2/controle-mouvements/bons-sortie', bon.id, 'modifier']"
-            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            <lucide-icon name="Pencil" [size]="16"></lucide-icon>
-            Modifier
-          </a>
-          <button (click)="soumettre()" [disabled]="action"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors">
-            <lucide-icon name="Send" [size]="16"></lucide-icon>
-            Soumettre
-          </button>
+          @if (perms.peutModifier(bon)) {
+            <a [routerLink]="['/admin/stock-v2/controle-mouvements/bons-sortie', bon.id, 'modifier']"
+              class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              <lucide-icon name="Pencil" [size]="16"></lucide-icon>
+              Modifier
+            </a>
+          }
+          @if (perms.peutSoumettreBon(bon)) {
+            <button (click)="soumettre()" [disabled]="action"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors">
+              <lucide-icon name="Send" [size]="16"></lucide-icon>
+              Soumettre
+            </button>
+          }
         }
-        @if (bon.statut === 'SOUMIS') {
+        @if (bon.statut === 'SOUMIS' && perms.peutValider()) {
           <button (click)="ouvrirRefus()" [disabled]="action"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
             <lucide-icon name="CircleX" [size]="16"></lucide-icon>

@@ -31,7 +31,7 @@ describe('GestionPrivilegeComponent', () => {
       modulesAutorises: {
         dashboard: true,
         admin: false,
-        rh: false,
+        rh: {},   // aucun sous-flag RH accordé
 
         productionChimie: {
           formulations: false,

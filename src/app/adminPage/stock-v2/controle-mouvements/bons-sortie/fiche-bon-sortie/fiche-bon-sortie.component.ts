@@ -15,6 +15,7 @@ import { Observable, Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2BonSortieService } from '../../../../../services/stock-v2-bon-sortie.service';
+import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-bon-permissions.service';
 import { StockV2PdfService } from '../../../../../services/stock-v2-pdf.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import { TimelineWorkflowComponent } from '../../shared/timeline-workflow/timeline-workflow.component';
@@ -63,6 +64,7 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private service: StockV2BonSortieService,
+    readonly perms: StockV2BonPermissionsService,
     private pdfService: StockV2PdfService,
     private dialog: MatDialog,
     private toastr: ToastrService,
@@ -84,7 +86,15 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
     this.service.getById(id)
       .pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
       .subscribe({
-        next: bon => { this.bon = bon; this.cdr.markForCheck(); },
+        next: bon => {
+          if (!this.perms.peutConsulter(bon)) {
+            this.toastr.warning('Vous ne pouvez consulter que vos propres bons.');
+            this.router.navigate(['/admin/stock-v2/controle-mouvements/bons-sortie']);
+            return;
+          }
+          this.bon = bon;
+          this.cdr.markForCheck();
+        },
         error: () => {
           this.toastr.error('Bon introuvable.');
           this.router.navigate(['/admin/stock-v2/controle-mouvements/bons-sortie']);
@@ -103,7 +113,7 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
   }
 
   soumettre(): void {
-    if (!this.bon?.id) return;
+    if (!this.bon?.id || !this.perms.peutSoumettreBon(this.bon)) return;
     this.dialog.open(ConfirmDialogComponent, {
       width: '440px',
       data: {
@@ -118,7 +128,7 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
   }
 
   valider(): void {
-    if (!this.bon?.id) return;
+    if (!this.bon?.id || !this.perms.peutValider()) return;
     this.dialog.open(ConfirmDialogComponent, {
       width: '460px',
       data: {
@@ -144,7 +154,7 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
   }
 
   confirmerRefus(): void {
-    if (!this.bon?.id) return;
+    if (!this.bon?.id || !this.perms.peutValider()) return;
     if (this.commentaireRefus.invalid) {
       this.commentaireRefus.markAsTouched();
       this.toastr.warning('Le motif de refus est obligatoire.');
@@ -164,6 +174,7 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
         next: bon => { this.bon = bon; this.toastr.success(msg); this.cdr.markForCheck(); },
         error: err => {
           if (err?.status === 422) this.toastr.error('Stock insuffisant pour générer les mouvements.');
+          else if (err?.status === 403) this.toastr.error("Action non autorisée pour votre profil.");
           else this.toastr.error("L'action a échoué.");
         },
       });

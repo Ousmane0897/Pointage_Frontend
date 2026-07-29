@@ -15,6 +15,7 @@ import { Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2WorkflowService } from '../../../../../services/stock-v2-workflow.service';
+import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-bon-permissions.service';
 import { WebsocketService } from '../../../../../services/websocket.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import {
@@ -77,6 +78,7 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: StockV2WorkflowService,
+    readonly perms: StockV2BonPermissionsService,
     private ws: WebsocketService,
     private router: Router,
     private dialog: MatDialog,
@@ -141,6 +143,7 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
 
   valider(b: BonWorkflow, event?: Event): void {
     event?.stopPropagation();
+    if (!this.perms.peutValider()) return;
     this.dialog.open(ConfirmDialogComponent, {
       width: '460px',
       data: {
@@ -169,7 +172,7 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
   }
 
   confirmerRefus(): void {
-    if (!this.bonEnCours) return;
+    if (!this.bonEnCours || !this.perms.peutValider()) return;
     if (this.commentaireRefus.invalid) {
       this.commentaireRefus.markAsTouched();
       this.toastr.warning('Le motif de refus est obligatoire.');
@@ -191,6 +194,7 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
         next: () => { this.toastr.success(msg); this.charger(); },
         error: err => {
           if (err?.status === 422) this.toastr.error('Stock insuffisant pour générer les mouvements.');
+          else if (err?.status === 403) this.toastr.error("Action non autorisée pour votre profil.");
           else this.toastr.error("L'action a échoué.");
         },
       });

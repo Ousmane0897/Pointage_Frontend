@@ -504,6 +504,53 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 
 > Les services PDF/Excel (`stock-v2-pdf`, `stock-v2-export`) restent **100 % client** (aucun endpoint). Le backend doit publier sur `/topic/stock-validations` (soumission/décision) et `/user/queue/notifications-stock` (validateur ciblé), et ajouter les 8 sous-flags `modules.stock` au claim JWT.
 
+**Habilitations des bons de sortie (par rôle + propriété)** — au-delà des sous-flags
+`modules.stock`, les actions des bons de **sortie** sont restreintes par le **rôle** du JWT et
+par l'**auteur** du bon :
+
+| Action | Autorisation |
+|---|---|
+| Créer un bon (brouillon) | tout profil ayant accès au module |
+| Consulter / Modifier / Supprimer un bon | son **créateur** uniquement (+ `SUPERADMIN` et `CONTROLEUR_STOCK` sur tous les bons) |
+| Soumettre | `SUPERADMIN` et `CONTROLEUR_STOCK` |
+| Valider / Refuser | `SUPERADMIN` uniquement |
+
+- Point unique de vérité côté front : [stock-v2-bon-permissions.service.ts](src/app/services/stock-v2-bon-permissions.service.ts)
+  (+ spec), consommé par `liste-bons-sortie`, `fiche-bon-sortie`, `formulaire-bon-sortie` et
+  `tableau-workflow`. Rôles centralisés dans [roles.constants.ts](src/app/constants/roles.constants.ts) —
+  ⚠ le super-admin est la chaîne **`SUPERADMIN`, sans underscore**.
+- Ergonomie : dans la **liste**, les actions sur les bons d'autrui restent visibles mais
+  **désactivées** (icône grisée + tooltip « Réservé au créateur du bon ») ; les actions
+  réservées par **rôle** (Soumettre / Valider / Refuser), elles, sont **masquées** — y compris
+  dans le Kanban `workflow-validation`, sans quoi la restriction de la fiche serait
+  contournable en un clic.
+- ⚠ **Champs backend à ajouter** : `BonSortie` et `BonWorkflow` exposent **`creeParId`**,
+  **`creeParEmail`** et **`creeParNom`**, renseignés **serveur** depuis le JWT à la création
+  et **jamais acceptés du client** (absents de `BonSortiePayload`). Ils sont distincts du
+  `demandeurId`, qui reste choisi manuellement dans le formulaire. Le front compare
+  `creeParEmail` à `LoginService.getUserEmail()` (le JWT ne porte ni `id` ni `username`).
+  Tant que `creeParEmail` est absent de la réponse, le front est **permissif** sur la
+  propriété (repli transitoire commenté `TODO` dans le service) — seules les restrictions par
+  rôle s'appliquent.
+- ⚠ **Contrôles serveur obligatoires** (le front n'est qu'une commodité UX) :
+  `PUT`/`DELETE /stock/bons-sortie/{id}` → **403** si l'appelant n'est ni le créateur, ni
+  `SUPERADMIN`, ni `CONTROLEUR_STOCK` ; `POST /{id}/soumettre` → **403** hors
+  `SUPERADMIN`/`CONTROLEUR_STOCK` ; `POST /{id}/valider` et `POST /{id}/refuser` → **403**
+  hors `SUPERADMIN`. Le front traite le 403 par un toast « Action non autorisée pour votre
+  profil. ».
+- Les **bons d'entrée** ne sont pas concernés par ce lot (règles inchangées).
+
+**Notification e-mail à la création d'un bon** (backend, aucun impact front) — `POST /stock/bons-entree`
+et `POST /stock/bons-sortie` envoient un e-mail HTML récapitulatif (référence, type, date, site,
+destinataire/fournisseur, nb de lignes, montant, auteur) au **SUPERADMIN** et aux
+**CONTROLEUR_STOCK**, sur leur adresse de connexion. Le mail contient un lien vers
+`/admin/stock-v2/controle-mouvements/bons-{entree|sortie}/{id}` construit côté serveur à partir de
+`app.frontend.base-url` (URL publique de l'app : `https://pointic-cleanic.com` en prod) —
+**si cette route front change, le lien des mails casse**. L'envoi est
+tolérant aux pannes (un échec SMTP n'empêche pas la création du bon). Implémentation :
+`BonMailNotificationService` dans [Pointage-Cleanic-Backend](../Pointage-Cleanic-Backend),
+branche `feature/notification-mail-bons`.
+
 ### 7.5 Analyse des consommations (`stock-v2/analyse-consommations/`)
 
 - Statistiques de consommation par article/site/période, graphiques et alertes de surconsommation.

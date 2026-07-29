@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 import { AdminService } from './admin.service';
 import { environment } from '../../environments/environment';
-import { Admin } from '../models/admin.model';
+import { Admin, ModulesAutorises } from '../models/admin.model';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -22,7 +22,8 @@ describe('AdminService', () => {
     modulesAutorises: {
       dashboard: true,
       admin: true,
-      rh: true,
+      // forme héritée `rh: true` (accès RH total) — toujours supportée par accessRh()
+      rh: true as unknown as ModulesAutorises['rh'],
       productionChimie: {
         formulations: true,
         ordresFabrication: true,
