@@ -3,7 +3,9 @@
   <!-- En-tête -->
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-slate-500">
-      <a routerLink="/admin/exploitation-v2/terrain/planning/affectations" class="hover:underline">Planning</a>
+      <a routerLink="/admin/rh/gestion-du-personnel/dossier-employe" class="hover:underline">Gestion du personnel</a>
+      <lucide-icon name="ChevronRight" class="h-4 w-4"></lucide-icon>
+      <a routerLink="/admin/rh/gestion-du-personnel/affectations" class="hover:underline">Affectations</a>
       <lucide-icon name="ChevronRight" class="h-4 w-4"></lucide-icon>
       <span>{{ estEdition() ? 'Modifier' : 'Nouvelle affectation' }}</span>
     </div>

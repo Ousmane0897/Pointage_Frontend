@@ -15,7 +15,8 @@ describe('SidebarComponent', () => {
   const basePermissions: ModulesAutorises = {
     dashboard: true,
     admin: false,
-    rh: true,
+    // forme héritée `rh: true` (accès RH total) — toujours supportée par accessRh()
+    rh: true as unknown as ModulesAutorises['rh'],
     productionChimie: {
       formulations: true,
       ordresFabrication: false,

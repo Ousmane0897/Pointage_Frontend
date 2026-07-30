@@ -4,9 +4,9 @@
   <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
     <div>
       <div class="flex items-center gap-2 text-sm text-slate-500">
-        <a routerLink="/admin/exploitation-v2/terrain/sites-clients" class="hover:underline">Terrain</a>
+        <a routerLink="/admin/rh/gestion-du-personnel/dossier-employe" class="hover:underline">Gestion du personnel</a>
         <lucide-icon name="ChevronRight" class="h-4 w-4"></lucide-icon>
-        <span>Planning des équipes</span>
+        <span>Affectations</span>
       </div>
       <h1 class="mt-1 text-2xl font-bold text-slate-900">Affectations agents → sites</h1>
       <p class="mt-1 text-sm text-slate-600">
@@ -24,7 +24,7 @@
         <lucide-icon name="TriangleAlert" class="h-4 w-4"></lucide-icon>
         Détecter les conflits
       </a>
-      <a routerLink="/admin/exploitation-v2/terrain/planning/affectations/nouvelle"
+      <a routerLink="/admin/rh/gestion-du-personnel/affectations/nouvelle"
          class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
         <lucide-icon name="Plus" class="h-4 w-4"></lucide-icon>
         Nouvelle affectation
@@ -98,7 +98,7 @@
     <div *ngIf="!loading && affectations.length === 0" class="p-12 text-center">
       <lucide-icon name="CalendarX" class="mx-auto h-12 w-12 text-slate-300"></lucide-icon>
       <p class="mt-3 text-sm text-slate-600">Aucune affectation trouvée pour ces filtres.</p>
-      <a routerLink="/admin/exploitation-v2/terrain/planning/affectations/nouvelle"
+      <a routerLink="/admin/rh/gestion-du-personnel/affectations/nouvelle"
          class="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
         <lucide-icon name="Plus" class="h-4 w-4"></lucide-icon>
         Créer la première
@@ -138,13 +138,13 @@
             </td>
             <td class="px-4 py-3 text-right text-sm">
               <div class="inline-flex items-center gap-1">
-                <a [routerLink]="['/admin/exploitation-v2/terrain/planning/affectations', a.id]"
+                <a [routerLink]="['/admin/rh/gestion-du-personnel/affectations', a.id]"
                    class="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600"
                    title="Voir le détail">
                   <lucide-icon name="Eye" class="h-4 w-4"></lucide-icon>
                 </a>
                 <a *ngIf="estModifiable(a)"
-                   [routerLink]="['/admin/exploitation-v2/terrain/planning/affectations', a.id, 'modifier']"
+                   [routerLink]="['/admin/rh/gestion-du-personnel/affectations', a.id, 'modifier']"
                    class="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600"
                    title="Modifier">
                   <lucide-icon name="Pencil" class="h-4 w-4"></lucide-icon>

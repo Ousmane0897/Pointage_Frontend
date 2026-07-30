@@ -72,6 +72,7 @@ export interface BonWorkflow {
   siteNom?: string;          // destination (entrée) ou source (sortie)
   destinataireNom?: string;  // sorties uniquement
   demandeurNom?: string;
+  creeParEmail?: string;     // auteur réel (JWT serveur) — habilitations 7.4
   validateurNom?: string;
   nbLignes: number;
   montantTotal?: number;

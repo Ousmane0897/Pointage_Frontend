@@ -128,17 +128,32 @@
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
-                    <a [routerLink]="[b.id]" title="Voir"
-                      class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
-                      <lucide-icon name="Eye" [size]="16"></lucide-icon>
-                    </a>
-                    @if (estBrouillon(b)) {
-                      <a [routerLink]="[b.id, 'modifier']" title="Modifier"
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-                        <lucide-icon name="Pencil" [size]="16"></lucide-icon>
+                    @if (perms.peutConsulter(b)) {
+                      <a [routerLink]="[b.id]" title="Voir"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                        <lucide-icon name="Eye" [size]="16"></lucide-icon>
                       </a>
-                      <button (click)="supprimer(b)" title="Supprimer"
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                    } @else {
+                      <span title="Réservé au créateur du bon"
+                        class="p-1.5 rounded-lg text-gray-400 opacity-40 cursor-not-allowed">
+                        <lucide-icon name="Eye" [size]="16"></lucide-icon>
+                      </span>
+                    }
+                    @if (estBrouillon(b)) {
+                      @if (perms.peutModifier(b)) {
+                        <a [routerLink]="[b.id, 'modifier']" title="Modifier"
+                          class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                          <lucide-icon name="Pencil" [size]="16"></lucide-icon>
+                        </a>
+                      } @else {
+                        <span title="Réservé au créateur du bon"
+                          class="p-1.5 rounded-lg text-gray-400 opacity-40 cursor-not-allowed">
+                          <lucide-icon name="Pencil" [size]="16"></lucide-icon>
+                        </span>
+                      }
+                      <button (click)="supprimer(b)" [disabled]="!perms.peutSupprimer(b)"
+                        [title]="perms.peutSupprimer(b) ? 'Supprimer' : 'Réservé au créateur du bon'"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent transition-colors">
                         <lucide-icon name="Trash2" [size]="16"></lucide-icon>
                       </button>
                     }

@@ -69,6 +69,12 @@ export interface BonSortie {
   statut: StatutBon;
   demandeurId?: string;
   demandeurNom?: string;         // dénormalisé
+  // Auteur réel du bon — renseigné SERVEUR depuis le JWT à la création (jamais envoyé par
+  // le client, absent de BonSortiePayload). Distinct du demandeur, qui est choisi dans le
+  // formulaire. Sert aux habilitations (StockV2BonPermissionsService).
+  creeParId?: string;
+  creeParEmail?: string;
+  creeParNom?: string;           // dénormalisé
   validateurId?: string;
   validateurNom?: string;        // dénormalisé
   commentaire?: string;          // note libre du bon

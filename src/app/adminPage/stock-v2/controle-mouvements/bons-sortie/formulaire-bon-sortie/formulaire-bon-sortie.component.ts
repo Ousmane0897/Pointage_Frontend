@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2BonSortieService } from '../../../../../services/stock-v2-bon-sortie.service';
+import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-bon-permissions.service';
 import {
   BonSortie,
   BonSortiePayload,
@@ -83,6 +84,7 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private service: StockV2BonSortieService,
+    private perms: StockV2BonPermissionsService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
   ) {}
@@ -179,6 +181,11 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
           if (bon.statut !== 'BROUILLON') {
             this.toastr.warning('Seuls les brouillons sont modifiables.');
             this.router.navigate(['/admin/stock-v2/controle-mouvements/bons-sortie', id]);
+            return;
+          }
+          if (!this.perms.peutModifier(bon)) {
+            this.toastr.warning('Vous ne pouvez modifier que vos propres bons.');
+            this.router.navigate(['/admin/stock-v2/controle-mouvements/bons-sortie']);
             return;
           }
           this.remplir(bon);
