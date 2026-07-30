@@ -56,7 +56,7 @@ export class FicheAffectationComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.router.navigate(['/admin/exploitation-v2/terrain/planning/affectations']);
+      this.router.navigate(['/admin/rh/gestion-du-personnel/affectations']);
       return;
     }
     this.charger(id);
@@ -82,7 +82,7 @@ export class FicheAffectationComponent implements OnInit, OnDestroy {
         next: (a) => (this.affectation = a),
         error: () => {
           this.toastr.error('Affectation introuvable.');
-          this.router.navigate(['/admin/exploitation-v2/terrain/planning/affectations']);
+          this.router.navigate(['/admin/rh/gestion-du-personnel/affectations']);
         },
       });
   }

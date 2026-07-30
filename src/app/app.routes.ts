@@ -42,7 +42,10 @@ export const routes: Routes = [
             { path: 'rh/gestion-du-personnel/contrats/nouveau/:employeId', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },
             { path: 'rh/gestion-du-personnel/contrats/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/formulaire-contrat/formulaire-contrat.component').then(m => m.FormulaireContratComponent) },
             { path: 'rh/gestion-du-personnel/contrats/:id/avenants', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/contrats/avenants/avenants.component').then(m => m.AvenantsComponent) },
-            { path: 'rh/gestion-du-personnel/historique-affectations', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/historique-affectations/historique-affectations.component').then(m => m.HistoriqueAffectationsComponent) },
+            { path: 'rh/gestion-du-personnel/affectations', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/affectations/liste-affectations/liste-affectations.component').then(m => m.ListeAffectationsComponent) },
+            { path: 'rh/gestion-du-personnel/affectations/nouvelle', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/affectations/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
+            { path: 'rh/gestion-du-personnel/affectations/:id/modifier', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/affectations/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
+            { path: 'rh/gestion-du-personnel/affectations/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/affectations/fiche-affectation/fiche-affectation.component').then(m => m.FicheAffectationComponent) },
             { path: 'rh/gestion-du-personnel/organigramme', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/organigramme/organigramme.component').then(m => m.OrganigrammeComponent) },
             { path: 'rh/gestion-du-personnel/documents', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/documents/liste-documents/liste-documents.component').then(m => m.ListeDocumentsComponent) },
             { path: 'rh/gestion-du-personnel/documents/visualiser/:id', loadComponent: () => import('./adminPage/ressources-humaines/gestion-du-personnel/documents/visualisation-document/visualisation-document.component').then(m => m.VisualisationDocumentComponent) },
@@ -158,12 +161,9 @@ export const routes: Routes = [
             { path: 'exploitation-v2/terrain/sites-clients/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/fiche-site/fiche-site.component').then(m => m.FicheSiteComponent) },
 
             // Planning des équipes
-            { path: 'exploitation-v2/terrain/planning/affectations', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/liste-affectations/liste-affectations.component').then(m => m.ListeAffectationsComponent) },
+            // (les affectations sont désormais sous rh/gestion-du-personnel/affectations)
             { path: 'exploitation-v2/terrain/planning/calendrier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/calendrier-planning/calendrier-planning.component').then(m => m.CalendrierPlanningComponent) },
             { path: 'exploitation-v2/terrain/planning/conflits', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/detection-conflits/detection-conflits.component').then(m => m.DetectionConflitsComponent) },
-            { path: 'exploitation-v2/terrain/planning/affectations/nouvelle', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
-            { path: 'exploitation-v2/terrain/planning/affectations/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/formulaire-affectation/formulaire-affectation.component').then(m => m.FormulaireAffectationComponent) },
-            { path: 'exploitation-v2/terrain/planning/affectations/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/planning/fiche-affectation/fiche-affectation.component').then(m => m.FicheAffectationComponent) },
 
             // Pointage terrain (les pointages sont créés via le code-PIN de la page d'accueil)
             { path: 'exploitation-v2/terrain/pointage/aujourd-hui', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/suivi-pointages/suivi-pointages.component').then(m => m.SuiviPointagesComponent) },

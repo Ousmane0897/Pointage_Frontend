@@ -45,8 +45,8 @@ import {
   ORDRE_STATUTS_AFFECTATION,
   STATUTS_AFFECTATION_MODIFIABLES,
 } from '../../../../../constants/terrain.constants';
-import { SelecteurAgentComponent } from '../../shared/selecteur-agent/selecteur-agent.component';
-import { SelecteurSiteComponent } from '../../shared/selecteur-site/selecteur-site.component';
+import { SelecteurAgentComponent } from '../../../../exploitation-v2/terrain/shared/selecteur-agent/selecteur-agent.component';
+import { SelecteurSiteComponent } from '../../../../exploitation-v2/terrain/shared/selecteur-site/selecteur-site.component';
 
 /**
  * Création / édition d'une affectation agent → site.
@@ -179,7 +179,7 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
           if (!STATUTS_AFFECTATION_MODIFIABLES.includes(a.statut)) {
             this.toastr.error('Cette affectation ne peut plus être modifiée.');
             this.router.navigate([
-              '/admin/exploitation-v2/terrain/planning/affectations',
+              '/admin/rh/gestion-du-personnel/affectations',
               id,
             ]);
             return;
@@ -208,7 +208,7 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.toastr.error('Affectation introuvable.');
-          this.router.navigate(['/admin/exploitation-v2/terrain/planning/affectations']);
+          this.router.navigate(['/admin/rh/gestion-du-personnel/affectations']);
         },
       });
   }
@@ -404,7 +404,7 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
             this.affectationId ? 'Affectation modifiée.' : 'Affectation créée.',
           );
           this.router.navigate([
-            '/admin/exploitation-v2/terrain/planning/affectations',
+            '/admin/rh/gestion-du-personnel/affectations',
             a.id ?? this.affectationId,
           ]);
         },
@@ -418,7 +418,7 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
   }
 
   annuler(): void {
-    this.router.navigate(['/admin/exploitation-v2/terrain/planning/affectations']);
+    this.router.navigate(['/admin/rh/gestion-du-personnel/affectations']);
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
