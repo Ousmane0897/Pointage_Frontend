@@ -150,16 +150,7 @@
                     <span class="flex-1 truncate">Affectations</span>
                   </a>
                 </li>
-                <li *ngIf="accessRh('contrats')">
-                  <a routerLink="/admin/rh/gestion-du-personnel/contrats"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="FileText" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
-                    <span class="flex-1 truncate">Contrats de travail</span>
-                  </a>
-                </li>
+                <!-- Contrats de travail : géré depuis l'onglet Contrats de la fiche employé -->
                 <li *ngIf="accessRh('organigramme')">
                   <a routerLink="/admin/rh/gestion-du-personnel/organigramme"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"

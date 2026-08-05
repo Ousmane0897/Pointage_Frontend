@@ -369,15 +369,78 @@
       ════════════════════════════════════════ -->
       <div *ngIf="activeTab === 'contrats'" class="p-6">
 
+        <!-- En-tête d'onglet -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div>
+            <h3 class="text-base font-semibold text-gray-800">Contrats de travail</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Contrats, renouvellements et avenants de cet employé</p>
+          </div>
+          <button
+            (click)="navigateToNouveauContrat()"
+            class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                   text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow transition-colors duration-200">
+            <lucide-icon name="FilePlus" class="w-4 h-4"></lucide-icon>
+            Nouveau contrat
+          </button>
+        </div>
+
+        <!-- Bannière alertes d'échéance -->
+        <div *ngIf="alertesContrats.length > 0 && !alertesDismissed"
+          class="mb-5 bg-amber-50 border border-amber-300 rounded-xl p-4">
+          <div class="flex items-start gap-3">
+            <div class="shrink-0 mt-0.5 p-1.5 bg-amber-100 rounded-lg">
+              <lucide-icon name="Bell" class="w-5 h-5 text-amber-600"></lucide-icon>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <h4 class="text-sm font-semibold text-amber-800">
+                  {{ alertesContrats.length }} contrat{{ alertesContrats.length > 1 ? 's' : '' }} arrivant à échéance
+                </h4>
+                <button
+                  (click)="dismissAlertes()"
+                  class="p-1 rounded text-amber-500 hover:bg-amber-100 transition-colors">
+                  <lucide-icon name="X" class="w-4 h-4"></lucide-icon>
+                </button>
+              </div>
+              <ul class="space-y-1.5">
+                <li *ngFor="let alerte of alertesContrats" class="flex items-center gap-2 text-sm">
+                  <lucide-icon name="AlertTriangle"
+                    class="w-4 h-4 shrink-0"
+                    [class]="getAlerteBadgeColor(alerte.joursRestants)">
+                  </lucide-icon>
+                  <span class="text-amber-800">
+                    {{ alerte.typeContrat }} &ndash; expire le
+                    <span class="font-medium">{{ alerte.dateFin | date:'dd/MM/yyyy' : '' : 'fr-FR' }}</span>
+                    (<span [class]="getAlerteBadgeColor(alerte.joursRestants)" class="font-semibold">
+                      {{ alerte.joursRestants }} jour{{ alerte.joursRestants > 1 ? 's' : '' }} restant{{ alerte.joursRestants > 1 ? 's' : '' }}
+                    </span>)
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chargement (rechargement partiel après action) -->
+        <div *ngIf="contratsLoading" class="flex items-center justify-center py-6">
+          <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
         <!-- État vide -->
-        <div *ngIf="contrats.length === 0"
+        <div *ngIf="!contratsLoading && contrats.length === 0"
           class="text-center py-12">
           <lucide-icon name="FileX" class="w-12 h-12 text-gray-300 mx-auto mb-3"></lucide-icon>
           <p class="text-sm text-gray-500 font-medium">Aucun contrat enregistré pour cet employé.</p>
+          <button
+            (click)="navigateToNouveauContrat()"
+            class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors duration-150">
+            <lucide-icon name="FilePlus" class="w-4 h-4"></lucide-icon>
+            Créer le premier contrat
+          </button>
         </div>
 
         <!-- Tableau des contrats -->
-        <div *ngIf="contrats.length > 0" class="overflow-x-auto rounded-xl border border-gray-200">
+        <div *ngIf="!contratsLoading && contrats.length > 0" class="overflow-x-auto rounded-xl border border-gray-200">
           <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -394,7 +457,9 @@
 
                 <!-- Type contrat -->
                 <td class="px-4 py-3">
-                  <span class="inline-flex items-center bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold px-2.5 py-1 rounded-full">
+                  <span
+                    [class]="getTypeContratBadgeClasses(contrat.typeContrat)"
+                    class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full">
                     {{ contrat.typeContrat }}
                   </span>
                 </td>
@@ -423,16 +488,40 @@
                   </span>
                 </td>
 
-                <!-- Action : voir le détail -->
-                <td class="px-4 py-3 text-center">
-                  <button
-                    *ngIf="contrat.id"
-                    (click)="navigateToDetailContrat(contrat.id)"
-                    title="Voir le contrat"
-                    class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors duration-150">
-                    <lucide-icon name="Eye" class="w-4 h-4"></lucide-icon>
-                    Voir
-                  </button>
+                <!-- Actions -->
+                <td class="px-4 py-3">
+                  <div *ngIf="contrat.id" class="flex items-center justify-center gap-1">
+
+                    <button
+                      *ngIf="contrat.fichierContratUrl || contrat.fichierContratNom"
+                      (click)="telechargerFichierContrat(contrat)"
+                      title="Télécharger le fichier du contrat"
+                      class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors duration-150">
+                      <lucide-icon name="Download" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="navigateToAvenants(contrat.id)"
+                      title="Avenants et renouvellements"
+                      class="p-1.5 rounded-lg text-teal-600 hover:bg-teal-100 transition-colors duration-150">
+                      <lucide-icon name="FileText" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="navigateToModificationContrat(contrat.id)"
+                      title="Modifier le contrat"
+                      class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-100 transition-colors duration-150">
+                      <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="supprimerContrat(contrat)"
+                      title="Supprimer le contrat"
+                      class="p-1.5 rounded-lg text-red-600 hover:bg-red-100 transition-colors duration-150">
+                      <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                  </div>
                 </td>
 
               </tr>
