@@ -28,7 +28,7 @@ export interface AffectationAgent {
 
   // Créneau
   dateDebut: string;                  // ISO : "2026-05-26T08:00:00"
-  dateFin: string;                    // ISO : "2026-05-26T12:00:00"
+  dateFin?: string;                   // ISO : "2026-05-26T12:00:00" — absent = durée indéterminée
 
   statut: StatutAffectation;
 
