@@ -40,6 +40,10 @@ export interface ModulesAutorises {
     pointageCentralise?: boolean;
     absences?: boolean;
     conges?: boolean;
+    /** File de validation des congés (circuit à 3 niveaux). */
+    congesValidation?: boolean;
+    /** Écran « Mes demandes » (auto-service du collaborateur). */
+    congesMesDemandes?: boolean;
     heuresSupplementaires?: boolean;
     recapitulatif?: boolean;
 

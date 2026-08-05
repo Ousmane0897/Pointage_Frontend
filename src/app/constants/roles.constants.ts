@@ -10,3 +10,16 @@
  */
 export const ROLE_SUPERADMIN = 'SUPERADMIN';
 export const ROLE_CONTROLEUR_STOCK = 'CONTROLEUR_STOCK';
+
+/**
+ * Rôle RH — niveau 2 du circuit de validation des congés.
+ * ⚠ `sidebar.accessRh()` traite déjà ce rôle comme un accès RH complet.
+ */
+export const ROLE_RH = 'RH';
+
+/**
+ * Niveau 3 du circuit de validation des congés : la **Direction générale est
+ * le super-admin**. Aucun rôle `DIRECTION_GENERALE` n'existe ni ne doit être
+ * créé — l'alias ci-dessous n'est là que pour rendre les appels lisibles.
+ */
+export const ROLE_DIRECTION_GENERALE = ROLE_SUPERADMIN;

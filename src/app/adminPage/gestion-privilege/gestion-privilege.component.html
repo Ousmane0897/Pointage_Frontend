@@ -298,6 +298,16 @@
                   <span class="text-sm text-gray-700">Calendrier des congés</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="rhCongesValidation" [(ngModel)]="modalData.modulesAutorises.rh!.congesValidation"
+                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <span class="text-sm text-gray-700">Validation des congés</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="rhCongesMesDemandes" [(ngModel)]="modalData.modulesAutorises.rh!.congesMesDemandes"
+                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <span class="text-sm text-gray-700">Mes demandes de congé</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" name="rhHeuresSupplementaires" [(ngModel)]="modalData.modulesAutorises.rh!.heuresSupplementaires"
                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                   <span class="text-sm text-gray-700">Heures supplémentaires</span>

@@ -59,6 +59,11 @@ export const routes: Routes = [
             { path: 'rh/temps-et-presences/conges', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/calendrier-conges.component').then(m => m.CalendrierCongesComponent) },
             { path: 'rh/temps-et-presences/conges/demande', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/demande-conge/demande-conge.component').then(m => m.DemandeCongeComponent) },
             { path: 'rh/temps-et-presences/conges/validation', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/validation-conges/validation-conges.component').then(m => m.ValidationCongesComponent) },
+            { path: 'rh/temps-et-presences/conges/mes-demandes', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/mes-demandes/mes-demandes.component').then(m => m.MesDemandesCongeComponent) },
+            // ⚠ Route ciblée par les liens des e-mails de notification du circuit
+            // de validation (construits serveur depuis `app.frontend.base-url`) :
+            // la modifier casse les liens des mails déjà envoyés.
+            { path: 'rh/temps-et-presences/conges/demandes/:id', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/detail-demande-conge/detail-demande-conge.component').then(m => m.DetailDemandeCongeComponent) },
             { path: 'rh/temps-et-presences/heures-supplementaires', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/liste-heures-sup/liste-heures-sup.component').then(m => m.ListeHeuresSupComponent) },
             { path: 'rh/temps-et-presences/heures-supplementaires/declaration', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/declaration-heures-sup/declaration-heures-sup.component').then(m => m.DeclarationHeuresSupComponent) },
             { path: 'rh/temps-et-presences/recapitulatif', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/recapitulatif-mensuel/recapitulatif-mensuel.component').then(m => m.RecapitulatifMensuelComponent) },

@@ -6,8 +6,20 @@
     </button>
     <div>
       <h1 class="text-2xl font-bold text-gray-800">Nouvelle demande de congé</h1>
-      <p class="text-sm text-gray-500 mt-1">La demande sera soumise à l'approbation du responsable</p>
+      <p class="text-sm text-gray-500 mt-1">
+        La demande suit le circuit : supérieur hiérarchique → RH → Direction générale
+      </p>
     </div>
+  </div>
+
+  <!-- Compte non rattaché à un dossier employé : le serveur refuserait la création. -->
+  <div *ngIf="profilNonRattache"
+    class="mb-4 flex max-w-3xl items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <lucide-icon name="AlertTriangle" class="w-4 h-4 mt-0.5 shrink-0"></lucide-icon>
+    <span>
+      Votre compte n'est rattaché à aucun dossier employé : vous ne pouvez pas déposer de demande.
+      Contactez les Ressources humaines.
+    </span>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="soumettre()" novalidate
@@ -15,7 +27,9 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
 
-      <div class="sm:col-span-2">
+      <!-- Sélecteur employé : RH / SUPERADMIN uniquement. Pour les autres, le
+           contrôle n'existe pas et le demandeur est déduit du JWT. -->
+      <div *ngIf="pourAutrui" class="sm:col-span-2">
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
           Employé <span class="text-red-500">*</span>
         </label>
@@ -56,11 +70,7 @@
         </label>
         <select formControlName="type"
           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
-          <option value="ANNUEL">Annuel</option>
-          <option value="MATERNITE">Maternité</option>
-          <option value="PATERNITE">Paternité</option>
-          <option value="SANS_SOLDE">Sans solde</option>
-          <option value="EXCEPTIONNEL">Exceptionnel</option>
+          <option *ngFor="let t of ORDRE_TYPES_CONGE" [value]="t">{{ LIBELLES_TYPE_CONGE[t] }}</option>
         </select>
       </div>
 
@@ -90,12 +100,37 @@
       </div>
     </div>
 
+    <!-- Circuit de validation -->
+    <div class="mb-5 rounded-lg border px-4 py-3 text-sm"
+      [ngClass]="sansSuperieur
+        ? 'border-amber-200 bg-amber-50 text-amber-800'
+        : 'border-indigo-100 bg-indigo-50 text-indigo-900'">
+      <p class="flex items-center gap-2 font-medium">
+        <lucide-icon [name]="sansSuperieur ? 'AlertTriangle' : 'Workflow'" class="w-4 h-4"></lucide-icon>
+        Circuit de validation
+      </p>
+      <p *ngIf="sansSuperieur" class="mt-1">
+        Aucun supérieur hiérarchique n'est renseigné dans le dossier employé : la demande
+        partira directement au <span class="font-medium">Responsable RH</span>.
+      </p>
+      <p class="mt-1">
+        <span class="font-semibold">1.</span> {{ superieurNom || 'Responsable RH' }}
+        <span class="mx-1 text-gray-400">→</span>
+        <span class="font-semibold">2.</span> Responsable RH
+        <span class="mx-1 text-gray-400">→</span>
+        <span class="font-semibold">3.</span> Direction générale
+      </p>
+      <p class="mt-1 text-xs opacity-80">
+        Chaque validateur reçoit un e-mail l'invitant à traiter la demande.
+      </p>
+    </div>
+
     <div class="flex gap-3 justify-end pt-4 border-t border-gray-100">
       <button type="button" (click)="annuler()"
         class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium">
         Annuler
       </button>
-      <button type="submit" [disabled]="submitting"
+      <button type="submit" [disabled]="submitting || profilNonRattache"
         class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-60">
         <lucide-icon [name]="submitting ? 'Loader' : 'Send'" [class.animate-spin]="submitting" class="w-4 h-4"></lucide-icon>
         Soumettre

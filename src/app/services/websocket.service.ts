@@ -14,6 +14,11 @@ import {
   QUEUE_NOTIFICATIONS_STOCK,
 } from '../constants/stock.constants';
 import { NotificationValidationStock } from '../models/stock-v2-workflow.model';
+import {
+  TOPIC_CONGES_VALIDATIONS,
+  QUEUE_NOTIFICATIONS_CONGES,
+} from '../constants/conges.constants';
+import { NotificationValidationConge } from '../models/conge.model';
 
 /**
  * Charge utile pour les notifications ciblées du module Exploitation Terrain
@@ -43,6 +48,10 @@ export class WebsocketService {
   // ─── Module Stock v2 (7.4 Contrôle des mouvements) ─────────────────────
   private stockValidations$ = new Subject<NotificationValidationStock>();
   private notificationsStock$ = new Subject<NotificationValidationStock>();
+
+  // ─── Module RH (6.2 — validation des congés) ───────────────────────────
+  private congesValidations$ = new Subject<NotificationValidationConge>();
+  private notificationsConges$ = new Subject<NotificationValidationConge>();
 
   constructor() {
     const token = localStorage.getItem('token'); // Récupère le JWT depuis le localStorage
@@ -120,6 +129,23 @@ export class WebsocketService {
           console.error('Payload notification stock invalide', e);
         }
       });
+
+      // ─── Module RH (6.2 — validation des congés) ───────────────────────
+      this.client.subscribe(TOPIC_CONGES_VALIDATIONS, (msg: IMessage) => {
+        try {
+          this.congesValidations$.next(JSON.parse(msg.body) as NotificationValidationConge);
+        } catch (e) {
+          console.error('Payload validation congé invalide', e);
+        }
+      });
+
+      this.client.subscribe(QUEUE_NOTIFICATIONS_CONGES, (msg: IMessage) => {
+        try {
+          this.notificationsConges$.next(JSON.parse(msg.body) as NotificationValidationConge);
+        } catch (e) {
+          console.error('Payload notification congé invalide', e);
+        }
+      });
     };
 
     this.client.onStompError = (frame) => {
@@ -171,5 +197,17 @@ export class WebsocketService {
   /** Notifications ciblées (queue utilisateur) — validateur / superviseur stock. */
   onNotificationsStock(): Observable<NotificationValidationStock> {
     return this.notificationsStock$.asObservable();
+  }
+
+  // ─── Module RH (6.2 — validation des congés) ─────────────────────────────
+
+  /** Flux temps réel des transitions du circuit de congés (broadcast). */
+  onCongesValidations(): Observable<NotificationValidationConge> {
+    return this.congesValidations$.asObservable();
+  }
+
+  /** Notifications ciblées — validateur du niveau attendu, puis demandeur. */
+  onNotificationsConges(): Observable<NotificationValidationConge> {
+    return this.notificationsConges$.asObservable();
   }
 }

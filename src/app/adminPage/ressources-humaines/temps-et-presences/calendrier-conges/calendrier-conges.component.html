@@ -3,10 +3,17 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-800">Calendrier des congés</h1>
-      <p class="text-sm text-gray-500 mt-1">Soldes, demandes et workflow d'approbation</p>
+      <p class="text-sm text-gray-500 mt-1">
+        Soldes, demandes et circuit de validation à 3 niveaux
+      </p>
     </div>
     <div class="flex gap-2">
-      <button (click)="validation()"
+      <button (click)="mesDemandes()"
+        class="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-lg font-medium">
+        <lucide-icon name="Plane" class="w-4 h-4"></lucide-icon>
+        Mes demandes
+      </button>
+      <button *ngIf="permissions.peutAccederFileValidation()" (click)="validation()"
         class="inline-flex items-center gap-2 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-4 py-2.5 rounded-lg font-medium">
         <lucide-icon name="CheckSquare" class="w-4 h-4"></lucide-icon>
         Validation
@@ -76,10 +83,9 @@
         <select [(ngModel)]="filtres.statut"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
           <option [ngValue]="undefined">Tous</option>
-          <option value="EN_ATTENTE">En attente</option>
-          <option value="APPROUVE">Approuvées</option>
-          <option value="REFUSE">Refusées</option>
-          <option value="ANNULE">Annulées</option>
+          <option *ngFor="let s of ORDRE_STATUTS_DEMANDE" [value]="s">
+            {{ LIBELLES_STATUT_DEMANDE[s] }}
+          </option>
         </select>
       </div>
       <div>
@@ -87,11 +93,9 @@
         <select [(ngModel)]="filtres.type"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
           <option [ngValue]="undefined">Tous</option>
-          <option value="ANNUEL">Annuel</option>
-          <option value="MATERNITE">Maternité</option>
-          <option value="PATERNITE">Paternité</option>
-          <option value="SANS_SOLDE">Sans solde</option>
-          <option value="EXCEPTIONNEL">Exceptionnel</option>
+          <option *ngFor="let t of ORDRE_TYPES_CONGE" [value]="t">
+            {{ LIBELLES_TYPE_CONGE[t] }}
+          </option>
         </select>
       </div>
       <div>
@@ -148,6 +152,7 @@
             <th class="px-4 py-3">Au</th>
             <th class="px-4 py-3">Jours</th>
             <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3">Niveau en cours</th>
             <th class="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
@@ -157,18 +162,22 @@
               <div class="font-medium text-gray-800">{{ d.prenom }} {{ d.nom }}</div>
               <div class="text-xs text-gray-500 font-mono">{{ d.matricule }}</div>
             </td>
-            <td class="px-4 py-3 text-gray-700">{{ getTypeLabel(d.type) }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ LIBELLES_TYPE_CONGE[d.type] }}</td>
             <td class="px-4 py-3 text-gray-700">{{ d.dateDebut | date: 'dd/MM/yyyy' }}</td>
             <td class="px-4 py-3 text-gray-700">{{ d.dateFin | date: 'dd/MM/yyyy' }}</td>
             <td class="px-4 py-3 text-gray-700">{{ d.nombreJours ?? '—' }}</td>
             <td class="px-4 py-3">
-              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
-                [ngClass]="getStatutClasses(d.statut)">{{ getStatutLabel(d.statut) }}</span>
+              <app-badge-statut-conge [statut]="d.statut"></app-badge-statut-conge>
             </td>
+            <td class="px-4 py-3 text-xs text-gray-600">{{ getNiveauLabel(d) }}</td>
             <td class="px-4 py-3 text-right">
-              <button *ngIf="d.statut === 'EN_ATTENTE'"
-                (click)="annulerDemande(d)"
-                class="text-red-600 hover:text-red-800 text-xs underline">Annuler</button>
+              <div class="inline-flex items-center gap-3">
+                <button (click)="detail(d)"
+                  class="text-indigo-600 hover:text-indigo-800 text-xs underline">Détail</button>
+                <button *ngIf="permissions.peutAnnuler(d)"
+                  (click)="annulerDemande(d)"
+                  class="text-red-600 hover:text-red-800 text-xs underline">Annuler</button>
+              </div>
             </td>
           </tr>
         </tbody>

@@ -6,8 +6,46 @@
     </button>
     <div>
       <h1 class="text-2xl font-bold text-gray-800">Validation des demandes de congé</h1>
-      <p class="text-sm text-gray-500 mt-1">Demandes en attente d'approbation</p>
+      <p class="text-sm text-gray-500 mt-1">
+        Circuit : supérieur hiérarchique → RH → Direction générale
+      </p>
     </div>
+  </div>
+
+  <!-- Le profil métier n'a pas pu être résolu : les gardes d'interface sont
+       permissives, le serveur reste seul juge. -->
+  <div *ngIf="!permissions.profilResolu()"
+    class="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    <lucide-icon name="AlertTriangle" class="w-4 h-4 mt-0.5 shrink-0"></lucide-icon>
+    <span>
+      Votre profil employé n'a pas pu être résolu : les actions affichées ici seront vérifiées
+      par le serveur au moment de la décision.
+    </span>
+  </div>
+
+  <!-- Onglets par niveau, avec compteurs -->
+  <div class="mb-4 flex flex-wrap gap-2">
+    <button type="button" (click)="changerOnglet('TOUS')"
+      class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition"
+      [ngClass]="ongletActif === 'TOUS'
+        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+        : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'">
+      Toutes
+      <span class="rounded-full bg-gray-200 px-1.5 text-xs font-semibold text-gray-700">
+        {{ compteurOnglet('TOUS') }}
+      </span>
+    </button>
+
+    <button *ngFor="let n of onglets; trackBy: trackByNiveau" type="button" (click)="changerOnglet(n)"
+      class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition"
+      [ngClass]="ongletActif === n
+        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+        : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'">
+      {{ libelleNiveauLong(n) }}
+      <span class="rounded-full bg-gray-200 px-1.5 text-xs font-semibold text-gray-700">
+        {{ compteurOnglet(n) }}
+      </span>
+    </button>
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -17,7 +55,7 @@
 
     <div *ngIf="!loading && demandes.length === 0" class="p-8 text-center text-gray-500">
       <lucide-icon name="CheckCircle2" class="w-10 h-10 inline text-green-300"></lucide-icon>
-      <p class="mt-2 text-sm">Aucune demande en attente.</p>
+      <p class="mt-2 text-sm">Aucune demande ne requiert votre validation.</p>
     </div>
 
     <div *ngIf="!loading && demandes.length > 0" class="overflow-x-auto">
@@ -29,6 +67,7 @@
             <th class="px-4 py-3">Du</th>
             <th class="px-4 py-3">Au</th>
             <th class="px-4 py-3">Jours</th>
+            <th class="px-4 py-3">Niveau</th>
             <th class="px-4 py-3">Motif</th>
             <th class="px-4 py-3 text-right">Décision</th>
           </tr>
@@ -36,24 +75,37 @@
         <tbody class="divide-y divide-gray-100">
           <tr *ngFor="let d of demandes; trackBy: trackById" class="hover:bg-gray-50">
             <td class="px-4 py-3">
-              <div class="font-medium text-gray-800">{{ d.prenom }} {{ d.nom }}</div>
+              <div class="font-medium text-gray-800">{{ nomComplet(d) }}</div>
               <div class="text-xs text-gray-500 font-mono">{{ d.matricule }} · {{ d.departement }}</div>
             </td>
-            <td class="px-4 py-3 text-gray-700">{{ getTypeLabel(d.type) }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ LIBELLES_TYPE_CONGE[d.type] }}</td>
             <td class="px-4 py-3 text-gray-700">{{ d.dateDebut | date: 'dd/MM/yyyy' }}</td>
             <td class="px-4 py-3 text-gray-700">{{ d.dateFin | date: 'dd/MM/yyyy' }}</td>
             <td class="px-4 py-3 font-medium">{{ d.nombreJours ?? '—' }}</td>
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-1">
+                <app-badge-statut-conge [statut]="d.statut"></app-badge-statut-conge>
+                <span class="text-[0.7rem] text-gray-500">{{ libelleNiveau(d) }}</span>
+              </div>
+            </td>
             <td class="px-4 py-3 text-gray-600 text-xs max-w-xs truncate">{{ d.motif || '—' }}</td>
             <td class="px-4 py-3 text-right">
               <div class="inline-flex gap-2">
-                <button (click)="approuver(d)"
-                  class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                  <lucide-icon name="Check" class="w-3.5 h-3.5"></lucide-icon> Approuver
+                <button (click)="detail(d)"
+                  class="inline-flex items-center gap-1 border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium">
+                  <lucide-icon name="Eye" class="w-3.5 h-3.5"></lucide-icon> Détail
                 </button>
-                <button (click)="refuser(d)"
-                  class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                  <lucide-icon name="X" class="w-3.5 h-3.5"></lucide-icon> Refuser
-                </button>
+                <!-- Actions réservées par rôle : masquées, pas grisées. -->
+                <ng-container *ngIf="permissions.peutValiderNiveau(d)">
+                  <button (click)="valider(d)"
+                    class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                    <lucide-icon name="Check" class="w-3.5 h-3.5"></lucide-icon> Valider
+                  </button>
+                  <button (click)="refuser(d)"
+                    class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                    <lucide-icon name="X" class="w-3.5 h-3.5"></lucide-icon> Refuser
+                  </button>
+                </ng-container>
               </div>
             </td>
           </tr>

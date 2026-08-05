@@ -4,6 +4,8 @@ import { Router, RouterModule } from '@angular/router';
 import { LoginService } from '../../services/login.service';
 import { LucideAngularModule } from 'lucide-angular';
 import { DropdownMenu, ModulesAutorises } from '../../models/admin.model';
+import { CongeService } from '../../services/conge.service';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
@@ -36,6 +38,9 @@ export class SidebarComponent implements OnInit {
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
+  /** Demandes de congé en attente de l'action de l'utilisateur (pastille du menu). */
+  nbCongesAValider = 0;
+
   ngOnInit(): void {
 
     this.handleResize();
@@ -53,12 +58,26 @@ export class SidebarComponent implements OnInit {
     });
 
     this.role = this.loginService.getUserRole();
+
+    this.chargerCompteurConges();
+  }
+
+  /**
+   * Pastille « Validation congés ». Un seul appel, uniquement pour les profils
+   * habilités ; l'échec est silencieux (le menu reste utilisable sans compteur).
+   */
+  private chargerCompteurConges(): void {
+    if (!this.accessCongesValidation()) return;
+    this.congeService.compterAValider()
+      .pipe(catchError(() => of({ total: 0, parNiveau: {} as any })))
+      .subscribe(c => (this.nbCongesAValider = c.total ?? 0));
   }
 
 
 
   constructor(private router: Router,
-    private loginService: LoginService
+    private loginService: LoginService,
+    private congeService: CongeService
 
   ) { }
 
@@ -103,8 +122,22 @@ export class SidebarComponent implements OnInit {
     return this.accessRh('pointageCentralise')
       || this.accessRh('absences')
       || this.accessRh('conges')
+      || this.accessCongesValidation()
+      || this.accessRh('congesMesDemandes')
       || this.accessRh('heuresSupplementaires')
       || this.accessRh('recapitulatif');
+  }
+
+  /**
+   * Accès à la file de validation des congés.
+   *
+   * Le rôle `RH` (niveau 2) et `SUPERADMIN` (niveau 3, la Direction générale)
+   * y accèdent d'office. Pour un supérieur hiérarchique sans rôle particulier,
+   * c'est le backend qui pose `modules.rh.congesValidation` au login dès que
+   * l'employé a au moins un subordonné — la sidebar ne fait aucun calcul.
+   */
+  accessCongesValidation(): boolean {
+    return this.accessRh('congesValidation');
   }
 
   /** Accès au sous-module 6.3 Paie (au moins une fonctionnalité). */

@@ -210,6 +210,31 @@
                     <span class="flex-1 truncate">Calendrier des congés</span>
                   </a>
                 </li>
+                <li *ngIf="accessCongesValidation()">
+                  <a routerLink="/admin/rh/temps-et-presences/conges/validation"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ClipboardCheck" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Validation congés</span>
+                    <span *ngIf="nbCongesAValider > 0"
+                      class="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full
+                             bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                      {{ nbCongesAValider }}
+                    </span>
+                  </a>
+                </li>
+                <li *ngIf="accessRh('congesMesDemandes')">
+                  <a routerLink="/admin/rh/temps-et-presences/conges/mes-demandes"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Plane" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Mes demandes de congé</span>
+                  </a>
+                </li>
                 <li *ngIf="accessRh('heuresSupplementaires')">
                   <a routerLink="/admin/rh/temps-et-presences/heures-supplementaires"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"

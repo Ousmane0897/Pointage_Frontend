@@ -59,6 +59,8 @@ export class GestionPrivilegeComponent implements OnInit {
         pointageCentralise: false,
         absences: false,
         conges: false,
+        congesValidation: false,
+        congesMesDemandes: false,
         heuresSupplementaires: false,
         recapitulatif: false,
         // 6.3 Paie
@@ -173,6 +175,8 @@ export class GestionPrivilegeComponent implements OnInit {
           pointageCentralise: false,
           absences: false,
           conges: false,
+          congesValidation: false,
+          congesMesDemandes: false,
           heuresSupplementaires: false,
           recapitulatif: false,
           // 6.3 Paie
@@ -271,6 +275,8 @@ export class GestionPrivilegeComponent implements OnInit {
           pointageCentralise: rhLegacyFull || !!rhSrc?.pointageCentralise,
           absences: rhLegacyFull || !!rhSrc?.absences,
           conges: rhLegacyFull || !!rhSrc?.conges,
+          congesValidation: rhLegacyFull || !!rhSrc?.congesValidation,
+          congesMesDemandes: rhLegacyFull || !!rhSrc?.congesMesDemandes,
           heuresSupplementaires: rhLegacyFull || !!rhSrc?.heuresSupplementaires,
           recapitulatif: rhLegacyFull || !!rhSrc?.recapitulatif,
           // 6.3 Paie

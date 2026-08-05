@@ -86,7 +86,7 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 ### 6.1 Gestion du personnel (`ressources-humaines/gestion-du-personnel/`)
 
 - **Dossier employé** — fiche complète : identité, photo, poste, département, site affecté, date d'entrée, contacts, personne à prévenir
-- **Contrats de travail** — génération CDD/CDI/stage, suivi renouvellements avec alertes avant échéance, historique des avenants
+- **Contrats de travail** — génération CDD/CDI/stage, suivi renouvellements avec alertes avant échéance, historique des avenants — *gérés depuis l'onglet Contrats de la fiche employé (plus d'entrée de menu dédiée)*
 - **Organigramme hiérarchique** — vue arborescente par département, liée au référentiel employés, mise à jour dynamique
 - **Suivi période d'essai** — alertes automatiques avant fin de période d'essai, workflow de validation pour titularisation
 - **Documents employé** — stockage numérique des pièces : CNI, diplômes, certificats, attestations, accès sécurisé
@@ -100,6 +100,9 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 - Contrats — le type `ALTERNANCE` est remplacé par `PRESTATION` dans le `TypeContrat`, avec mise à jour des radios du formulaire, de l'option du filtre et des mappings de badges (liste-contrats, avenants).
 - Contrats — upload d'un fichier de contrat (PDF/DOC/DOCX) via zone drag-and-drop. Le `ContratService.creerContrat` / `modifierContrat` passent à `FormData` (blob JSON `contrat` + champ `fichier`). Le DTO `Contrat` retourné par le backend expose les champs optionnels **`fichierContratUrl`**, **`fichierContratNom`**, **`fichierContratMimeType`** (la taille n'est pas renvoyée). Méthodes `telechargerContrat(id)` (Blob) et `supprimerFichierContrat(id)`.
 - Import Excel des employés — depuis la liste des dossiers employés, un lien « Importer depuis Excel » (icône `FileSpreadsheet`, à gauche du bouton « Nouvel employé ») ouvre une modale `MatDialog` avec téléchargement d'un template (22 colonnes + feuille « Consignes »), upload drag-and-drop `.xlsx/.xls`, pré-validation ligne-par-ligne (fail-soft — toutes les erreurs collectées, rapport Excel exportable), confirmation avant import et spinner pendant l'appel serveur. L'import consomme `POST /gestion-personnel/employes/bulk` — **transactionnel all-or-nothing côté serveur** : en cas d'erreur sur une ligne, aucun employé n'est créé. Le backend résout les `superieurHierarchiqueMatricule` → `id` pour les managers internes au batch et ceux déjà en base, ce qui permet d'importer des hiérarchies profondes en un seul appel. Le champ photo n'est pas importable via Excel (à éditer ensuite dans la fiche). Composant : [import-excel-modal/](src/app/adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/import-excel-modal/). Service : [import-employe-excel.service.ts](src/app/services/import-employe-excel.service.ts). Modèles : [import-employe.model.ts](src/app/models/import-employe.model.ts). Méthode service API : `DossierEmployeService.importerBulk(payload)`.
+- **Contrats & documents rattachés à la fiche employé** — les rubriques « Contrats de travail » et « Documents employé » ont été retirées du sous-menu *RH > Gestion du Personnel* de la sidebar. Elles sont désormais accessibles via les onglets **Contrats** et **Documents** de la fiche employé ([fiche-employe/](src/app/adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/fiche-employe/)), rendus **inline** dans le template (pas de composant enfant, pas d'`@Input`) et alimentés par le `forkJoin` de `chargerDonnees()`. L'onglet Contrats porte les actions complètes — créer (via la route existante `contrats/nouveau/:employeId`), modifier, avenants, supprimer (`ConfirmDialogComponent` + toastr, puis `rechargerContrats()` qui ne recharge ni la photo ni le dossier), télécharger le fichier (blob, endpoint protégé par JWT) — ainsi qu'une bannière d'alertes d'échéance : `ContratService.getAlertes()` renvoie **toutes** les alertes, filtrées côté client sur `employeId` (aucun endpoint backend à ajouter). Les composants `formulaire-contrat` et `avenants` acceptent un query param **`returnUrl`** pour revenir sur la fiche (`…/dossier-employe/fiche/:id?tab=contrats`, l'onglet étant restauré depuis `?tab=`) ; à défaut ils retombent sur la liste globale des contrats. Les routes `rh/gestion-du-personnel/contrats*` et `.../documents*` ainsi que les flags RBAC `rh.contrats` et `rh.documents` sont **conservés** — les deux restent agrégés dans `sidebar.accessGestionPersonnel()`, sans quoi un profil n'ayant que l'un de ces droits perdrait tout le sous-menu. La **liste globale des contrats** (`rh/gestion-du-personnel/contrats`, sans entrée de menu) reste atteignable par un lien « Contrats de travail » dans la barre d'actions de la page **Dossiers Employés**.
+- **Étape « Contrat » dans l'assistant de création d'employé** — [formulaire-employe/](src/app/adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/) compte une étape supplémentaire intercalée **entre « Documents » et « Récapitulatif »**, proposée **à la création uniquement** (6 étapes ; en modification on reste à 5, les contrats d'un employé existant se gérant depuis sa fiche). Le tableau `etapes` est donc devenu mutable — `'Contrat'` y est inséré dans `ngOnInit` si `!isEditMode` — et le récapitulatif est rendu par `*ngIf="etapeCourante === 'Récapitulatif'"` (getter sur `etapes[etapeActuelle - 1]`) et non plus par un index en dur. L'étape est **optionnelle** : `contratForm` (un `FormGroup` séparé de `employeForm`, comme `documentForm`) est sans contrôle `employeId` — injecté à l'envoi — et sans `Validators.required` sur `dateDebut` ; `validerEtapeContrat()` ne s'applique que si `contratRenseigne` (date de début saisie ou fichier joint). La soumission enchaîne `creerEmploye` → `televerserDocuments` → `creerContratSiRenseigne`, chaque cascade avec `catchError(() => of(null))` + toast d'avertissement : **un échec sur les documents ou le contrat n'annule jamais la création de l'employé**, déjà persistée.
+- **Affectations — date de fin optionnelle** — dans [formulaire-affectation/](src/app/adminPage/ressources-humaines/gestion-du-personnel/affectations/formulaire-affectation/), le contrôle `dateFin` (label « Date et heure de fin ») n'est plus `required` : une affectation sans fin est **à durée indéterminée**. `AffectationAgent.dateFin` passe à **optionnel** dans [terrain-planning.model.ts](src/app/models/terrain-planning.model.ts) ; tous les affichages ont un repli « Indéterminée » (fiche, liste + exports, durée) et le calendrier rend un **événement ponctuel** (`end: a.dateFin ?? undefined`). Le validateur croisé fin > début et la détection de conflits ne s'appliquent que si la fin est saisie — **un intervalle ouvert ne produit jamais de conflit**, côté front comme côté serveur (`PlanningService.chevauche` renvoie `false` sur un null). ⚠ **Contrat backend** (branche `feature/affectation-date-fin-optionnelle`) : `@NotNull` retiré de `AffectationAgentDto.dateFin` ; le filtre de période de `PlanningService.appliquerFiltres` tolère les `dateFin` nuls (`orOperator` fin ≥ borne **ou** fin absente), sans quoi ces affectations disparaîtraient du calendrier et des listes ; `update()` réaffecte explicitement `dateFin` (le mapper MapStruct ignore les nulls) pour permettre de **retirer** une date de fin existante ; le scheduler laisse volontairement ces affectations en **`EN_COURS`** (clôture humaine : ajout d'une date de fin ou annulation).
 
 ### 6.2 Temps & Présences (`ressources-humaines/temps-et-presences/`)
 
@@ -116,7 +119,134 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 **Dépendances :** consomme les données employé de 6.1. Le récapitulatif mensuel alimente directement le calcul de paie (6.3). Le pointage centralisé reçoit des données du module Exploitation existant.
 
 **Corrections ultérieures :**
+- Sidebar — les deux entrées « Pointage centralisé » et « Historique pointage » du sous-menu **Présences** sont condensées en une seule rubrique **« Pointage »** (→ `rh/temps-et-presences/pointage-centralise`). Les deux routes et les deux composants sont conservés ; la bascule se fait par une **barre d'onglets** « Vue du jour » / « Historique » présente dans les deux templates (elle remplace les anciens liens croisés). ⚠ L'entrée de sidebar n'a **plus** `[routerLinkActiveOptions]="{ exact: true }"` (sans quoi elle se dé-surlignerait sur `/historique`), et inversement l'onglet « Vue du jour » **doit** le porter (sinon il reste actif sur le sous-chemin `/historique`). Le flag RBAC reste l'unique `rh.pointageCentralise`.
 - Formulaire d'absence — quand le type sélectionné est `AUTRE`, un champ texte "Précisez le type d'absence" apparaît et devient obligatoire. La valeur est stockée dans `Absence.typeAutrePrecision` (optionnel) et envoyée dans le `FormData` de soumission. Dans le tableau de la liste, le type `AUTRE` est affiché enrichi : `Autre (précision saisie)` via le helper `getTypeLibelle(a)`.
+
+#### Congés — circuit de validation à 3 niveaux + notifications
+
+Une demande de congé n'est plus tranchée par un décideur unique : elle remonte
+**le supérieur hiérarchique du demandeur → la RH → la Direction générale**, chaque
+niveau étant notifié par e-mail. Statuts :
+`EN_ATTENTE_SUPERIEUR → EN_ATTENTE_RH → EN_ATTENTE_DG → APPROUVE`, un refus à
+n'importe quel niveau étant **terminal** (`REFUSE`, motif obligatoire).
+
+**Rôles.** Niveau 1 = l'employé désigné comme `superieurHierarchiqueId` du demandeur
+(pas un rôle). Niveau 2 = le rôle **`RH` existant**. Niveau 3 = **`SUPERADMIN`** — *la
+Direction générale est le super-admin*, **aucun rôle `DIRECTION_GENERALE` n'existe ni
+ne doit être créé** (l'alias `ROLE_DIRECTION_GENERALE` de
+[roles.constants.ts](src/app/constants/roles.constants.ts) pointe sur `ROLE_SUPERADMIN`,
+il n'est là que pour la lisibilité). `SUPERADMIN` peut agir à tous les niveaux.
+
+**Front.** Constantes centralisées dans [conges.constants.ts](src/app/constants/conges.constants.ts)
+(libellés/couleurs de statut, niveaux, actions, topics WS, `PARAMETRES_CONGES`) — les maps
+inline des composants ont été supprimées. Point unique de vérité des habilitations :
+[conge-permissions.service.ts](src/app/services/conge-permissions.service.ts) (+ spec,
+21 tests), consommé par `calendrier-conges`, `validation-conges`, `detail-demande-conge`,
+`mes-demandes` et `demande-conge`. Nouveaux écrans : **`detail-demande-conge`** (fiche +
+stepper des 3 niveaux) et **`mes-demandes`** (auto-service). Le `window.prompt` du refus est
+remplacé par `dialogs/refus-conge-dialog` (motif ≥ 10 car.) et le `ConfirmDialogComponent`
+de l'approbation par `dialogs/valider-conge-dialog`, qui **transmet enfin le commentaire**
+que l'API acceptait sans jamais le recevoir.
+
+- ⚠ **Le front ne calcule jamais l'habilitation** : il consomme `DemandeConge.peutValiderParMoi`
+  et `MonProfilConge.niveauxValidables`, calculés serveur. Le JWT ne portant **ni `id` ni
+  `employeId`**, « qui suis-je » et « de qui suis-je le supérieur » passent obligatoirement par
+  `GET /moi` et `GET /demandes/a-valider` — aucun calcul de subordonnés côté client
+  (ce serait un `getEmployes(0, 500)` faux au-delà de 500 employés). Tant que ces champs sont
+  absents, le service de permissions est **permissif sur le niveau 1** (repli `TODO` commenté,
+  calqué sur `estProprietaire()` du module Stock) et strict sur les niveaux gouvernés par un rôle.
+- Le **timeline est spécifique aux congés** ([shared/timeline-validation-conge](src/app/adminPage/ressources-humaines/temps-et-presences/calendrier-conges/shared/timeline-validation-conge.component.ts))
+  et **ne réutilise pas** `timeline-workflow` du stock : celui-ci n'affiche qu'un journal
+  d'actions passées, alors qu'on rend ici les 3 étapes en permanence — y compris celles à venir
+  et l'étape *sautée*. Le généraliser aurait imposé de toucher 3 écrans stock livrés.
+- Les actions réservées par rôle sont **masquées** (pas grisées) dans la file de validation —
+  sans quoi la restriction serait contournable en un clic, comme pour le Kanban stock.
+- **RBAC** : 2 sous-flags ajoutés sous `rh` — `congesValidation` (file de validation) et
+  `congesMesDemandes`. Tous deux agrégés dans `sidebar.accessTempsPresences()`, sans quoi un
+  profil n'ayant que ce droit perdrait tout le sous-menu (même piège que `rh.contrats`).
+
+**Backend : ✅ implémenté** dans [Pointage-Cleanic-Backend](../Pointage-Cleanic-Backend), branche
+`feature/conges-validation-3-niveaux` (partant de `main`). Classes clés : `CongeIdentiteService`
+(résolution e-mail JWT → dossier employé), `CongeWorkflowService` (transitions + habilitations),
+`CongeNotificationService` (STOMP), `CongeMailNotificationService`, `CongeCalendrier` (jours ouvrés),
+`CongeStatutMigrationRunner`. ⚠ La branche redéclare `app.frontend.base-url` et le correctif
+d'expéditeur d'`EmailService`, déjà présents sur `feature/notification-mail-bons` — **conflit trivial
+attendu au merge des deux branches**.
+
+**Endpoints backend** (base `${environment.apiUrl}/temps-presences/conges`) :
+
+| Méthode | URL | Corps / params | Réponse |
+|---|---|---|---|
+| GET | `/moi` | — | `MonProfilConge` (employeId, supérieur, `niveauxValidables[]`, `nbDemandesAValider`) |
+| GET | `/demandes` | `page,size,employeId,departement,statut(*n),niveau,type,dateDebut,dateFin,q` | `Page<DemandeConge>` |
+| GET | `/demandes/mes-demandes` | `page,size,…` | demandes de l'appelant (résolu par le JWT) |
+| GET | `/demandes/a-valider` | `page,size,niveau?` | **uniquement** ce que l'appelant peut trancher maintenant, `peutValiderParMoi=true` sur chaque ligne |
+| GET | `/demandes/a-valider/compteurs` | — | `{ total, parNiveau: { SUPERIEUR, RH, DIRECTION_GENERALE } }` |
+| GET | `/demandes/{id}` | — | `DemandeConge` **avec `historique[]`** et `peutValiderParMoi` |
+| POST | `/demandes` | `{ type, dateDebut, dateFin, motif?, employeId? }` | `DemandeConge` (201) |
+| PUT / DELETE | `/demandes/{id}` | — | modification / passage en `ANNULE` |
+| POST | `/demandes/{id}/valider` | `{ commentaire? }` | statut avancé d'un cran |
+| POST | `/demandes/{id}/refuser` | `{ motif }` (≥ 10 car.) | `REFUSE` |
+| POST | `/demandes/{id}/approuver` | *alias `@deprecated` de `/valider`, à conserver une release* | |
+
+**Règles serveur** (le front n'est qu'une commodité UX) :
+
+- **Le niveau n'est jamais fourni par le client** : `/valider` le déduit du statut courant et
+  vérifie que l'appelant est habilité à ce niveau.
+- **403** — `/valider` ou `/refuser` si l'appelant n'est ni le `superieurHierarchiqueId` de la
+  demande (N1), ni de rôle `RH` (N2), ni `SUPERADMIN` (N3) ; `POST /demandes` avec un `employeId`
+  ≠ soi hors `RH`/`SUPERADMIN` ; `DELETE` sur la demande d'autrui hors `RH`/`SUPERADMIN`.
+- **409** — transition sur un statut terminal ou dont le niveau courant n'est pas celui de
+  l'appelant (course entre deux RH). Message exploitable : `{ "message": "Demande déjà traitée au niveau RH." }`.
+- **422** — motif absent/trop court ; solde insuffisant (type `ANNUEL`) ; `dateFin < dateDebut` ;
+  chevauchement avec une demande approuvée ; compte non rattaché à un `DossierEmploye`.
+- **Sans supérieur hiérarchique** : statut initial `EN_ATTENTE_RH`, `niveauSuperieurIgnore = true`,
+  entrée d'historique « Niveau ignoré — aucun supérieur hiérarchique renseigné ».
+  **Ne jamais bloquer la demande.**
+- `superieurHierarchiqueId/Nom` sont **figés à la création** — un changement d'organigramme ne doit
+  pas rerouter une demande en vol. `decision*` et `historique[].auteur*` sont renseignés serveur
+  depuis le JWT, jamais acceptés du client.
+- **Migration** (`CongeStatutMigrationRunner`, idempotent) : les demandes existantes en `EN_ATTENTE`
+  passent en `EN_ATTENTE_SUPERIEUR` (ou `EN_ATTENTE_RH` sans supérieur) ;
+  `decideur*`/`dateDecision`/`commentaireDecision` sont convertis en une entrée d'historique. La
+  valeur `EN_ATTENTE` reste tolérée en lecture par le front
+  (`NIVEAU_PAR_STATUT['EN_ATTENTE'] = 'SUPERIEUR'`).
+- **Solde et décompte** — l'acquis annuel passe de 30 à **22 jours ouvrés**
+  (`app.conges.jours-acquis-par-an`), `enCours` compte les **4** statuts d'attente, et
+  `computeNombreJours` exclut samedi et dimanche : le décompte était en jours *calendaires* alors que
+  le solde est en jours *ouvrés*, si bien que le solde se vidait trop vite. ⚠ Les **jours fériés
+  restent décomptés** — l'ancien référentiel des fériés a été supprimé et une liste en dur serait
+  pire qu'une limite documentée. ⚠ Au déploiement, les soldes affichés changent pour tout le monde
+  (moins d'acquis, mais aussi moins de jours par demande) : à annoncer aux utilisateurs.
+- **Claims JWT** : ajouter `modules.rh.congesValidation` et `modules.rh.congesMesDemandes`.
+  `congesValidation` doit être **vrai automatiquement** pour tout compte dont le `DossierEmploye`
+  a au moins un subordonné, ainsi que pour les rôles `RH` et `SUPERADMIN` — le calcul se fait à
+  l'émission du JWT, la sidebar ne fait aucun calcul. Le claim legacy `rh: true` reste traité comme
+  « accès RH complet ». **Aucun nouveau rôle à émettre.**
+
+**Matrice e-mails** (HTML, tolérante aux pannes SMTP — un échec n'annule jamais la transition ;
+adresse = adresse de connexion du compte) :
+
+| Transition | Destinataire (action attendue) | En copie |
+|---|---|---|
+| Création (→ `EN_ATTENTE_SUPERIEUR`) | supérieur hiérarchique | demandeur (accusé) |
+| Création sans supérieur (→ `EN_ATTENTE_RH`) | tous les comptes `RH` | demandeur |
+| Validation N1 (→ `EN_ATTENTE_RH`) | tous les comptes `RH` | demandeur, supérieur |
+| Validation N2 (→ `EN_ATTENTE_DG`) | tous les comptes `SUPERADMIN` | demandeur, supérieur, RH décideur |
+| Validation N3 (→ `APPROUVE`) | demandeur | supérieur, RH, DG |
+| Refus (tout niveau, → `REFUSE`) | demandeur (**motif dans le corps**) | supérieur + RH + validateurs déjà passés |
+| Annulation par le demandeur | validateur du niveau courant | RH |
+
+Contenu commun : nom/matricule du demandeur, type, période `dd/MM/yyyy`, nombre de jours, solde
+restant, motif de la demande, décisions déjà rendues, bouton « Ouvrir la demande ». Le lien est
+construit serveur depuis `app.frontend.base-url` + **`/admin/rh/temps-et-presences/conges/demandes/{id}`**
+— ⚠ comme pour les mails de bons, **si cette route front change, les liens des mails cassent**
+(un commentaire le rappelle dans [app.routes.ts](src/app/app.routes.ts)).
+
+**WebSocket** : publier `NotificationValidationConge` sur `/topic/conges-validations` (broadcast à
+chaque transition) et `/user/queue/notifications-conges` (ciblé vers les validateurs du niveau
+désormais attendu, puis vers le demandeur à l'issue). Consommé par `validation-conges` (toast +
+rechargement de la file), `detail-demande-conge` et `calendrier-conges`/`mes-demandes`.
 
 ### 6.3 Paie (`ressources-humaines/paie/`)
 
