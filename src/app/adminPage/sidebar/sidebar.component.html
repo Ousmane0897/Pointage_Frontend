@@ -171,7 +171,7 @@
                        hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
                 [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/rh/temps-et-presences') }">
                 <lucide-icon name="Clock" class="w-4 h-4 text-amber-400"></lucide-icon>
-                <span class="flex-1 truncate">Temps &amp; Présences</span>
+                <span class="flex-1 truncate">Présences</span>
                 <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
                   [ngClass]="{ 'rotate-180': openDropdownTempsPresences === 'tempsPresences' }"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,21 +184,10 @@
                 <li *ngIf="accessRh('pointageCentralise')">
                   <a routerLink="/admin/rh/temps-et-presences/pointage-centralise"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
                     class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
                            hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                     <lucide-icon name="Users" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Pointage centralisé</span>
-                  </a>
-                </li>
-                <li *ngIf="accessRh('pointageCentralise')">
-                  <a routerLink="/admin/rh/temps-et-presences/pointage-centralise/historique"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="History" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Historique pointage</span>
+                    <span class="flex-1 truncate">Pointage</span>
                   </a>
                 </li>
                 <li *ngIf="accessRh('absences')">
