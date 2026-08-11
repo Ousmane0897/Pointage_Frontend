@@ -17,6 +17,7 @@ import { debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/op
 import { StockV2ProduitService } from '../../../../../services/stock-v2-produit.service';
 import { StockV2CategorieService } from '../../../../../services/stock-v2-categorie.service';
 import { StockV2ExportService } from '../../../../../services/stock-v2-export.service';
+import { StockV2EtatStockService } from '../../../../../services/stock-v2-etat-stock.service';
 import { Produit, FiltreProduit, TypeProduit } from '../../../../../models/stock-v2-produit.model';
 import { CategorieStock } from '../../../../../models/stock-v2-categorie.model';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
@@ -56,6 +57,10 @@ export class ListeProduitsComponent implements OnInit, OnDestroy {
 
   categories: CategorieStock[] = [];
 
+  // Édition inline du seuil d'alerte (reprise de l'ancien écran « État du stock »)
+  editId: string | null = null;
+  editSeuilControl = new FormControl<number>(0, { nonNullable: true });
+
   readonly LIBELLES_TYPE_PRODUIT = LIBELLES_TYPE_PRODUIT;
   readonly COULEURS_TYPE_PRODUIT = COULEURS_TYPE_PRODUIT;
   readonly LIBELLES_UNITE = LIBELLES_UNITE;
@@ -67,6 +72,7 @@ export class ListeProduitsComponent implements OnInit, OnDestroy {
     private produitService: StockV2ProduitService,
     private categorieService: StockV2CategorieService,
     private exportService: StockV2ExportService,
+    private etatService: StockV2EtatStockService,
     private dialog: MatDialog,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
@@ -174,6 +180,40 @@ export class ListeProduitsComponent implements OnInit, OnDestroy {
         error: () => this.toastr.error('Suppression impossible (produit référencé par des mouvements ?).'),
       });
     });
+  }
+
+  // ─── Édition inline du seuil d'alerte ────────────────────────────────────
+
+  demarrerEdition(p: Produit): void {
+    this.editId = p.id ?? null;
+    this.editSeuilControl.setValue(p.seuilAlerte ?? 0);
+    this.cdr.markForCheck();
+  }
+
+  annulerEdition(): void {
+    this.editId = null;
+    this.cdr.markForCheck();
+  }
+
+  /** `siteId` omis ⇒ seuil global du produit, celui affiché dans cette table. */
+  enregistrerSeuil(p: Produit): void {
+    const seuil = Number(this.editSeuilControl.value);
+    if (!p.id) return;
+    if (isNaN(seuil) || seuil < 0) {
+      this.toastr.warning('Le seuil doit être positif.');
+      return;
+    }
+    this.etatService.majSeuil({ produitId: p.id, seuilAlerte: seuil })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: maj => {
+          p.seuilAlerte = maj?.seuilAlerte ?? seuil;
+          this.editId = null;
+          this.toastr.success('Seuil mis à jour.');
+          this.cdr.markForCheck();
+        },
+        error: () => this.toastr.error('Mise à jour du seuil impossible.'),
+      });
   }
 
   estSousSeuil(p: Produit): boolean {

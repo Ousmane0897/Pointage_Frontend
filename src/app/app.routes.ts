@@ -222,13 +222,6 @@ export const routes: Routes = [
             { path: 'stock-v2/stocks-approvisionnement/produits/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
             { path: 'stock-v2/stocks-approvisionnement/produits/:id', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/fiche-produit/fiche-produit.component').then(m => m.FicheProduitComponent) },
 
-            // Mouvements de stock
-            { path: 'stock-v2/stocks-approvisionnement/mouvements', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/liste-mouvements/liste-mouvements.component').then(m => m.ListeMouvementsComponent) },
-            { path: 'stock-v2/stocks-approvisionnement/mouvements/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/formulaire-mouvement/formulaire-mouvement.component').then(m => m.FormulaireMouvementComponent) },
-
-            // État du stock temps réel
-            { path: 'stock-v2/stocks-approvisionnement/etat', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/etat-stock/etat-stock.component').then(m => m.EtatStockComponent) },
-
             // Inventaires (ordre important : /nouveau, /:id/modifier AVANT /:id)
             { path: 'stock-v2/stocks-approvisionnement/inventaires', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/liste-inventaires/liste-inventaires.component').then(m => m.ListeInventairesComponent) },
             { path: 'stock-v2/stocks-approvisionnement/inventaires/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/planification-inventaire/planification-inventaire.component').then(m => m.PlanificationInventaireComponent) },

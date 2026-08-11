@@ -25,7 +25,7 @@ export class StockV2TableauBordService {
       .set('dateDebut', filtres.dateDebut)
       .set('dateFin', filtres.dateFin);
     if (filtres.siteId) params = params.set('siteId', filtres.siteId);
-    if (filtres.categorieId) params = params.set('categorieId', filtres.categorieId);
+    if (filtres.produitId) params = params.set('produitId', filtres.produitId);
     if (filtres.moisDormance) params = params.set('moisDormance', filtres.moisDormance);
     return this.http.get<RapportTableauBordStock>(this.baseUrl, { params });
   }

@@ -8,6 +8,7 @@
 
 import { TypeProduit, UniteStock } from '../models/stock-v2-produit.model';
 import { TypeMouvement, MotifMouvement } from '../models/stock-v2-mouvement.model';
+import { FluxSynthese } from '../models/stock-v2-synthese.model';
 import { StatutStock } from '../models/stock-v2-etat-stock.model';
 import { StatutInventaire } from '../models/stock-v2-inventaire.model';
 import { StatutBon, ActionWorkflow } from '../models/stock-v2-workflow.model';
@@ -69,6 +70,75 @@ export const COULEURS_TYPE_MOUVEMENT: Record<TypeMouvement, { bg: string; text: 
   ENTREE:    { bg: 'bg-green-100',  text: 'text-green-700' },
   SORTIE:    { bg: 'bg-red-100',    text: 'text-red-700' },
 };
+
+/**
+ * Filtre de flux de la Synthèse mensuelle — purement cosmétique (masque les
+ * colonnes / séries du flux non retenu), aucun paramètre serveur associé.
+ */
+export const LIBELLES_FLUX_SYNTHESE: Record<FluxSynthese, string> = {
+  TOUT: 'Tout',
+  ENTREE: 'Flux entrée',
+  SORTIE: 'Flux sortie',
+};
+
+export const ORDRE_FLUX_SYNTHESE: FluxSynthese[] = ['TOUT', 'ENTREE', 'SORTIE'];
+
+// ─── Libellés de mois (yyyy-MM) ─────────────────────────────────────────────
+
+export const LIBELLES_MOIS = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
+
+export const LIBELLES_MOIS_COURTS = [
+  'Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin',
+  'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.',
+];
+
+/** `'2026-01'` → `'Janvier 2026'`. Renvoie l'entrée telle quelle si le format est inattendu. */
+export function formaterMois(mois: string): string {
+  return formaterAvec(mois, LIBELLES_MOIS);
+}
+
+/** `'2026-01'` → `'Janv. 2026'` — en-têtes de tableau, puces et légende de graphique. */
+export function formaterMoisCourt(mois: string): string {
+  return formaterAvec(mois, LIBELLES_MOIS_COURTS);
+}
+
+/** `'2026-02'` → `'2026-02-01'`. Chaîne vide si le format est inattendu. */
+export function premierJourDuMois(mois: string): string {
+  const [annee, numero] = decomposerMois(mois);
+  return annee ? `${annee}-${String(numero).padStart(2, '0')}-01` : '';
+}
+
+/**
+ * `'2026-02'` → `'2026-02-28'` (`'2024-02'` → `'2024-02-29'`). Chaîne vide si le
+ * format est inattendu.
+ *
+ * ⚠ La date est construite en **local** et seul le numéro de jour en est lu :
+ * passer par `toISOString()` décalerait d'un jour selon le fuseau.
+ */
+export function dernierJourDuMois(mois: string): string {
+  const [annee, numero] = decomposerMois(mois);
+  if (!annee) return '';
+  const dernierJour = new Date(Number(annee), numero, 0).getDate();
+  return `${annee}-${String(numero).padStart(2, '0')}-${String(dernierJour).padStart(2, '0')}`;
+}
+
+/** `'2026-02'` → `['2026', 2]` ; `['', 0]` si le format est inattendu. */
+function decomposerMois(mois: string): [string, number] {
+  const [annee, brut] = (mois ?? '').split('-');
+  const numero = Number(brut);
+  if (!annee || Number.isNaN(numero) || numero < 1 || numero > 12) return ['', 0];
+  return [annee, numero];
+}
+
+function formaterAvec(mois: string, libelles: string[]): string {
+  const [annee, numero] = (mois ?? '').split('-');
+  const index = Number(numero) - 1;
+  if (!annee || index < 0 || index > 11 || Number.isNaN(index)) return mois;
+  return `${libelles[index]} ${annee}`;
+}
 
 // ─── Motifs de mouvement ────────────────────────────────────────────────────
 
@@ -279,6 +349,7 @@ export const LIBELLES_ACTION_WORKFLOW: Record<ActionWorkflow, string> = {
   SOUMISSION: 'Soumission',
   VALIDATION: 'Validation',
   REFUS: 'Refus',
+  REPRISE: 'Reprise après refus',
   EFFECTIF: 'Mouvement effectif',
 };
 
@@ -288,6 +359,7 @@ export const COULEURS_ACTION_WORKFLOW: Record<ActionWorkflow, string> = {
   SOUMISSION: 'bg-amber-500',
   VALIDATION: 'bg-blue-500',
   REFUS: 'bg-red-500',
+  REPRISE: 'bg-orange-500',
   EFFECTIF: 'bg-green-500',
 };
 
@@ -330,6 +402,11 @@ export const PARAMETRES_CONTROLE_MOUVEMENTS = {
   seuilDepassementPlafondPct: 100,
   /** Nombre de mois affichés par défaut dans les courbes d'évolution. */
   nbMoisEvolutionDefaut: 12,
+  /**
+   * Profondeur de l'historique de sorties affiché par l'éditeur de lignes du bon de sortie,
+   * en **mois complets** — le mois en cours, partiel, est exclu.
+   */
+  moisHistoriqueSorties: 3,
 };
 
 // ════════════════════════════════════════════════════════════════════════════

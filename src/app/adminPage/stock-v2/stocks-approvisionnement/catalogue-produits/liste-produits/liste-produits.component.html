@@ -127,6 +127,7 @@
                 <th class="px-4 py-3 text-left">Type</th>
                 <th class="px-4 py-3 text-left">Catégorie</th>
                 <th class="px-4 py-3 text-right">Stock</th>
+                <th class="px-4 py-3 text-right">Seuil</th>
                 <th class="px-4 py-3 text-right">Prix unit.</th>
                 <th class="px-4 py-3 text-center">Statut</th>
                 <th class="px-4 py-3 text-right">Actions</th>
@@ -155,6 +156,30 @@
                     </span>
                     @if (estSousSeuil(p)) {
                       <lucide-icon name="AlertTriangle" [size]="14" class="inline ml-1 text-red-500"></lucide-icon>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
+                    @if (editId === p.id) {
+                      <div class="inline-flex items-center gap-1">
+                        <input type="number" min="0" [formControl]="editSeuilControl"
+                          class="w-20 px-2 py-1 rounded border border-indigo-300 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                        <button type="button" (click)="enregistrerSeuil(p)" title="Enregistrer"
+                          class="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
+                          <lucide-icon name="Check" [size]="16"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="annulerEdition()" title="Annuler"
+                          class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+                          <lucide-icon name="X" [size]="16"></lucide-icon>
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="inline-flex items-center gap-1">
+                        <span class="text-gray-500">{{ p.seuilAlerte | number:'1.0-2':'fr' }}</span>
+                        <button type="button" (click)="demarrerEdition(p)" title="Modifier le seuil"
+                          class="p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                          <lucide-icon name="Pencil" [size]="14"></lucide-icon>
+                        </button>
+                      </div>
                     }
                   </td>
                   <td class="px-4 py-3 text-right tabular-nums text-gray-700">

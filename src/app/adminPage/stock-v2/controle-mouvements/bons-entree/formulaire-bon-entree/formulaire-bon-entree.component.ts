@@ -99,6 +99,8 @@ export class FormulaireBonEntreeComponent implements OnInit, OnDestroy {
   }
 
   get lignes(): FormArray { return this.form.get('lignes') as FormArray; }
+  /** Site détenteur du stock, transmis à l'éditeur de lignes : pour une entrée, c'est la destination. */
+  get siteDestinationId(): string | null { return this.form.get('siteDestinationId')!.value || null; }
 
   private chargerBon(id: string): void {
     this.chargement = true;

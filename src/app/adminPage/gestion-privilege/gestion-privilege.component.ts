@@ -98,8 +98,6 @@ export class GestionPrivilegeComponent implements OnInit {
       stock: {
         // 7.3 Stocks & Approvisionnement
         catalogue: false,
-        mouvements: false,
-        etatStock: false,
         inventaires: false,
         synthese: false,
         approvisionnement: false,
@@ -213,8 +211,6 @@ export class GestionPrivilegeComponent implements OnInit {
         stock: {
           // 7.3 Stocks & Approvisionnement
           catalogue: false,
-          mouvements: false,
-          etatStock: false,
           inventaires: false,
           synthese: false,
           approvisionnement: false,
@@ -313,8 +309,6 @@ export class GestionPrivilegeComponent implements OnInit {
         stock: {
           // 7.3 Stocks & Approvisionnement
           catalogue: !!admin.modulesAutorises?.stock?.catalogue,
-          mouvements: !!admin.modulesAutorises?.stock?.mouvements,
-          etatStock: !!admin.modulesAutorises?.stock?.etatStock,
           inventaires: !!admin.modulesAutorises?.stock?.inventaires,
           synthese: !!admin.modulesAutorises?.stock?.synthese,
           approvisionnement: !!admin.modulesAutorises?.stock?.approvisionnement,

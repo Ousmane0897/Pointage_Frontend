@@ -69,6 +69,8 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
   submitting = false;
   chargement = false;
   idEdition: string | null = null;
+  /** Motif du dernier refus, rappelé pendant la correction d'un bon repris. */
+  motifRefus: string | null = null;
 
   readonly LIBELLES_TYPE_SORTIE = LIBELLES_TYPE_SORTIE;
   readonly TYPES = ORDRE_TYPES_SORTIE;
@@ -131,6 +133,8 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
   }
 
   get lignes(): FormArray { return this.form.get('lignes') as FormArray; }
+  /** Site détenteur du stock, transmis à l'éditeur de lignes. ⚠ Pas `destSiteId`, qui est le destinataire. */
+  get siteSourceId(): string | null { return this.form.get('siteSourceId')!.value || null; }
   get destType(): TypeDestinataire { return this.form.get('destType')!.value; }
   get typeSortie(): TypeSortie { return this.form.get('type')!.value; }
 
@@ -188,6 +192,8 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
             this.router.navigate(['/admin/stock-v2/controle-mouvements/bons-sortie']);
             return;
           }
+          // Rappelé en haut du formulaire après une reprise : c'est ici qu'on corrige.
+          this.motifRefus = bon.motifRefus ?? null;
           this.remplir(bon);
           this.cdr.markForCheck();
         },

@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { Produit } from '../models/stock-v2-produit.model';
 import { MouvementStock } from '../models/stock-v2-mouvement.model';
 import { EtatStock } from '../models/stock-v2-etat-stock.model';
-import { SyntheseMensuelle } from '../models/stock-v2-synthese.model';
+import { SyntheseMultiMois, FluxSynthese } from '../models/stock-v2-synthese.model';
 import { RapportTableauBordStock } from '../models/stock-v2-tableau-bord.model';
 import { BonEntree } from '../models/stock-v2-bon-entree.model';
 import { BonSortie, Destinataire } from '../models/stock-v2-bon-sortie.model';
@@ -37,6 +37,7 @@ import {
   LIBELLES_SENS_ECART_DOTATION,
   LIBELLES_NATURE_DON,
   LIBELLES_STATUT_CHANTIER,
+  formaterMoisCourt,
 } from '../constants/stock.constants';
 
 /**
@@ -100,19 +101,44 @@ export class StockV2ExportService {
     this.ecrire(rows, 'État du stock', `etat-stock-${this.dateAujourdhui()}.xlsx`);
   }
 
-  exporterSynthese(synthese: SyntheseMensuelle): void {
-    const rows = synthese.lignes.map(l => ({
-      Code: l.produitCode,
-      Produit: l.produitLibelle,
-      Catégorie: l.categorieLibelle ?? '',
-      Unité: LIBELLES_UNITE[l.unite],
-      'Stock initial': l.stockInitial,
-      Entrées: l.entrees,
-      Sorties: l.sorties,
-      'Stock final': l.stockFinal,
-      'Valeur finale (FCFA)': l.valeurFinale,
-    }));
-    this.ecrire(rows, 'Synthèse', `synthese-${synthese.mois}.xlsx`);
+  /**
+   * Synthèse comparée : une paire de colonnes par mois selon le flux retenu.
+   * Le stock final et la valeur sont ceux du dernier mois, jamais une somme.
+   */
+  exporterSynthese(synthese: SyntheseMultiMois, flux: FluxSynthese = 'TOUT'): void {
+    const avecEntrees = flux !== 'SORTIE';
+    const avecSorties = flux !== 'ENTREE';
+    const avecStockInitial = flux === 'TOUT';
+    const dernierMois = formaterMoisCourt(synthese.mois[synthese.mois.length - 1] ?? '');
+
+    const rows = synthese.lignes.map(l => {
+      const row: Record<string, string | number> = {
+        Code: l.produitCode,
+        Produit: l.produitLibelle,
+        Catégorie: l.categorieLibelle ?? '',
+        Unité: LIBELLES_UNITE[l.unite],
+      };
+      l.parMois.forEach(c => {
+        const mois = formaterMoisCourt(c.mois);
+        if (avecStockInitial) row[`Stock initial ${mois}`] = c.stockInitial;
+        if (avecEntrees) row[`Entrées ${mois}`] = c.entrees;
+        if (avecSorties) row[`Sorties ${mois}`] = c.sorties;
+      });
+      if (avecEntrees) row['Total entrées'] = l.totalEntrees;
+      if (avecSorties) row['Total sorties'] = l.totalSorties;
+      row[`Stock final ${dernierMois}`] = l.stockFinal;
+      row[`Valeur finale ${dernierMois} (FCFA)`] = l.valeurFinale;
+      return row;
+    });
+
+    this.ecrire(rows, 'Synthèse', `synthese-${this.suffixeMois(synthese.mois)}.xlsx`);
+  }
+
+  /** `2026-01` si un seul mois, `2026-01_2026-07` sinon. */
+  private suffixeMois(mois: string[]): string {
+    if (mois.length === 0) return this.dateAujourdhui();
+    if (mois.length === 1) return mois[0];
+    return `${mois[0]}_${mois[mois.length - 1]}`;
   }
 
   exporterTableauBord(rapport: RapportTableauBordStock): void {
@@ -128,8 +154,12 @@ export class StockV2ExportService {
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpis), 'KPIs');
 
-    const valeurCat = rapport.valeurParCategorie.map(v => ({ Catégorie: v.categorie, 'Valeur (FCFA)': v.valeur }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(valeurCat), 'Valeur par catégorie');
+    const valeurProduit = (rapport.valeurParProduit ?? []).map(v => ({
+      Code: v.produitCode,
+      Produit: v.produitLibelle,
+      'Valeur (FCFA)': v.valeur,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(valeurProduit), 'Valeur par produit');
 
     const topConso = rapport.topConsommations.map(c => ({
       Produit: c.produitLibelle, Quantité: c.quantite, Unité: LIBELLES_UNITE[c.unite],
@@ -194,6 +224,8 @@ export class StockV2ExportService {
   }
 
   exporterHistoriqueDestinataire(consommations: ConsommationDestinataire[]): void {
+    const wb = XLSX.utils.book_new();
+
     const rows = consommations.map(c => ({
       Destinataire: c.destinataireNom,
       Type: c.typeDestinataire,
@@ -201,7 +233,24 @@ export class StockV2ExportService {
       'Quantité totale': c.quantiteTotale,
       'Montant total (FCFA)': c.montantTotal,
     }));
-    this.ecrire(rows, 'Par destinataire', `consommation-destinataires-${this.dateAujourdhui()}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Par destinataire');
+
+    // Détail produit par produit, tous destinataires confondus. Feuille omise si le
+    // serveur ne renvoie pas `lignes[]` — un onglet vide laisserait croire à un bug.
+    const detail = consommations.flatMap(c => (c.lignes ?? []).map(l => ({
+      Destinataire: c.destinataireNom,
+      Type: c.typeDestinataire,
+      Code: l.produitCode ?? '',
+      Produit: l.produitLibelle ?? l.produitId,
+      Unité: l.unite ? LIBELLES_UNITE[l.unite] : '',
+      Quantité: l.quantite,
+      'Montant (FCFA)': l.montant,
+    })));
+    if (detail.length > 0) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detail), 'Détail produits');
+    }
+
+    XLSX.writeFile(wb, `consommation-destinataires-${this.dateAujourdhui()}.xlsx`);
   }
 
   exporterDotation(comparatif: ComparatifDotation): void {

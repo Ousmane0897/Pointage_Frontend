@@ -95,8 +95,6 @@ export interface ModulesAutorises {
   // `modules.stock` au claim JWT pour activer ce menu en production.
   stock?: {
     catalogue?: boolean;
-    mouvements?: boolean;
-    etatStock?: boolean;
     inventaires?: boolean;
     synthese?: boolean;
     approvisionnement?: boolean;
