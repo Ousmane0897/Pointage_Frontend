@@ -19,6 +19,10 @@ import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-b
 import { StockV2ExportService } from '../../../../../services/stock-v2-export.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import {
+  SuppressionDefinitiveDialogComponent,
+  SuppressionDefinitiveDialogResult,
+} from '../../../shared/dialogs/suppression-definitive-dialog.component';
+import {
   BonSortie,
   Destinataire,
   FiltreBonSortie,
@@ -152,6 +156,58 @@ export class ListeBonsSortieComponent implements OnInit, OnDestroy {
       this.service.supprimer(b.id!).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => { this.toastr.success('Bon supprimé.'); this.charger(); },
         error: () => this.toastr.error('Suppression impossible.'),
+      });
+    });
+  }
+
+  /**
+   * Suppression d'un bon déjà engagé — SUPERADMIN seul. Sur un bon EFFECTIF, le serveur
+   * contre-passe les mouvements de sortie (stock recrédité) avant d'effacer le bon.
+   */
+  supprimerDefinitivement(b: BonSortie): void {
+    if (!b.id || !this.perms.peutSupprimerDefinitivement(b)) return;
+    this.dialog.open<SuppressionDefinitiveDialogComponent, unknown, SuppressionDefinitiveDialogResult | null>(
+      SuppressionDefinitiveDialogComponent, {
+        width: '480px',
+        data: {
+          titre: 'Supprimer le bon de sortie',
+          reference: b.reference,
+          effetStock: b.statut === 'EFFECTIF'
+            ? 'Les mouvements de sortie sont contre-passés : les quantités sorties sont recréditées au site source.'
+            : 'Ce bon n’a pas encore mouvementé le stock : aucune quantité ne sera modifiée.',
+        },
+      }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+        if (!res) return;
+        this.service.supprimerDefinitivement(b.id!, res.motif)
+          .pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => { this.toastr.success('Bon supprimé et stock rétabli.'); this.charger(); },
+            error: err => {
+              if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.');
+              else this.toastr.error(err?.error?.message ?? 'Suppression impossible.');
+            },
+          });
+      });
+  }
+
+  /** Renvoie un bon refusé en brouillon pour correction (l'historique est conservé). */
+  reprendre(b: BonSortie): void {
+    if (!b.id || !this.perms.peutReprendre(b)) return;
+    this.dialog.open(ConfirmDialogComponent, {
+      width: '460px',
+      data: {
+        message: `Reprendre le bon « ${b.reference ?? ''} » ? Il repassera en brouillon pour correction, puis devra être soumis à nouveau.`,
+        confirmLabel: 'Reprendre',
+        confirmColor: 'primary',
+      },
+    }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (!ok) return;
+      this.service.reprendre(b.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => { this.toastr.success('Bon repassé en brouillon.'); this.charger(); },
+        error: err => {
+          if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.');
+          else if (err?.status === 409) this.toastr.error('Le statut de ce bon a changé entre-temps.');
+          else this.toastr.error('La reprise a échoué.');
+        },
       });
     });
   }

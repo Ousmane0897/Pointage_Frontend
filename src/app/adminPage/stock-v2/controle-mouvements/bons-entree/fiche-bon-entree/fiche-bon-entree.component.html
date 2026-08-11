@@ -53,6 +53,14 @@
             Soumettre
           </button>
         }
+        @if (perms.peutSupprimerDefinitivement(bon)) {
+          <!-- Réservé au super-admin : masqué ailleurs. -->
+          <button (click)="supprimerDefinitivement()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
+            <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+            Supprimer définitivement
+          </button>
+        }
         @if (bon.statut === 'SOUMIS') {
           <button (click)="ouvrirRefus()" [disabled]="action"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">

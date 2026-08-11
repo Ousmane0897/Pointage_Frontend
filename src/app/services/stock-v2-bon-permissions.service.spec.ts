@@ -47,6 +47,15 @@ describe('StockV2BonPermissionsService', () => {
       expect(service.peutModifier(b)).toBeTrue();
       expect(service.peutSupprimer(b)).toBeTrue();
     });
+
+    it('peut supprimer définitivement un bon déjà engagé, quel que soit son statut', () => {
+      (['SOUMIS', 'VALIDE', 'EFFECTIF', 'REFUSE'] as StatutBon[]).forEach(statut =>
+        expect(service.peutSupprimerDefinitivement(bon('agent@cleanic.sn', statut))).toBeTrue());
+    });
+
+    it('ne propose pas la suppression définitive sur un brouillon (peutSupprimer s’en charge)', () => {
+      expect(service.peutSupprimerDefinitivement(bon('agent@cleanic.sn', 'BROUILLON'))).toBeFalse();
+    });
   });
 
   describe('CONTROLEUR_STOCK', () => {
@@ -61,6 +70,10 @@ describe('StockV2BonPermissionsService', () => {
       const b = bon('agent@cleanic.sn');
       expect(service.peutConsulter(b)).toBeTrue();
       expect(service.peutModifier(b)).toBeTrue();
+    });
+
+    it('ne peut pas supprimer définitivement un bon engagé', () => {
+      expect(service.peutSupprimerDefinitivement(bon('agent@cleanic.sn', 'EFFECTIF'))).toBeFalse();
     });
   });
 
@@ -92,12 +105,35 @@ describe('StockV2BonPermissionsService', () => {
       expect(service.peutSupprimer(b)).toBeFalse();
     });
 
-    it('ne peut pas soumettre son propre brouillon (rôle non habilité)', () => {
-      expect(service.peutSoumettreBon(bon('agent@cleanic.sn'))).toBeFalse();
+    it('peut soumettre son propre brouillon, sans être habilité par son rôle', () => {
+      // Sans cela, un bon repris après refus serait corrigé mais jamais renvoyé.
+      expect(service.peutSoumettre()).toBeFalse();
+      expect(service.peutSoumettreBon(bon('agent@cleanic.sn'))).toBeTrue();
+    });
+
+    it('ne peut pas soumettre le brouillon d’un autre', () => {
+      expect(service.peutSoumettreBon(bon('autre@cleanic.sn'))).toBeFalse();
     });
 
     it('ne peut pas modifier un bon déjà soumis', () => {
       expect(service.peutModifier(bon('agent@cleanic.sn', 'SOUMIS'))).toBeFalse();
+    });
+
+    it('peut reprendre son propre bon refusé', () => {
+      expect(service.peutReprendre(bon('agent@cleanic.sn', 'REFUSE'))).toBeTrue();
+    });
+
+    it('ne peut jamais supprimer définitivement, même son propre bon effectif', () => {
+      // Le repli permissif sur la propriété ne doit pas ouvrir une action gouvernée par le rôle.
+      expect(service.peutSupprimerDefinitivement(bon('agent@cleanic.sn', 'EFFECTIF'))).toBeFalse();
+      expect(service.peutSupprimerDefinitivement(bon(undefined, 'EFFECTIF'))).toBeFalse();
+    });
+
+    it('ne peut reprendre ni un bon d’un autre, ni un bon non refusé', () => {
+      expect(service.peutReprendre(bon('autre@cleanic.sn', 'REFUSE'))).toBeFalse();
+      expect(service.peutReprendre(bon('agent@cleanic.sn', 'BROUILLON'))).toBeFalse();
+      expect(service.peutReprendre(bon('agent@cleanic.sn', 'SOUMIS'))).toBeFalse();
+      expect(service.peutReprendre(bon('agent@cleanic.sn', 'EFFECTIF'))).toBeFalse();
     });
   });
 
@@ -109,9 +145,16 @@ describe('StockV2BonPermissionsService', () => {
       expect(service.peutModifier(b)).toBeTrue();
     });
 
-    it('mais les restrictions par rôle restent actives', () => {
+    it('la propriété acquise ouvre aussi la soumission et la reprise', () => {
+      // Contrepartie assumée du repli : à retirer en même temps que lui.
       connecte('MAGASINIER', 'agent@cleanic.sn');
-      expect(service.peutSoumettreBon(bon(undefined))).toBeFalse();
+      expect(service.peutSoumettreBon(bon(undefined))).toBeTrue();
+      expect(service.peutReprendre(bon(undefined, 'REFUSE'))).toBeTrue();
+    });
+
+    it('mais les restrictions purement par rôle restent actives', () => {
+      connecte('MAGASINIER', 'agent@cleanic.sn');
+      expect(service.peutSoumettre()).toBeFalse();
       expect(service.peutValider()).toBeFalse();
     });
   });

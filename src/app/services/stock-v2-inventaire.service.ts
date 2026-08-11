@@ -55,6 +55,17 @@ export class StockV2InventaireService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  /**
+   * Supprime un inventaire **quel que soit son statut** — SUPERADMIN uniquement (403 sinon).
+   *
+   * ⚠ Sur un inventaire CLOTURE, le serveur **contre-passe** les écarts appliqués au stock et
+   * efface les mouvements d'ajustement, puis journalise l'opération avec le motif. POST et non
+   * DELETE : la requête porte un corps.
+   */
+  supprimerDefinitivement(id: string, motif: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/suppression-definitive`, { motif });
+  }
+
   // ─── Transitions de workflow ────────────────────────────────────────────
 
   /** BROUILLON → COMPTAGE : fige les quantités théoriques. */

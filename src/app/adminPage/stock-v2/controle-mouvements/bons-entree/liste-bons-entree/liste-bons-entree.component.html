@@ -25,6 +25,26 @@
     </div>
   </div>
 
+  <!--
+    ONGLETS — routes sœurs de 1er niveau, chacune avec son propre préfixe et rien d'autre
+    dessous : le routerLinkActive par préfixe suffit (pas de `exact`), l'onglet reste donc
+    allumé sur /nouveau, /:id et /:id/modifier.
+    Vert = entrée, rouge = sortie : la couleur est portée par le bouton d'accès uniquement,
+    pas par le contenu des écrans (cf. badges de statut, inchangés).
+  -->
+  <nav class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6">
+    <a routerLink="/admin/stock-v2/controle-mouvements/bons-entree"
+      routerLinkActive="bg-emerald-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-emerald-700 hover:bg-emerald-50">
+      <lucide-icon name="FileInput" class="w-4 h-4"></lucide-icon> Bons d'entrée
+    </a>
+    <a routerLink="/admin/stock-v2/controle-mouvements/bons-sortie"
+      routerLinkActive="bg-red-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">
+      <lucide-icon name="FileOutput" class="w-4 h-4"></lucide-icon> Bons de sortie
+    </a>
+  </nav>
+
   <!-- Filtres -->
   <div class="bg-white rounded-xl border border-gray-100 p-4 mb-4">
     <div class="flex flex-wrap items-end gap-3">
@@ -138,6 +158,12 @@
                         <lucide-icon name="Pencil" [size]="16"></lucide-icon>
                       </a>
                       <button (click)="supprimer(b)" title="Supprimer"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                        <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+                      </button>
+                    } @else if (perms.peutSupprimerDefinitivement(b)) {
+                      <!-- Réservé au super-admin : masqué (et non grisé) pour les autres profils. -->
+                      <button (click)="supprimerDefinitivement(b)" title="Supprimer définitivement (stock rétabli)"
                         class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                         <lucide-icon name="Trash2" [size]="16"></lucide-icon>
                       </button>

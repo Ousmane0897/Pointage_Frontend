@@ -2,11 +2,16 @@ import { Injectable } from '@angular/core';
 
 import { LoginService } from './login.service';
 import { ROLE_CONTROLEUR_STOCK, ROLE_SUPERADMIN } from '../constants/roles.constants';
-import { BonSortie } from '../models/stock-v2-bon-sortie.model';
+import { StatutBon } from '../models/stock-v2-workflow.model';
 
 /** Bon minimal exploitable par les contrôles de propriété (`BonSortie` ou `BonWorkflow`). */
 export interface BonAvecAuteur {
   creeParEmail?: string;
+}
+
+/** Bon minimal exploitable par les contrôles dépendant du statut. */
+export interface BonAvecStatut extends BonAvecAuteur {
+  statut?: StatutBon;
 }
 
 /**
@@ -16,10 +21,14 @@ export interface BonAvecAuteur {
  *
  * Règles :
  * - créer un bon : tout profil ayant accès au module ;
- * - consulter / modifier / supprimer : le créateur du bon uniquement (SUPERADMIN et
- *   CONTROLEUR_STOCK ont accès à tous les bons) ;
- * - soumettre : SUPERADMIN et CONTROLEUR_STOCK ;
- * - valider / refuser : SUPERADMIN uniquement.
+ * - consulter / modifier / supprimer / reprendre après refus : le créateur du bon uniquement
+ *   (SUPERADMIN et CONTROLEUR_STOCK ont accès à tous les bons) ;
+ * - soumettre *un bon* : les mêmes — le créateur doit pouvoir renvoyer dans le circuit le bon
+ *   qu'il vient de corriger, sans quoi la reprise après refus serait un cul-de-sac ;
+ * - valider / refuser : SUPERADMIN uniquement ;
+ * - supprimer définitivement un bon déjà engagé : SUPERADMIN uniquement — seule règle de ce service
+ *   qui vaut aussi pour les **bons d'entrée** (ils n'ont pas de notion de propriété), d'où son usage
+ *   depuis les écrans `bons-entree/`.
  *
  * ⚠ Ces contrôles sont une commodité d'interface : l'autorisation fait foi côté serveur
  * (403 attendu sur les endpoints correspondants).
@@ -37,7 +46,7 @@ export class StockV2BonPermissionsService {
     return this.loginService.getUserRole() === ROLE_CONTROLEUR_STOCK;
   }
 
-  /** Soumettre un bon pour validation. */
+  /** Rôle habilité à soumettre, hors contexte d'un bon précis. */
   peutSoumettre(): boolean {
     return this.estSuperAdmin() || this.estControleurStock();
   }
@@ -67,16 +76,40 @@ export class StockV2BonPermissionsService {
     return this.estSuperAdmin() || this.estControleurStock() || this.estProprietaire(bon);
   }
 
-  peutModifier(bon: BonSortie | null | undefined): boolean {
+  peutModifier(bon: BonAvecStatut | null | undefined): boolean {
     return !!bon && bon.statut === 'BROUILLON' && this.peutConsulter(bon);
   }
 
-  peutSupprimer(bon: BonSortie | null | undefined): boolean {
+  peutSupprimer(bon: BonAvecStatut | null | undefined): boolean {
     return this.peutModifier(bon);
   }
 
-  /** Soumettre *ce* bon : brouillon accessible + rôle habilité. */
-  peutSoumettreBon(bon: BonSortie | null | undefined): boolean {
-    return !!bon && bon.statut === 'BROUILLON' && this.peutSoumettre() && this.peutConsulter(bon);
+  /**
+   * Supprimer un bon **déjà engagé** (soumis, validé, effectif, refusé) : SUPERADMIN seul.
+   *
+   * Le serveur contre-passe alors les mouvements générés et journalise l'opération. Le prédicat est
+   * **disjoint de `peutSupprimer()`** (qui ne vaut qu'en BROUILLON) : les deux ne peuvent jamais
+   * être vrais ensemble, donc aucun écran ne rend deux boutons de suppression.
+   *
+   * ⚠ Contrairement au reste du service, aucun repli permissif ici : le rôle est porté par le JWT,
+   * il est toujours connu.
+   */
+  peutSupprimerDefinitivement(bon: BonAvecStatut | null | undefined): boolean {
+    return !!bon?.statut && bon.statut !== 'BROUILLON' && this.estSuperAdmin();
+  }
+
+  /**
+   * Soumettre *ce* bon.
+   *
+   * ⚠ N'exige plus `peutSoumettre()` : le créateur soumet ses propres bons, sans quoi il
+   * corrigerait un bon repris après refus sans pouvoir le renvoyer.
+   */
+  peutSoumettreBon(bon: BonAvecStatut | null | undefined): boolean {
+    return !!bon && bon.statut === 'BROUILLON' && this.peutConsulter(bon);
+  }
+
+  /** Reprendre un bon de sortie refusé : il repasse en brouillon pour correction. */
+  peutReprendre(bon: BonAvecStatut | null | undefined): boolean {
+    return !!bon && bon.statut === 'REFUSE' && this.peutConsulter(bon);
   }
 }

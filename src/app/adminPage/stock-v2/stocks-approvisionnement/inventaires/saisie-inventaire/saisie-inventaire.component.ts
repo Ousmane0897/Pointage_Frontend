@@ -16,6 +16,12 @@ import { finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2InventaireService } from '../../../../../services/stock-v2-inventaire.service';
 import { StockV2PdfService } from '../../../../../services/stock-v2-pdf.service';
+import { LoginService } from '../../../../../services/login.service';
+import { ROLE_SUPERADMIN } from '../../../../../constants/roles.constants';
+import {
+  SuppressionDefinitiveDialogComponent,
+  SuppressionDefinitiveDialogResult,
+} from '../../../shared/dialogs/suppression-definitive-dialog.component';
 import { Inventaire, StatutInventaire } from '../../../../../models/stock-v2-inventaire.model';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import {
@@ -46,6 +52,9 @@ export class SaisieInventaireComponent implements OnInit, OnDestroy {
   readonly ETAPES = ORDRE_STATUTS_INVENTAIRE;
   readonly LIBELLES_UNITE = LIBELLES_UNITE;
 
+  /** Suppression d'un inventaire engagé : super-administrateur seul (mémorisé — OnPush). */
+  readonly estSuperAdmin: boolean;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -57,7 +66,10 @@ export class SaisieInventaireComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-  ) {}
+    loginService: LoginService,
+  ) {
+    this.estSuperAdmin = loginService.getUserRole() === ROLE_SUPERADMIN;
+  }
 
   ngOnInit(): void {
     this.form = this.fb.group({ lignes: this.fb.array([]) });
@@ -213,6 +225,41 @@ export class SaisieInventaireComponent implements OnInit, OnDestroy {
       .subscribe({
         next: inv => { this.inventaire = inv; this.construireForm(inv); this.toastr.success(message); this.cdr.markForCheck(); },
         error: () => this.toastr.error('Action impossible.'),
+      });
+  }
+
+  /**
+   * Suppression d'un inventaire déjà engagé — SUPERADMIN seul. Le serveur contre-passe les écarts
+   * appliqués à la clôture ; on revient à la liste, la fiche n'ayant plus d'objet.
+   */
+  supprimerDefinitivement(): void {
+    const inv = this.inventaire;
+    if (!inv?.id || !this.estSuperAdmin) return;
+    this.dialog.open<SuppressionDefinitiveDialogComponent, unknown, SuppressionDefinitiveDialogResult | null>(
+      SuppressionDefinitiveDialogComponent, {
+        width: '480px',
+        data: {
+          titre: `Supprimer l'inventaire « ${inv.libelle} »`,
+          reference: inv.reference,
+          effetStock: inv.statut === 'CLOTURE'
+            ? 'Les écarts appliqués à la clôture sont contre-passés : le stock revient à sa valeur d’avant inventaire.'
+            : 'Cet inventaire n’a pas encore touché le stock : aucune quantité ne sera modifiée.',
+        },
+      }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+        if (!res) return;
+        this.action = true;
+        this.service.supprimerDefinitivement(inv.id!, res.motif)
+          .pipe(finalize(() => { this.action = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastr.success('Inventaire supprimé et stock rétabli.');
+              this.router.navigate(['/admin/stock-v2/stocks-approvisionnement/inventaires']);
+            },
+            error: err => {
+              if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.');
+              else this.toastr.error(err?.error?.message ?? 'Suppression impossible.');
+            },
+          });
       });
   }
 

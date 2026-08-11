@@ -15,8 +15,13 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2BonEntreeService } from '../../../../../services/stock-v2-bon-entree.service';
+import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-bon-permissions.service';
 import { StockV2ExportService } from '../../../../../services/stock-v2-export.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
+import {
+  SuppressionDefinitiveDialogComponent,
+  SuppressionDefinitiveDialogResult,
+} from '../../../shared/dialogs/suppression-definitive-dialog.component';
 import {
   BonEntree,
   FiltreBonEntree,
@@ -76,6 +81,9 @@ export class ListeBonsEntreeComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: StockV2BonEntreeService,
+    // Seule la suppression définitive (réservée au SUPERADMIN) est gouvernée par ce service ici :
+    // les bons d'entrée ne portent pas de règle de propriété (pas de `creeParEmail`).
+    readonly perms: StockV2BonPermissionsService,
     private exportService: StockV2ExportService,
     private dialog: MatDialog,
     private toastr: ToastrService,
@@ -149,6 +157,37 @@ export class ListeBonsEntreeComponent implements OnInit, OnDestroy {
         error: () => this.toastr.error('Suppression impossible.'),
       });
     });
+  }
+
+  /**
+   * Suppression d'un bon déjà engagé — SUPERADMIN seul. Sur un bon EFFECTIF, le serveur retire du
+   * stock la marchandise réceptionnée (422 si elle a déjà été consommée).
+   */
+  supprimerDefinitivement(b: BonEntree): void {
+    if (!b.id || !this.perms.peutSupprimerDefinitivement(b)) return;
+    this.dialog.open<SuppressionDefinitiveDialogComponent, unknown, SuppressionDefinitiveDialogResult | null>(
+      SuppressionDefinitiveDialogComponent, {
+        width: '480px',
+        data: {
+          titre: "Supprimer le bon d'entrée",
+          reference: b.reference,
+          effetStock: b.statut === 'EFFECTIF'
+            ? 'Les mouvements d’entrée sont contre-passés : la marchandise réceptionnée est retirée du site de destination.'
+            : 'Ce bon n’a pas encore mouvementé le stock : aucune quantité ne sera modifiée.',
+          avertissementCump: b.statut === 'EFFECTIF',
+        },
+      }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+        if (!res) return;
+        this.service.supprimerDefinitivement(b.id!, res.motif)
+          .pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => { this.toastr.success('Bon supprimé et stock rétabli.'); this.charger(); },
+            error: err => {
+              if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.');
+              // 422 : la marchandise a déjà été consommée — le message serveur est actionnable.
+              else this.toastr.error(err?.error?.message ?? 'Suppression impossible.');
+            },
+          });
+      });
   }
 
   exporter(): void {
