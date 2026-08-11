@@ -84,6 +84,19 @@ export class CongeService {
     );
   }
 
+  /**
+   * Historique complet des demandes d'un employé — non paginé, trié serveur de la plus
+   * récente à la plus ancienne. Alimente l'onglet Congés de la fiche employé.
+   *
+   * ⚠ Soumis au **périmètre de visibilité serveur** : 403 si l'employé n'est ni soi-même
+   * ni un subordonné direct, hors profils RH / SUPERADMIN.
+   */
+  demandesParEmploye(employeId: string): Observable<DemandeConge[]> {
+    return this.http.get<DemandeConge[]>(
+      `${this.baseUrl}/temps-presences/conges/demandes/employe/${employeId}`,
+    );
+  }
+
   /** Demandes de l'utilisateur connecté (demandeur déduit du JWT). */
   mesDemandes(
     page = 0,

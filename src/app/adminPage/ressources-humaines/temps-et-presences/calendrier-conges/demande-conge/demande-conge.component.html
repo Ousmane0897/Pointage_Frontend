@@ -72,6 +72,10 @@
           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
           <option *ngFor="let t of ORDRE_TYPES_CONGE" [value]="t">{{ LIBELLES_TYPE_CONGE[t] }}</option>
         </select>
+        <p *ngIf="!typeDecompteLeSolde" class="mt-1.5 flex items-start gap-1.5 text-xs text-gray-500">
+          <lucide-icon name="Info" class="w-3.5 h-3.5 mt-px shrink-0"></lucide-icon>
+          Ce type de congé n'est pas décompté du solde annuel.
+        </p>
       </div>
 
       <div></div>

@@ -191,4 +191,32 @@ describe('CongePermissionsService', () => {
       expect(service.peutAccederFileValidation()).toBeTrue();
     });
   });
+
+  describe('périmètre de lecture (affichage seulement)', () => {
+    it('RH et Direction générale voient tous les congés', () => {
+      connecte('RH');
+      expect(service.voitTousLesConges()).toBeTrue();
+      expect(service.voitPlusieursEmployes()).toBeTrue();
+
+      connecte('SUPERADMIN', profil(['DIRECTION_GENERALE']));
+      expect(service.voitTousLesConges()).toBeTrue();
+    });
+
+    it('un agent sans subordonné ne voit que les siens', () => {
+      connecte('EXPLOITATION', profil([]));
+      expect(service.voitTousLesConges()).toBeFalse();
+      expect(service.voitPlusieursEmployes()).toBeFalse();
+    });
+
+    it('un supérieur hiérarchique voit plusieurs employés sans tout voir', () => {
+      connecte('EXPLOITATION', profil(['SUPERIEUR']));
+      expect(service.voitTousLesConges()).toBeFalse();
+      expect(service.voitPlusieursEmployes()).toBeTrue();
+    });
+
+    it('profil non résolu ⇒ restrictif (parti pris inverse du reste du service)', () => {
+      connecte('EXPLOITATION', null);
+      expect(service.voitPlusieursEmployes()).toBeFalse();
+    });
+  });
 });

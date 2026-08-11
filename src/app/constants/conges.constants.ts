@@ -20,13 +20,32 @@ export const LIBELLES_TYPE_CONGE: Record<TypeConge, string> = {
   ANNUEL: 'Annuel',
   MATERNITE: 'Maternité',
   PATERNITE: 'Paternité',
+  REPOS_MEDICAL: 'Repos médical',
   SANS_SOLDE: 'Sans solde',
   EXCEPTIONNEL: 'Exceptionnel',
+  ABSENCE_NON_JUSTIFIEE: 'Absence non justifiée',
 };
 
+/** Ordre d'affichage (select du formulaire, filtre du calendrier) — même ordre que l'enum serveur. */
 export const ORDRE_TYPES_CONGE: TypeConge[] = [
-  'ANNUEL', 'MATERNITE', 'PATERNITE', 'SANS_SOLDE', 'EXCEPTIONNEL',
+  'ANNUEL', 'MATERNITE', 'PATERNITE', 'REPOS_MEDICAL',
+  'SANS_SOLDE', 'EXCEPTIONNEL', 'ABSENCE_NON_JUSTIFIEE',
 ];
+
+/**
+ * Types imputés sur les jours de congé annuel acquis.
+ *
+ * ⚠ **Miroir d'affichage** de `TypeConge.decompteSoldeAnnuel()` côté serveur, qui reste
+ * l'autorité : ne sert qu'à prévenir l'utilisateur avant qu'il ne soumette. Un repos
+ * médical, un congé maternité ou un congé sans solde n'entament pas le compteur de congés
+ * payés. Toute évolution de la règle serveur doit être répercutée ici.
+ */
+export const TYPES_DECOMPTES_DU_SOLDE: TypeConge[] = ['ANNUEL'];
+
+/** Ce type de congé ampute-t-il le solde annuel ? (affichage seulement) */
+export function decompteLeSolde(type: TypeConge | null | undefined): boolean {
+  return !!type && TYPES_DECOMPTES_DU_SOLDE.includes(type);
+}
 
 // ─── Statuts du circuit ─────────────────────────────────────────────────────
 

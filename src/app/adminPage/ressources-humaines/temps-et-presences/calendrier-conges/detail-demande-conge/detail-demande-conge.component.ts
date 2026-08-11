@@ -58,6 +58,8 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
 
   private id!: string;
+  private returnUrl: string | null = null;
+  private returnTab: string | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -72,6 +74,10 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id') ?? '';
+    // Écran atteignable depuis l'onglet Congés de la fiche employé : on revient d'où l'on
+    // vient (même pattern que `formulaire-contrat` / `avenants`), sinon retour au calendrier.
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    this.returnTab = this.route.snapshot.queryParamMap.get('tab');
     this.permissions.charger().pipe(takeUntil(this.destroy$)).subscribe();
     this.charger();
 
@@ -191,7 +197,15 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
     });
   }
 
-  retour(): void { this.router.navigate(['/admin/rh/temps-et-presences/conges']); }
+  retour(): void {
+    if (this.returnUrl) {
+      this.router.navigate([this.returnUrl], {
+        queryParams: this.returnTab ? { tab: this.returnTab } : {},
+      });
+      return;
+    }
+    this.router.navigate(['/admin/rh/temps-et-presences/conges']);
+  }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 

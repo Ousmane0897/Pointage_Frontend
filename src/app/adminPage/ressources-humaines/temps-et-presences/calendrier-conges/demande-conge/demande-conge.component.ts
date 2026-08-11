@@ -16,7 +16,11 @@ import {
   MonProfilConge,
   SoldeConge,
 } from '../../../../../models/conge.model';
-import { ORDRE_TYPES_CONGE, LIBELLES_TYPE_CONGE } from '../../../../../constants/conges.constants';
+import {
+  ORDRE_TYPES_CONGE,
+  LIBELLES_TYPE_CONGE,
+  decompteLeSolde,
+} from '../../../../../constants/conges.constants';
 import { DossierEmploye } from '../../../../../models/dossier-employe.model';
 import { PageResponse } from '../../../../../models/pageResponse.model';
 
@@ -48,6 +52,14 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
 
   readonly ORDRE_TYPES_CONGE = ORDRE_TYPES_CONGE;
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
+
+  /**
+   * Le type sélectionné ampute-t-il le solde annuel ? Sert uniquement à prévenir avant
+   * la soumission — le décompte réel est calculé serveur.
+   */
+  get typeDecompteLeSolde(): boolean {
+    return decompteLeSolde(this.form?.get('type')?.value);
+  }
 
   private destroy$ = new Subject<void>();
 

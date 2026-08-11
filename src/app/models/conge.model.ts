@@ -15,12 +15,21 @@
  * d'interface (masquage des actions) — l'autorisation fait foi côté serveur.
  */
 
+/**
+ * Nature d'une demande de congé — miroir de l'enum serveur `TypeConge`.
+ *
+ * Seul `ANNUEL` est décompté des jours acquis : voir `TYPES_DECOMPTES_DU_SOLDE`
+ * dans [conges.constants.ts](../constants/conges.constants.ts), et la règle serveur
+ * `TypeConge.decompteSoldeAnnuel()` qui fait autorité.
+ */
 export type TypeConge =
   | 'ANNUEL'
   | 'MATERNITE'
   | 'PATERNITE'
+  | 'REPOS_MEDICAL'
   | 'SANS_SOLDE'
-  | 'EXCEPTIONNEL';
+  | 'EXCEPTIONNEL'
+  | 'ABSENCE_NON_JUSTIFIEE';
 
 /**
  * Statut du circuit de validation.

@@ -2,8 +2,8 @@
 
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Gestion des congés</h1>
-      <p class="text-sm text-gray-500 mt-1">Saisie, catégorisation et suivi des congés</p>
+      <h1 class="text-2xl font-bold text-gray-800">Congés</h1>
+      <p class="text-sm text-gray-500 mt-1">Saisie, catégorisation et suivi des déclarations</p>
     </div>
     <button (click)="nouvelle()"
       class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow font-medium">
@@ -12,10 +12,43 @@
     </button>
   </div>
 
+  <!--
+    ONGLETS — les deux routes sont SŒURS (/conges et /absences), pas parent/enfant :
+    `exact: true` va donc sur Calendrier (sinon il resterait actif sur /conges/demande),
+    et Déclarations ne l'a pas (pour rester actif sur /absences/nouvelle et /absences/:id/modifier).
+  -->
+  <nav class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6">
+    <a routerLink="/admin/rh/temps-et-presences/conges"
+      [routerLinkActiveOptions]="{ exact: true }"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="CalendarDays" class="w-4 h-4"></lucide-icon> Calendrier
+    </a>
+    <a routerLink="/admin/rh/temps-et-presences/absences"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="UserMinus" class="w-4 h-4"></lucide-icon> Déclarations
+    </a>
+  </nav>
+
+  <!-- PÉRIMÈTRE DE VISIBILITÉ (rappel ; la restriction elle-même est serveur) -->
+  <div *ngIf="!permissions.voitTousLesConges()"
+    class="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 text-sm">
+    <lucide-icon name="Info" class="w-4 h-4 mt-0.5 shrink-0"></lucide-icon>
+    <span *ngIf="permissions.voitPlusieursEmployes(); else seulMoi">
+      Vous consultez vos déclarations et celles de votre équipe directe.
+    </span>
+    <ng-template #seulMoi>
+      <span>Vous consultez uniquement vos propres déclarations.</span>
+    </ng-template>
+  </div>
+
   <!-- FILTRES -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-      <div>
+    <!-- Sans le filtre Employé, la grille retombe à 5 colonnes. -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+      [ngClass]="permissions.voitPlusieursEmployes() ? 'lg:grid-cols-6' : 'lg:grid-cols-5'">
+      <div *ngIf="permissions.voitPlusieursEmployes()">
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">Employé</label>
         <select [(ngModel)]="filtres.employeId"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
@@ -87,7 +120,7 @@
       <table class="min-w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
-            <th class="px-4 py-3">Employé</th>
+            <th *ngIf="permissions.voitPlusieursEmployes()" class="px-4 py-3">Employé</th>
             <th class="px-4 py-3">Type</th>
             <th class="px-4 py-3">Du</th>
             <th class="px-4 py-3">Au</th>
@@ -99,7 +132,7 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           <tr *ngFor="let a of absences; trackBy: trackById" class="hover:bg-gray-50">
-            <td class="px-4 py-3">
+            <td *ngIf="permissions.voitPlusieursEmployes()" class="px-4 py-3">
               <div class="font-medium text-gray-800">{{ a.prenom }} {{ a.nom }}</div>
               <div class="text-xs text-gray-500 font-mono">{{ a.matricule }}</div>
             </td>

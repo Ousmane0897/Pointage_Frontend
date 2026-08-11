@@ -143,14 +143,6 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin/rh/temps-et-presences/conges/demande']);
   }
 
-  validation(): void {
-    this.router.navigate(['/admin/rh/temps-et-presences/conges/validation']);
-  }
-
-  mesDemandes(): void {
-    this.router.navigate(['/admin/rh/temps-et-presences/conges/mes-demandes']);
-  }
-
   detail(d: DemandeConge): void {
     if (!d.id) return;
     this.router.navigate(['/admin/rh/temps-et-presences/conges/demandes', d.id]);

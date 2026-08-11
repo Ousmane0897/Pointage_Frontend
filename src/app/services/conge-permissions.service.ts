@@ -135,6 +135,32 @@ export class CongePermissionsService {
     }
   }
 
+  // ─── Périmètre de lecture ─────────────────────────────────────────────────
+
+  /**
+   * Vue complète des congés (tous les employés) : RH et Direction générale.
+   *
+   * ⚠ **Cosmétique** : le périmètre réel est appliqué **côté serveur** (un agent ne reçoit
+   * que ses congés, un supérieur y ajoute ses subordonnés directs). Ces deux méthodes ne
+   * servent qu'à masquer des filtres et des colonnes devenus vides de sens.
+   */
+  voitTousLesConges(): boolean {
+    return this.estRh() || this.estSuperAdmin();
+  }
+
+  /**
+   * Le périmètre dépasse-t-il ses propres congés ? (supérieur hiérarchique, RH, DG)
+   *
+   * ⚠ Parti pris **inverse** du reste de ce service : profil non résolu ⇒ **restrictif**.
+   * Se tromper ici ne fait que masquer un filtre, alors que la liste sera de toute façon
+   * réduite par le serveur — tandis qu'afficher « recherche par nom » à un agent qui ne
+   * verra jamais que ses propres lignes est trompeur.
+   */
+  voitPlusieursEmployes(): boolean {
+    return this.voitTousLesConges()
+      || !!this.profil?.niveauxValidables.includes('SUPERIEUR');
+  }
+
   /** Accès à l'écran « Validation congés ». */
   peutAccederFileValidation(): boolean {
     if (this.estSuperAdmin() || this.estRh()) return true;
