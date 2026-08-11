@@ -9,11 +9,11 @@ import {
   LigneImport,
   ResultatValidation,
 } from '../models/import-employe.model';
+import { SituationMatrimoniale } from '../models/dossier-employe.model';
 import { DossierEmployeService } from './dossier-employe.service';
 
 type Genre = 'HOMME' | 'FEMME';
 type Statut = 'ACTIF' | 'EN_PERIODE_ESSAI' | 'SUSPENDU' | 'SORTI';
-type SituationMatrimoniale = 'CELIBATAIRE' | 'MARIE';
 
 const MATRICULE_EXEMPLE = 'EXEMPLE';
 
@@ -73,7 +73,7 @@ export class ImportEmployeExcelService {
       [''],
       ['4. Valeurs acceptées (énumérations) :'],
       ["   • Genre : Homme, Femme"],
-      ['   • Situation matrimoniale : Célibataire, Marié(e)'],
+      ['   • Situation matrimoniale : Célibataire, Marié(e), Divorcé(e), Veuf(ve)'],
       ["   • Statut : Actif, En période d'essai, Suspendu, Sorti"],
       [''],
       ['5. Règles de validation :'],
@@ -430,7 +430,14 @@ export class ImportEmployeExcelService {
     const norm = this.normaliserEnum(v);
     if (norm === 'celibataire') return 'CELIBATAIRE';
     if (norm === 'marie' || norm === 'mariee') return 'MARIE';
-    pousser(colonne, v, 'Situation matrimoniale invalide — valeurs acceptées : Célibataire, Marié(e).');
+    if (norm === 'divorce' || norm === 'divorcee') return 'DIVORCE';
+    // « Veuf(ve) » → « veufve » : normaliserEnum retire les parenthèses.
+    if (norm === 'veuf' || norm === 'veuve' || norm === 'veufve') return 'VEUF';
+    pousser(
+      colonne,
+      v,
+      'Situation matrimoniale invalide — valeurs acceptées : Célibataire, Marié(e), Divorcé(e), Veuf(ve).',
+    );
     return undefined;
   }
 

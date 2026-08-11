@@ -1013,6 +1013,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     const v = this.identiteGroup?.get('situationMatrimoniale')?.value;
     if (v === 'MARIE') return 'Marié(e)';
     if (v === 'CELIBATAIRE') return 'Célibataire';
+    if (v === 'DIVORCE') return 'Divorcé(e)';
+    if (v === 'VEUF') return 'Veuf(ve)';
     return '';
   }
 

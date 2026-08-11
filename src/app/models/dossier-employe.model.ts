@@ -8,7 +8,7 @@ export interface ContactUrgence {
   telephone: string;
 }
 
-export type SituationMatrimoniale = 'CELIBATAIRE' | 'MARIE';
+export type SituationMatrimoniale = 'CELIBATAIRE' | 'MARIE' | 'DIVORCE' | 'VEUF';
 
 /** Semaine ouvrée de l'employé. */
 export type JoursTravail = 'LUN_VEN' | 'LUN_SAM' | 'LUN_DIM';

@@ -10,12 +10,23 @@ import { LucideAngularModule } from 'lucide-angular';
 import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
 import { ContratService } from '../../../../../services/contrat.service';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
+import { CongeService } from '../../../../../services/conge.service';
+import { AbsenceService } from '../../../../../services/absence.service';
 import { DossierEmploye } from '../../../../../models/dossier-employe.model';
 import { Contrat, AlerteContrat } from '../../../../../models/contrat.model';
 import { DocumentEmploye } from '../../../../../models/document-employe.model';
+import { DemandeConge, SoldeConge } from '../../../../../models/conge.model';
+import { Absence } from '../../../../../models/absence.model';
+import { PageResponse } from '../../../../../models/pageResponse.model';
+import { LIBELLES_TYPE_CONGE } from '../../../../../constants/conges.constants';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
+import { BadgeStatutCongeComponent }
+  from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/badge-statut-conge.component';
 
-export type ActiveTab = 'infos' | 'contrats' | 'documents';
+export type ActiveTab = 'infos' | 'contrats' | 'documents' | 'conges';
+
+/** Plafond de déclarations remontées dans l'onglet — au-delà, on renvoie vers l'écran dédié. */
+const MAX_DECLARATIONS = 100;
 
 @Component({
   selector: 'app-fiche-employe',
@@ -24,6 +35,7 @@ export type ActiveTab = 'infos' | 'contrats' | 'documents';
     CommonModule,
     RouterModule,
     LucideAngularModule,
+    BadgeStatutCongeComponent,
   ],
   templateUrl: './fiche-employe.component.html',
   styleUrl: './fiche-employe.component.scss',
@@ -38,6 +50,17 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   /** Alertes d'échéance de contrat, filtrées sur cet employé. */
   alertesContrats: AlerteContrat[] = [];
   alertesDismissed = false;
+
+  // ─── Onglet Congés (chargé à la demande, cf. setActiveTab) ────────────────
+  soldeConge: SoldeConge | null = null;
+  demandesConge: DemandeConge[] = [];
+  declarations: Absence[] = [];
+  congesLoading = false;
+  congesCharges = false;
+  /** Message affiché *dans l'onglet* — un 403 de périmètre n'est pas une panne. */
+  congesMessage = '';
+
+  readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
 
   // ─── Photo (ObjectURL local, le endpoint est protégé par JWT) ────────────
   photoBlobUrl: string | null = null;
@@ -60,6 +83,8 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
     private dossierEmployeService: DossierEmployeService,
     private contratService: ContratService,
     private documentEmployeService: DocumentEmployeService,
+    private congeService: CongeService,
+    private absenceService: AbsenceService,
     private dialog: MatDialog,
     private toastr: ToastrService,
   ) {}
@@ -70,8 +95,8 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(qp => {
         const tab = qp.get('tab');
-        if (tab === 'infos' || tab === 'contrats' || tab === 'documents') {
-          this.activeTab = tab;
+        if (tab === 'infos' || tab === 'contrats' || tab === 'documents' || tab === 'conges') {
+          this.setActiveTab(tab);
         }
       });
 
@@ -81,6 +106,11 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
         this.employeId = params['id'] ?? '';
         if (this.employeId) {
           this.chargerDonnees();
+          // `queryParamMap` a émis avant que l'id soit résolu : si on revient du détail
+          // d'une demande (?tab=conges), c'est ici que le chargement peut enfin partir.
+          if (this.activeTab === 'conges' && !this.congesCharges) {
+            this.chargerConges();
+          }
         } else {
           this.errorMessage = "Identifiant de l'employé manquant.";
         }
@@ -176,6 +206,99 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   // ─── Navigation par onglets ───────────────────────────────────────────────
   setActiveTab(tab: ActiveTab): void {
     this.activeTab = tab;
+    if (tab === 'conges' && !this.congesCharges) {
+      this.chargerConges();
+    }
+  }
+
+  /**
+   * Congés de l'employé — chargés **à la première ouverture de l'onglet**, délibérément
+   * hors du `forkJoin` de `chargerDonnees()`.
+   *
+   * Deux raisons : ne pas ajouter trois requêtes à chaque ouverture de fiche pour un onglet
+   * rarement consulté, et surtout ne pas déclencher le 403 de périmètre chez un utilisateur
+   * qui n'ouvrira jamais l'onglet (le serveur ne laisse voir que soi-même et ses
+   * subordonnés directs, hors RH / SUPERADMIN).
+   */
+  private chargerConges(): void {
+    if (!this.employeId) return;   // l'id n'est pas encore résolu, cf. ngOnInit
+    this.congesLoading = true;
+    this.congesMessage = '';
+    let refuse = false;
+    let erreur = false;
+
+    /** Un 403 est un cas nominal ici ; toute autre erreur reste une anomalie. */
+    const noter = (err: any): void => {
+      if (err?.status === 403) refuse = true;
+      else erreur = true;
+    };
+
+    forkJoin({
+      solde: this.congeService.getSoldeEmploye(this.employeId).pipe(
+        catchError(err => { noter(err); return of(null as SoldeConge | null); }),
+      ),
+      demandes: this.congeService.demandesParEmploye(this.employeId).pipe(
+        catchError(err => { noter(err); return of([] as DemandeConge[]); }),
+      ),
+      declarations: this.absenceService
+        .lister(0, MAX_DECLARATIONS, { employeId: this.employeId })
+        .pipe(catchError(err => {
+          noter(err);
+          return of({ content: [], totalElements: 0 } as PageResponse<Absence>);
+        })),
+    })
+      .pipe(
+        finalize(() => {
+          this.congesLoading = false;
+          this.congesCharges = true;
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(({ solde, demandes, declarations }) => {
+        this.soldeConge = solde;
+        this.demandesConge = demandes;
+        this.declarations = declarations.content;
+
+        // Message dans l'onglet, jamais de toast : la fiche reste utilisable et
+        // l'utilisateur n'a rien fait de mal en ouvrant l'onglet.
+        if (refuse) {
+          this.congesMessage = "Vous n'êtes pas autorisé à consulter les congés de cet employé.";
+        } else if (erreur) {
+          this.congesMessage = 'Les congés de cet employé n’ont pas pu être chargés.';
+        }
+      });
+  }
+
+  /**
+   * Libellé d'un type de déclaration.
+   *
+   * ⚠ Duplique la map inline de `liste-absences` : il n'existe pas de constante partagée
+   * pour `TypeAbsence`, et le modèle front est de toute façon désynchronisé de l'enum
+   * serveur (bug documenté dans CLAUDE.md, à traiter dans un lot dédié). On ne centralise
+   * donc pas ici ce qui devra être refait à ce moment-là.
+   */
+  libelleTypeAbsence(absence: Absence): string {
+    const libelles: Record<string, string> = {
+      CONGE_PAYE: 'Congé payé',
+      ANNUEL: 'Annuel',
+      SANS_SOLDE: 'Sans solde',
+      AUTRE: 'Autre',
+    };
+    const base = libelles[absence.type] ?? absence.type;
+    return absence.type === 'AUTRE' && absence.typeAutrePrecision
+      ? `${base} (${absence.typeAutrePrecision})`
+      : base;
+  }
+
+  /** Ouvre le détail d'une demande, avec le retour balisé vers cet onglet. */
+  ouvrirDemandeConge(demande: DemandeConge): void {
+    if (!demande.id) return;
+    this.router.navigate(['/admin/rh/temps-et-presences/conges/demandes', demande.id], {
+      queryParams: {
+        returnUrl: `/admin/rh/gestion-du-personnel/dossier-employe/fiche/${this.employeId}`,
+        tab: 'conges',
+      },
+    });
   }
 
   // ─── Navigation ───────────────────────────────────────────────────────────

@@ -285,6 +285,8 @@
                 <option value="">— Sélectionner —</option>
                 <option value="CELIBATAIRE">Célibataire</option>
                 <option value="MARIE">Marié(e)</option>
+                <option value="DIVORCE">Divorcé(e)</option>
+                <option value="VEUF">Veuf(ve)</option>
               </select>
               <p *ngIf="identiteGroup.get('situationMatrimoniale')?.invalid && identiteGroup.get('situationMatrimoniale')?.touched" class="text-xs text-red-500 mt-1">
                 La situation matrimoniale est obligatoire.
