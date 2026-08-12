@@ -510,7 +510,7 @@ contrôle qualité terrain → matériel & maintenance → phytosanitaire
   L'affectation est **conservée** (statut `ANNULEE`), contrairement à la suppression
   qui reste disponible séparément. La fiche affiche un panneau « Annulation »
   (motif, date, auteur) calqué sur le panneau « Remplacement ».
-  ⚠️ **Endpoint backend à implémenter** : `POST /api/terrain/planning/affectations/{id}/annuler`
+  ✅ **Endpoint backend livré** (sur `main`) : `POST /api/terrain/planning/affectations/{id}/annuler`
   body `{ motif: string }` → passe `statut` à `ANNULEE`, persiste `motifAnnulation`,
   `dateAnnulation` et `annuleParNom` (déduit du JWT), renvoie l'affectation mise à jour,
   et refuse en **409/422** si le statut courant n'est ni `PLANIFIEE` ni `EN_COURS`.
@@ -865,21 +865,28 @@ par l'**auteur** du bon :
   Tant que `creeParEmail` est absent de la réponse, le front est **permissif** sur la
   propriété (repli transitoire commenté `TODO` dans le service) — seules les restrictions par
   rôle s'appliquent.
-- ⚠ **Contrôles serveur obligatoires** (le front n'est qu'une commodité UX) :
-  `PUT`/`DELETE /stock/bons-sortie/{id}` → **403** si l'appelant n'est ni le créateur, ni
-  `SUPERADMIN`, ni `CONTROLEUR_STOCK` ; `POST /{id}/soumettre` → **403** hors
-  `SUPERADMIN`/`CONTROLEUR_STOCK` ; `POST /{id}/valider` et `POST /{id}/refuser` → **403**
-  hors `SUPERADMIN`. Le front traite le 403 par un toast « Action non autorisée pour votre
-  profil. ».
-- Les **bons d'entrée** ne sont pas concernés par ce lot (règles inchangées).
+- ✅ **Contrôles serveur** (le front n'est qu'une commodité UX) — **livrés** sur la branche
+  `feature/stock-bons-autorisation` : `PUT`/`DELETE /stock/bons-sortie/{id}` et
+  `POST /{id}/soumettre` → **403** si l'appelant n'est ni le créateur, ni `SUPERADMIN`, ni
+  `CONTROLEUR_STOCK` (soumettre est ouvert au créateur, sinon un bon repris après refus ne
+  pourrait jamais être renvoyé) ; `POST /{id}/valider` et `POST /{id}/refuser` → **403** hors
+  `SUPERADMIN`. Le front traite le 403 par un toast « Action non autorisée pour votre profil. ».
+  ⚠ Jusqu'à ce lot, **aucune de ces règles n'était appliquée** : `SecurityConfig` se limite à
+  `.authenticated()` et le backend n'a aucun `@PreAuthorize`, si bien que tout compte connecté
+  pouvait valider ou supprimer le bon d'autrui en appelant l'API directement. Au déploiement, un
+  compte qui validait sans être `SUPERADMIN` recevra désormais un 403 — vérifier les rôles réels.
+  ⚠ La **lecture n'est pas restreinte** (`GET /{id}` ni la liste) : la restriction serait
+  cosmétique tant que la liste renvoie tous les bons.
+- Les **bons d'entrée** ne sont pas concernés (pas de `creeParEmail`, donc pas de notion de
+  créateur côté serveur) : leurs `valider` / `refuser` restent ouverts à tout compte authentifié.
 
 **Reprise après refus (bons de sortie)** — `REFUSE` n'est plus un cul-de-sac : un bon refusé
 **revient chez son créateur**, qui le corrige et le renvoie dans le circuit, **l'historique du cycle
 refusé étant conservé**. Boucle : `REFUSE → (reprise) → BROUILLON → SOUMIS → …`
 
-- Action explicite **« Reprendre »** (`POST /stock/bons-sortie/{id}/reprendre`, ⚠ **endpoint backend
-  à implémenter** : **409** hors statut `REFUSE`, **403** hors créateur / `CONTROLEUR_STOCK` /
-  `SUPERADMIN`) plutôt qu'un bon refusé rendu modifiable en place — sinon la colonne *Refusé* du
+- Action explicite **« Reprendre »** (`POST /stock/bons-sortie/{id}/reprendre`, ✅ **livré côté
+  serveur** sur la branche `feature/stock-reprise-et-etat-produit` : **409** hors statut `REFUSE`,
+  **403** hors créateur / `CONTROLEUR_STOCK` / `SUPERADMIN`) plutôt qu'un bon refusé rendu modifiable en place — sinon la colonne *Refusé* du
   Kanban et les compteurs mélangeraient refus définitifs et corrections en cours.
 - ⚠ **Le serveur AJOUTE l'entrée `{ action: 'REPRISE' }` à `historique[]`, il ne le réinitialise
   jamais** : c'est toute la demande. `'REPRISE'` est une nouvelle valeur d'`ActionWorkflow`, avec son
@@ -924,7 +931,9 @@ qu'il possède déjà avant de réceptionner. ⚠ Un stock actuel à 0 sur une e
   entrée, le site détenteur est bien la **destination** (c'est là qu'arrive la marchandise), à ne
   pas confondre avec le `destSiteId` du bon de sortie, qui est le destinataire et ne détient rien.
 - **`StockV2EtatStockService` retrouve une méthode de lecture**, `getEtatProduit(produitId, siteId?)`
-  → `GET /stock/etat-stock/produit/{id}?siteId=` (⚠ **endpoint backend à implémenter**), commune aux
+  → `GET /stock/etat-stock/produit/{id}?siteId=` (✅ **livré côté serveur** sur la branche
+  `feature/stock-reprise-et-etat-produit` ; le seuil du site prime sur celui du produit, et un
+  produit jamais mouvementé renvoie 0 plutôt qu'une erreur), commune aux
   deux écrans. Les erreurs sont **absorbées en `null`** (`catchError`) : un produit jamais
   mouvementé sur ce site n'est pas une anomalie, l'éditeur affiche alors « — » — jamais `0`, qui se
   lirait comme une rupture.
