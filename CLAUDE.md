@@ -1021,14 +1021,21 @@ supprimer un bon **quel que soit son statut**, l'effet stock étant **contre-pas
   ligne sur le site de l'inventaire (l'inverse exact de `cloturer`), la **source de vérité étant le
   document**, pas les mouvements. Puis suppression des mouvements. Sur un document qui n'a rien
   mouvementé, c'est un **no-op** — pas de 409, l'appelant est déjà super-admin.
-- ⚠ **Trois limites assumées, documentées dans le code** : (1) la **répartition site / bucket
-  consolidé** d'un débit de sortie n'est pas persistée (`RepartitionDebit` ne vit que le temps de
-  `MouvementBonGenerator.genererPourSortie`) — le recrédit va **intégralement sur le site source**, le
-  total consolidé restant exact ; (2) le **CUMP n'est pas restauré** sur suppression d'un bon d'entrée
+- ⚠ **Le contre-passement des bons vise l'entrepôt unique** (`StockBalanceService.ENTREPOT`, c.-à-d.
+  `siteId = null`), **pas le site du mouvement** : une entrée y crédite tout et une sortie y puise
+  (`debiterAvecRepli`), les soldes par site n'étant plus alimentés depuis la bascule « entrepôt
+  unique ». ⚠ La première version visait le site du mouvement — écrite avant cette bascule et mergée
+  juste avant elle sans rejouer la suite de tests, elle créait **du stock fantôme sur un site en
+  laissant l'entrepôt faux**. Corrigé par `fix(stock): le contre-passement vise l'entrepôt unique`
+  (branche `feature/stock-contre-passement-entrepot`) ; `verifierRetraitPossible` cumule désormais
+  **par produit** et non par couple (produit, site). ⚠ **L'inventaire n'est pas concerné** :
+  `InventaireService.cloturer` applique toujours ses écarts sur `inv.getSiteId()` — seuls les bons
+  sont passés à l'entrepôt — et le contre-passement lit le même champ, donc la symétrie tient.
+- ⚠ **Deux limites assumées, documentées dans le code** : (1) le **CUMP n'est pas restauré** sur suppression d'un bon d'entrée
   (`ValorisationSupport.compenserEntree` exige le `RecalcResult` d'origine) — le dialog l'annonce via
-  `avertissementCump` ; (3) supprimer une entrée **déjà consommée** rendrait le solde négatif : c'est
-  refusé en **422** avec le disponible et la quantité à retirer, au super-admin d'ajuster le stock
-  d'abord — un stock négatif contaminerait les statuts de rupture et la valorisation.
+  `avertissementCump` ; (2) supprimer une entrée **déjà consommée** rendrait le solde de l'entrepôt
+  négatif : c'est refusé en **422** avec le disponible et la quantité à retirer, au super-admin
+  d'ajuster le stock d'abord — un stock négatif contaminerait les statuts de rupture et la valorisation.
 - **Hors périmètre, volontairement** : le Kanban `workflow-validation/tableau-workflow` — c'est une file
   de validation, pas un écran de gestion documentaire.
 - Tests : `SuppressionDefinitiveServiceIT` (8 IT — contre-passement des 3 documents, repli par
