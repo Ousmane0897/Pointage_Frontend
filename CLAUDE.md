@@ -639,7 +639,20 @@ ajouter `modules.stock` au claim JWT pour activer le menu en production.
 - **Code produit : saisi manuellement, unique** (champ `code`, contrôle d'unicité serveur). Aucune génération auto imposée par le front.
 - **Types de produit (5)** : `PRODUIT_FINI | MATIERE_PREMIERE | CONSOMMABLE | EPI | MATERIEL`.
 - **Unités de mesure (10)** : `KG | G | L | ML | PIECE | M2 | M3 | METRE | CARTON | LOT`.
-- **Mouvements** (⚠️ plus aucun écran 7.3 ne les crée ni ne les liste — ils sont **générés serveur à la validation des bons de 7.4** et consultés dans 7.6 `valorisation-financiere/cout-mouvements` ; le modèle et les règles ci-dessous restent le contrat) : types `ENTREE | SORTIE | TRANSFERT` ; motifs `ACHAT | PRODUCTION | CONSOMMATION | VENTE | TRANSFERT | AJUSTEMENT | RETOUR | PERTE`. Combinaisons valides — ENTREE : ACHAT/PRODUCTION/RETOUR/AJUSTEMENT ; SORTIE : CONSOMMATION/VENTE/PERTE/AJUSTEMENT ; TRANSFERT : TRANSFERT seul. Multi-site via `siteSourceId` (requis SORTIE/TRANSFERT) + `siteDestinationId` (requis ENTREE/TRANSFERT).
+- **Mouvements** (⚠️ plus aucun écran 7.3 ne les crée ni ne les liste — ils sont **générés serveur à la validation des bons de 7.4** et consultés dans 7.6 `valorisation-financiere/cout-mouvements` ; le modèle et les règles ci-dessous restent le contrat) : types `ENTREE | SORTIE | TRANSFERT` ; motifs `ACHAT | PRODUCTION | CONSOMMATION | VENTE | TRANSFERT | AJUSTEMENT | RETOUR | PERTE`. Multi-site via `siteSourceId` (requis SORTIE/TRANSFERT) + `siteDestinationId` (requis ENTREE/TRANSFERT).
+  - ⚠ **L'écriture directe n'existe plus côté serveur** : `POST /stock/mouvements` a été **retiré**
+    (il appliquait les deltas de stock sans bon, sans validation ni historique de workflow — un
+    contournement du circuit entier, ouvert à tout compte authentifié). `MouvementStockService` ne
+    dépend plus de `StockBalanceService` : la garantie est **structurelle**, pas seulement une route
+    absente, et un test de contrôleur affirme le **405** pour empêcher son rétablissement. Seuls les
+    `GET /stock/mouvements` (liste, détail) subsistent, en lecture seule.
+  - Un mouvement ne naît donc plus que de **trois chemins tracés** : la validation d'un bon
+    (`MouvementBonGenerator`), la clôture d'un inventaire (écarts), et le stock initial à l'import de
+    produits. Une **correction** de stock passe par un inventaire (écart justifié puis clôture) ou par
+    la **suppression définitive** du document erroné, qui contre-passe son effet.
+  - Les **combinaisons type/motif** (ENTREE : ACHAT/PRODUCTION/RETOUR/AJUSTEMENT ; SORTIE :
+    CONSOMMATION/VENTE/PERTE/AJUSTEMENT) ne sont plus validées : elles ne contrôlaient qu'une saisie
+    utilisateur qui n'existe plus, le code générateur choisissant lui-même des couples valides.
 - **Catégories : arborescence par `parentId`** (`null` = racine) + `niveau` (0,1,2…). Pas de chemin matérialisé, lazy-load des enfants. Dénormalisés `nbEnfants` / `nbProduits` attendus pour l'affichage de l'arbre.
 - **Statut de stock (calculé serveur)** : `RUPTURE` (qté ≤ 0), `CRITIQUE` (0 < qté ≤ `seuilAlerte`), `OK` (qté > seuil).
 - **Inventaire** : workflow strict `BROUILLON → COMPTAGE → VALIDATION → CLOTURE` ; périmètre `TOUS | CATEGORIE | SELECTION` ; écart = `qtePhysique − qteTheorique` (calculé) ; `justification` requise si `|écart| > seuilEcartJustification` (**défaut 5**). La clôture applique les écarts au stock réel.
