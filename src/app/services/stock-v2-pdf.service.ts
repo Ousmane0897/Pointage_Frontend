@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { RowInput } from 'jspdf-autotable';
 
 import { Inventaire } from '../models/stock-v2-inventaire.model';
 import { BonCommandePrevisionnel } from '../models/stock-v2-approvisionnement.model';
-import { SyntheseMensuelle } from '../models/stock-v2-synthese.model';
+import { SyntheseMultiMois, FluxSynthese } from '../models/stock-v2-synthese.model';
 import { RapportTableauBordStock, FiltreTableauBordStock } from '../models/stock-v2-tableau-bord.model';
 import { BonEntree } from '../models/stock-v2-bon-entree.model';
 import { BonSortie } from '../models/stock-v2-bon-sortie.model';
@@ -30,6 +30,9 @@ import {
   LIBELLES_SENS_ECART_DOTATION,
   LIBELLES_NATURE_DON,
   LIBELLES_STATUT_CHANTIER,
+  LIBELLES_FLUX_SYNTHESE,
+  formaterMois,
+  formaterMoisCourt,
 } from '../constants/stock.constants';
 import { Destinataire } from '../models/stock-v2-bon-sortie.model';
 
@@ -128,7 +131,17 @@ export class StockV2PdfService {
 
   // ─── Synthèse mensuelle ───────────────────────────────────────────────────
 
-  genererSynthese(synthese: SyntheseMensuelle): void {
+  /**
+   * Synthèse comparée sur N mois : en-tête à deux niveaux (un groupe de colonnes
+   * par mois), colonnes filtrées par le flux retenu à l'écran.
+   */
+  genererSynthese(synthese: SyntheseMultiMois, flux: FluxSynthese = 'TOUT'): void {
+    const avecEntrees = flux !== 'SORTIE';
+    const avecSorties = flux !== 'ENTREE';
+    const avecStockInitial = flux === 'TOUT';
+    const nbColMois = (avecStockInitial ? 1 : 0) + (avecEntrees ? 1 : 0) + (avecSorties ? 1 : 0);
+    const dernierMois = formaterMoisCourt(synthese.mois[synthese.mois.length - 1] ?? '');
+
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
     const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -138,37 +151,84 @@ export class StockV2PdfService {
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Mois : ${synthese.mois}`, 14, 26);
-    doc.text(`Site : ${synthese.siteNom ?? 'Tous sites'}`, 90, 26);
+    doc.text(`Mois : ${synthese.mois.map(formaterMois).join(', ')}`, 14, 26);
+    doc.text(`Site : ${synthese.siteNom ?? 'Tous sites'}`, 14, 31);
+    doc.text(`Flux : ${LIBELLES_FLUX_SYNTHESE[flux]}`, 120, 31);
+
+    const centre = { halign: 'center' as const };
+    const ligne1: RowInput = [
+      { content: 'Code', rowSpan: 2 },
+      { content: 'Produit', rowSpan: 2 },
+      { content: 'Unité', rowSpan: 2 },
+      ...synthese.mois.map(m => ({ content: formaterMoisCourt(m), colSpan: nbColMois, styles: centre })),
+      { content: 'Total', colSpan: nbColMois, styles: centre },
+      { content: `Stock final ${dernierMois}`, rowSpan: 2 },
+      { content: `Valeur ${dernierMois} (FCFA)`, rowSpan: 2 },
+    ];
+    const sousColonnes = () => [
+      ...(avecStockInitial ? ['Stock init.'] : []),
+      ...(avecEntrees ? ['Entrées'] : []),
+      ...(avecSorties ? ['Sorties'] : []),
+    ];
+    const ligne2: RowInput = [
+      ...synthese.mois.flatMap(() => sousColonnes()),
+      ...sousColonnes(),
+    ];
+
+    const body = synthese.lignes.map(l => [
+      l.produitCode,
+      l.produitLibelle,
+      LIBELLES_UNITE[l.unite],
+      ...l.parMois.flatMap(c => [
+        ...(avecStockInitial ? [this.fmtNombre(c.stockInitial)] : []),
+        ...(avecEntrees ? [this.fmtNombre(c.entrees)] : []),
+        ...(avecSorties ? [this.fmtNombre(c.sorties)] : []),
+      ]),
+      ...(avecStockInitial ? ['—'] : []),
+      ...(avecEntrees ? [this.fmtNombre(l.totalEntrees)] : []),
+      ...(avecSorties ? [this.fmtNombre(l.totalSorties)] : []),
+      this.fmtNombre(l.stockFinal),
+      this.fmtNombre(l.valeurFinale),
+    ]);
+
+    const foot: RowInput = [
+      { content: 'Totaux', colSpan: 3 },
+      ...synthese.totauxParMois.flatMap(t => [
+        ...(avecStockInitial ? ['—'] : []),
+        ...(avecEntrees ? [this.fmtNombre(t.entrees)] : []),
+        ...(avecSorties ? [this.fmtNombre(t.sorties)] : []),
+      ]),
+      ...(avecStockInitial ? ['—'] : []),
+      ...(avecEntrees ? [this.fmtNombre(synthese.totalEntrees)] : []),
+      ...(avecSorties ? [this.fmtNombre(synthese.totalSorties)] : []),
+      '',
+      this.fmtNombre(synthese.valeurStockFinal),
+    ];
+
+    // Toutes les colonnes chiffrées (après Code / Produit / Unité) sont alignées à droite.
+    const nbColonnes = 3 + nbColMois * (synthese.mois.length + 1) + 2;
+    const columnStyles: Record<number, { halign: 'right' }> = {};
+    for (let i = 3; i < nbColonnes; i++) columnStyles[i] = { halign: 'right' };
 
     autoTable(doc, {
-      startY: 32,
-      head: [['Code', 'Produit', 'Unité', 'Stock initial', 'Entrées', 'Sorties', 'Stock final', 'Valeur (FCFA)']],
-      body: synthese.lignes.map(l => [
-        l.produitCode,
-        l.produitLibelle,
-        LIBELLES_UNITE[l.unite],
-        this.fmtNombre(l.stockInitial),
-        this.fmtNombre(l.entrees),
-        this.fmtNombre(l.sorties),
-        this.fmtNombre(l.stockFinal),
-        this.fmtNombre(l.valeurFinale),
-      ]),
-      foot: [[
-        '', '', 'Totaux',
-        '', this.fmtNombre(synthese.totalEntrees), this.fmtNombre(synthese.totalSorties),
-        '', `${this.fmtNombre(synthese.valeurStockFinal)}`,
-      ]],
-      headStyles: { fillColor: BLEU, textColor: 255 },
+      startY: 37,
+      head: [ligne1, ligne2],
+      body,
+      foot: [foot],
+      headStyles: { fillColor: BLEU, textColor: 255, halign: 'center' },
       footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
-      styles: { fontSize: 8 },
-      columnStyles: {
-        3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' },
-        6: { halign: 'right' }, 7: { halign: 'right' },
-      },
+      styles: { fontSize: 7 },
+      columnStyles,
     });
 
-    doc.save(`synthese-stock-${synthese.mois}.pdf`);
+    doc.save(`synthese-stock-${this.suffixeMois(synthese.mois)}.pdf`);
+  }
+
+  /** `2026-01` si un seul mois, `2026-01_2026-07` sinon. */
+  private suffixeMois(mois: string[]): string {
+    if (mois.length === 0) return this.dateFichier();
+    if (mois.length === 1) return mois[0];
+    return `${mois[0]}_${mois[mois.length - 1]}`;
   }
 
   // ─── Tableau de bord ──────────────────────────────────────────────────────
@@ -388,6 +448,36 @@ export class StockV2PdfService {
       styles: { fontSize: 9 },
       columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
     });
+
+    // Détail produit par destinataire — un tableau par destinataire, omis
+    // entièrement si le serveur ne renvoie pas `lignes[]`.
+    const avecDetail = consommations.filter(c => (c.lignes?.length ?? 0) > 0);
+    if (avecDetail.length > 0) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DÉTAIL PAR PRODUIT', 14, this.finalY(doc) + 12);
+
+      for (const c of avecDetail) {
+        const lignes = [...(c.lignes ?? [])].sort((a, b) => (b.montant ?? 0) - (a.montant ?? 0));
+        const totalQte = lignes.reduce((s, l) => s + (l.quantite ?? 0), 0);
+        const totalMontant = lignes.reduce((s, l) => s + (l.montant ?? 0), 0);
+
+        autoTable(doc, {
+          startY: this.finalY(doc) + 8,
+          head: [[`${c.destinataireNom} — Produit`, 'Quantité', 'Montant (FCFA)']],
+          body: lignes.map(l => [
+            l.produitLibelle ?? l.produitId,
+            this.fmtQte(l.quantite, l.unite),
+            this.fmtNombre(l.montant),
+          ]),
+          foot: [['Total', this.fmtNombre(totalQte), this.fmtNombre(totalMontant)]],
+          headStyles: { fillColor: BLEU, textColor: 255 },
+          footStyles: { fillColor: [238, 242, 255], textColor: 30, fontStyle: 'bold' },
+          styles: { fontSize: 8 },
+          columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } },
+        });
+      }
+    }
 
     doc.save(`consommation-destinataires-${this.dateFichier()}.pdf`);
   }

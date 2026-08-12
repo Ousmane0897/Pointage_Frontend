@@ -15,6 +15,12 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2InventaireService } from '../../../../../services/stock-v2-inventaire.service';
+import { LoginService } from '../../../../../services/login.service';
+import { ROLE_SUPERADMIN } from '../../../../../constants/roles.constants';
+import {
+  SuppressionDefinitiveDialogComponent,
+  SuppressionDefinitiveDialogResult,
+} from '../../../shared/dialogs/suppression-definitive-dialog.component';
 import {
   Inventaire,
   FiltreInventaire,
@@ -53,6 +59,12 @@ export class ListeInventairesComponent implements OnInit, OnDestroy {
   readonly COULEURS_STATUT_INVENTAIRE = COULEURS_STATUT_INVENTAIRE;
   readonly STATUTS = ORDRE_STATUTS_INVENTAIRE;
 
+  /**
+   * Seul le super-administrateur supprime un inventaire déjà engagé. Mémorisé (et non exposé en
+   * getter) : le composant est en OnPush, un getter relirait le JWT à chaque cycle de rendu.
+   */
+  readonly estSuperAdmin: boolean;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -60,7 +72,10 @@ export class ListeInventairesComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-  ) {}
+    loginService: LoginService,
+  ) {
+    this.estSuperAdmin = loginService.getUserRole() === ROLE_SUPERADMIN;
+  }
 
   ngOnInit(): void {
     this.qControl.valueChanges
@@ -113,6 +128,35 @@ export class ListeInventairesComponent implements OnInit, OnDestroy {
         error: () => this.toastr.error('Suppression impossible.'),
       });
     });
+  }
+
+  /**
+   * Suppression d'un inventaire déjà engagé (typiquement clôturé) — SUPERADMIN seul.
+   * Le serveur contre-passe les écarts appliqués au stock ; le motif est journalisé.
+   */
+  supprimerDefinitivement(inv: Inventaire): void {
+    if (!inv.id || !this.estSuperAdmin) return;
+    this.dialog.open<SuppressionDefinitiveDialogComponent, unknown, SuppressionDefinitiveDialogResult | null>(
+      SuppressionDefinitiveDialogComponent, {
+        width: '480px',
+        data: {
+          titre: `Supprimer l'inventaire « ${inv.libelle} »`,
+          reference: inv.reference,
+          effetStock: inv.statut === 'CLOTURE'
+            ? 'Les écarts appliqués à la clôture sont contre-passés : le stock revient à sa valeur d’avant inventaire.'
+            : 'Cet inventaire n’a pas encore touché le stock : aucune quantité ne sera modifiée.',
+        },
+      }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+        if (!res) return;
+        this.service.supprimerDefinitivement(inv.id!, res.motif)
+          .pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => { this.toastr.success('Inventaire supprimé et stock rétabli.'); this.charger(); },
+            error: err => {
+              if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.');
+              else this.toastr.error(err?.error?.message ?? 'Suppression impossible.');
+            },
+          });
+      });
   }
 
   trackById(_: number, i: Inventaire): string {

@@ -2,24 +2,41 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { LucideAngularModule } from 'lucide-angular';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of, catchError, finalize, takeUntil } from 'rxjs';
+import { Subject, of, catchError, filter, finalize, takeUntil } from 'rxjs';
 
 import { CongeService } from '../../../../services/conge.service';
+import { CongePermissionsService } from '../../../../services/conge-permissions.service';
+import { WebsocketService } from '../../../../services/websocket.service';
+import { ConfirmDialogComponent } from '../../../confirm-dialog/confirm-dialog.component';
 import {
   DemandeConge,
   FiltreConge,
   SoldeConge,
-  StatutDemande,
-  TypeConge,
 } from '../../../../models/conge.model';
+import {
+  LIBELLES_NIVEAU_COURT,
+  LIBELLES_STATUT_DEMANDE,
+  LIBELLES_TYPE_CONGE,
+  NIVEAU_PAR_STATUT,
+  ORDRE_STATUTS_DEMANDE,
+  ORDRE_TYPES_CONGE,
+} from '../../../../constants/conges.constants';
 import { PageResponse } from '../../../../models/pageResponse.model';
+import { BadgeStatutCongeComponent } from './shared/badge-statut-conge.component';
 
 @Component({
   selector: 'app-calendrier-conges',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    LucideAngularModule,
+    BadgeStatutCongeComponent,
+  ],
   templateUrl: './calendrier-conges.component.html',
   styleUrl: './calendrier-conges.component.scss',
 })
@@ -45,17 +62,37 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
   loadingSoldes = false;
   loadingDemandes = false;
 
+  readonly ORDRE_STATUTS_DEMANDE = ORDRE_STATUTS_DEMANDE;
+  readonly LIBELLES_STATUT_DEMANDE = LIBELLES_STATUT_DEMANDE;
+  readonly ORDRE_TYPES_CONGE = ORDRE_TYPES_CONGE;
+  readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
+
   private destroy$ = new Subject<void>();
 
   constructor(
     private congeService: CongeService,
+    public permissions: CongePermissionsService,
+    private websocket: WebsocketService,
     private router: Router,
     private toastr: ToastrService,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
+    this.permissions.charger().pipe(takeUntil(this.destroy$)).subscribe();
     this.loadSoldes();
     this.loadDemandes();
+
+    // Une décision prise ailleurs modifie le statut d'une ligne affichée.
+    this.websocket.onCongesValidations()
+      .pipe(
+        filter(n => this.demandes.some(d => d.id === n.demandeId)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => {
+        this.loadDemandes();
+        this.loadSoldes();
+      });
   }
 
   loadSoldes(): void {
@@ -106,52 +143,38 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin/rh/temps-et-presences/conges/demande']);
   }
 
-  validation(): void {
-    this.router.navigate(['/admin/rh/temps-et-presences/conges/validation']);
+  detail(d: DemandeConge): void {
+    if (!d.id) return;
+    this.router.navigate(['/admin/rh/temps-et-presences/conges/demandes', d.id]);
   }
 
   annulerDemande(d: DemandeConge): void {
-    if (!d.id) return;
-    this.congeService.annulerDemande(d.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.toastr.success('Demande annulée.', 'Succès');
-        this.loadDemandes();
-        this.loadSoldes();
+    if (!d.id || !this.permissions.peutAnnuler(d)) return;
+    this.dialog.open(ConfirmDialogComponent, {
+      width: '420px',
+      data: {
+        message: `Annuler la demande de ${d.prenom} ${d.nom} (${d.nombreJours ?? '?'} j) ?`,
+        confirmLabel: 'Annuler la demande',
+        confirmColor: 'warn',
       },
-      error: err => this.handleError(err),
+    }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (!ok) return;
+      this.congeService.annulerDemande(d.id!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastr.success('Demande annulée.', 'Succès');
+          this.loadDemandes();
+          this.loadSoldes();
+        },
+        error: err => this.handleError(err),
+      });
     });
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
-  getStatutLabel(s: StatutDemande): string {
-    const map: Record<StatutDemande, string> = {
-      EN_ATTENTE: 'En attente',
-      APPROUVE: 'Approuvée',
-      REFUSE: 'Refusée',
-      ANNULE: 'Annulée',
-    };
-    return map[s];
-  }
-
-  getStatutClasses(s: StatutDemande): string {
-    const map: Record<StatutDemande, string> = {
-      EN_ATTENTE: 'bg-amber-100 text-amber-700 border border-amber-200',
-      APPROUVE: 'bg-green-100 text-green-700 border border-green-200',
-      REFUSE: 'bg-red-100 text-red-700 border border-red-200',
-      ANNULE: 'bg-gray-100 text-gray-500 border border-gray-200',
-    };
-    return map[s];
-  }
-
-  getTypeLabel(t: TypeConge): string {
-    const map: Record<TypeConge, string> = {
-      ANNUEL: 'Annuel',
-      MATERNITE: 'Maternité',
-      PATERNITE: 'Paternité',
-      SANS_SOLDE: 'Sans solde',
-      EXCEPTIONNEL: 'Exceptionnel',
-    };
-    return map[t];
+  /** Niveau attendu pour la demande, ou `—` si elle est sortie du circuit. */
+  getNiveauLabel(d: DemandeConge): string {
+    const n = d.niveauCourant ?? NIVEAU_PAR_STATUT[d.statut];
+    return n ? LIBELLES_NIVEAU_COURT[n] : '—';
   }
 
   // ─── Pagination ──────────────────────────────────────────────────────────
@@ -164,6 +187,8 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
   private handleError(err: any): void {
     console.error(err);
     if (err?.status === 0) this.toastr.error('Serveur injoignable.', 'Erreur réseau');
+    else if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.', 'Accès refusé');
+    else if (err?.status === 409) this.toastr.warning('Cette demande a déjà été traitée.', 'Conflit');
     else this.toastr.error('Une erreur est survenue.', 'Erreur');
   }
 

@@ -90,6 +90,7 @@ export class FicheAffectationComponent implements OnInit, OnDestroy {
   /** Durée en heures arrondie à la première décimale. */
   duree(): string {
     if (!this.affectation) return '';
+    if (!this.affectation.dateFin) return 'Indéterminée';
     const ms =
       new Date(this.affectation.dateFin).getTime() -
       new Date(this.affectation.dateDebut).getTime();
@@ -152,7 +153,7 @@ export class FicheAffectationComponent implements OnInit, OnDestroy {
         hour: '2-digit',
         minute: '2-digit',
       });
-    return `${fmt(a.dateDebut)} → ${fmt(a.dateFin)}`;
+    return `${fmt(a.dateDebut)} → ${a.dateFin ? fmt(a.dateFin) : 'indéterminée'}`;
   }
 
 }

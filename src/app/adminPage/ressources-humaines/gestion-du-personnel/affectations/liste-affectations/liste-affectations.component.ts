@@ -273,7 +273,7 @@ export class ListeAffectationsComponent implements OnInit, OnDestroy {
         hour: '2-digit',
         minute: '2-digit',
       });
-    return `${fmt(a.dateDebut)} → ${fmt(a.dateFin)}`;
+    return `${fmt(a.dateDebut)} → ${a.dateFin ? fmt(a.dateFin) : 'indéterminée'}`;
   }
 
   trackById(_: number, a: AffectationAgent): string {

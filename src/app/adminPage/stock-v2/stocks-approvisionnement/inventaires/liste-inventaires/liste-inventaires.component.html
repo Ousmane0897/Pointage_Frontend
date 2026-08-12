@@ -101,6 +101,13 @@
                           class="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors">
                           <lucide-icon name="Trash2" [size]="16"></lucide-icon>
                         </button>
+                      } @else if (estSuperAdmin) {
+                        <!-- Réservé au super-admin : masqué (et non grisé) pour les autres profils. -->
+                        <button type="button" (click)="supprimerDefinitivement(inv)"
+                          title="Supprimer définitivement (stock rétabli)"
+                          class="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+                          <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+                        </button>
                       }
                     </div>
                   </td>

@@ -23,6 +23,16 @@
       <div class="h-40 rounded-xl bg-gray-100 animate-pulse"></div>
     </div>
   } @else {
+    @if (motifRefus) {
+      <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <lucide-icon name="Undo2" [size]="18" class="text-orange-500 mt-0.5"></lucide-icon>
+        <div>
+          <p class="text-sm font-semibold text-orange-700">Ce bon a été refusé</p>
+          <p class="text-sm text-orange-600">{{ motifRefus }}</p>
+          <p class="text-xs text-orange-500 mt-1">Corrigez-le, puis soumettez-le à nouveau depuis sa fiche.</p>
+        </div>
+      </div>
+    }
     <form [formGroup]="form" (ngSubmit)="enregistrer()" class="space-y-6">
 
       <!-- Infos générales -->
@@ -131,7 +141,8 @@
       <!-- Lignes produits -->
       <div class="bg-white rounded-xl border border-gray-100 p-5">
         <h2 class="text-sm font-semibold text-gray-700 mb-4">Produits du bon</h2>
-        <app-editeur-lignes-bon [lignes]="lignes"></app-editeur-lignes-bon>
+        <app-editeur-lignes-bon [lignes]="lignes" modeStock="RESTE" [siteId]="siteSourceId"
+          [afficherSorties3Mois]="true"></app-editeur-lignes-bon>
       </div>
 
       <!-- Demandeur + commentaire -->

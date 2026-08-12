@@ -1,19 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import {
-  EtatStock,
-  FiltreEtatStock,
-  SeuilPayload,
-} from '../models/stock-v2-etat-stock.model';
-import { PageResponse } from '../models/pageResponse.model';
+import { EtatStock, SeuilPayload } from '../models/stock-v2-etat-stock.model';
 
 /**
- * Service de l'État du stock temps réel — Module Stock v2 / 7.3.
+ * État de stock — Module Stock v2 / 7.3.
  *
- * Vue agrégée des quantités disponibles par produit / site, avec statut
- * d'alerte calculé côté serveur et valorisation FCFA.
+ * L'écran « État du stock » a été supprimé : les quantités globales sont lues
+ * depuis le catalogue produits (`quantiteTotale`) et les alertes depuis le
+ * tableau de bord. Subsistent ici l'édition du seuil (table du catalogue) et la
+ * lecture ciblée d'un couple produit/site, utilisée par le bon de sortie.
  */
 @Injectable({ providedIn: 'root' })
 export class StockV2EtatStockService {
@@ -22,23 +20,21 @@ export class StockV2EtatStockService {
 
   constructor(private http: HttpClient) {}
 
-  lister(
-    page = 0,
-    size = 20,
-    filtres?: FiltreEtatStock,
-  ): Observable<PageResponse<EtatStock>> {
-    let params = new HttpParams().set('page', page).set('size', size);
-    if (filtres?.q) params = params.set('q', filtres.q);
-    if (filtres?.categorieId) params = params.set('categorieId', filtres.categorieId);
-    if (filtres?.typeProduit) params = params.set('typeProduit', filtres.typeProduit);
-    if (filtres?.siteId) params = params.set('siteId', filtres.siteId);
-    if (filtres?.statut) params = params.set('statut', filtres.statut);
-    if (filtres?.parSite !== undefined) params = params.set('parSite', filtres.parSite);
-    return this.http.get<PageResponse<EtatStock>>(this.baseUrl, { params });
-  }
-
-  /** Mise à jour du seuil d'alerte (global produit ou couple produit/site). */
+  /** Mise à jour du seuil d'alerte (global produit si `siteId` omis, sinon couple produit/site). */
   majSeuil(payload: SeuilPayload): Observable<EtatStock> {
     return this.http.put<EtatStock>(`${this.baseUrl}/seuils`, payload);
+  }
+
+  /**
+   * Stock d'un produit sur un site (`siteId` omis ⇒ consolidé tous sites).
+   *
+   * Renvoie `null` en cas d'erreur : un produit jamais mouvementé sur ce site
+   * n'est pas une anomalie, et l'appelant affiche « — » plutôt qu'un faux zéro.
+   */
+  getEtatProduit(produitId: string, siteId?: string): Observable<EtatStock | null> {
+    let params = new HttpParams();
+    if (siteId) params = params.set('siteId', siteId);
+    return this.http.get<EtatStock>(`${this.baseUrl}/produit/${produitId}`, { params })
+      .pipe(catchError(() => of(null)));
   }
 }

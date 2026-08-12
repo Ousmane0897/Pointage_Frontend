@@ -23,7 +23,7 @@
         </h1>
         <p class="mt-1 text-sm text-slate-600">
           Du {{ a.dateDebut | date:'EEEE d MMMM y, HH:mm':'':'fr-FR' }}
-          au {{ a.dateFin | date:'EEEE d MMMM y, HH:mm':'':'fr-FR' }}
+          au {{ a.dateFin ? (a.dateFin | date:'EEEE d MMMM y, HH:mm':'':'fr-FR') : '(indéterminée)' }}
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -89,7 +89,7 @@
           </div>
           <div>
             <span class="text-slate-500">Fin :</span>
-            <span class="ml-2 font-medium text-slate-900">{{ a.dateFin | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="ml-2 font-medium text-slate-900">{{ a.dateFin ? (a.dateFin | date:'dd/MM/yyyy HH:mm') : 'Indéterminée' }}</span>
           </div>
           <div>
             <span class="text-slate-500">Durée :</span>

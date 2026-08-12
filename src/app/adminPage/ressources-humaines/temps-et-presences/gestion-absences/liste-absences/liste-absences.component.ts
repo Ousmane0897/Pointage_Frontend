@@ -8,6 +8,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { Subject, of, catchError, finalize, takeUntil } from 'rxjs';
 
 import { AbsenceService } from '../../../../../services/absence.service';
+import { CongePermissionsService } from '../../../../../services/conge-permissions.service';
 import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
 import {
   Absence,
@@ -52,17 +53,26 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
   constructor(
     private absenceService: AbsenceService,
     private dossierService: DossierEmployeService,
+    public permissions: CongePermissionsService,
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
-    this.loadEmployes();
+    // Le profil conditionne l'affichage du filtre « Employé » : on le charge d'abord,
+    // sinon la liste complète des employés partirait avant qu'on sache le masquer.
+    this.permissions.charger().pipe(takeUntil(this.destroy$)).subscribe(() => this.loadEmployes());
     this.loadAbsences();
   }
 
+  /**
+   * Trombinoscope du filtre « Employé ». Réservé aux profils dont le périmètre dépasse
+   * leurs propres déclarations : pour un agent, ce serait la liste de tout le personnel
+   * alors qu'il ne peut de toute façon filtrer que sur lui-même.
+   */
   private loadEmployes(): void {
+    if (!this.permissions.voitPlusieursEmployes()) return;
     this.dossierService
       .getEmployes(0, 200)
       .pipe(
@@ -194,6 +204,9 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
   private handleError(err: any): void {
     console.error(err);
     if (err?.status === 0) this.toastr.error('Serveur injoignable.', 'Erreur réseau');
+    // Le serveur restreint les déclarations au périmètre de l'appelant : un 403 est un
+    // cas nominal (lien partagé, employé hors équipe), pas une panne.
+    else if (err?.status === 403) this.toastr.error('Action non autorisée pour votre profil.', 'Accès refusé');
     else this.toastr.error('Une erreur est survenue.', 'Erreur');
   }
 

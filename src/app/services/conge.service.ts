@@ -1,24 +1,60 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+  CompteursAValider,
+  CreationDemandePayload,
   DemandeConge,
   FiltreConge,
+  MonProfilConge,
+  NiveauValidation,
   SoldeConge,
 } from '../models/conge.model';
 import { PageResponse } from '../models/pageResponse.model';
 
 /**
  * Service pour les demandes de congé et soldes.
- * Workflow : EN_ATTENTE → APPROUVE | REFUSE (décision du responsable).
+ *
+ * Circuit de validation à 3 niveaux :
+ *   EN_ATTENTE_SUPERIEUR → EN_ATTENTE_RH → EN_ATTENTE_DG → APPROUVE
+ * (refus terminal à n'importe quel niveau, motif obligatoire).
+ *
+ * ⚠ Le **niveau n'est jamais transmis** par le client sur `/valider` et
+ * `/refuser` : le serveur le déduit du statut courant et vérifie que l'appelant
+ * est habilité à ce niveau (403 sinon, 409 si la demande a déjà été traitée).
  */
 @Injectable({ providedIn: 'root' })
 export class CongeService {
 
   private baseUrl = environment.apiUrl;
 
+  /** Cache du profil métier de l'appelant (une seule résolution par session). */
+  private monProfil$?: Observable<MonProfilConge>;
+
   constructor(private http: HttpClient) {}
+
+  // ─── Identité ─────────────────────────────────────────────────────────────
+
+  /**
+   * Profil métier de l'utilisateur connecté, résolu serveur depuis l'e-mail du
+   * JWT — celui-ci ne portant ni `id` ni `employeId`, c'est le seul moyen de
+   * savoir « qui suis-je » et « de qui suis-je le supérieur ».
+   */
+  getMonProfil(): Observable<MonProfilConge> {
+    if (!this.monProfil$) {
+      this.monProfil$ = this.http.get<MonProfilConge>(
+        `${this.baseUrl}/temps-presences/conges/moi`,
+      ).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    }
+    return this.monProfil$;
+  }
+
+  /** Invalide le cache puis recharge (changement de compte, droits modifiés). */
+  rafraichirMonProfil(): Observable<MonProfilConge> {
+    this.monProfil$ = undefined;
+    return this.getMonProfil();
+  }
 
   // ─── Soldes ───────────────────────────────────────────────────────────────
   getSoldes(employeId?: string): Observable<SoldeConge[]> {
@@ -42,21 +78,59 @@ export class CongeService {
     size = 10,
     filtres?: FiltreConge,
   ): Observable<PageResponse<DemandeConge>> {
-    let params = new HttpParams()
-      .set('page', page)
-      .set('size', size);
-
-    if (filtres?.employeId) params = params.set('employeId', filtres.employeId);
-    if (filtres?.departement) params = params.set('departement', filtres.departement);
-    if (filtres?.statut) params = params.set('statut', filtres.statut);
-    if (filtres?.type) params = params.set('type', filtres.type);
-    if (filtres?.dateDebut) params = params.set('dateDebut', filtres.dateDebut);
-    if (filtres?.dateFin) params = params.set('dateFin', filtres.dateFin);
-    if (filtres?.q) params = params.set('q', filtres.q);
-
     return this.http.get<PageResponse<DemandeConge>>(
       `${this.baseUrl}/temps-presences/conges/demandes`,
+      { params: this.construireParams(page, size, filtres) },
+    );
+  }
+
+  /**
+   * Historique complet des demandes d'un employé — non paginé, trié serveur de la plus
+   * récente à la plus ancienne. Alimente l'onglet Congés de la fiche employé.
+   *
+   * ⚠ Soumis au **périmètre de visibilité serveur** : 403 si l'employé n'est ni soi-même
+   * ni un subordonné direct, hors profils RH / SUPERADMIN.
+   */
+  demandesParEmploye(employeId: string): Observable<DemandeConge[]> {
+    return this.http.get<DemandeConge[]>(
+      `${this.baseUrl}/temps-presences/conges/demandes/employe/${employeId}`,
+    );
+  }
+
+  /** Demandes de l'utilisateur connecté (demandeur déduit du JWT). */
+  mesDemandes(
+    page = 0,
+    size = 10,
+    filtres?: FiltreConge,
+  ): Observable<PageResponse<DemandeConge>> {
+    return this.http.get<PageResponse<DemandeConge>>(
+      `${this.baseUrl}/temps-presences/conges/demandes/mes-demandes`,
+      { params: this.construireParams(page, size, filtres) },
+    );
+  }
+
+  /**
+   * File de validation : le serveur ne renvoie que ce que l'appelant peut
+   * trancher **maintenant** (subordonnés directs pour le niveau supérieur, file
+   * RH, file Direction), avec `peutValiderParMoi = true` sur chaque ligne.
+   */
+  demandesAValider(
+    page = 0,
+    size = 10,
+    niveau?: NiveauValidation,
+  ): Observable<PageResponse<DemandeConge>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (niveau) params = params.set('niveau', niveau);
+    return this.http.get<PageResponse<DemandeConge>>(
+      `${this.baseUrl}/temps-presences/conges/demandes/a-valider`,
       { params },
+    );
+  }
+
+  /** Compteurs de la file de validation, par niveau, pour les onglets. */
+  compterAValider(): Observable<CompteursAValider> {
+    return this.http.get<CompteursAValider>(
+      `${this.baseUrl}/temps-presences/conges/demandes/a-valider/compteurs`,
     );
   }
 
@@ -66,11 +140,16 @@ export class CongeService {
     );
   }
 
-  creerDemande(demande: DemandeConge): Observable<DemandeConge> {
+  /**
+   * Crée une demande. `employeId` omis ⇒ le serveur prend le demandeur du JWT ;
+   * fourni ⇒ réservé aux profils RH / SUPERADMIN (403 sinon). Le statut initial
+   * est posé par le serveur, jamais par le client.
+   */
+  creerDemande(payload: CreationDemandePayload): Observable<DemandeConge> {
     return this.http.post<DemandeConge>(
       `${this.baseUrl}/temps-presences/conges/demandes`,
-      demande,
-    );
+      payload,
+    ).pipe(tap(() => this.invaliderProfil()));
   }
 
   modifierDemande(id: string, demande: DemandeConge): Observable<DemandeConge> {
@@ -83,21 +162,62 @@ export class CongeService {
   annulerDemande(id: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/temps-presences/conges/demandes/${id}`,
-    );
+    ).pipe(tap(() => this.invaliderProfil()));
   }
 
-  // ─── Workflow d'approbation ───────────────────────────────────────────────
-  approuver(id: string, commentaire?: string): Observable<DemandeConge> {
+  // ─── Transitions du circuit ───────────────────────────────────────────────
+
+  /**
+   * Fait avancer la demande d'un cran. Le niveau est déduit serveur du statut
+   * courant et de l'identité de l'appelant.
+   */
+  valider(id: string, commentaire?: string): Observable<DemandeConge> {
     return this.http.post<DemandeConge>(
-      `${this.baseUrl}/temps-presences/conges/demandes/${id}/approuver`,
+      `${this.baseUrl}/temps-presences/conges/demandes/${id}/valider`,
       { commentaire },
-    );
+    ).pipe(tap(() => this.invaliderProfil()));
   }
 
+  /** Refus terminal — motif obligatoire (422 côté serveur s'il est trop court). */
   refuser(id: string, motif: string): Observable<DemandeConge> {
     return this.http.post<DemandeConge>(
       `${this.baseUrl}/temps-presences/conges/demandes/${id}/refuser`,
       { motif },
-    );
+    ).pipe(tap(() => this.invaliderProfil()));
+  }
+
+  /** @deprecated remplacé par `valider()` — conservé le temps de la bascule backend. */
+  approuver(id: string, commentaire?: string): Observable<DemandeConge> {
+    return this.valider(id, commentaire);
+  }
+
+  // ─── Interne ──────────────────────────────────────────────────────────────
+
+  private construireParams(
+    page: number,
+    size: number,
+    filtres?: FiltreConge,
+  ): HttpParams {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    if (filtres?.employeId) params = params.set('employeId', filtres.employeId);
+    if (filtres?.departement) params = params.set('departement', filtres.departement);
+    if (filtres?.statut) params = params.set('statut', filtres.statut);
+    // Multi-statuts : le param `statut` est répété (Spring lie une List<String>).
+    filtres?.statuts?.forEach(s => (params = params.append('statut', s)));
+    if (filtres?.niveau) params = params.set('niveau', filtres.niveau);
+    if (filtres?.type) params = params.set('type', filtres.type);
+    if (filtres?.dateDebut) params = params.set('dateDebut', filtres.dateDebut);
+    if (filtres?.dateFin) params = params.set('dateFin', filtres.dateFin);
+    if (filtres?.q) params = params.set('q', filtres.q);
+
+    return params;
+  }
+
+  /** Le compteur `nbDemandesAValider` du profil devient faux après une écriture. */
+  private invaliderProfil(): void {
+    this.monProfil$ = undefined;
   }
 }

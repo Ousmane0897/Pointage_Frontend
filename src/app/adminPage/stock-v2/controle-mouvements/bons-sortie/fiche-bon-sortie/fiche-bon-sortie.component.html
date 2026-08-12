@@ -57,6 +57,21 @@
             </button>
           }
         }
+        @if (perms.peutReprendre(bon)) {
+          <button (click)="reprendre()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors">
+            <lucide-icon name="Undo2" [size]="16"></lucide-icon>
+            Reprendre
+          </button>
+        }
+        @if (perms.peutSupprimerDefinitivement(bon)) {
+          <!-- Réservé au super-admin : masqué ailleurs. -->
+          <button (click)="supprimerDefinitivement()" [disabled]="action"
+            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
+            <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+            Supprimer définitivement
+          </button>
+        }
         @if (bon.statut === 'SOUMIS' && perms.peutValider()) {
           <button (click)="ouvrirRefus()" [disabled]="action"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors">
@@ -72,14 +87,27 @@
       </div>
     </div>
 
-    @if (bon.statut === 'REFUSE' && bon.motifRefus) {
-      <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-6 flex items-start gap-3">
-        <lucide-icon name="CircleX" [size]="18" class="text-red-500 mt-0.5"></lucide-icon>
-        <div>
-          <p class="text-sm font-semibold text-red-700">Bon refusé</p>
-          <p class="text-sm text-red-600">{{ bon.motifRefus }}</p>
+    <!-- Le motif reste affiché après reprise (statut redevenu BROUILLON) : c'est au moment
+         de corriger que le créateur en a le plus besoin. -->
+    @if (bon.motifRefus) {
+      @if (bon.statut === 'REFUSE') {
+        <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <lucide-icon name="CircleX" [size]="18" class="text-red-500 mt-0.5"></lucide-icon>
+          <div>
+            <p class="text-sm font-semibold text-red-700">Bon refusé</p>
+            <p class="text-sm text-red-600">{{ bon.motifRefus }}</p>
+          </div>
         </div>
-      </div>
+      } @else {
+        <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <lucide-icon name="Undo2" [size]="18" class="text-orange-500 mt-0.5"></lucide-icon>
+          <div>
+            <p class="text-sm font-semibold text-orange-700">Ce bon a été refusé</p>
+            <p class="text-sm text-orange-600">{{ bon.motifRefus }}</p>
+            <p class="text-xs text-orange-500 mt-1">Corrigez-le, puis renvoyez-le dans le circuit de validation.</p>
+          </div>
+        </div>
+      }
     }
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -59,6 +59,8 @@ export class GestionPrivilegeComponent implements OnInit {
         pointageCentralise: false,
         absences: false,
         conges: false,
+        congesValidation: false,
+        congesMesDemandes: false,
         heuresSupplementaires: false,
         recapitulatif: false,
         // 6.3 Paie
@@ -96,8 +98,6 @@ export class GestionPrivilegeComponent implements OnInit {
       stock: {
         // 7.3 Stocks & Approvisionnement
         catalogue: false,
-        mouvements: false,
-        etatStock: false,
         inventaires: false,
         synthese: false,
         approvisionnement: false,
@@ -173,6 +173,8 @@ export class GestionPrivilegeComponent implements OnInit {
           pointageCentralise: false,
           absences: false,
           conges: false,
+          congesValidation: false,
+          congesMesDemandes: false,
           heuresSupplementaires: false,
           recapitulatif: false,
           // 6.3 Paie
@@ -209,8 +211,6 @@ export class GestionPrivilegeComponent implements OnInit {
         stock: {
           // 7.3 Stocks & Approvisionnement
           catalogue: false,
-          mouvements: false,
-          etatStock: false,
           inventaires: false,
           synthese: false,
           approvisionnement: false,
@@ -271,6 +271,8 @@ export class GestionPrivilegeComponent implements OnInit {
           pointageCentralise: rhLegacyFull || !!rhSrc?.pointageCentralise,
           absences: rhLegacyFull || !!rhSrc?.absences,
           conges: rhLegacyFull || !!rhSrc?.conges,
+          congesValidation: rhLegacyFull || !!rhSrc?.congesValidation,
+          congesMesDemandes: rhLegacyFull || !!rhSrc?.congesMesDemandes,
           heuresSupplementaires: rhLegacyFull || !!rhSrc?.heuresSupplementaires,
           recapitulatif: rhLegacyFull || !!rhSrc?.recapitulatif,
           // 6.3 Paie
@@ -307,8 +309,6 @@ export class GestionPrivilegeComponent implements OnInit {
         stock: {
           // 7.3 Stocks & Approvisionnement
           catalogue: !!admin.modulesAutorises?.stock?.catalogue,
-          mouvements: !!admin.modulesAutorises?.stock?.mouvements,
-          etatStock: !!admin.modulesAutorises?.stock?.etatStock,
           inventaires: !!admin.modulesAutorises?.stock?.inventaires,
           synthese: !!admin.modulesAutorises?.stock?.synthese,
           approvisionnement: !!admin.modulesAutorises?.stock?.approvisionnement,

@@ -86,6 +86,19 @@
                   <span>{{ b.nbLignes }} ligne(s)</span>
                   <span class="font-medium text-gray-600">{{ (b.montantTotal ?? 0) | number:'1.0-0':'fr' }}</span>
                 </div>
+                @if (b.motifRefus) {
+                  <p class="text-xs text-red-600 mt-2 pt-2 border-t border-gray-100 line-clamp-2" [title]="b.motifRefus">
+                    Motif : {{ b.motifRefus }}
+                  </p>
+                }
+                @if (peutReprendre(b)) {
+                  <div class="mt-2 pt-2 border-t border-gray-100">
+                    <button (click)="reprendre(b, $event)" [disabled]="action"
+                      class="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-orange-500 text-white text-xs font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors">
+                      <lucide-icon name="Undo2" [size]="13"></lucide-icon> Reprendre
+                    </button>
+                  </div>
+                }
                 @if (b.statut === 'SOUMIS' && perms.peutValider()) {
                   <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
                     <button (click)="valider(b, $event)" [disabled]="action"
@@ -146,7 +159,8 @@
                   <td class="px-4 py-3 text-right font-medium text-gray-700">{{ (b.montantTotal ?? 0) | number:'1.0-0':'fr' }}</td>
                   <td class="px-4 py-3">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                      [ngClass]="[COULEURS_STATUT_BON[b.statut].bg, COULEURS_STATUT_BON[b.statut].text]">
+                      [ngClass]="[COULEURS_STATUT_BON[b.statut].bg, COULEURS_STATUT_BON[b.statut].text]"
+                      [title]="b.motifRefus ?? ''">
                       <span class="w-1.5 h-1.5 rounded-full" [ngClass]="COULEURS_STATUT_BON[b.statut].dot"></span>
                       {{ LIBELLES_STATUT_BON[b.statut] }}
                     </span>
@@ -161,6 +175,11 @@
                         <button (click)="ouvrirRefus(b, $event)" [disabled]="action" title="Refuser"
                           class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors">
                           <lucide-icon name="CircleX" [size]="16"></lucide-icon>
+                        </button>
+                      } @else if (peutReprendre(b)) {
+                        <button (click)="reprendre(b, $event)" [disabled]="action" title="Reprendre pour correction"
+                          class="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 disabled:opacity-50 transition-colors">
+                          <lucide-icon name="Undo2" [size]="16"></lucide-icon>
                         </button>
                       } @else {
                         <span class="text-gray-300 text-xs">—</span>

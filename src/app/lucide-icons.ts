@@ -27,7 +27,7 @@ import {
   Boxes, Warehouse, PackagePlus, PackageMinus, PackageSearch, PackageOpen,
   ShoppingCart, Truck, Container, FolderTree, ClipboardX, Scale, PackageX,
   // ─── Stock v2 (7.4 Contrôle des mouvements) ───
-  FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck,
+  FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck, Undo2,
   // ─── Stock v2 (7.5 Analyse des consommations) ───
   CalendarRange, ChartColumn, ChartPie, Grid3x3, HardHat, Gift, Coins, CircleCheck,
   // ─── Stock v2 (7.6 Valorisation financière) ───
@@ -65,7 +65,7 @@ export const LucideIconsProvider = importProvidersFrom(
     Boxes, Warehouse, PackagePlus, PackageMinus, PackageSearch, PackageOpen,
     ShoppingCart, Truck, Container, FolderTree, ClipboardX, Scale, PackageX,
     // ─── Stock v2 (7.4 Contrôle des mouvements) ───
-    FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck,
+    FileInput, FileOutput, SlidersHorizontal, Tags, PackageCheck, Undo2,
     // ─── Stock v2 (7.5 Analyse des consommations) ───
     CalendarRange, ChartColumn, ChartPie, Grid3x3, HardHat, Gift, Coins, CircleCheck,
     // ─── Stock v2 (7.6 Valorisation financière) ───

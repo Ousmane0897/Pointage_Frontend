@@ -4,6 +4,8 @@ import { Router, RouterModule } from '@angular/router';
 import { LoginService } from '../../services/login.service';
 import { LucideAngularModule } from 'lucide-angular';
 import { DropdownMenu, ModulesAutorises } from '../../models/admin.model';
+import { CongeService } from '../../services/conge.service';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
@@ -36,6 +38,15 @@ export class SidebarComponent implements OnInit {
 
   modulesAutorises: any = {}; // Objet pour stocker les modules autorisés de l'utilisateur
 
+  /** Demandes de congé en attente de l'action de l'utilisateur (pastille du menu). */
+  nbCongesAValider = 0;
+
+  private readonly RACINE_CONGES = '/admin/rh/temps-et-presences/conges';
+  private readonly RACINE_ABSENCES = '/admin/rh/temps-et-presences/absences';
+
+  private readonly RACINE_BONS_ENTREE = '/admin/stock-v2/controle-mouvements/bons-entree';
+  private readonly RACINE_BONS_SORTIE = '/admin/stock-v2/controle-mouvements/bons-sortie';
+
   ngOnInit(): void {
 
     this.handleResize();
@@ -53,12 +64,26 @@ export class SidebarComponent implements OnInit {
     });
 
     this.role = this.loginService.getUserRole();
+
+    this.chargerCompteurConges();
+  }
+
+  /**
+   * Pastille « Validation congés ». Un seul appel, uniquement pour les profils
+   * habilités ; l'échec est silencieux (le menu reste utilisable sans compteur).
+   */
+  private chargerCompteurConges(): void {
+    if (!this.accessCongesValidation()) return;
+    this.congeService.compterAValider()
+      .pipe(catchError(() => of({ total: 0, parNiveau: {} as any })))
+      .subscribe(c => (this.nbCongesAValider = c.total ?? 0));
   }
 
 
 
   constructor(private router: Router,
-    private loginService: LoginService
+    private loginService: LoginService,
+    private congeService: CongeService
 
   ) { }
 
@@ -103,8 +128,22 @@ export class SidebarComponent implements OnInit {
     return this.accessRh('pointageCentralise')
       || this.accessRh('absences')
       || this.accessRh('conges')
+      || this.accessCongesValidation()
+      || this.accessRh('congesMesDemandes')
       || this.accessRh('heuresSupplementaires')
       || this.accessRh('recapitulatif');
+  }
+
+  /**
+   * Accès à la file de validation des congés.
+   *
+   * Le rôle `RH` (niveau 2) et `SUPERADMIN` (niveau 3, la Direction générale)
+   * y accèdent d'office. Pour un supérieur hiérarchique sans rôle particulier,
+   * c'est le backend qui pose `modules.rh.congesValidation` au login dès que
+   * l'employé a au moins un subordonné — la sidebar ne fait aucun calcul.
+   */
+  accessCongesValidation(): boolean {
+    return this.accessRh('congesValidation');
   }
 
   /** Accès au sous-module 6.3 Paie (au moins une fonctionnalité). */
@@ -182,8 +221,6 @@ export class SidebarComponent implements OnInit {
     const s = m.stock;
     return !!(
       s.catalogue ||
-      s.mouvements ||
-      s.etatStock ||
       s.inventaires ||
       s.synthese ||
       s.approvisionnement ||
@@ -337,6 +374,44 @@ export class SidebarComponent implements OnInit {
   // Permet également d'appliquer des styles aux liens parents lorsque l'un de leurs sous-liens est actif.
   isActivePrefix(prefix: string): boolean {
     return this.router.url.startsWith(prefix);
+  }
+
+  /**
+   * Rubrique « Congés » — onglets Calendrier (`/conges`) et Déclarations (`/absences`).
+   *
+   * ⚠ Un simple `isActivePrefix('/conges')` capterait aussi `/conges/validation` et
+   * `/conges/mes-demandes`, qui restent des entrées de menu distinctes. On énumère donc
+   * les seules sous-routes sans entrée propre : le formulaire (`/conges/demande`) et la
+   * fiche (`/conges/demandes/:id`, ciblée par les liens des e-mails) — le préfixe
+   * `/conges/demande` couvre volontairement les deux.
+   */
+  estRubriqueConges(): boolean {
+    const url = this.router.url.split(/[?#]/)[0];
+    return url === this.RACINE_CONGES
+      || url.startsWith(this.RACINE_ABSENCES)
+      || url.startsWith(`${this.RACINE_CONGES}/demande`);
+  }
+
+  /** Onglet d'atterrissage de la rubrique : le calendrier, ou les déclarations si c'est le seul droit. */
+  lienRubriqueConges(): string {
+    return this.accessRh('conges') ? this.RACINE_CONGES : this.RACINE_ABSENCES;
+  }
+
+  /**
+   * Rubrique « Bons » — onglets Entrée et Sortie, deux préfixes de routes sœurs.
+   *
+   * Un simple `startsWith` suffit ici, contrairement à `estRubriqueConges()` : aucune autre
+   * entrée de menu ne vit sous ces deux préfixes, les sous-routes (`/nouveau`, `/:id`,
+   * `/:id/modifier`) appartiennent donc toutes à la rubrique.
+   */
+  estRubriqueBons(): boolean {
+    const url = this.router.url.split(/[?#]/)[0];
+    return url.startsWith(this.RACINE_BONS_ENTREE) || url.startsWith(this.RACINE_BONS_SORTIE);
+  }
+
+  /** Onglet d'atterrissage de la rubrique : les entrées, ou les sorties si c'est le seul droit. */
+  lienRubriqueBons(): string {
+    return this.hasAccess('stock.bonsEntree') ? this.RACINE_BONS_ENTREE : this.RACINE_BONS_SORTIE;
   }
 
 

@@ -129,7 +129,7 @@
               <div class="text-xs text-slate-500">{{ a.siteCode }}</div>
             </td>
             <td class="px-4 py-3 text-sm text-slate-700">{{ a.dateDebut | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">{{ a.dateFin | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">{{ a.dateFin ? (a.dateFin | date:'dd/MM/yyyy HH:mm') : 'Indéterminée' }}</td>
             <td class="px-4 py-3 text-sm">
               <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
                     [ngClass]="[COULEURS_STATUT[a.statut].bg, COULEURS_STATUT[a.statut].text, COULEURS_STATUT[a.statut].border]">

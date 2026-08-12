@@ -54,6 +54,9 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
   dragOver = false;
   fichierExistant: { nom: string; url?: string } | null = null;
 
+  // ─── Retour de navigation (ex. fiche employé, onglet Contrats) ───────────
+  private returnUrl: string | null = null;
+
   // ─── Cycle de vie ─────────────────────────────────────────────────────────
   private destroy$ = new Subject<void>();
 
@@ -67,6 +70,7 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     this.initContratForm();
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
@@ -141,7 +145,7 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
           }
         } else {
           this.toastr.error('Contrat introuvable.', 'Erreur');
-          this.router.navigate(['/admin/rh/gestion-du-personnel/contrats']);
+          this.retour();
         }
       });
   }
@@ -304,13 +308,25 @@ export class FormulaireContratComponent implements OnInit, OnDestroy {
         if (res) {
           const action = this.isEditMode ? 'modifié' : 'créé';
           this.toastr.success(`Contrat ${action} avec succès.`, 'Succès');
-          this.router.navigate(['/admin/rh/gestion-du-personnel/contrats']);
+          this.retour();
         }
       });
   }
 
   // ─── Annulation ───────────────────────────────────────────────────────────
   annuler(): void {
+    this.retour();
+  }
+
+  /**
+   * Retourne à l'écran appelant : la fiche employé (onglet Contrats) lorsque le
+   * query param `returnUrl` est fourni, sinon la liste globale des contrats.
+   */
+  private retour(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
     this.router.navigate(['/admin/rh/gestion-du-personnel/contrats']);
   }
 

@@ -1,0 +1,106 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <button (click)="retour()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+        <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Mes demandes de congé</h1>
+        <p class="text-sm text-gray-500 mt-1">Suivi de l'avancement dans le circuit de validation</p>
+      </div>
+    </div>
+    <button (click)="nouvelleDemande()"
+      class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+      <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+      Nouvelle demande
+    </button>
+  </div>
+
+  <!-- Solde personnel -->
+  <div *ngIf="solde" class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <p class="text-xs uppercase tracking-wide text-gray-500">Acquis</p>
+      <p class="mt-1 text-xl font-semibold text-gray-800">{{ solde.acquis }} j</p>
+    </div>
+    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <p class="text-xs uppercase tracking-wide text-gray-500">Pris</p>
+      <p class="mt-1 text-xl font-semibold text-gray-800">{{ solde.pris }} j</p>
+    </div>
+    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <p class="text-xs uppercase tracking-wide text-gray-500">En cours</p>
+      <p class="mt-1 text-xl font-semibold text-amber-600">{{ solde.enCours }} j</p>
+    </div>
+    <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm">
+      <p class="text-xs uppercase tracking-wide text-indigo-500">Restant</p>
+      <p class="mt-1 text-xl font-semibold text-indigo-700">{{ solde.solde }} j</p>
+    </div>
+    <p class="col-span-2 sm:col-span-4 text-xs text-gray-500">
+      Seuls les congés annuels sont décomptés du solde.
+    </p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+    </div>
+
+    <div *ngIf="!loading && demandes.length === 0" class="p-8 text-center text-gray-500">
+      <lucide-icon name="Plane" class="w-10 h-10 inline text-indigo-200"></lucide-icon>
+      <p class="mt-2 text-sm">Vous n'avez encore déposé aucune demande de congé.</p>
+    </div>
+
+    <div *ngIf="!loading && demandes.length > 0" class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Du</th>
+            <th class="px-4 py-3">Au</th>
+            <th class="px-4 py-3">Jours</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3">Motif</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let d of demandes; trackBy: trackById" class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-gray-700">{{ LIBELLES_TYPE_CONGE[d.type] }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.dateDebut | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ d.dateFin | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 font-medium">{{ d.nombreJours ?? '—' }}</td>
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-1">
+                <app-badge-statut-conge [statut]="d.statut"></app-badge-statut-conge>
+                <span class="text-[0.7rem] text-gray-500">{{ libelleNiveau(d) }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-600 text-xs max-w-xs truncate">{{ d.motif || '—' }}</td>
+            <td class="px-4 py-3 text-right">
+              <div class="inline-flex gap-2">
+                <button (click)="detail(d)"
+                  class="inline-flex items-center gap-1 border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium">
+                  <lucide-icon name="Eye" class="w-3.5 h-3.5"></lucide-icon> Détail
+                </button>
+                <button *ngIf="permissions.peutAnnuler(d)" (click)="annuler(d)"
+                  class="inline-flex items-center gap-1 border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium">
+                  <lucide-icon name="CircleX" class="w-3.5 h-3.5"></lucide-icon> Annuler
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">{{ total }} demande(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="page === 0"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Précédent</button>
+        <button (click)="nextPage()" [disabled]="page + 1 >= totalPages"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>

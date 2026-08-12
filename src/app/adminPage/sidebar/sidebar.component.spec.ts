@@ -132,6 +132,104 @@ describe('SidebarComponent', () => {
   });
 
   // =====================================================
+  // 5️⃣ bis — Rubrique « Congés » (onglets Calendrier / Déclarations)
+  // =====================================================
+  describe('estRubriqueConges', () => {
+    /** Le spy Router expose `url` en propriété : on la redéfinit pour varier la route. */
+    const setUrl = (url: string) =>
+      Object.defineProperty(router, 'url', { get: () => url, configurable: true });
+
+    it('surligne la rubrique sur le calendrier', () => {
+      setUrl('/admin/rh/temps-et-presences/conges');
+      expect(component.estRubriqueConges()).toBeTrue();
+    });
+
+    it('surligne la rubrique sur les déclarations et leurs sous-routes', () => {
+      setUrl('/admin/rh/temps-et-presences/absences');
+      expect(component.estRubriqueConges()).toBeTrue();
+
+      setUrl('/admin/rh/temps-et-presences/absences/nouvelle');
+      expect(component.estRubriqueConges()).toBeTrue();
+    });
+
+    it('surligne la rubrique sur le formulaire et la fiche de demande', () => {
+      setUrl('/admin/rh/temps-et-presences/conges/demande');
+      expect(component.estRubriqueConges()).toBeTrue();
+
+      setUrl('/admin/rh/temps-et-presences/conges/demandes/abc123');
+      expect(component.estRubriqueConges()).toBeTrue();
+    });
+
+    it('ne surligne PAS la rubrique sur les entrées de menu restées distinctes', () => {
+      setUrl('/admin/rh/temps-et-presences/conges/validation');
+      expect(component.estRubriqueConges()).toBeFalse();
+
+      setUrl('/admin/rh/temps-et-presences/conges/mes-demandes');
+      expect(component.estRubriqueConges()).toBeFalse();
+    });
+
+    it('ignore les query params et le fragment', () => {
+      setUrl('/admin/rh/temps-et-presences/conges?tab=1');
+      expect(component.estRubriqueConges()).toBeTrue();
+    });
+
+    it('atterrit sur les déclarations quand le droit `conges` manque', () => {
+      component.role = 'ADMIN';
+      component.modulesAutorises = { rh: { absences: true } };
+      expect(component.lienRubriqueConges()).toBe('/admin/rh/temps-et-presences/absences');
+
+      component.modulesAutorises = { rh: { conges: true, absences: true } };
+      expect(component.lienRubriqueConges()).toBe('/admin/rh/temps-et-presences/conges');
+    });
+  });
+
+  // =====================================================
+  // 5️⃣ ter — Rubrique « Bons » (onglets Entrée / Sortie)
+  // =====================================================
+  describe('estRubriqueBons', () => {
+    const setUrl = (url: string) =>
+      Object.defineProperty(router, 'url', { get: () => url, configurable: true });
+
+    it('surligne la rubrique sur les deux racines', () => {
+      setUrl('/admin/stock-v2/controle-mouvements/bons-entree');
+      expect(component.estRubriqueBons()).toBeTrue();
+
+      setUrl('/admin/stock-v2/controle-mouvements/bons-sortie');
+      expect(component.estRubriqueBons()).toBeTrue();
+    });
+
+    it('surligne la rubrique sur les sous-routes (formulaire et fiche)', () => {
+      setUrl('/admin/stock-v2/controle-mouvements/bons-entree/nouveau');
+      expect(component.estRubriqueBons()).toBeTrue();
+
+      setUrl('/admin/stock-v2/controle-mouvements/bons-sortie/BON123/modifier');
+      expect(component.estRubriqueBons()).toBeTrue();
+    });
+
+    it('ne surligne PAS la rubrique sur les autres entrées du sous-menu', () => {
+      setUrl('/admin/stock-v2/controle-mouvements/plafonds');
+      expect(component.estRubriqueBons()).toBeFalse();
+
+      setUrl('/admin/stock-v2/controle-mouvements/workflow');
+      expect(component.estRubriqueBons()).toBeFalse();
+    });
+
+    it('ignore les query params et le fragment', () => {
+      setUrl('/admin/stock-v2/controle-mouvements/bons-sortie?statut=SOUMIS');
+      expect(component.estRubriqueBons()).toBeTrue();
+    });
+
+    it('atterrit sur les sorties quand le droit `bonsEntree` manque', () => {
+      component.role = 'ADMIN';
+      component.modulesAutorises = { stock: { bonsSortie: true } };
+      expect(component.lienRubriqueBons()).toBe('/admin/stock-v2/controle-mouvements/bons-sortie');
+
+      component.modulesAutorises = { stock: { bonsEntree: true, bonsSortie: true } };
+      expect(component.lienRubriqueBons()).toBe('/admin/stock-v2/controle-mouvements/bons-entree');
+    });
+  });
+
+  // =====================================================
   // 6️⃣ Permissions
   // =====================================================
   it('should allow access if permission is true', () => {

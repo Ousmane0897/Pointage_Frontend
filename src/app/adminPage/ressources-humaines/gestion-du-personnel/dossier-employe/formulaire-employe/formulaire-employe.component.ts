@@ -14,6 +14,8 @@ import { TerrainSiteClientService } from '../../../../../services/terrain-site-c
 import { SiteClient, EffectifSite } from '../../../../../models/terrain-site-client.model';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
 import { CategorieDocument } from '../../../../../models/document-employe.model';
+import { ContratService } from '../../../../../services/contrat.service';
+import { TypeContrat } from '../../../../../models/contrat.model';
 
 /** Document collecté en mémoire pendant l'assistant, uploadé après la création/màj de l'employé. */
 interface DocumentStage {
@@ -45,14 +47,21 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   employeId: string | null = null;
 
   // ─── Étapes ───────────────────────────────────────────────────────────────
+  // L'étape « Contrat » n'est proposée qu'à la création : en modification, les
+  // contrats se gèrent depuis l'onglet Contrats de la fiche employé.
   etapeActuelle = 1;
-  readonly etapes = [
+  etapes: string[] = [
     'Identité',
     'Poste & Affectation',
     'Contacts',
     'Documents',
     'Récapitulatif',
   ];
+
+  /** Libellé de l'étape en cours — les positions variant selon le mode. */
+  get etapeCourante(): string {
+    return this.etapes[this.etapeActuelle - 1];
+  }
 
   // ─── État UI ──────────────────────────────────────────────────────────────
   loading = false;
@@ -120,10 +129,18 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     { valeur: 'AUTRE', libelle: 'Autre' },
   ];
 
+  // ─── Contrat (étape création uniquement — créé après l'employé) ──────────
+  /** Formulaire du contrat initial. `employeId` est injecté à l'envoi. */
+  contratForm!: FormGroup;
+  /** Fichier du contrat (PDF/DOC), envoyé avec le contrat. */
+  contratFile: File | null = null;
+  dragOverContrat = false;
+
   constructor(
     private dossierEmployeService: DossierEmployeService,
     private terrainSiteClientService: TerrainSiteClientService,
     private documentEmployeService: DocumentEmployeService,
+    private contratService: ContratService,
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
@@ -140,6 +157,12 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     });
     this.employeId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.employeId;
+
+    // L'étape « Contrat » s'intercale entre Documents et Récapitulatif, à la création seulement.
+    if (!this.isEditMode) {
+      this.initContratForm();
+      this.etapes.splice(this.etapes.indexOf('Récapitulatif'), 0, 'Contrat');
+    }
 
     this.chargerReferentiels();
     this.chargerSitesClients();
@@ -531,6 +554,11 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     let groupe: FormGroup | null = null;
     let messageErreur = '';
 
+    // Étape « Contrat » : optionnelle, mais cohérente dès qu'elle est entamée.
+    if (this.etapeCourante === 'Contrat') {
+      return this.validerEtapeContrat();
+    }
+
     switch (this.etapeActuelle) {
       case 1:
         groupe = this.identiteGroup;
@@ -551,6 +579,30 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     groupe.markAllAsTouched();
     if (groupe.invalid) {
       this.erreurEtape = messageErreur;
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * L'étape Contrat peut être passée sans rien saisir (l'employé est alors créé
+   * sans contrat). Dès qu'elle est entamée, les champs obligatoires s'appliquent.
+   */
+  private validerEtapeContrat(): boolean {
+    if (!this.contratRenseigne) return true;
+
+    this.contratForm.markAllAsTouched();
+
+    if (!this.contratForm.get('dateDebut')?.value) {
+      this.erreurEtape = 'La date de début du contrat est obligatoire.';
+      return false;
+    }
+    if (this.isDateFinRequired && !this.contratForm.get('dateFin')?.value) {
+      this.erreurEtape = 'La date de fin est obligatoire pour ce type de contrat.';
+      return false;
+    }
+    if (this.contratForm.invalid) {
+      this.erreurEtape = 'Veuillez corriger les champs du contrat.';
       return false;
     }
     return true;
@@ -710,6 +762,125 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       });
   }
 
+  // ─── Contrat (étape création uniquement) ─────────────────────────────────
+  /**
+   * Formulaire du contrat initial. Volontairement sans contrôle `employeId`
+   * (inconnu tant que l'employé n'existe pas) ni `Validators.required` sur
+   * `dateDebut` : l'étape est optionnelle, la contrainte est portée par
+   * `validerEtape()` dès lors que l'utilisateur a commencé à la remplir.
+   */
+  private initContratForm(): void {
+    this.contratForm = this.fb.group({
+      typeContrat: ['CDI' as TypeContrat, Validators.required],
+      dateDebut: [null],
+      dateFin: [null],
+      statut: ['ACTIF'],
+      clauses: [''],
+      joursAvantAlerte: [30],
+    });
+
+    // dateFin est requise pour tout type de contrat autre que le CDI.
+    this.contratForm.get('typeContrat')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((type: TypeContrat) => {
+        const dateFinCtrl = this.contratForm.get('dateFin')!;
+        if (type === 'CDI') {
+          dateFinCtrl.clearValidators();
+          dateFinCtrl.setValue(null);
+        } else {
+          dateFinCtrl.setValidators(Validators.required);
+        }
+        dateFinCtrl.updateValueAndValidity();
+      });
+  }
+
+  /** L'utilisateur a-t-il commencé à renseigner un contrat ? (le type a une valeur par défaut) */
+  get contratRenseigne(): boolean {
+    return !!this.contratForm?.get('dateDebut')?.value || !!this.contratFile;
+  }
+
+  get isDateFinRequired(): boolean {
+    return this.contratForm?.get('typeContrat')?.value !== 'CDI';
+  }
+
+  get showJoursAlerte(): boolean {
+    const type = this.contratForm?.get('typeContrat')?.value;
+    return type === 'CDD' || type === 'STAGE';
+  }
+
+  onContratFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.contratFile = input.files[0];
+    }
+  }
+
+  onContratDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOverContrat = true;
+  }
+
+  onContratDragLeave(): void {
+    this.dragOverContrat = false;
+  }
+
+  onContratDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOverContrat = false;
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      this.contratFile = event.dataTransfer.files[0];
+    }
+  }
+
+  retirerFichierContrat(): void {
+    this.contratFile = null;
+  }
+
+  formatFileSize(bytes?: number): string {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  }
+
+  /**
+   * Crée le contrat initial pour l'employé `employeId` si l'étape a été renseignée,
+   * puis exécute `onDone`. Comme pour les documents, un échec n'annule pas la
+   * création de l'employé (déjà persistée) : simple avertissement.
+   */
+  private creerContratSiRenseigne(employeId: string, onDone: () => void): void {
+    if (!this.contratRenseigne) {
+      onDone();
+      return;
+    }
+
+    const v = this.contratForm.value;
+    const payload = {
+      ...v,
+      employeId,
+      dateDebut: this.toDateInput(v.dateDebut),
+      dateFin: v.dateFin ? this.toDateInput(v.dateFin) : null,
+    };
+
+    const fd = new FormData();
+    fd.append('contrat', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    if (this.contratFile) {
+      fd.append('fichier', this.contratFile, this.contratFile.name);
+    }
+
+    this.contratService.creerContrat(fd)
+      .pipe(catchError(() => of(null)), takeUntil(this.destroy$))
+      .subscribe(res => {
+        if (!res) {
+          this.toastr.warning(
+            "Le contrat n'a pas pu être enregistré. Vous pourrez l'ajouter depuis la fiche de l'employé.",
+            'Contrat non enregistré',
+          );
+        }
+        onDone();
+      });
+  }
+
   // ─── Sauvegarde ───────────────────────────────────────────────────────────
   sauvegarder(): void {
     if (this.employeForm.invalid) {
@@ -780,10 +951,12 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (employe) => {
-            this.televerserDocuments(employe.id!, () => {
-              this.toastr.success('Employé créé avec succès.', 'Succès');
-              this.router.navigate(['../'], { relativeTo: this.route });
-            });
+            // Cascade : documents, puis contrat initial — chaque étape tolérante aux pannes.
+            this.televerserDocuments(employe.id!, () =>
+              this.creerContratSiRenseigne(employe.id!, () => {
+                this.toastr.success('Employé créé avec succès.', 'Succès');
+                this.router.navigate(['../'], { relativeTo: this.route });
+              }));
           },
           error: (err: HttpErrorResponse) => {
             this.toastr.error(this.messageErreurServeur(err, 'création'), 'Erreur');
@@ -840,6 +1013,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     const v = this.identiteGroup?.get('situationMatrimoniale')?.value;
     if (v === 'MARIE') return 'Marié(e)';
     if (v === 'CELIBATAIRE') return 'Célibataire';
+    if (v === 'DIVORCE') return 'Divorcé(e)';
+    if (v === 'VEUF') return 'Veuf(ve)';
     return '';
   }
 

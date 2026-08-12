@@ -1,0 +1,142 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="retour()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+      <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Demande de congé</h1>
+      <p class="text-sm text-gray-500 mt-1">Circuit de validation et décisions</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="rounded-xl border border-gray-100 bg-white p-8 text-center text-gray-500">
+    <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+  </div>
+
+  <div *ngIf="!loading && introuvable"
+    class="rounded-xl border border-gray-100 bg-white p-8 text-center text-gray-500">
+    <lucide-icon name="AlertTriangle" class="w-10 h-10 inline text-amber-300"></lucide-icon>
+    <p class="mt-2 text-sm">Cette demande est introuvable ou vous n'y avez pas accès.</p>
+  </div>
+
+  <div *ngIf="!loading && demande" class="grid gap-6 lg:grid-cols-3">
+
+    <!-- Récapitulatif -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="text-lg font-semibold text-gray-800">{{ nomComplet }}</p>
+            <p class="text-xs font-mono text-gray-500">
+              {{ demande.matricule || '—' }} · {{ demande.departement || '—' }}
+            </p>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <app-badge-statut-conge [statut]="demande.statut"></app-badge-statut-conge>
+            <span class="text-xs text-gray-500">{{ libelleNiveauCourant }}</span>
+          </div>
+        </div>
+
+        <dl class="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-gray-500">Type</dt>
+            <dd class="mt-0.5 font-medium text-gray-800">{{ LIBELLES_TYPE_CONGE[demande.type] }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-gray-500">Du</dt>
+            <dd class="mt-0.5 font-medium text-gray-800">{{ demande.dateDebut | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-gray-500">Au</dt>
+            <dd class="mt-0.5 font-medium text-gray-800">{{ demande.dateFin | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-gray-500">Jours</dt>
+            <dd class="mt-0.5 font-medium text-gray-800">{{ demande.nombreJours ?? '—' }}</dd>
+          </div>
+        </dl>
+
+        <div class="mt-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Motif de la demande</p>
+          <p class="mt-1 text-sm text-gray-700">{{ demande.motif || '—' }}</p>
+        </div>
+
+        <p *ngIf="demande.dateDemande" class="mt-3 text-xs text-gray-400">
+          Soumise le {{ demande.dateDemande | date: 'dd/MM/yyyy à HH:mm' }}
+        </p>
+
+        <!-- Actions du niveau courant -->
+        <div class="mt-5 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
+          <ng-container *ngIf="permissions.peutValiderNiveau(demande)">
+            <button (click)="valider()"
+              class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">
+              <lucide-icon name="Check" class="w-4 h-4"></lucide-icon> Valider
+            </button>
+            <button (click)="refuser()"
+              class="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700">
+              <lucide-icon name="X" class="w-4 h-4"></lucide-icon> Refuser
+            </button>
+          </ng-container>
+          <button *ngIf="permissions.peutAnnuler(demande)" (click)="annuler()"
+            class="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <lucide-icon name="CircleX" class="w-4 h-4"></lucide-icon> Annuler la demande
+          </button>
+        </div>
+      </div>
+
+      <!-- Circuit de validation -->
+      <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
+          <lucide-icon name="Workflow" class="w-4 h-4 text-indigo-500"></lucide-icon>
+          Circuit de validation
+        </h2>
+        <app-timeline-validation-conge [demande]="demande"></app-timeline-validation-conge>
+      </div>
+    </div>
+
+    <!-- Solde du demandeur -->
+    <div class="space-y-6">
+      <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
+          <lucide-icon name="CalendarDays" class="w-4 h-4 text-indigo-500"></lucide-icon>
+          Solde de congés
+        </h2>
+        <div *ngIf="solde; else pasDeSolde" class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Année de référence</span>
+            <span class="font-medium text-gray-800">{{ solde.anneeReference }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Acquis</span>
+            <span class="font-medium text-gray-800">{{ solde.acquis }} j</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Pris</span>
+            <span class="font-medium text-gray-800">{{ solde.pris }} j</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">En cours</span>
+            <span class="font-medium text-gray-800">{{ solde.enCours }} j</span>
+          </div>
+          <div class="flex justify-between border-t border-gray-100 pt-2">
+            <span class="font-medium text-gray-700">Restant</span>
+            <span class="font-semibold text-indigo-600">{{ solde.solde }} j</span>
+          </div>
+        </div>
+        <ng-template #pasDeSolde>
+          <p class="text-sm text-gray-500">Solde indisponible.</p>
+        </ng-template>
+      </div>
+
+      <div *ngIf="demande.superieurHierarchiqueNom"
+        class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 class="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
+          <lucide-icon name="UserCheck" class="w-4 h-4 text-indigo-500"></lucide-icon>
+          Supérieur hiérarchique
+        </h2>
+        <p class="text-sm text-gray-800">{{ demande.superieurHierarchiqueNom }}</p>
+      </div>
+    </div>
+  </div>
+</div>

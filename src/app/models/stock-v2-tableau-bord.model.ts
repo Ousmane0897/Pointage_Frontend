@@ -16,8 +16,10 @@ export interface KpisStock {
   nbDormants: number;            // produits sans mouvement depuis N mois
 }
 
-export interface PointValeurCategorie {
-  categorie: string;
+export interface PointValeurProduit {
+  produitId: string;
+  produitCode: string;
+  produitLibelle: string;
   valeur: number;                // FCFA
 }
 
@@ -43,7 +45,7 @@ export interface ProduitDormant {
 
 export interface RapportTableauBordStock {
   kpis: KpisStock;
-  valeurParCategorie: PointValeurCategorie[];
+  valeurParProduit: PointValeurProduit[];   // borné top 10 côté serveur
   evolutionValeur: PointEvolution[];
   topConsommations: PointConsommation[];
   produitsDormants: ProduitDormant[];
@@ -53,6 +55,6 @@ export interface FiltreTableauBordStock {
   dateDebut: string;             // ISO yyyy-MM-dd
   dateFin: string;               // ISO yyyy-MM-dd
   siteId?: string;
-  categorieId?: string;
+  produitId?: string;            // absent = tous produits
   moisDormance?: number;         // seuil de dormance (mois)
 }

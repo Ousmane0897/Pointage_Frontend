@@ -20,16 +20,18 @@ import { StockV2PdfService } from '../../../../services/stock-v2-pdf.service';
 import {
   ConsommationDestinataire,
   FiltreConsommation,
+  LigneConsommationDestinataire,
 } from '../../../../models/stock-v2-consommation.model';
 import { SelecteurSiteComponent } from '../../stocks-approvisionnement/shared/selecteur-site/selecteur-site.component';
 import { SelecteurProduitComponent } from '../../stocks-approvisionnement/shared/selecteur-produit/selecteur-produit.component';
-import { COULEURS_CHARTS, DEVISE } from '../../../../constants/stock.constants';
+import { COULEURS_CHARTS, DEVISE, LIBELLES_UNITE } from '../../../../constants/stock.constants';
 
 /**
  * Historique de consommation par destinataire — Module Stock v2 / 7.4 (fonctionnalité 6).
  *
  * Consommation cumulée par site / agence / client sur une période, avec
- * graphique d'évolution du destinataire sélectionné et exports PDF/Excel.
+ * graphique d'évolution du destinataire sélectionné, détail produit par produit
+ * et exports PDF/Excel.
  */
 @Component({
   selector: 'app-historique-destinataire',
@@ -51,6 +53,15 @@ export class HistoriqueDestinataireComponent implements OnInit, OnDestroy {
   consommations: ConsommationDestinataire[] = [];
   selection: ConsommationDestinataire | null = null;
   loading = false;
+
+  /**
+   * Détail produit du destinataire sélectionné, trié par montant décroissant.
+   * Matérialisé (et non calculé par un getter appelé depuis le template) : le
+   * composant est en `OnPush`, un tri dans un getter se rejouerait à chaque cycle.
+   */
+  lignesSelection: LigneConsommationDestinataire[] = [];
+  totalQuantiteLignes = 0;
+  totalMontantLignes = 0;
 
   readonly DEVISE = DEVISE;
 
@@ -106,6 +117,7 @@ export class HistoriqueDestinataireComponent implements OnInit, OnDestroy {
           this.consommations = data ?? [];
           this.selection = this.consommations[0] ?? null;
           this.construireChart();
+          this.construireDetail();
           this.cdr.markForCheck();
         },
         error: () => this.toastr.error('Impossible de charger la consommation.'),
@@ -115,8 +127,27 @@ export class HistoriqueDestinataireComponent implements OnInit, OnDestroy {
   selectionner(c: ConsommationDestinataire): void {
     this.selection = c;
     this.construireChart();
+    this.construireDetail();
     this.cdr.markForCheck();
   }
+
+  /**
+   * Les totaux du pied sont ceux des lignes affichées, jamais
+   * `selection.montantTotal` : si le serveur renvoie un détail partiel, l'écart
+   * avec le total du destinataire doit se voir plutôt que d'être masqué.
+   */
+  private construireDetail(): void {
+    this.lignesSelection = [...(this.selection?.lignes ?? [])]
+      .sort((a, b) => (b.montant ?? 0) - (a.montant ?? 0));
+    this.totalQuantiteLignes = this.lignesSelection.reduce((s, l) => s + (l.quantite ?? 0), 0);
+    this.totalMontantLignes = this.lignesSelection.reduce((s, l) => s + (l.montant ?? 0), 0);
+  }
+
+  libelleUnite(l: LigneConsommationDestinataire): string {
+    return l.unite ? LIBELLES_UNITE[l.unite] : '';
+  }
+
+  trackByProduit(_: number, l: LigneConsommationDestinataire): string { return l.produitId; }
 
   private construireChart(): void {
     const points = this.selection?.evolution ?? [];

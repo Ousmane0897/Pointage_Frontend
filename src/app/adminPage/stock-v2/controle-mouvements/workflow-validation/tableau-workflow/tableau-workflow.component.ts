@@ -15,6 +15,8 @@ import { Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/operators';
 
 import { StockV2WorkflowService } from '../../../../../services/stock-v2-workflow.service';
+// La reprise après refus n'existe que côté sorties : appel direct, pas de dispatch par sens.
+import { StockV2BonSortieService } from '../../../../../services/stock-v2-bon-sortie.service';
 import { StockV2BonPermissionsService } from '../../../../../services/stock-v2-bon-permissions.service';
 import { WebsocketService } from '../../../../../services/websocket.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
@@ -78,6 +80,7 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
 
   constructor(
     private service: StockV2WorkflowService,
+    private bonSortieService: StockV2BonSortieService,
     readonly perms: StockV2BonPermissionsService,
     private ws: WebsocketService,
     private router: Router,
@@ -157,6 +160,27 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** La reprise après refus n'existe que sur les bons de sortie. */
+  peutReprendre(b: BonWorkflow): boolean {
+    return b.sens === 'SORTIE' && this.perms.peutReprendre(b);
+  }
+
+  reprendre(b: BonWorkflow, event?: Event): void {
+    event?.stopPropagation();
+    if (!this.peutReprendre(b)) return;
+    this.dialog.open(ConfirmDialogComponent, {
+      width: '460px',
+      data: {
+        message: `Reprendre le bon « ${b.reference} » ? Il repassera en brouillon pour correction, puis devra être soumis à nouveau.`,
+        confirmLabel: 'Reprendre',
+        confirmColor: 'primary',
+      },
+    }).afterClosed().pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (!ok) return;
+      this.executer(this.bonSortieService.reprendre(b.id), 'Bon repassé en brouillon.');
+    });
+  }
+
   ouvrirRefus(b: BonWorkflow, event?: Event): void {
     event?.stopPropagation();
     this.bonEnCours = b;
@@ -195,6 +219,7 @@ export class TableauWorkflowComponent implements OnInit, OnDestroy {
         error: err => {
           if (err?.status === 422) this.toastr.error('Stock insuffisant pour générer les mouvements.');
           else if (err?.status === 403) this.toastr.error("Action non autorisée pour votre profil.");
+          else if (err?.status === 409) this.toastr.error('Le statut de ce bon a changé entre-temps.');
           else this.toastr.error("L'action a échoué.");
         },
       });

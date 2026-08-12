@@ -183,6 +183,21 @@
           </span>
         </button>
 
+        <!-- Onglet Congés (données chargées à la première ouverture) -->
+        <button
+          (click)="setActiveTab('conges')"
+          [ngClass]="activeTab === 'conges'
+            ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50/50'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+          class="flex items-center gap-2 px-5 py-4 text-sm font-medium transition-colors duration-150 whitespace-nowrap">
+          <lucide-icon name="CalendarDays" class="w-4 h-4"></lucide-icon>
+          Congés
+          <span *ngIf="demandesConge.length > 0"
+            class="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+            {{ demandesConge.length }}
+          </span>
+        </button>
+
       </div>
 
       <!-- ════════════════════════════════════════
@@ -232,6 +247,8 @@
                   <ng-container [ngSwitch]="employe.situationMatrimoniale">
                     <span *ngSwitchCase="'CELIBATAIRE'">Célibataire</span>
                     <span *ngSwitchCase="'MARIE'">Marié(e)</span>
+                    <span *ngSwitchCase="'DIVORCE'">Divorcé(e)</span>
+                    <span *ngSwitchCase="'VEUF'">Veuf(ve)</span>
                     <span *ngSwitchDefault>—</span>
                   </ng-container>
                 </dd>
@@ -369,15 +386,78 @@
       ════════════════════════════════════════ -->
       <div *ngIf="activeTab === 'contrats'" class="p-6">
 
+        <!-- En-tête d'onglet -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div>
+            <h3 class="text-base font-semibold text-gray-800">Contrats de travail</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Contrats, renouvellements et avenants de cet employé</p>
+          </div>
+          <button
+            (click)="navigateToNouveauContrat()"
+            class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                   text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow transition-colors duration-200">
+            <lucide-icon name="FilePlus" class="w-4 h-4"></lucide-icon>
+            Nouveau contrat
+          </button>
+        </div>
+
+        <!-- Bannière alertes d'échéance -->
+        <div *ngIf="alertesContrats.length > 0 && !alertesDismissed"
+          class="mb-5 bg-amber-50 border border-amber-300 rounded-xl p-4">
+          <div class="flex items-start gap-3">
+            <div class="shrink-0 mt-0.5 p-1.5 bg-amber-100 rounded-lg">
+              <lucide-icon name="Bell" class="w-5 h-5 text-amber-600"></lucide-icon>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <h4 class="text-sm font-semibold text-amber-800">
+                  {{ alertesContrats.length }} contrat{{ alertesContrats.length > 1 ? 's' : '' }} arrivant à échéance
+                </h4>
+                <button
+                  (click)="dismissAlertes()"
+                  class="p-1 rounded text-amber-500 hover:bg-amber-100 transition-colors">
+                  <lucide-icon name="X" class="w-4 h-4"></lucide-icon>
+                </button>
+              </div>
+              <ul class="space-y-1.5">
+                <li *ngFor="let alerte of alertesContrats" class="flex items-center gap-2 text-sm">
+                  <lucide-icon name="AlertTriangle"
+                    class="w-4 h-4 shrink-0"
+                    [class]="getAlerteBadgeColor(alerte.joursRestants)">
+                  </lucide-icon>
+                  <span class="text-amber-800">
+                    {{ alerte.typeContrat }} &ndash; expire le
+                    <span class="font-medium">{{ alerte.dateFin | date:'dd/MM/yyyy' : '' : 'fr-FR' }}</span>
+                    (<span [class]="getAlerteBadgeColor(alerte.joursRestants)" class="font-semibold">
+                      {{ alerte.joursRestants }} jour{{ alerte.joursRestants > 1 ? 's' : '' }} restant{{ alerte.joursRestants > 1 ? 's' : '' }}
+                    </span>)
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chargement (rechargement partiel après action) -->
+        <div *ngIf="contratsLoading" class="flex items-center justify-center py-6">
+          <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
         <!-- État vide -->
-        <div *ngIf="contrats.length === 0"
+        <div *ngIf="!contratsLoading && contrats.length === 0"
           class="text-center py-12">
           <lucide-icon name="FileX" class="w-12 h-12 text-gray-300 mx-auto mb-3"></lucide-icon>
           <p class="text-sm text-gray-500 font-medium">Aucun contrat enregistré pour cet employé.</p>
+          <button
+            (click)="navigateToNouveauContrat()"
+            class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors duration-150">
+            <lucide-icon name="FilePlus" class="w-4 h-4"></lucide-icon>
+            Créer le premier contrat
+          </button>
         </div>
 
         <!-- Tableau des contrats -->
-        <div *ngIf="contrats.length > 0" class="overflow-x-auto rounded-xl border border-gray-200">
+        <div *ngIf="!contratsLoading && contrats.length > 0" class="overflow-x-auto rounded-xl border border-gray-200">
           <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -394,7 +474,9 @@
 
                 <!-- Type contrat -->
                 <td class="px-4 py-3">
-                  <span class="inline-flex items-center bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold px-2.5 py-1 rounded-full">
+                  <span
+                    [class]="getTypeContratBadgeClasses(contrat.typeContrat)"
+                    class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full">
                     {{ contrat.typeContrat }}
                   </span>
                 </td>
@@ -423,16 +505,40 @@
                   </span>
                 </td>
 
-                <!-- Action : voir le détail -->
-                <td class="px-4 py-3 text-center">
-                  <button
-                    *ngIf="contrat.id"
-                    (click)="navigateToDetailContrat(contrat.id)"
-                    title="Voir le contrat"
-                    class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors duration-150">
-                    <lucide-icon name="Eye" class="w-4 h-4"></lucide-icon>
-                    Voir
-                  </button>
+                <!-- Actions -->
+                <td class="px-4 py-3">
+                  <div *ngIf="contrat.id" class="flex items-center justify-center gap-1">
+
+                    <button
+                      *ngIf="contrat.fichierContratUrl || contrat.fichierContratNom"
+                      (click)="telechargerFichierContrat(contrat)"
+                      title="Télécharger le fichier du contrat"
+                      class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors duration-150">
+                      <lucide-icon name="Download" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="navigateToAvenants(contrat.id)"
+                      title="Avenants et renouvellements"
+                      class="p-1.5 rounded-lg text-teal-600 hover:bg-teal-100 transition-colors duration-150">
+                      <lucide-icon name="FileText" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="navigateToModificationContrat(contrat.id)"
+                      title="Modifier le contrat"
+                      class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-100 transition-colors duration-150">
+                      <lucide-icon name="Pencil" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="supprimerContrat(contrat)"
+                      title="Supprimer le contrat"
+                      class="p-1.5 rounded-lg text-red-600 hover:bg-red-100 transition-colors duration-150">
+                      <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                  </div>
                 </td>
 
               </tr>
@@ -528,6 +634,140 @@
         </div>
       </div>
       <!-- fin onglet documents -->
+
+      <!-- ════════════════════════════════════════
+           ONGLET : CONGÉS
+           ════════════════════════════════════════ -->
+      <div *ngIf="activeTab === 'conges'" class="p-6">
+
+        <div *ngIf="congesLoading" class="p-8 text-center text-gray-500">
+          <lucide-icon name="Loader" class="w-6 h-6 animate-spin inline"></lucide-icon>
+        </div>
+
+        <!-- Périmètre de visibilité : message dans l'onglet, jamais un toast. -->
+        <div *ngIf="!congesLoading && congesMessage"
+          class="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm">
+          <lucide-icon name="Info" class="w-4 h-4 mt-0.5 shrink-0"></lucide-icon>
+          <span>{{ congesMessage }}</span>
+        </div>
+
+        <ng-container *ngIf="!congesLoading && !congesMessage">
+
+          <!-- SOLDE (exercice courant) -->
+          <div *ngIf="soldeConge" class="mb-6">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Acquis</p>
+                <p class="mt-1 text-xl font-semibold text-gray-800">{{ soldeConge.acquis }} j</p>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Pris</p>
+                <p class="mt-1 text-xl font-semibold text-gray-800">{{ soldeConge.pris }} j</p>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                <p class="text-xs uppercase tracking-wide text-gray-500">En cours</p>
+                <p class="mt-1 text-xl font-semibold text-amber-600">{{ soldeConge.enCours }} j</p>
+              </div>
+              <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm">
+                <p class="text-xs uppercase tracking-wide text-indigo-500">Restant</p>
+                <p class="mt-1 text-xl font-semibold text-indigo-700">{{ soldeConge.solde }} j</p>
+              </div>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">
+              Exercice {{ soldeConge.anneeReference }} — seuls les congés annuels sont décomptés du solde.
+            </p>
+          </div>
+
+          <!-- DEMANDES DE CONGÉ -->
+          <h3 class="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
+            <lucide-icon name="CalendarDays" class="w-5 h-5 text-indigo-600"></lucide-icon>
+            Demandes de congé
+          </h3>
+          <p class="text-xs text-gray-500 mb-3">
+            Demandes passées par le circuit de validation, de la plus récente à la plus ancienne.
+          </p>
+
+          <div *ngIf="demandesConge.length === 0"
+            class="rounded-xl border border-gray-100 bg-gray-50 p-6 text-center text-sm text-gray-500 mb-8">
+            Aucune demande de congé enregistrée.
+          </div>
+
+          <div *ngIf="demandesConge.length > 0" class="overflow-x-auto mb-8">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Du</th>
+                  <th class="px-4 py-3">Au</th>
+                  <th class="px-4 py-3">Jours</th>
+                  <th class="px-4 py-3">Statut</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let d of demandesConge" class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-gray-700">{{ LIBELLES_TYPE_CONGE[d.type] }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ d.dateDebut | date: 'dd/MM/yyyy' }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ d.dateFin | date: 'dd/MM/yyyy' }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ d.nombreJours ?? '—' }}</td>
+                  <td class="px-4 py-3">
+                    <app-badge-statut-conge [statut]="d.statut"></app-badge-statut-conge>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <button (click)="ouvrirDemandeConge(d)"
+                      class="text-indigo-600 hover:text-indigo-800 text-xs underline">Détail</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- DÉCLARATIONS -->
+          <h3 class="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
+            <lucide-icon name="UserMinus" class="w-5 h-5 text-indigo-600"></lucide-icon>
+            Déclarations
+          </h3>
+          <p class="text-xs text-gray-500 mb-3">
+            Congés déclarés directement, hors circuit de validation — référentiel distinct des
+            demandes ci-dessus, les deux ne s'additionnent pas.
+          </p>
+
+          <div *ngIf="declarations.length === 0"
+            class="rounded-xl border border-gray-100 bg-gray-50 p-6 text-center text-sm text-gray-500">
+            Aucune déclaration enregistrée.
+          </div>
+
+          <div *ngIf="declarations.length > 0" class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Du</th>
+                  <th class="px-4 py-3">Au</th>
+                  <th class="px-4 py-3">Jours</th>
+                  <th class="px-4 py-3">Justificatif</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let a of declarations" class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-gray-700">{{ libelleTypeAbsence(a) }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ a.dateDebut | date: 'dd/MM/yyyy' }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ a.nombreJours ?? '—' }}</td>
+                  <td class="px-4 py-3">
+                    <span *ngIf="a.pieceJustificative" class="inline-flex items-center gap-1 text-green-700 text-xs">
+                      <lucide-icon name="Paperclip" class="w-3.5 h-3.5"></lucide-icon> Fourni
+                    </span>
+                    <span *ngIf="!a.pieceJustificative" class="text-gray-400 text-xs">Aucun</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </ng-container>
+      </div>
+      <!-- fin onglet congés -->
 
     </div>
     <!-- fin onglets -->

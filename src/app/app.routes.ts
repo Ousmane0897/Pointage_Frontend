@@ -59,6 +59,11 @@ export const routes: Routes = [
             { path: 'rh/temps-et-presences/conges', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/calendrier-conges.component').then(m => m.CalendrierCongesComponent) },
             { path: 'rh/temps-et-presences/conges/demande', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/demande-conge/demande-conge.component').then(m => m.DemandeCongeComponent) },
             { path: 'rh/temps-et-presences/conges/validation', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/validation-conges/validation-conges.component').then(m => m.ValidationCongesComponent) },
+            { path: 'rh/temps-et-presences/conges/mes-demandes', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/mes-demandes/mes-demandes.component').then(m => m.MesDemandesCongeComponent) },
+            // ⚠ Route ciblée par les liens des e-mails de notification du circuit
+            // de validation (construits serveur depuis `app.frontend.base-url`) :
+            // la modifier casse les liens des mails déjà envoyés.
+            { path: 'rh/temps-et-presences/conges/demandes/:id', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/detail-demande-conge/detail-demande-conge.component').then(m => m.DetailDemandeCongeComponent) },
             { path: 'rh/temps-et-presences/heures-supplementaires', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/liste-heures-sup/liste-heures-sup.component').then(m => m.ListeHeuresSupComponent) },
             { path: 'rh/temps-et-presences/heures-supplementaires/declaration', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/declaration-heures-sup/declaration-heures-sup.component').then(m => m.DeclarationHeuresSupComponent) },
             { path: 'rh/temps-et-presences/recapitulatif', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/recapitulatif-mensuel/recapitulatif-mensuel.component').then(m => m.RecapitulatifMensuelComponent) },
@@ -216,13 +221,6 @@ export const routes: Routes = [
             { path: 'stock-v2/stocks-approvisionnement/produits/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
             { path: 'stock-v2/stocks-approvisionnement/produits/:id/modifier', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/formulaire-produit/formulaire-produit.component').then(m => m.FormulaireProduitComponent) },
             { path: 'stock-v2/stocks-approvisionnement/produits/:id', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/catalogue-produits/fiche-produit/fiche-produit.component').then(m => m.FicheProduitComponent) },
-
-            // Mouvements de stock
-            { path: 'stock-v2/stocks-approvisionnement/mouvements', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/liste-mouvements/liste-mouvements.component').then(m => m.ListeMouvementsComponent) },
-            { path: 'stock-v2/stocks-approvisionnement/mouvements/nouveau', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/mouvements-stock/formulaire-mouvement/formulaire-mouvement.component').then(m => m.FormulaireMouvementComponent) },
-
-            // État du stock temps réel
-            { path: 'stock-v2/stocks-approvisionnement/etat', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/etat-stock/etat-stock.component').then(m => m.EtatStockComponent) },
 
             // Inventaires (ordre important : /nouveau, /:id/modifier AVANT /:id)
             { path: 'stock-v2/stocks-approvisionnement/inventaires', loadComponent: () => import('./adminPage/stock-v2/stocks-approvisionnement/inventaires/liste-inventaires/liste-inventaires.component').then(m => m.ListeInventairesComponent) },

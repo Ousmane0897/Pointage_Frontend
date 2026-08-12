@@ -113,6 +113,15 @@
 
       <!-- Barre d'actions selon le statut -->
       <div class="flex items-center justify-end gap-3 mt-4">
+        <!-- Suppression définitive : réservée au super-admin, donc masquée (et non grisée) ailleurs.
+             À gauche des actions de workflow, pour ne pas se placer sous le geste courant. -->
+        @if (estSuperAdmin) {
+          <button type="button" (click)="supprimerDefinitivement()" [disabled]="action"
+            class="mr-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 bg-white border border-red-200 hover:bg-red-50 disabled:opacity-60 transition-colors">
+            <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+            Supprimer définitivement
+          </button>
+        }
         @if (inventaire.statut === 'BROUILLON') {
           <button type="button" (click)="demarrerComptage()" [disabled]="action"
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm">

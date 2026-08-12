@@ -125,11 +125,10 @@
              class="mt-1 text-xs text-red-600">La date de début est obligatoire.</p>
         </div>
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">Date et heure de fin *</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Date et heure de fin</label>
           <input type="datetime-local" formControlName="dateFin"
                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"/>
-          <p *ngIf="form.get('dateFin')?.touched && form.get('dateFin')?.hasError('required')"
-             class="mt-1 text-xs text-red-600">La date de fin est obligatoire.</p>
+          <p class="mt-1 text-xs text-slate-500">Laisser vide pour une affectation à durée indéterminée.</p>
         </div>
       </div>
       <p *ngIf="form.hasError('datesInvalides') && (form.get('dateDebut')?.touched || form.get('dateFin')?.touched)"

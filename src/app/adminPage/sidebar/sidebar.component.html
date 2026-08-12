@@ -150,16 +150,7 @@
                     <span class="flex-1 truncate">Affectations</span>
                   </a>
                 </li>
-                <li *ngIf="accessRh('contrats')">
-                  <a routerLink="/admin/rh/gestion-du-personnel/contrats"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="FileText" class="w-3.5 h-3.5 text-emerald-400"></lucide-icon>
-                    <span class="flex-1 truncate">Contrats de travail</span>
-                  </a>
-                </li>
+                <!-- Contrats de travail : géré depuis l'onglet Contrats de la fiche employé -->
                 <li *ngIf="accessRh('organigramme')">
                   <a routerLink="/admin/rh/gestion-du-personnel/organigramme"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
@@ -180,7 +171,7 @@
                        hover:bg-indigo-500/10 hover:text-white transition-all duration-200 text-left"
                 [ngClass]="{ 'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': isActivePrefix('/admin/rh/temps-et-presences') }">
                 <lucide-icon name="Clock" class="w-4 h-4 text-amber-400"></lucide-icon>
-                <span class="flex-1 truncate">Temps &amp; Présences</span>
+                <span class="flex-1 truncate">Présences</span>
                 <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
                   [ngClass]="{ 'rotate-180': openDropdownTempsPresences === 'tempsPresences' }"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,41 +184,50 @@
                 <li *ngIf="accessRh('pointageCentralise')">
                   <a routerLink="/admin/rh/temps-et-presences/pointage-centralise"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
                     class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
                            hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                     <lucide-icon name="Users" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Pointage centralisé</span>
+                    <span class="flex-1 truncate">Pointage</span>
                   </a>
                 </li>
-                <li *ngIf="accessRh('pointageCentralise')">
-                  <a routerLink="/admin/rh/temps-et-presences/pointage-centralise/historique"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="History" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Historique pointage</span>
-                  </a>
-                </li>
-                <li *ngIf="accessRh('absences')">
-                  <a routerLink="/admin/rh/temps-et-presences/absences"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="UserMinus" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Congés</span>
-                  </a>
-                </li>
-                <li *ngIf="accessRh('conges')">
-                  <a routerLink="/admin/rh/temps-et-presences/conges"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
+                <!--
+                  Rubrique unique « Congés » : onglets Calendrier (/conges) et Déclarations
+                  (/absences) portés par les écrans eux-mêmes. Le surlignage passe par
+                  estRubriqueConges() car routerLinkActive ne sait pas exprimer « /conges exact
+                  OU /absences*, mais ni /conges/validation ni /conges/mes-demandes ».
+                -->
+                <li *ngIf="accessRh('conges') || accessRh('absences')">
+                  <a [routerLink]="lienRubriqueConges()"
+                    [ngClass]="{ '!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold': estRubriqueConges() }"
                     class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
                            hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                     <lucide-icon name="CalendarDays" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Calendrier des congés</span>
+                    <span class="flex-1 truncate">Congés</span>
+                  </a>
+                </li>
+                <li *ngIf="accessCongesValidation()">
+                  <a routerLink="/admin/rh/temps-et-presences/conges/validation"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="ClipboardCheck" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Validation congés</span>
+                    <span *ngIf="nbCongesAValider > 0"
+                      class="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full
+                             bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                      {{ nbCongesAValider }}
+                    </span>
+                  </a>
+                </li>
+                <li *ngIf="accessRh('congesMesDemandes')">
+                  <a routerLink="/admin/rh/temps-et-presences/conges/mes-demandes"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="Plane" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Mes demandes de congé</span>
                   </a>
                 </li>
                 <li *ngIf="accessRh('heuresSupplementaires')">
@@ -674,7 +674,7 @@
                   'bg-gradient-to-r from-indigo-500/20 to-indigo-500/5 text-white font-semibold': isActivePrefix('/admin/stock-v2/stocks-approvisionnement')
                 }">
                 <lucide-icon name="Boxes" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
-                <span class="flex-1 truncate">Stocks &amp; Appro.</span>
+                <span class="flex-1 truncate">Stocks & Appro</span>
                 <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"
                   [ngClass]="{ 'rotate-180': openDropdownStock === 'stock' }"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -701,22 +701,6 @@
                 <span class="flex-1 truncate">Catalogue produits</span>
               </a>
             </li>
-            <li *ngIf="hasAccess('stock.mouvements')">
-              <a routerLink="/admin/stock-v2/stocks-approvisionnement/mouvements"
-                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                <lucide-icon name="ArrowLeftRight" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
-                <span class="flex-1 truncate">Mouvements</span>
-              </a>
-            </li>
-            <li *ngIf="hasAccess('stock.etatStock')">
-              <a routerLink="/admin/stock-v2/stocks-approvisionnement/etat"
-                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                <lucide-icon name="Warehouse" class="w-3.5 h-3.5 text-amber-300"></lucide-icon>
-                <span class="flex-1 truncate">État du stock</span>
-              </a>
-            </li>
             <li *ngIf="hasAccess('stock.inventaires')">
               <a routerLink="/admin/stock-v2/stocks-approvisionnement/inventaires"
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
@@ -738,7 +722,7 @@
                 routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
                 class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
                 <lucide-icon name="ShoppingCart" class="w-3.5 h-3.5 text-rose-300"></lucide-icon>
-                <span class="flex-1 truncate">Approvisionnement</span>
+                <span class="flex-1 truncate">Besoins</span>
               </a>
             </li>
           </ul>
@@ -772,20 +756,18 @@
                 <span class="flex-1 truncate">Workflow validation</span>
               </a>
             </li>
-            <li *ngIf="hasAccess('stock.bonsEntree')">
-              <a routerLink="/admin/stock-v2/controle-mouvements/bons-entree"
-                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+            <!--
+              Rubrique unique « Bons » : onglets Entrée / Sortie portés par les écrans
+              eux-mêmes. Le surlignage passe par estRubriqueBons() car routerLinkActive ne
+              connaît que la destination du lien (l'un des deux préfixes) et ne s'allumerait
+              pas sur l'autre.
+            -->
+            <li *ngIf="hasAccess('stock.bonsEntree') || hasAccess('stock.bonsSortie')">
+              <a [routerLink]="lienRubriqueBons()"
+                [ngClass]="{ '!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold': estRubriqueBons() }"
                 class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                <lucide-icon name="FileInput" class="w-3.5 h-3.5 text-emerald-300"></lucide-icon>
-                <span class="flex-1 truncate">Bons d'entrée</span>
-              </a>
-            </li>
-            <li *ngIf="hasAccess('stock.bonsSortie')">
-              <a routerLink="/admin/stock-v2/controle-mouvements/bons-sortie"
-                routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                class="group flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400 hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                <lucide-icon name="FileOutput" class="w-3.5 h-3.5 text-sky-300"></lucide-icon>
-                <span class="flex-1 truncate">Bons de sortie</span>
+                <lucide-icon name="FileText" class="w-3.5 h-3.5 text-blue-300"></lucide-icon>
+                <span class="flex-1 truncate">Bons</span>
               </a>
             </li>
             <li *ngIf="hasAccess('stock.plafonds')">

@@ -86,20 +86,71 @@
         </div>
       </div>
 
-      <!-- Chart évolution -->
-      <div class="bg-white rounded-xl border border-gray-100 p-4">
-        <h2 class="text-sm font-semibold text-gray-700 mb-1">Évolution</h2>
-        <p class="text-xs text-gray-400 mb-3">{{ selection?.destinataireNom ?? '—' }}</p>
-        @if (evolutionData) {
-          <div class="h-64">
-            <canvas baseChart [type]="'line'" [data]="evolutionData" [options]="lineOptions"></canvas>
-          </div>
-        } @else {
-          <div class="h-64 flex flex-col items-center justify-center text-gray-300">
-            <lucide-icon name="LineChart" [size]="32"></lucide-icon>
-            <p class="text-sm mt-2 text-gray-400">Aucune évolution disponible.</p>
-          </div>
-        }
+      <div class="flex flex-col gap-6">
+        <!-- Chart évolution -->
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+          <h2 class="text-sm font-semibold text-gray-700 mb-1">Évolution</h2>
+          <p class="text-xs text-gray-400 mb-3">{{ selection?.destinataireNom ?? '—' }}</p>
+          @if (evolutionData) {
+            <div class="h-64">
+              <canvas baseChart [type]="'line'" [data]="evolutionData" [options]="lineOptions"></canvas>
+            </div>
+          } @else {
+            <div class="h-64 flex flex-col items-center justify-center text-gray-300">
+              <lucide-icon name="LineChart" [size]="32"></lucide-icon>
+              <p class="text-sm mt-2 text-gray-400">Aucune évolution disponible.</p>
+            </div>
+          }
+        </div>
+
+        <!-- Détail par produit du destinataire sélectionné -->
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+          <h2 class="text-sm font-semibold text-gray-700 mb-1">Détail par produit</h2>
+          <p class="text-xs text-gray-400 mb-3">{{ selection?.destinataireNom ?? '—' }}</p>
+          @if (lignesSelection.length > 0) {
+            <div class="max-h-72 overflow-y-auto overflow-x-auto -mx-4">
+              <table class="w-full text-sm">
+                <thead class="sticky top-0">
+                  <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                    <th class="px-4 py-2 font-semibold">Produit</th>
+                    <th class="px-4 py-2 font-semibold text-right">Quantité</th>
+                    <th class="px-4 py-2 font-semibold text-right">Montant</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  @for (l of lignesSelection; track trackByProduit($index, l)) {
+                    <tr class="hover:bg-gray-50/60 transition-colors">
+                      <td class="px-4 py-2">
+                        <span class="text-gray-800">{{ l.produitLibelle ?? l.produitId }}</span>
+                        @if (l.produitCode) {
+                          <span class="text-xs text-gray-400 ml-2">{{ l.produitCode }}</span>
+                        }
+                      </td>
+                      <td class="px-4 py-2 text-right text-gray-700">
+                        {{ l.quantite | number:'1.0-0':'fr' }}
+                        <span class="text-xs text-gray-400">{{ libelleUnite(l) }}</span>
+                      </td>
+                      <td class="px-4 py-2 text-right font-medium text-gray-700">{{ l.montant | number:'1.0-0':'fr' }}</td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="bg-indigo-50/60 font-semibold text-gray-700">
+                    <td class="px-4 py-2">Total</td>
+                    <td class="px-4 py-2 text-right">{{ totalQuantiteLignes | number:'1.0-0':'fr' }}</td>
+                    <td class="px-4 py-2 text-right">{{ totalMontantLignes | number:'1.0-0':'fr' }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Montants en {{ DEVISE }}.</p>
+          } @else {
+            <div class="h-40 flex flex-col items-center justify-center text-gray-300">
+              <lucide-icon name="Package" [size]="32"></lucide-icon>
+              <p class="text-sm mt-2 text-gray-400">Détail par produit indisponible pour ce destinataire.</p>
+            </div>
+          }
+        </div>
       </div>
     </div>
   } @else {

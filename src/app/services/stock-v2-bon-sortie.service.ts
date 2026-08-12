@@ -55,6 +55,17 @@ export class StockV2BonSortieService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  /**
+   * Supprime un bon **quel que soit son statut** — SUPERADMIN uniquement (403 sinon).
+   *
+   * ⚠ Sur un bon EFFECTIF, le serveur **contre-passe** les mouvements de sortie (stock recrédité)
+   * avant d'effacer le bon, et journalise l'opération avec le motif. POST et non DELETE : la
+   * requête porte un corps.
+   */
+  supprimerDefinitivement(id: string, motif: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/suppression-definitive`, { motif });
+  }
+
   // ─── Transitions workflow ─────────────────────────────────────────────────
 
   soumettre(id: string): Observable<BonSortie> {
@@ -67,5 +78,18 @@ export class StockV2BonSortieService {
 
   refuser(id: string, payload: DecisionWorkflowPayload): Observable<BonSortie> {
     return this.http.post<BonSortie>(`${this.baseUrl}/${id}/refuser`, payload);
+  }
+
+  /**
+   * Reprend un bon REFUSE : il repasse en BROUILLON pour correction, puis suit à
+   * nouveau le circuit normal.
+   *
+   * ⚠ Serveur : l'`historique[]` est **augmenté** d'une entrée `REPRISE`, jamais
+   * réinitialisé, et `motifRefus` est **conservé** — c'est lui qui rappelle au
+   * créateur la raison du refus pendant qu'il corrige. 409 si le statut n'est
+   * pas REFUSE.
+   */
+  reprendre(id: string, payload?: DecisionWorkflowPayload): Observable<BonSortie> {
+    return this.http.post<BonSortie>(`${this.baseUrl}/${id}/reprendre`, payload ?? {});
   }
 }

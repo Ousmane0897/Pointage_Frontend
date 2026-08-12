@@ -1,18 +1,27 @@
 <div class="min-h-screen bg-gray-50 p-6">
 
   <!-- EN-TÊTE -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-800">Historique des pointages</h1>
-      <p class="text-sm text-gray-500 mt-1">
-        Consultation des pointages sur une plage de dates, tous départements confondus
-      </p>
-    </div>
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Pointage</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      Consultation des pointages sur une plage de dates, tous départements confondus
+    </p>
+  </div>
+
+  <!-- ONGLETS -->
+  <nav class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6">
     <a routerLink="/admin/rh/temps-et-presences/pointage-centralise"
-      class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+      [routerLinkActiveOptions]="{ exact: true }"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
       <lucide-icon name="Users" class="w-4 h-4"></lucide-icon> Vue du jour
     </a>
-  </div>
+    <a routerLink="/admin/rh/temps-et-presences/pointage-centralise/historique"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="History" class="w-4 h-4"></lucide-icon> Historique
+    </a>
+  </nav>
 
   <!-- FILTRES -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">

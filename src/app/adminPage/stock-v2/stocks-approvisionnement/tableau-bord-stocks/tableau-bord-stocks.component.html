@@ -29,26 +29,22 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4" [formGroup]="filtres">
       <div class="flex flex-wrap items-end gap-3">
         <div class="flex flex-col gap-1">
-          <label class="text-xs text-gray-400">Du</label>
-          <input type="date" formControlName="dateDebut"
+          <label class="text-xs text-gray-400">Du mois</label>
+          <input type="month" formControlName="moisDebut"
             class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs text-gray-400">Au</label>
-          <input type="date" formControlName="dateFin"
+          <label class="text-xs text-gray-400">Au mois</label>
+          <input type="month" formControlName="moisFin"
             class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
         </div>
         <div class="flex flex-col gap-1 min-w-[220px]">
           <label class="text-xs text-gray-400">Site</label>
           <app-selecteur-site formControlName="siteId" placeholder="Tous sites…"></app-selecteur-site>
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-gray-400">Catégorie</label>
-          <select formControlName="categorieId"
-            class="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-            <option value="">Toutes</option>
-            @for (c of categories; track c.id) { <option [value]="c.id">{{ c.libelle }}</option> }
-          </select>
+        <div class="flex flex-col gap-1 min-w-[220px]">
+          <label class="text-xs text-gray-400">Produit</label>
+          <app-selecteur-produit formControlName="produitId" placeholder="Tous produits…"></app-selecteur-produit>
         </div>
         <button type="button" (click)="charger()"
           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
@@ -99,9 +95,9 @@
       <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h2 class="text-sm font-semibold text-gray-700 mb-3">Valeur du stock par catégorie</h2>
+          <h2 class="text-sm font-semibold text-gray-700 mb-3">Valeur du stock par produit</h2>
           <div class="h-72">
-            @if (valeurCategorieData) { <canvas baseChart [type]="'doughnut'" [data]="valeurCategorieData" [options]="doughnutOptions"></canvas> }
+            @if (valeurProduitData) { <canvas baseChart [type]="'doughnut'" [data]="valeurProduitData" [options]="doughnutOptions"></canvas> }
           </div>
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">

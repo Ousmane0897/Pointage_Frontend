@@ -56,6 +56,17 @@ export class StockV2BonEntreeService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  /**
+   * Supprime un bon **quel que soit son statut** — SUPERADMIN uniquement (403 sinon).
+   *
+   * ⚠ Sur un bon EFFECTIF, le serveur **contre-passe** les mouvements d'entrée (la marchandise
+   * reçue est retirée du stock) — **422 si elle a déjà été consommée** — puis efface le bon et
+   * journalise l'opération. Le coût courant du produit (CUMP) n'est pas recalculé en arrière.
+   */
+  supprimerDefinitivement(id: string, motif: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/suppression-definitive`, { motif });
+  }
+
   // ─── Transitions workflow ─────────────────────────────────────────────────
 
   soumettre(id: string): Observable<BonEntree> {

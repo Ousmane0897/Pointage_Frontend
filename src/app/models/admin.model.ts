@@ -40,6 +40,10 @@ export interface ModulesAutorises {
     pointageCentralise?: boolean;
     absences?: boolean;
     conges?: boolean;
+    /** File de validation des congés (circuit à 3 niveaux). */
+    congesValidation?: boolean;
+    /** Écran « Mes demandes » (auto-service du collaborateur). */
+    congesMesDemandes?: boolean;
     heuresSupplementaires?: boolean;
     recapitulatif?: boolean;
 
@@ -91,8 +95,6 @@ export interface ModulesAutorises {
   // `modules.stock` au claim JWT pour activer ce menu en production.
   stock?: {
     catalogue?: boolean;
-    mouvements?: boolean;
-    etatStock?: boolean;
     inventaires?: boolean;
     synthese?: boolean;
     approvisionnement?: boolean;

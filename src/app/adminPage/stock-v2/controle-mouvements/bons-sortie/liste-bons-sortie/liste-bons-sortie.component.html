@@ -3,7 +3,7 @@
   <!-- En-tête -->
   <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
     <div class="flex items-start gap-3">
-      <div class="p-2.5 rounded-xl bg-sky-100 text-sky-700">
+      <div class="p-2.5 rounded-xl bg-red-100 text-red-700">
         <lucide-icon name="FileOutput" [size]="22"></lucide-icon>
       </div>
       <div>
@@ -24,6 +24,26 @@
       </a>
     </div>
   </div>
+
+  <!--
+    ONGLETS — routes sœurs de 1er niveau, chacune avec son propre préfixe et rien d'autre
+    dessous : le routerLinkActive par préfixe suffit (pas de `exact`), l'onglet reste donc
+    allumé sur /nouveau, /:id et /:id/modifier.
+    Vert = entrée, rouge = sortie : la couleur est portée par le bouton d'accès uniquement,
+    pas par le contenu des écrans (cf. badges de statut, inchangés).
+  -->
+  <nav class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6">
+    <a routerLink="/admin/stock-v2/controle-mouvements/bons-entree"
+      routerLinkActive="bg-emerald-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-emerald-700 hover:bg-emerald-50">
+      <lucide-icon name="FileInput" class="w-4 h-4"></lucide-icon> Bons d'entrée
+    </a>
+    <a routerLink="/admin/stock-v2/controle-mouvements/bons-sortie"
+      routerLinkActive="bg-red-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">
+      <lucide-icon name="FileOutput" class="w-4 h-4"></lucide-icon> Bons de sortie
+    </a>
+  </nav>
 
   <!-- Filtres -->
   <div class="bg-white rounded-xl border border-gray-100 p-4 mb-4">
@@ -121,7 +141,8 @@
                 <td class="px-4 py-3 text-right font-medium text-gray-700">{{ (b.montantTotal ?? 0) | number:'1.0-0':'fr' }}</td>
                 <td class="px-4 py-3">
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                    [ngClass]="[COULEURS_STATUT_BON[b.statut].bg, COULEURS_STATUT_BON[b.statut].text]">
+                    [ngClass]="[COULEURS_STATUT_BON[b.statut].bg, COULEURS_STATUT_BON[b.statut].text]"
+                    [title]="b.motifRefus ?? ''">
                     <span class="w-1.5 h-1.5 rounded-full" [ngClass]="COULEURS_STATUT_BON[b.statut].dot"></span>
                     {{ LIBELLES_STATUT_BON[b.statut] }}
                   </span>
@@ -155,6 +176,19 @@
                         [title]="perms.peutSupprimer(b) ? 'Supprimer' : 'Réservé au créateur du bon'"
                         class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent transition-colors">
                         <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+                      </button>
+                    }
+                    @if (perms.peutSupprimerDefinitivement(b)) {
+                      <!-- Réservé au super-admin : masqué ailleurs, comme les autres actions de rôle. -->
+                      <button (click)="supprimerDefinitivement(b)" title="Supprimer définitivement (stock rétabli)"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                        <lucide-icon name="Trash2" [size]="16"></lucide-icon>
+                      </button>
+                    }
+                    @if (perms.peutReprendre(b)) {
+                      <button (click)="reprendre(b)" title="Reprendre pour correction"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
+                        <lucide-icon name="Undo2" [size]="16"></lucide-icon>
                       </button>
                     }
                   </div>

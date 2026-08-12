@@ -5,6 +5,11 @@
  * BonSortie). Cycle de vie strict :
  *   BROUILLON → SOUMIS → VALIDE → EFFECTIF   (ou → REFUSE)
  *
+ * Un bon de **sortie** REFUSE n'est pas terminal : son créateur peut le
+ * « reprendre » (REFUSE → BROUILLON, action d'historique `REPRISE`) pour le
+ * corriger et le renvoyer dans le circuit. L'historique du cycle refusé est
+ * conservé. Les bons d'entrée, eux, restent terminaux sur un refus.
+ *
  * Aucun mouvement de stock 7.3 n'est généré tant que le bon n'est pas passé
  * EFFECTIF (déclenché côté serveur à la validation). L'auteur de chaque action
  * est déduit du JWT côté serveur et dénormalisé dans l'historique.
@@ -25,6 +30,7 @@ export type ActionWorkflow =
   | 'SOUMISSION'
   | 'VALIDATION'
   | 'REFUS'
+  | 'REPRISE'
   | 'EFFECTIF';
 
 /** Sens d'un bon, utilisé par le tableau de workflow unifié. */
