@@ -54,7 +54,10 @@
           <option value="PRESENT">Présent</option>
           <option value="ABSENT">Absent</option>
           <option value="RETARD">Retard</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="NEUTRE">À venir</option>
           <option value="CONGE">En congé</option>
+          <option value="HORS_PLAN">Hors planning</option>
         </select>
       </div>
       <div>
@@ -96,6 +99,7 @@
             <th class="px-4 py-3">Employé</th>
             <th class="px-4 py-3">Département</th>
             <th class="px-4 py-3">Site</th>
+            <th class="px-4 py-3">Horaire prévu</th>
             <th class="px-4 py-3">Arrivée</th>
             <th class="px-4 py-3">Départ</th>
             <th class="px-4 py-3">Retard</th>
@@ -103,14 +107,32 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let p of pointages; trackBy: trackById" class="hover:bg-gray-50">
-            <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.date | date:'dd/MM/yyyy' }}</td>
-            <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ p.matricule }}</td>
-            <td class="px-4 py-3 font-medium text-gray-800">{{ p.prenom }} {{ p.nom }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ p.departement }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ p.site }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ p.heureArrivee || '—' }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ p.heureDepart || '—' }}</td>
+          <!-- Sur un jour passé le serveur ne produit ni NEUTRE ni EN_ATTENTE : la journée
+               est finie, un créneau non pointé est une absence. Le grisé reste néanmoins
+               géré ici, l'écran acceptant une plage qui déborde sur aujourd'hui. -->
+          <tr *ngFor="let p of pointages; trackBy: trackById"
+            [ngClass]="estNeutre(p) ? 'bg-gray-50/60 text-gray-400' : 'hover:bg-gray-50'">
+            <td class="px-4 py-3 whitespace-nowrap"
+              [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">{{ p.date | date:'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 font-mono text-xs"
+              [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">{{ p.matricule }}</td>
+            <td class="px-4 py-3 font-medium"
+              [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-800'">{{ p.prenom }} {{ p.nom }}</td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-600'">
+              {{ p.departement }}
+            </td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-600'">
+              {{ p.site }}
+              <span *ngIf="p.planifie === false"
+                class="ml-1 text-[11px] text-purple-600">(hors planning)</span>
+            </td>
+            <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ horairePrevu(p) || '—' }}</td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">
+              {{ p.heureArrivee || '—' }}
+            </td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">
+              {{ p.heureDepart || '—' }}
+            </td>
             <td class="px-4 py-3">
               <span *ngIf="estEnRetard(p)"
                 class="inline-flex items-center gap-1 text-amber-700 font-medium">
@@ -121,7 +143,8 @@
             </td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                [ngClass]="getStatutClasses(statutAffiche(p))">
+                [ngClass]="getStatutClasses(statutAffiche(p))"
+                [title]="getStatutDescription(statutAffiche(p))">
                 <lucide-icon [name]="getStatutIcon(statutAffiche(p))" class="w-3.5 h-3.5"></lucide-icon>
                 {{ getStatutLabel(statutAffiche(p)) }}
               </span>
@@ -133,7 +156,7 @@
 
     <!-- PAGINATION -->
     <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-      <p class="text-xs text-gray-500">{{ total }} pointage(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <p class="text-xs text-gray-500">{{ total }} créneau(x) — page {{ page + 1 }} / {{ totalPages }}</p>
       <div class="flex gap-1">
         <button (click)="prevPage()" [disabled]="page === 0"
           class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">

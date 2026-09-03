@@ -104,6 +104,18 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 - **Onglet « Congés » de la fiche employé** — 4ᵉ onglet (`ActiveTab = 'infos' | 'contrats' | 'documents' | 'conges'`), seule vue de l'**historique des congés d'un agent** : solde de l'exercice courant, demandes passées par le circuit de validation, et déclarations. Il consomme **`GET /temps-presences/conges/demandes/employe/{id}`** — un endpoint qui existait depuis le lot congés mais qu'**aucun code front n'appelait** (`CongeService.demandesParEmploye()`), plus `GET /soldes/{id}` et `AbsenceService.lister(0, 100, { employeId })`. Côté serveur, seul `DemandeCongeService.getByEmployeId` a changé : il **trie** désormais par `dateDemande` décroissant (`nullsLast`), comme `searchDemandes`. ⚠ **Chargement paresseux à la première ouverture de l'onglet**, délibérément **hors du `forkJoin` de `chargerDonnees()`** qui alimente contrats et documents : d'une part on n'ajoute pas 3 requêtes à chaque ouverture de fiche, d'autre part on ne déclenche pas le **403 de périmètre** chez un utilisateur qui n'ouvrira jamais l'onglet (drapeau `congesCharges`). ⚠ `queryParamMap` émet **avant** que l'id de route soit résolu : le retour depuis le détail d'une demande (`?tab=conges`) est donc relancé depuis le handler de `route.params`, sans quoi `chargerConges()` partirait avec un `employeId` vide. ⚠ Le **403 est un cas nominal** (employé hors périmètre) : il s'affiche **dans l'onglet**, jamais en toast. `detail-demande-conge` accepte désormais `returnUrl` + `tab` pour revenir sur la fiche (même pattern que `formulaire-contrat` / `avenants`). Demandes et déclarations sont **deux référentiels distincts** (`DemandeConge` vs `Absence`) : ils sont affichés côte à côte et **ne s'additionnent jamais**, ce que dit le sous-titre. Aucun nouveau flag RBAC — l'onglet suit `rh.dossierEmploye` et son contenu est borné serveur par le périmètre de visibilité. ⚠ Le libellé de type de déclaration duplique la map inline de `liste-absences` : à factoriser lors du lot qui corrigera la désynchronisation de `TypeAbsence` (cf. 6.2), pas avant.
 - **Étape « Contrat » dans l'assistant de création d'employé** — [formulaire-employe/](src/app/adminPage/ressources-humaines/gestion-du-personnel/dossier-employe/formulaire-employe/) compte une étape supplémentaire intercalée **entre « Documents » et « Récapitulatif »**, proposée **à la création uniquement** (6 étapes ; en modification on reste à 5, les contrats d'un employé existant se gérant depuis sa fiche). Le tableau `etapes` est donc devenu mutable — `'Contrat'` y est inséré dans `ngOnInit` si `!isEditMode` — et le récapitulatif est rendu par `*ngIf="etapeCourante === 'Récapitulatif'"` (getter sur `etapes[etapeActuelle - 1]`) et non plus par un index en dur. L'étape est **optionnelle** : `contratForm` (un `FormGroup` séparé de `employeForm`, comme `documentForm`) est sans contrôle `employeId` — injecté à l'envoi — et sans `Validators.required` sur `dateDebut` ; `validerEtapeContrat()` ne s'applique que si `contratRenseigne` (date de début saisie ou fichier joint). La soumission enchaîne `creerEmploye` → `televerserDocuments` → `creerContratSiRenseigne`, chaque cascade avec `catchError(() => of(null))` + toast d'avertissement : **un échec sur les documents ou le contrat n'annule jamais la création de l'employé**, déjà persistée.
 - **Affectations — date de fin optionnelle** — dans [formulaire-affectation/](src/app/adminPage/ressources-humaines/gestion-du-personnel/affectations/formulaire-affectation/), le contrôle `dateFin` (label « Date et heure de fin ») n'est plus `required` : une affectation sans fin est **à durée indéterminée**. `AffectationAgent.dateFin` passe à **optionnel** dans [terrain-planning.model.ts](src/app/models/terrain-planning.model.ts) ; tous les affichages ont un repli « Indéterminée » (fiche, liste + exports, durée) et le calendrier rend un **événement ponctuel** (`end: a.dateFin ?? undefined`). Le validateur croisé fin > début et la détection de conflits ne s'appliquent que si la fin est saisie — **un intervalle ouvert ne produit jamais de conflit**, côté front comme côté serveur (`PlanningService.chevauche` renvoie `false` sur un null). ⚠ **Contrat backend** (branche `feature/affectation-date-fin-optionnelle`) : `@NotNull` retiré de `AffectationAgentDto.dateFin` ; le filtre de période de `PlanningService.appliquerFiltres` tolère les `dateFin` nuls (`orOperator` fin ≥ borne **ou** fin absente), sans quoi ces affectations disparaîtraient du calendrier et des listes ; `update()` réaffecte explicitement `dateFin` (le mapper MapStruct ignore les nulls) pour permettre de **retirer** une date de fin existante ; le scheduler laisse volontairement ces affectations en **`EN_COURS`** (clôture humaine : ajout d'une date de fin ou annulation).
+- **Dates et jours de travail rattachés au site** — trois informations de l'étape « Poste & Affectation » qui étaient portées au niveau de l'**employé** deviennent propres à chaque **site** du tableau `affectations` ([dossier-employe.model.ts](src/app/models/dossier-employe.model.ts)). `AffectationSite` gagne **`dateEntree`** (arrivée sur ce site, requise), **`dateSortie`** (optionnelle) et **`joursTravail`** (requis, défaut `LUN_VEN`) ; en contrepartie `DossierEmploye.joursTravail` est **supprimé** et `DossierEmploye.dateEntree` est **renommé `dateEmbauche`** (« Date d'embauche »), sans quoi deux champs homonymes désigneraient l'entrée dans l'entreprise et l'entrée sur un site.
+  - ⚠ **`dateSortie` naît `disabled`**, et c'est le contrôle désactivé lui-même qui porte le sens « sortie inconnue, l'employé est toujours en poste sur ce site » ; une case à cocher l'active le jour où il quitte le site, et la décocher **vide** la valeur (une date invisible mais persistée sortirait l'employé à son insu). Un contrôle désactivé étant absent de `form.value`, la construction du payload lit **`this.affectations.getRawValue()`** et non `v.poste.affectations` — même piège que le champ Employé du formulaire de demande de congé.
+  - ⚠ Le **calendrier de planning terrain** est le seul consommateur réel de ces champs. Dans `appliquerEvenements()` ([calendrier-planning.component.ts](src/app/adminPage/exploitation-v2/terrain/planning/calendrier-planning/calendrier-planning.component.ts)), le test de semaine ouvrée était fait **une fois par employé, avant** la boucle sur les tranches : il est descendu **dans** cette boucle, avec le filtre de période `dateEntree`/`dateSortie`. Les comparaisons se font sur des **chaînes `yyyy-MM-dd`** (`date` vient d'`isoLocale()`) — l'ordre lexicographique ISO est exact, aucune conversion `Date` n'est nécessaire, et un `.slice(0, 10)` absorbe un datetime backend.
+  - ⚠ **Le repli rétro-compat ne filtre rien** : la tranche dérivée de `siteAffecte` (calendrier) naît avec `dateEntree: null`, et les gardes sont toutes conditionnées à la présence de la valeur — un dossier antérieur reste affiché à l'identique. Côté formulaire, ce même repli complète en revanche chaque ligne avec `dateEntree = dateEmbauche` et `LUN_VEN`, sinon une fiche ancienne s'ouvrirait invalide.
+  - Les libellés de semaine ouvrée étaient déjà **dupliqués dans deux fichiers** : ils sont centralisés en `LIBELLES_JOURS_TRAVAIL` / `OPTIONS_JOURS_TRAVAIL` / `libelleJoursTravail()` exportés **à côté du type `JoursTravail`** dans son modèle, et consommés par `formulaire-employe`, `formulaire-affectation` et `fiche-employe` — ne pas en recopier une troisième version (cf. le tableau des mois dupliqué 6 fois dans le module RH).
+  - La **fiche employé** rend désormais la liste des affectations (site, horaires, jours, période) là où elle n'affichait que la string plate `siteAffecte` ; `formulaire-affectation` affiche les jours **par ligne** et non plus une fois pour l'agent.
+  - **Import Excel** : colonne `"Date d'entrée *"` → `"Date d'embauche *"`, champ payload `dateEntree` → `dateEmbauche`. Les dates et jours **par site ne sont pas importables** (l'import reste mono-champ `Site affecté *`) : le backend complète chaque affectation dérivée avec `dateEntree = dateEmbauche` et `joursTravail = LUN_VEN`, ce que disent les consignes du template.
+  - ⚠ **Contrat backend livré** (branche `feature/affectation-dates-et-jours-par-site`, partant de `main`). `AffectationSite` (entité + DTO) gagne `dateEntree`, `dateSortie` (LocalDate) et `joursTravail` (String) ; MapStruct mappe par nom, rien à écrire. La propagation se fait par une **passe supplémentaire, idempotente, dans `AffectationSiteBackfillRunner`** (plutôt qu'un nouveau runner : il balaie déjà tous les dossiers au démarrage) qui recopie sur chaque affectation `joursTravail` de l'employé et `dateEntree = dateEmbauche`, **sans jamais écraser une valeur saisie**. Sans elle, tout le parc retomberait sur l'échelon permissif du résolveur.
+  - ⚠ **Trois écarts assumés par rapport au contrat initialement esquissé ci-dessus :**
+    1. **Le champ Mongo n'est PAS renommé.** `DossierEmploye.dateEntree` devient `dateEmbauche` en Java/JSON mais garde `@Field("dateEntree")` (même procédé que `Produit.dateEntree`) : renommer réellement aurait rendu **nulle la date d'embauche de tous les dossiers en base**, alors que seul le nom devait changer. Aucune migration de données n'est donc nécessaire pour ce renommage.
+    2. **`joursTravail` reste sur l'employé.** Il n'est plus envoyé par le front, mais c'est le **deuxième échelon de repli** du résolveur (`par site → par employé → aucun filtrage`) et la source de la migration. Le retirer supprimerait la seule information de rythme des dossiers antérieurs.
+    3. **`dateEntree` et `joursTravail` ne sont PAS `@NotNull`** sur l'affectation : l'import bulk et `SiteAffecteUtils.affectationsDepuisSiteAffecte` (repli quand le client n'envoie que `siteAffecte`) produisent des affectations **sans aucune date**, et les exiger casserait ces deux flux. Seul `dateSortie >= dateEntree` est vérifié (**422**), ainsi que `joursTravail` contre l'enum.
 
 ### 6.2 Temps & Présences (`ressources-humaines/temps-et-presences/`)
 
@@ -123,6 +135,99 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
 - Sidebar — les deux entrées « Pointage centralisé » et « Historique pointage » du sous-menu **Présences** sont condensées en une seule rubrique **« Pointage »** (→ `rh/temps-et-presences/pointage-centralise`). Les deux routes et les deux composants sont conservés ; la bascule se fait par une **barre d'onglets** « Vue du jour » / « Historique » présente dans les deux templates (elle remplace les anciens liens croisés). ⚠ L'entrée de sidebar n'a **plus** `[routerLinkActiveOptions]="{ exact: true }"` (sans quoi elle se dé-surlignerait sur `/historique`), et inversement l'onglet « Vue du jour » **doit** le porter (sinon il reste actif sur le sous-chemin `/historique`). Le flag RBAC reste l'unique `rh.pointageCentralise`.
 - Formulaire d'absence — quand le type sélectionné est `AUTRE`, un champ texte "Précisez le type d'absence" apparaît et devient obligatoire. La valeur est stockée dans `Absence.typeAutrePrecision` (optionnel) et envoyée dans le `FormData` de soumission. Dans le tableau de la liste, le type `AUTRE` est affiché enrichi : `Autre (précision saisie)` via le helper `getTypeLibelle(a)`.
 - Sidebar — les entrées « Congés » (qui pointait en réalité sur `rh/temps-et-presences/absences`, l'écran de *déclaration*) et « Calendrier des congés » (`rh/temps-et-presences/conges`) sont condensées en une seule rubrique **« Congés »**, avec une **barre d'onglets** « Calendrier » / « Déclarations » dupliquée dans `calendrier-conges` et `liste-absences`. « Validation congés » et « Mes demandes de congé » **restent des entrées de menu distinctes** ; les boutons croisés « Mes demandes » / « Validation » de l'en-tête du calendrier sont donc supprimés (avec les méthodes `mesDemandes()` / `validation()`), seul « Nouvelle demande » reste. ⚠ **Inversion par rapport à la rubrique Pointage** : ici les deux routes sont **sœurs** (`/conges` et `/absences`), pas parent/enfant — `[routerLinkActiveOptions]="{ exact: true }"` va donc sur l'onglet **Calendrier** (sinon il resterait actif sur `/conges/demande`) et non sur Déclarations (qui doit rester actif sur `/absences/nouvelle` et `/absences/:id/modifier`). ⚠ Le surlignage de l'entrée de sidebar ne peut **pas** passer par `routerLinkActive` (il faudrait exprimer « `/conges` exact **ou** `/absences*`, mais ni `/conges/validation` ni `/conges/mes-demandes` ») : il passe par `estRubriqueConges()` + `[ngClass]`, et la destination par `lienRubriqueConges()` (retombe sur `/absences` si le droit `rh.conges` manque). Les deux flags RBAC `rh.conges` et `rh.absences` sont **conservés** et agrégés en `*ngIf` sur l'entrée — un profil n'ayant que l'un des deux verra l'onglet de l'autre (comportement inchangé, il n'y a pas de guard de route sur ces écrans).
+
+#### Pointage centralisé — une ligne par site, retards et absences sur l'horaire du site
+
+La présence est évaluée **par créneau** (employé × jour × site attendu) et non plus par
+employé : un agent affecté à 2 sites produit **2 lignes par jour**, chacune jugée sur le
+`horaireDebut` / `horaireFin` **de son propre site**. Le socle des lignes est le
+**planning**, les pointages venant s'y rattacher — l'inverse de l'ancien modèle, qui
+émettait une ligne par enregistrement de pointage.
+
+- ⚠ **`Pointage.site[]` n'est pas une clé de rattachement, et ne doit jamais le redevenir.**
+  `PointageServices.enregistrerPointage` y recopie **tous** les sites de l'agent
+  (`site(decouperSites(agent.getSiteAffecte()))`) : l'agent ne choisit jamais le sien. La
+  branche « mono-site » de l'ancien `resoudreHeurePrevue` ne se déclenchait donc **jamais**
+  pour un multi-sites et retombait sur le `horaireDebut` **le plus tôt de tous ses sites**,
+  d'où des retards faux (arrivée 10:20 sur un site à 10:00 comptée « en avance » sur un site
+  à 06:00). Ce champ n'est plus qu'un libellé d'affichage sur les lignes hors planning.
+  Le test `pointage_multi_sites_dans_un_record_prend_horaire_le_plus_tot`, qui verrouillait
+  ce repli, a été **supprimé**.
+- **Rattachement par plage horaire**, en deux passes dans `PointageCentraliseService.rattacher` :
+  *contenance* (l'arrivée tombe dans `[horaireDebut, horaireFin]` ; sur fenêtres
+  chevauchantes, **le début le plus tard gagne** — c'est la fenêtre qui vient de s'ouvrir),
+  puis *proximité* (écart croissant, glouton). **Un créneau n'accueille qu'un pointage** ;
+  un créneau sans `horaireDebut` n'est gagné par aucune passe.
+- **Échelle de statuts**, comparée à la **date-heure** de la ligne (jamais un `LocalTime` nu) :
+  pointé ⇒ `PRESENT` / `RETARD` ; sinon `NEUTRE` avant le début, `EN_ATTENTE` pendant,
+  `ABSENT` après la fin. ⚠ Cette règle unique règle les trois horizons **sans cas
+  particulier** : un jour passé est toujours après la fin (⇒ jamais de `NEUTRE` dans
+  l'Historique), un jour futur toujours avant le début (⇒ jamais d'`ABSENT`).
+  ⚠ **Horaires nuls : ne rien inventer** (pas de 08:00–17:00 par défaut) — un horaire
+  fabriqué produirait un retard faux ; bornes = journée entière, retard 0.
+- ⚠ **Nouveau statut `HORS_PLAN`** : un pointage qu'aucun créneau n'explique (plus de
+  pointages que de sites, dossier sans affectation, jour non travaillé). Il **ne disparaît
+  jamais** et n'est **pas** fondu dans `absents` — c'est justement la branche `default ->`
+  attrape-tout de l'ancien `getResume` qui avait rendu le bug invisible. Tuile dédiée.
+- ⚠ **`joursTravail` absent ⇒ échelle de replis « par site → par employé → aucun filtrage »**
+  ([PlanningAffectationResolver](../Pointage-Cleanic-Backend/src/main/java/com/example/Pointage_Cleanic/services/rh/PlanningAffectationResolver.java)),
+  et **surtout pas un repli sur `LUN_VEN`** : dans une société de nettoyage où `LUN_SAM` et
+  `LUN_DIM` sont courants, forcer `LUN_VEN` ferait **disparaître toute ligne du samedi et du
+  dimanche** d'un dossier legacy — donc masquerait une absence réelle sur l'écran qui sert à
+  les tracer. Le faux négatif est ici le pire mode de défaillance. `LUN_VEN` reste le défaut
+  d'**affichage** du front (`libelleJoursTravail`), ce qui n'en fait pas une règle de filtrage.
+- ⚠ **L'identifiant de ligne appartient au créneau**, pas au pointage
+  (`employeId|date|ordinal|site-slug@horaireDebut`) : avec `id = pointage.getId()`, la même
+  ligne n'aurait pas d'id avant le pointage puis hériterait de l'`_id` Mongo après, et le
+  `trackBy` Angular détruirait/recréerait la ligne à chaque rafraîchissement traversant un
+  pointage. L'`_id` réel est porté à part par **`pointageId`**.
+- ⚠ **Le filtre `site` passe du prédicat employé au prédicat ligne.** Il testait
+  `employe.siteAffecte.contains(...)` : filtrer sur « Yoff » rendait **toutes** les lignes
+  d'un agent bi-site. `departement` et `q` restent employé-level (pré-filtre bon marché).
+  Le filtrage reste **avant** la pagination, `totalElements` comptant désormais des
+  **créneaux** (le libellé front dit « créneau(x) »).
+- ⚠ **`ResumeJourneeDto` mélange deux unités, à ne pas additionner** : `totalEmployes` et
+  `enConge` comptent des **personnes**, tout le reste des **créneaux**. Nouveaux champs
+  `creneauxPrevus`, `enAttente`, `neutres`, `horsPlan`. L'ancien invariant
+  `presents + absents + retards + enConge == totalEmployes` était **déjà faux** pour les
+  multi-pointages : il est abandonné, remplacé par
+  `presents + retards + absents + enAttente + neutres == creneauxPrevus`.
+- ⚠ **Un congé approuvé produit UNE seule ligne**, pas une par site : c'est un fait de la
+  journée, et le multiplier gonflerait la tuile « En congé ».
+- **Horloge injectée** : le service consomme le bean `Clock` de `configurations/TimeConfig`
+  (`Africa/Dakar`) au lieu de `LocalDate.now()` en dur — sans quoi l'échelle temporelle
+  serait fausse hors Dakar et **intestable**. ⚠ Tous les tests fixent l'horloge
+  (`Clock.fixed`) ; l'ancienne suite avait une date de référence future à l'écriture, devenue
+  passée, ce qui aurait rendu ses résultats dépendants du jour d'exécution.
+- **Front** : `StatutPresence` gagne `NEUTRE | EN_ATTENTE | HORS_PLAN` ; colonne **Horaire
+  prévu**, ligne **grisée** sur `NEUTRE`, tuiles *En attente* / *À venir* / *Hors planning*.
+  ⚠ **`statutAffiche()` ne dérive plus rien** et renvoie le statut serveur : l'ancienne
+  version repliait sur `PRESENT` tout ce qui n'était ni `ABSENT` ni `CONGE`, et aurait donc
+  affiché « Présent » sur un créneau non commencé. Cela corrige au passage l'incohérence
+  d'origine entre le badge (tolérance appliquée côté client) et le filtre / les tuiles
+  (statut brut serveur). Les trois maps de badges, **dupliquées verbatim** dans
+  `pointage-centralise` et `historique-pointage-centralise`, sont centralisées dans
+  [pointage-retard.util.ts](src/app/adminPage/ressources-humaines/temps-et-presences/pointage-retard.util.ts).
+- ⚠ **Impact aval traité** : `TableauBordRhService.calculerTempsPresence` divisait
+  `totalAbsents` par un compte **par ligne** — les lignes `NEUTRE` / `EN_ATTENTE` /
+  `HORS_PLAN` auraient **dilué silencieusement le taux d'absentéisme**. Elles sont exclues du
+  dénominateur. `GET /temps-presences/pointages` borne désormais la plage à **92 jours**
+  (une requête Mongo par jour).
+- ⚠ **Effet de bord sur le calendrier de planning terrain**, à connaître : `calendrier-planning`
+  estompe un jour dès qu'il trouve une ligne `ABSENT` ou `CONGE` pour le couple
+  employé/jour. Un agent qui honore un site et en manque un autre produit désormais
+  **`PRESENT` + `ABSENT`** le même jour, là où l'ancien modèle ne produisait aucune ligne
+  `ABSENT` : sa journée est donc estompée alors qu'elle ne l'était pas. C'est plus fidèle
+  (il a bien manqué un créneau), mais c'est un changement visible. Le composant lui-même est
+  **inchangé** ; il reçoit simplement plus de lignes (volume ~×nombre de sites, sa fenêtre
+  restant sous le plafond de 92 jours).
+- ⚠ **Au déploiement les chiffres changent pour tout le monde** : plus de lignes (une par
+  site), des retards jusqu'ici faux qui disparaissent, des lignes `HORS_PLAN` qui
+  apparaissent. À annoncer, comme les bascules de soldes de congés.
+- **Hors périmètre, connu** : `RecapitulatifMensuelService` fige toujours `nombreRetards` à 0
+  avec un commentaire devenu faux (« DossierEmploye ne porte pas d'heure de début » — les
+  affectations en portent). Lot dédié.
+- Backend : branche `feature/affectation-dates-et-jours-par-site` (depuis `main`).
 
 #### Congés — circuit de validation à 3 niveaux + notifications
 
@@ -175,6 +280,11 @@ vue complète, sans laquelle ils ne pourraient pas instruire les niveaux 2 et 3.
 - Codes : **403** (`CongeAccesRefuseException`) sur `GET /demandes/{id}`,
   `GET /soldes/{employeId}`, `GET /demandes/employe/{id}` et les routes `/absences`
   correspondantes, hors périmètre.
+- 📄 **Audit de conformité** (2026-09-02) : [docs/backend/conges-perimetre-validation.md](docs/backend/conges-perimetre-validation.md)
+  — chaîne d'application complète du périmètre (claim JWT → file de validation → 403), et **trois
+  écarts non traités**, dont le plus sérieux : **`PUT /demandes/{id}` n'a aucune garde**
+  (`DemandeCongeService.update` : ni périmètre, ni habilitation, ni contrôle de statut — tout
+  compte authentifié peut modifier la demande d'autrui, même approuvée).
 
 **Front.** Constantes centralisées dans [conges.constants.ts](src/app/constants/conges.constants.ts)
 (libellés/couleurs de statut, niveaux, actions, topics WS, `PARAMETRES_CONGES`) — les maps
@@ -214,11 +324,49 @@ pas sur `main` (qui n'a pas encore le module congés). ⚠ La branche redéclare
 d'expéditeur d'`EmailService`, déjà présents sur `feature/notification-mail-bons` — **conflit trivial
 attendu au merge des deux branches**.
 
+**Périmètre de dépôt — le champ « Employé » du formulaire de demande.** Distinct du périmètre
+de *visibilité* ci-dessus, et **volontairement plus étroit**. Le champ est désormais **toujours
+rendu** (il ne l'était que pour `RH`/`SUPERADMIN`), et son contenu vient d'un endpoint dédié :
+
+| Profil | Liste reçue |
+|---|---|
+| `RH`, `SUPERADMIN` | tous les employés non sortis (inchangé) |
+| `EXPLOITATION` | lui-même **et ses subordonnés directs** |
+| tout autre profil | lui-même seul |
+| compte non rattaché à un `DossierEmploye` | **vide**, jamais totale |
+
+- ⚠ **Encadrer ne suffit pas : seul le rôle ouvre le droit.** Un manager `BACKOFFICE` *voit* les
+  congés de son équipe (`perimetreLecture`) mais ne peut **pas** en *déposer* pour elle. D'où un
+  **`CongeIdentiteService.perimetreDepot()` séparé**, et non une réutilisation de
+  `perimetreLecture()` — les confondre ouvrirait le dépôt pour autrui à tout encadrant. Il porte
+  aussi une surcharge `perimetreDepot(DossierEmploye)` pour les appelants qui tiennent déjà le
+  dossier (économie d'une lecture Mongo, cf. la règle « un périmètre par méthode publique »).
+- ⚠ **`POST /demandes` a été assoupli en conséquence** : la garde de `resoudreDemandeur` passe de
+  `peutCreerPourAutrui()` (RH/SUPERADMIN) à `perimetreDepot(moi).voitEmploye(cible)`. Sans quoi le
+  champ serait un piège — il proposerait des subordonnés que la création refuserait en 403. La
+  garde reste posée **avant** le `findById`, un 404 distinct du 403 divulguant l'existence du
+  dossier. `ROLE_EXPLOITATION` **existait déjà** (assignable dans `gestion-privilege`), rien à
+  créer côté rôles ; il gagne juste sa constante dans [roles.constants.ts](src/app/constants/roles.constants.ts).
+- ⚠ **Route sous `/conges/`, pas sous `/gestion-personnel/`** : un compte `EXPLOITATION` n'a pas le
+  droit de lecture du référentiel employés — un filtre `superieurHierarchiqueId` ajouté à
+  `GET /gestion-personnel/employes` lui aurait valu un 403. Elle remplace le `getEmployes(0, 500)`
+  **sans filtre** que faisait le formulaire, qui était de toute façon faux au-delà de 500 employés.
+- Côté front, `peutCreerPourAutrui()` s'élargit à `EXPLOITATION` mais devient **purement
+  cosmétique** (un libellé) : le formulaire décide de rendre un `<select>` ou un champ figé sur la
+  **longueur de la liste reçue**, jamais sur le rôle. `voitTousLesConges()` /
+  `voitPlusieursEmployes()` sont **inchangés** — ils gouvernent la *lecture*, pas le dépôt.
+- ⚠ **Aucune présélection quand la liste dépasse un employé** : déposer au nom d'un tiers est un
+  acte délibéré, un demandeur pré-rempli s'enverrait par mégarde. À un seul choix, le champ est
+  `disable()` — donc **lu par `form.getRawValue()`**, un contrôle désactivé sortant de `form.value`.
+- Backend : branche `feature/conges-employes-selectionnables`, partant de **`main`** (le module
+  congés y est déjà, contrairement à ce que laissait entendre la section précédente).
+
 **Endpoints backend** (base `${environment.apiUrl}/temps-presences/conges`) :
 
 | Méthode | URL | Corps / params | Réponse |
 |---|---|---|---|
 | GET | `/moi` | — | `MonProfilConge` (employeId, supérieur, `niveauxValidables[]`, `nbDemandesAValider`) |
+| GET | `/employes-selectionnables` | — | `EmployeSelectionnable[]` — non paginé, borné serveur (voir « Périmètre de dépôt ») |
 | GET | `/demandes` | `page,size,employeId,departement,statut(*n),niveau,type,dateDebut,dateFin,q` | `Page<DemandeConge>` |
 | GET | `/demandes/mes-demandes` | `page,size,…` | demandes de l'appelant (résolu par le JWT) |
 | GET | `/demandes/a-valider` | `page,size,niveau?` | **uniquement** ce que l'appelant peut trancher maintenant, `peutValiderParMoi=true` sur chaque ligne |
@@ -236,7 +384,8 @@ attendu au merge des deux branches**.
   vérifie que l'appelant est habilité à ce niveau.
 - **403** — `/valider` ou `/refuser` si l'appelant n'est ni le `superieurHierarchiqueId` de la
   demande (N1), ni de rôle `RH` (N2), ni `SUPERADMIN` (N3) ; `POST /demandes` avec un `employeId`
-  ≠ soi hors `RH`/`SUPERADMIN` ; `DELETE` sur la demande d'autrui hors `RH`/`SUPERADMIN`.
+  hors du **périmètre de dépôt** de l'appelant (cf. section dédiée) ; `DELETE` sur la demande
+  d'autrui hors `RH`/`SUPERADMIN`.
 - **409** — transition sur un statut terminal ou dont le niveau courant n'est pas celui de
   l'appelant (course entre deux RH). Message exploitable : `{ "message": "Demande déjà traitée au niveau RH." }`.
 - **422** — motif absent/trop court ; solde insuffisant (type `ANNUEL`) ; `dateFin < dateDebut` ;
@@ -252,13 +401,41 @@ attendu au merge des deux branches**.
   `decideur*`/`dateDecision`/`commentaireDecision` sont convertis en une entrée d'historique. La
   valeur `EN_ATTENTE` reste tolérée en lecture par le front
   (`NIVEAU_PAR_STATUT['EN_ATTENTE'] = 'SUPERIEUR'`).
-- **Solde et décompte** — l'acquis annuel passe de 30 à **22 jours ouvrés**
-  (`app.conges.jours-acquis-par-an`), `enCours` compte les **4** statuts d'attente, et
-  `computeNombreJours` exclut samedi et dimanche : le décompte était en jours *calendaires* alors que
-  le solde est en jours *ouvrés*, si bien que le solde se vidait trop vite. ⚠ Les **jours fériés
-  restent décomptés** — l'ancien référentiel des fériés a été supprimé et une liste en dur serait
-  pire qu'une limite documentée. ⚠ Au déploiement, les soldes affichés changent pour tout le monde
-  (moins d'acquis, mais aussi moins de jours par demande) : à annoncer aux utilisateurs.
+- **Solde et décompte** — `enCours` compte les **4** statuts d'attente, et `computeNombreJours`
+  exclut samedi et dimanche : le décompte était en jours *calendaires* alors que le solde est en
+  jours *ouvrés*, si bien que le solde se vidait trop vite. ⚠ Les **jours fériés restent
+  décomptés** — l'ancien référentiel des fériés a été supprimé et une liste en dur serait pire
+  qu'une limite documentée.
+- **Acquis dynamique — 2 jours ouvrables par mois de service effectif** (droit sénégalais, 24 j
+  pour une année pleine), via `app.conges.jours-acquis-par-mois`. Remplace le forfait annuel
+  (`jours-acquis-par-an`, 22), qui accordait autant de jours à un employé embauché le 15 novembre
+  qu'à un employé présent toute l'année. Le calcul est porté par
+  **`services/rh/CongeAcquisCalculator`** — composant **pur** (aucun accès base, « aujourd'hui »
+  passé en paramètre), pinné sur dates figées par `CongeAcquisCalculatorTest`.
+  - ⚠ **Mois révolus, de quantième à quantième** : entré le 15/03, au 02/09 → 5 mois (15/03→15/08),
+    pas 6. La borne d'un exercice est le **1er janvier suivant, exclu** — avec le 31 décembre,
+    `MONTHS.between` rend 11 et ampute d'un mois toute année pleine.
+  - ⚠ **`dateEntree` nulle** (dossiers antérieurs, le champ n'a jamais été `@NotNull`) : l'employé
+    est réputé présent depuis le 1er janvier, et son **report est nul** — sans date d'entrée il
+    n'existe aucune base pour reconstituer un historique, et en inventer un créditerait des jours
+    à tort (même arbitrage prudent que le `type` nul de `decompteLeSolde`).
+  - Côté front, `PARAMETRES_CONGES.joursAcquisParMois` est un **miroir d'affichage** au même titre
+    que `TYPES_DECOMPTES_DU_SOLDE` : il ne sert qu'à composer un libellé, le serveur renvoyant
+    déjà `acquis` **et `moisAcquis`**. Le front ne recalcule jamais de droits.
+- **Solde antérieur — le reliquat N-1 est désormais calculé, plus perdu.** `SoldeCongeDto` expose
+  **`soldeAnterieur`** : `Σ [ acquis(a) − prisApprouvés(a) ]` de l'année d'entrée à N-1,
+  **ajouté au disponible** — `solde = max(0, soldeAnterieur + acquis − pris − enCours)`.
+  - ⚠ **Le plancher à 0 porte sur le TOTAL du report**, pas année par année : un dépassement en
+    2024 doit s'imputer sur le reliquat 2025, sinon le report serait systématiquement surévalué.
+  - ⚠ **Seul `APPROUVE` ampute un exercice clos** : une demande restée en attente depuis 2024 ne
+    sera jamais tranchée, la geler amputerait un reliquat pour rien.
+  - ⚠ **`soldeAnterieur` est INCLUS dans `solde`** — l'additionner compterait les jours deux fois.
+    C'est ce que disent l'infobulle et la note de pied sur les 5 écrans qui l'affichent.
+  - `buildSolde` fait désormais **une seule** lecture (`findByEmployeId`) et groupe par année ;
+    `findByEmployeIdAndDateDebutBetween` est **supprimé du repository**, plus aucun appelant.
+- ⚠ Au déploiement, **les soldes affichés changent pour tout le monde, et dans les deux sens** :
+  l'acquis chute en début d'exercice (2 j en février au lieu de 22) mais le reliquat antérieur
+  apparaît pour les anciens. À annoncer aux utilisateurs, comme les bascules précédentes.
 - **Types de congé et décompte du solde** — 7 valeurs :
   `ANNUEL`, `MATERNITE`, `PATERNITE`, `REPOS_MEDICAL`, `SANS_SOLDE`, `EXCEPTIONNEL`,
   `ABSENCE_NON_JUSTIFIEE`. **Seul `ANNUEL` ampute les jours acquis.** La règle est portée par
@@ -277,13 +454,18 @@ attendu au merge des deux branches**.
   `name()` brut sortait auparavant (« Repos medical » sans accent, « ABSENCE_NON_JUSTIFIEE »).
   ⚠ Le pointage centralisé range **toute** demande sous le statut `CONGE`, y compris désormais une
   absence non justifiée — sémantiquement discutable, non traité.
-- ⚠ **Le solde ne porte que sur l'exercice courant.** `buildSolde` est câblé sur
+- ⚠ **Le solde affiché reste celui de l'exercice courant.** `buildSolde` est câblé sur
   `LocalDate.now().getYear()` : il n'existe **aucun paramètre d'année** sur `/soldes`,
-  `/soldes/{id}` ni `/soldes/moi`, et **aucune historisation des soldes** (`acquis` est une
-  constante applicative, il n'y a ni solde par exercice ni report de reliquat N-1). Un
-  « solde 2025 » serait donc recalculé avec les paramètres d'aujourd'hui — c'est la raison
-  pour laquelle l'onglet Congés de la fiche employé n'ouvre **pas** de sélecteur d'année :
-  seul l'historique des demandes remonte dans le temps.
+  `/soldes/{id}` ni `/soldes/moi`, et **aucune historisation des soldes** en base. Les exercices
+  antérieurs ne remontent que **cumulés** dans `soldeAnterieur`, jamais consultables un par un —
+  c'est la raison pour laquelle l'onglet Congés de la fiche employé n'ouvre **pas** de sélecteur
+  d'année. Le rétroactif est néanmoins fidèle : 2 j × mois de service est déterministe année par
+  année, là où l'ancien forfait annuel configurable aurait recalculé 2024 avec les paramètres
+  d'aujourd'hui.
+- ⚠ **Écart connu : le 422 « solde insuffisant » n'est pas implémenté.** `CongeWorkflowService` ne
+  lit jamais le solde et le formulaire ne pose aucun validateur — le solde est **indicatif**, et
+  rendre le report consommable ne change donc rien au comportement de dépôt. À trancher dans un
+  lot dédié (la table des règles serveur plus bas l'annonce à tort).
 - ⚠ **Bug latent, non traité : l'onglet « Déclarations » est désynchronisé du serveur.**
   [absence.model.ts](src/app/models/absence.model.ts) propose `ANNUEL` et `SANS_SOLDE`, qui
   **n'existent pas** dans l'enum serveur `TypeAbsence` (`CONGE_PAYE, MALADIE, PERMISSION,
