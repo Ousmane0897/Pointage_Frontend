@@ -12,13 +12,13 @@ import { ContratService } from '../../../../../services/contrat.service';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
 import { CongeService } from '../../../../../services/conge.service';
 import { AbsenceService } from '../../../../../services/absence.service';
-import { DossierEmploye } from '../../../../../models/dossier-employe.model';
+import { DossierEmploye, libelleJoursTravail } from '../../../../../models/dossier-employe.model';
 import { Contrat, AlerteContrat } from '../../../../../models/contrat.model';
 import { DocumentEmploye } from '../../../../../models/document-employe.model';
 import { DemandeConge, SoldeConge } from '../../../../../models/conge.model';
 import { Absence } from '../../../../../models/absence.model';
 import { PageResponse } from '../../../../../models/pageResponse.model';
-import { LIBELLES_TYPE_CONGE } from '../../../../../constants/conges.constants';
+import { LIBELLES_TYPE_CONGE, PARAMETRES_CONGES } from '../../../../../constants/conges.constants';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import { BadgeStatutCongeComponent }
   from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/badge-statut-conge.component';
@@ -61,6 +61,9 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   congesMessage = '';
 
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
+  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
+  /** Semaine ouvrée d'une affectation — propre au site, rendue par ligne. */
+  readonly libelleJoursTravail = libelleJoursTravail;
 
   // ─── Photo (ObjectURL local, le endpoint est protégé par JWT) ────────────
   photoBlobUrl: string | null = null;

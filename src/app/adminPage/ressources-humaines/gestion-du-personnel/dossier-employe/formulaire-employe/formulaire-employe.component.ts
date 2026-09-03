@@ -9,7 +9,12 @@ import { LucideAngularModule } from 'lucide-angular';
 import { ToastrService } from 'ngx-toastr';
 
 import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
-import { DossierEmploye, AffectationSite } from '../../../../../models/dossier-employe.model';
+import {
+  DossierEmploye,
+  AffectationSite,
+  OPTIONS_JOURS_TRAVAIL,
+  libelleJoursTravail,
+} from '../../../../../models/dossier-employe.model';
 import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
 import { SiteClient, EffectifSite } from '../../../../../models/terrain-site-client.model';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
@@ -105,11 +110,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     { valeur: 'SORTI', libelle: 'Sorti' },
   ];
 
-  readonly joursTravailOptions = [
-    { valeur: 'LUN_VEN', libelle: 'Lundi - Vendredi' },
-    { valeur: 'LUN_SAM', libelle: 'Lundi - Samedi' },
-    { valeur: 'LUN_DIM', libelle: 'Lundi - Dimanche' },
-  ];
+  readonly joursTravailOptions = OPTIONS_JOURS_TRAVAIL;
 
   // ─── Documents (étape 4 — collecte en mémoire, upload après création) ────────
   /** Formulaire de saisie d'un document à ajouter à la liste. */
@@ -214,11 +215,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         // Affectations : sites + tranche horaire optionnelle. `siteAffecte` (rétro-compat)
         // n'est plus un champ de saisie : il est dérivé au moment de la sauvegarde.
         affectations: this.fb.array([], this.auMoinsUnSiteValidator),
-        dateEntree: [null, Validators.required],
+        dateEmbauche: [null, Validators.required],
         statut: ['ACTIF', Validators.required],
         superieurHierarchiqueId: ['', Validators.required],
         dureeEssaiMois: [null],
-        joursTravail: ['LUN_VEN', Validators.required],
       }),
       // Étape 3
       contacts: this.fb.group({
@@ -257,18 +257,49 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   /** FormArray des affectations (site + tranche horaire). */
   get affectations(): FormArray { return this.posteGroup.get('affectations') as FormArray; }
 
-  /** Fabrique une ligne d'affectation (site requis, horaires optionnels mais cohérents). */
+  /**
+   * Fabrique une ligne d'affectation : site et date d'entrée requis, horaires
+   * optionnels mais cohérents, jours de travail propres au site.
+   *
+   * ⚠ `dateSortie` naît **désactivée** : c'est ce qui matérialise « sortie inconnue,
+   * l'employé est toujours en poste sur ce site ». L'utilisateur l'active par la case
+   * à cocher le jour où il quitte le site. Un contrôle désactivé sortant de
+   * `form.value`, la lecture du FormArray se fait partout via `getRawValue()`.
+   */
   private creerLigneAffectation(a?: AffectationSite): FormGroup {
+    const dateSortie = this.toDateInput(a?.dateSortie);
     const groupe = this.fb.group(
       {
         site: [a?.site ?? '', Validators.required],
         horaireDebut: [a?.horaireDebut ?? ''],
         horaireFin: [a?.horaireFin ?? ''],
+        dateEntree: [this.toDateInput(a?.dateEntree) ?? '', Validators.required],
+        dateSortie: [{ value: dateSortie ?? '', disabled: !dateSortie }],
+        joursTravail: [a?.joursTravail ?? 'LUN_VEN', Validators.required],
       },
-      { validators: this.coherenceHoraireValidator },
+      { validators: this.coherenceLigneValidator },
     );
     this.brancherControleCapacite(groupe);
     return groupe;
+  }
+
+  /** True si la date de sortie de la ligne `i` est renseignée (case cochée). */
+  sortieRenseignee(i: number): boolean {
+    return this.affectations.at(i).get('dateSortie')!.enabled;
+  }
+
+  /**
+   * Bascule la case « Sortie renseignée ». Décocher **vide** le contrôle : une date
+   * de sortie invisible mais persistée ferait sortir l'employé du site à son insu.
+   */
+  basculerDateSortie(i: number, actif: boolean): void {
+    const ctrl = this.affectations.at(i).get('dateSortie')!;
+    if (actif) {
+      ctrl.enable();
+    } else {
+      ctrl.setValue('');
+      ctrl.disable();
+    }
   }
 
   /**
@@ -349,12 +380,26 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return (control as FormArray).length === 0 ? { aucunSite: true } : null;
   }
 
-  /** Erreur `horaireIncoherent` si début ET fin sont saisis avec début >= fin. */
-  private coherenceHoraireValidator(group: AbstractControl): ValidationErrors | null {
+  /**
+   * Cohérence d'une ligne d'affectation :
+   * - `horaireIncoherent` si début ET fin sont saisis avec début >= fin ;
+   * - `sortieAvantEntree` si la date de sortie (activée) précède la date d'entrée.
+   *
+   * ⚠ `dateSortie` est désactivée tant que la sortie est inconnue — son contrôle est
+   * lu directement (et non via `group.value`, qui l'omettrait), mais la règle ne
+   * s'applique que s'il est `enabled`.
+   */
+  private coherenceLigneValidator(group: AbstractControl): ValidationErrors | null {
     const debut = group.get('horaireDebut')?.value;
     const fin = group.get('horaireFin')?.value;
     if (debut && fin && debut >= fin) {
       return { horaireIncoherent: true };
+    }
+
+    const sortieCtrl = group.get('dateSortie');
+    const entree = group.get('dateEntree')?.value;
+    if (sortieCtrl?.enabled && sortieCtrl.value && entree && sortieCtrl.value < entree) {
+      return { sortieAvantEntree: true };
     }
     return null;
   }
@@ -488,11 +533,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
               poste: employe.poste,
               departement: employe.departement,
               // siteAffecte est géré par la sélection multi-sites (cf. ci-dessous)
-              dateEntree: this.toDateInput(employe.dateEntree),
+              dateEmbauche: this.toDateInput(employe.dateEmbauche),
               statut: employe.statut,
               superieurHierarchiqueId: employe.superieurHierarchiqueId ?? '',
               dureeEssaiMois: employe.dureeEssaiMois ?? null,
-              joursTravail: employe.joursTravail ?? 'LUN_VEN',
             },
             contacts: {
               telephone: employe.telephone,
@@ -504,11 +548,18 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
           // Hydrate le FormArray des affectations. Priorité au champ structuré
           // `affectations` ; sinon fallback rétro-compat sur la string `siteAffecte`
-          // (une ligne par site, sans horaire).
+          // (une ligne par site, sans horaire). ⚠ Les lignes dérivées doivent porter
+          // une date d'entrée et des jours de travail, sinon une fiche antérieure au
+          // rattachement de ces champs au site s'ouvrirait invalide : on retombe sur
+          // la date d'embauche et la semaine ouvrée par défaut.
           this.affectations.clear();
           const affectations: AffectationSite[] = employe.affectations?.length
             ? employe.affectations
-            : this.splitSites(employe.siteAffecte).map(site => ({ site }));
+            : this.splitSites(employe.siteAffecte).map(site => ({
+                site,
+                dateEntree: this.toDateInput(employe.dateEmbauche),
+                joursTravail: 'LUN_VEN' as const,
+              }));
           // Mémorise les sites déjà rattachés pour ne pas les bloquer contre eux-mêmes.
           this.sitesInitiaux = new Set(
             affectations.map(a => (a.site ?? '').trim()).filter(Boolean),
@@ -908,16 +959,22 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
     // Défense : garantit le format "yyyy-MM-dd" (le backend parse en LocalDate)
     employePayload.dateNaissance = this.toDateInput(employePayload.dateNaissance);
-    employePayload.dateEntree = this.toDateInput(employePayload.dateEntree);
+    employePayload.dateEmbauche = this.toDateInput(employePayload.dateEmbauche);
 
     // Affectations : on nettoie les lignes (site requis) et on dérive `siteAffecte`
     // (noms joints par « - ») pour la rétro-compatibilité (liste, pointage, filtres).
-    const affectations: AffectationSite[] = (v.poste.affectations ?? [])
+    // ⚠ Lecture via `getRawValue()` et non `v.poste.affectations` : `dateSortie` est
+    // désactivée tant que la sortie est inconnue, et un contrôle désactivé est absent
+    // de `form.value` — une sortie renseignée serait silencieusement perdue.
+    const affectations: AffectationSite[] = (this.affectations.getRawValue() ?? [])
       .filter((a: AffectationSite) => (a.site ?? '').trim())
       .map((a: AffectationSite) => ({
         site: a.site.trim(),
         horaireDebut: a.horaireDebut || undefined,
         horaireFin: a.horaireFin || undefined,
+        dateEntree: this.toDateInput(a.dateEntree),
+        dateSortie: this.toDateInput(a.dateSortie) ?? undefined,
+        joursTravail: a.joursTravail,
       }));
     employePayload.affectations = affectations;
     employePayload.siteAffecte = affectations.map(a => a.site).join(this.SEPARATEUR_SITES);
@@ -1000,10 +1057,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return this.statutOptions.find((s) => s.valeur === statut)?.libelle ?? '';
   }
 
-  get libelleJoursTravail(): string {
-    const v = this.posteGroup?.get('joursTravail')?.value;
-    return this.joursTravailOptions.find(o => o.valeur === v)?.libelle ?? '';
-  }
+  /** Libellé d'une semaine ouvrée — désormais propre à chaque site, d'où le paramètre. */
+  readonly libelleJoursTravail = libelleJoursTravail;
 
   get libelleGenre(): string {
     return this.identiteGroup?.get('genre')?.value === 'HOMME' ? 'Homme' : 'Femme';

@@ -467,9 +467,73 @@
                     </div>
                   </div>
 
+                  <!-- Période de présence sur ce site + semaine ouvrée propre au site -->
+                  <div class="grid grid-cols-12 gap-3 items-end mt-3 pt-3 border-t border-gray-200">
+                    <!-- Entrée sur le site -->
+                    <div class="col-span-12 sm:col-span-4">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Entrée sur le site <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        formControlName="dateEntree"
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        [ngClass]="{ 'border-red-400 bg-red-50': a.get('dateEntree')?.invalid && a.get('dateEntree')?.touched }"
+                      />
+                    </div>
+
+                    <!-- Jours de travail sur ce site -->
+                    <div class="col-span-12 sm:col-span-4">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Jours de travail <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        formControlName="joursTravail"
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                      >
+                        <option *ngFor="let j of joursTravailOptions" [value]="j.valeur">{{ j.libelle }}</option>
+                      </select>
+                    </div>
+
+                    <!-- Sortie du site : désactivée tant qu'elle est inconnue -->
+                    <div class="col-span-12 sm:col-span-4">
+                      <label class="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <input
+                          type="checkbox"
+                          [checked]="sortieRenseignee(i)"
+                          (change)="basculerDateSortie(i, $any($event.target).checked)"
+                          class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                        />
+                        Sortie du site
+                      </label>
+                      <input
+                        type="date"
+                        formControlName="dateSortie"
+                        [title]="
+                          sortieRenseignee(i)
+                            ? 'Date à laquelle l\'employé a quitté ce site.'
+                            : 'Sortie inconnue : l\'employé est toujours en poste sur ce site. Cochez la case dès qu\'il le quitte.'
+                        "
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
                   <!-- Erreur cohérence horaire -->
                   <p *ngIf="a.errors?.['horaireIncoherent']" class="text-xs text-red-500 mt-1">
                     L'heure de fin doit être postérieure à l'heure de début.
+                  </p>
+
+                  <!-- Erreur cohérence des dates de présence -->
+                  <p *ngIf="a.errors?.['sortieAvantEntree']" class="text-xs text-red-500 mt-1">
+                    La date de sortie doit être postérieure à la date d'entrée sur le site.
+                  </p>
+
+                  <p
+                    *ngIf="a.get('dateEntree')?.invalid && a.get('dateEntree')?.touched"
+                    class="text-xs text-red-500 mt-1"
+                  >
+                    La date d'entrée sur le site est obligatoire.
                   </p>
                 </div>
               </div>
@@ -483,19 +547,20 @@
               </p>
             </div>
 
-            <!-- Date d'entrée -->
+            <!-- Date d'embauche (entrée dans l'entreprise ; l'entrée sur chaque site
+                 est portée par la ligne d'affectation correspondante) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                Date d'entrée <span class="text-red-500">*</span>
+                Date d'embauche <span class="text-red-500">*</span>
               </label>
               <input
                 type="date"
-                formControlName="dateEntree"
+                formControlName="dateEmbauche"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('dateEntree')?.invalid && posteGroup.get('dateEntree')?.touched }"
+                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('dateEmbauche')?.invalid && posteGroup.get('dateEmbauche')?.touched }"
               />
-              <p *ngIf="posteGroup.get('dateEntree')?.invalid && posteGroup.get('dateEntree')?.touched" class="text-xs text-red-500 mt-1">
-                La date d'entrée est obligatoire.
+              <p *ngIf="posteGroup.get('dateEmbauche')?.invalid && posteGroup.get('dateEmbauche')?.touched" class="text-xs text-red-500 mt-1">
+                La date d'embauche est obligatoire.
               </p>
             </div>
 
@@ -514,23 +579,6 @@
               </select>
               <p *ngIf="posteGroup.get('statut')?.invalid && posteGroup.get('statut')?.touched" class="text-xs text-red-500 mt-1">
                 Le statut est obligatoire.
-              </p>
-            </div>
-
-            <!-- Jours de travail -->
-            <div class="sm:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Jours de travail <span class="text-red-500">*</span>
-              </label>
-              <select
-                formControlName="joursTravail"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-white"
-                [ngClass]="{ 'border-red-400 bg-red-50': posteGroup.get('joursTravail')?.invalid && posteGroup.get('joursTravail')?.touched }"
-              >
-                <option *ngFor="let j of joursTravailOptions" [value]="j.valeur">{{ j.libelle }}</option>
-              </select>
-              <p *ngIf="posteGroup.get('joursTravail')?.invalid && posteGroup.get('joursTravail')?.touched" class="text-xs text-red-500 mt-1">
-                Les jours de travail sont obligatoires.
               </p>
             </div>
 
@@ -1065,19 +1113,28 @@
                   <span class="text-gray-500 shrink-0">Site(s)</span>
                   <span class="font-medium text-gray-700 text-right">
                     <ng-container *ngIf="affectations.length > 0; else aucunSiteRecap">
-                      <span *ngFor="let a of affectations.controls; let last = last" class="block">
+                      <span *ngFor="let a of affectations.controls" class="block mb-1 last:mb-0">
                         {{ a.get('site')?.value }}<ng-container
                           *ngIf="a.get('horaireDebut')?.value && a.get('horaireFin')?.value"
                         > ({{ a.get('horaireDebut')?.value }} - {{ a.get('horaireFin')?.value }})</ng-container>
+                        <span class="block text-xs font-normal text-gray-500">
+                          {{ libelleJoursTravail(a.get('joursTravail')?.value) }}
+                          · {{ a.get('dateEntree')?.value | date:'dd/MM/yyyy' }}
+                          →
+                          <ng-container *ngIf="a.get('dateSortie')?.enabled && a.get('dateSortie')?.value; else enPoste">
+                            {{ a.get('dateSortie')?.value | date:'dd/MM/yyyy' }}
+                          </ng-container>
+                          <ng-template #enPoste>en poste</ng-template>
+                        </span>
                       </span>
                     </ng-container>
                     <ng-template #aucunSiteRecap>—</ng-template>
                   </span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-500">Date d'entrée</span>
+                  <span class="text-gray-500">Date d'embauche</span>
                   <span class="font-medium text-gray-700">
-                    {{ posteGroup.get('dateEntree')?.value | date:'dd/MM/yyyy' }}
+                    {{ posteGroup.get('dateEmbauche')?.value | date:'dd/MM/yyyy' }}
                   </span>
                 </div>
                 <div class="flex justify-between">
@@ -1093,10 +1150,6 @@
                   >
                     {{ libelleStatut }}
                   </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Jours de travail</span>
-                  <span class="font-medium text-gray-700">{{ libelleJoursTravail }}</span>
                 </div>
                 <div *ngIf="posteGroup.get('statut')?.value === 'EN_PERIODE_ESSAI'" class="flex justify-between">
                   <span class="text-gray-500">Durée d'essai</span>

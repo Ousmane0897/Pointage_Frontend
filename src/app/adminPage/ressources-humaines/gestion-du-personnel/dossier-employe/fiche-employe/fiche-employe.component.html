@@ -129,9 +129,9 @@
               <lucide-icon name="Phone" class="w-4 h-4 text-gray-400 shrink-0"></lucide-icon>
               {{ employe.telephone || '—' }}
             </div>
-            <div class="flex items-center gap-1.5 text-sm text-gray-500" *ngIf="employe.dateEntree">
+            <div class="flex items-center gap-1.5 text-sm text-gray-500" *ngIf="employe.dateEmbauche">
               <lucide-icon name="CalendarCheck" class="w-4 h-4 text-gray-400 shrink-0"></lucide-icon>
-              Entrée le {{ employe.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
+              Embauché le {{ employe.dateEmbauche | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
             </div>
           </div>
         </div>
@@ -301,14 +301,35 @@
                 <dt class="text-sm text-gray-500 shrink-0">Département</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.departement || '—' }}</dd>
               </div>
+              <!-- Sites : période de présence et semaine ouvrée sont propres à chaque
+                   site. Repli sur la string `siteAffecte` pour les dossiers antérieurs. -->
               <div class="flex justify-between items-start gap-3">
-                <dt class="text-sm text-gray-500 shrink-0">Site affecté</dt>
-                <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.siteAffecte || '—' }}</dd>
+                <dt class="text-sm text-gray-500 shrink-0">Site(s) affecté(s)</dt>
+                <dd class="text-sm font-medium text-gray-800 text-right">
+                  <ng-container *ngIf="employe.affectations?.length; else siteAffecteBrut">
+                    <div *ngFor="let a of employe.affectations" class="mb-1.5 last:mb-0">
+                      {{ a.site }}
+                      <span *ngIf="a.horaireDebut && a.horaireFin" class="text-gray-500">
+                        ({{ a.horaireDebut }} - {{ a.horaireFin }})
+                      </span>
+                      <span class="block text-xs font-normal text-gray-500">
+                        {{ libelleJoursTravail(a.joursTravail) }}
+                        · {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
+                        →
+                        <ng-container *ngIf="a.dateSortie; else enPosteSite">
+                          {{ a.dateSortie | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
+                        </ng-container>
+                        <ng-template #enPosteSite>en poste</ng-template>
+                      </span>
+                    </div>
+                  </ng-container>
+                  <ng-template #siteAffecteBrut>{{ employe.siteAffecte || '—' }}</ng-template>
+                </dd>
               </div>
               <div class="flex justify-between items-start gap-3">
-                <dt class="text-sm text-gray-500 shrink-0">Date d'entrée</dt>
+                <dt class="text-sm text-gray-500 shrink-0">Date d'embauche</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">
-                  {{ employe.dateEntree ? (employe.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') : '—' }}
+                  {{ employe.dateEmbauche ? (employe.dateEmbauche | date:'dd/MM/yyyy' : '' : 'fr-FR') : '—' }}
                 </dd>
               </div>
               <div class="flex justify-between items-start gap-3">
@@ -655,8 +676,14 @@
 
           <!-- SOLDE (exercice courant) -->
           <div *ngIf="soldeConge" class="mb-6">
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                title="Reliquat des exercices précédents, déjà inclus dans le restant">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Antérieur</p>
+                <p class="mt-1 text-xl font-semibold text-gray-800">{{ soldeConge.soldeAnterieur }} j</p>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                [title]="soldeConge.moisAcquis + ' mois de service effectif en ' + soldeConge.anneeReference">
                 <p class="text-xs uppercase tracking-wide text-gray-500">Acquis</p>
                 <p class="mt-1 text-xl font-semibold text-gray-800">{{ soldeConge.acquis }} j</p>
               </div>
@@ -674,7 +701,10 @@
               </div>
             </div>
             <p class="mt-2 text-xs text-gray-500">
-              Exercice {{ soldeConge.anneeReference }} — seuls les congés annuels sont décomptés du solde.
+              Exercice {{ soldeConge.anneeReference }} — acquis = {{ joursAcquisParMois }} jours
+              ouvrables par mois de service effectif ({{ soldeConge.moisAcquis }} mois).
+              « Antérieur » est le reliquat des exercices précédents, déjà inclus dans le restant.
+              Seuls les congés annuels sont décomptés du solde.
             </p>
           </div>
 
