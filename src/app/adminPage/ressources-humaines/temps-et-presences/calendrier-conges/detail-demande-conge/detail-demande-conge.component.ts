@@ -15,6 +15,7 @@ import {
   LIBELLES_NIVEAU,
   LIBELLES_TYPE_CONGE,
   NIVEAU_PAR_STATUT,
+  PARAMETRES_CONGES,
 } from '../../../../../constants/conges.constants';
 import { BadgeStatutCongeComponent } from '../shared/badge-statut-conge.component';
 import { TimelineValidationCongeComponent } from '../shared/timeline-validation-conge.component';
@@ -56,6 +57,7 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
   introuvable = false;
 
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
+  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
 
   private id!: string;
   private returnUrl: string | null = null;
@@ -204,7 +206,15 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    this.router.navigate(['/admin/rh/temps-et-presences/conges']);
+    // Sans returnUrl : le calendrier RH pour un profil qui voit tous les congés, sinon
+    // l'auto-service — seule vue ouverte à un collaborateur sans droits RH.
+    // `voitTousLesConges()` est restrictif si le profil n'est pas résolu, donc le repli
+    // est toujours sûr.
+    this.router.navigate([
+      this.permissions.voitTousLesConges()
+        ? '/admin/rh/temps-et-presences/conges'
+        : '/admin/rh/temps-et-presences/conges/mes-demandes',
+    ]);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

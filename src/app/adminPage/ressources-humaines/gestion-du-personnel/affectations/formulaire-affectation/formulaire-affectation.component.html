@@ -75,10 +75,6 @@
           <p class="font-mono text-xs text-slate-500">{{ agentCourant.matricule }}</p>
           <p class="mt-2 text-sm text-slate-700">{{ agentCourant.poste }}</p>
           <p class="text-xs text-slate-500">{{ agentCourant.departement }}</p>
-          <p class="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
-            <lucide-icon name="CalendarClock" class="h-3.5 w-3.5"></lucide-icon>
-            {{ libelleJoursTravail() }}
-          </p>
         </div>
 
         <!-- Sites & horaires -->
@@ -94,6 +90,16 @@
               <p class="text-sm font-medium text-slate-900">{{ a.site }}</p>
               <p *ngIf="a.horaireDebut && a.horaireFin" class="text-xs text-slate-600">
                 de {{ a.horaireDebut }} à {{ a.horaireFin }}
+              </p>
+              <p class="mt-1 flex items-center gap-1.5 text-xs text-slate-600">
+                <lucide-icon name="CalendarClock" class="h-3.5 w-3.5"></lucide-icon>
+                {{ libelleJoursTravail(a) }}
+              </p>
+              <p class="text-xs text-slate-500">
+                Depuis le {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
+                <ng-container *ngIf="a.dateSortie">
+                  · sorti le {{ a.dateSortie | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
+                </ng-container>
               </p>
             </li>
           </ul>

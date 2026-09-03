@@ -148,7 +148,7 @@ export class OrganigrammeService {
       );
       const responsable = candidats
         .slice()
-        .sort((a, b) => this.dateEntreeMs(a) - this.dateEntreeMs(b))[0];
+        .sort((a, b) => this.dateEmbaucheMs(a) - this.dateEmbaucheMs(b))[0];
 
       departements.push({
         id: nom,
@@ -164,9 +164,10 @@ export class OrganigrammeService {
     return departements.sort((a, b) => a.nom.localeCompare(b.nom));
   }
 
-  private dateEntreeMs(employe: DossierEmploye): number {
-    if (!employe.dateEntree) return Number.MAX_SAFE_INTEGER;
-    const t = new Date(employe.dateEntree).getTime();
+  /** Ancienneté dans l'entreprise — donc la date d'embauche, pas l'entrée sur un site. */
+  private dateEmbaucheMs(employe: DossierEmploye): number {
+    if (!employe.dateEmbauche) return Number.MAX_SAFE_INTEGER;
+    const t = new Date(employe.dateEmbauche).getTime();
     return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t;
   }
 }

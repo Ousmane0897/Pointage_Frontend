@@ -3,7 +3,7 @@ import { Observable, catchError, of, shareReplay, tap } from 'rxjs';
 
 import { CongeService } from './conge.service';
 import { LoginService } from './login.service';
-import { ROLE_RH, ROLE_SUPERADMIN } from '../constants/roles.constants';
+import { ROLE_EXPLOITATION, ROLE_RH, ROLE_SUPERADMIN } from '../constants/roles.constants';
 import { NIVEAU_PAR_STATUT, STATUTS_EN_COURS } from '../constants/conges.constants';
 import { DemandeConge, MonProfilConge } from '../models/conge.model';
 
@@ -13,7 +13,7 @@ import { DemandeConge, MonProfilConge } from '../models/conge.model';
  * | Action                              | Autorisation                                   |
  * |-------------------------------------|------------------------------------------------|
  * | Déposer une demande pour soi        | tout profil ayant accès au module              |
- * | Déposer pour un tiers               | `RH` et `SUPERADMIN`                           |
+ * | Déposer pour un tiers               | `RH`, `SUPERADMIN` (tous) et `EXPLOITATION` (ses subordonnés directs) |
  * | Valider / refuser au niveau 1       | le supérieur hiérarchique du demandeur         |
  * | Valider / refuser au niveau 2       | `RH` (et `SUPERADMIN`)                         |
  * | Valider / refuser au niveau 3       | `SUPERADMIN` (la Direction générale)           |
@@ -84,11 +84,24 @@ export class CongePermissionsService {
     return this.estSuperAdmin();
   }
 
+  /** Responsable d'équipe terrain — dépose pour ses subordonnés directs. */
+  estExploitation(): boolean {
+    return this.loginService.getUserRole() === ROLE_EXPLOITATION;
+  }
+
   // ─── Création ─────────────────────────────────────────────────────────────
 
-  /** Déposer une demande au nom d'un tiers (le `<select>` employé reste affiché). */
+  /**
+   * Le sélecteur d'employé peut-il contenir quelqu'un d'autre que soi ?
+   *
+   * ⚠ Ne dit **pas** *qui* est sélectionnable : la liste est calculée serveur
+   * (`GET /conges/employes-selectionnables`) — tous les employés pour `RH` et
+   * `SUPERADMIN`, soi + ses subordonnés directs pour `EXPLOITATION`. Ce booléen
+   * n'est qu'un libellé d'interface ; le formulaire s'appuie sur la longueur de
+   * la liste reçue, jamais sur ce rôle, pour décider s'il rend un `<select>`.
+   */
   peutCreerPourAutrui(): boolean {
-    return this.estSuperAdmin() || this.estRh();
+    return this.estSuperAdmin() || this.estRh() || this.estExploitation();
   }
 
   // ─── Propriété ────────────────────────────────────────────────────────────

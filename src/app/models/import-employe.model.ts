@@ -17,7 +17,7 @@ export interface DossierEmployeImportPayload {
   poste: string;
   departement: string;
   siteAffecte: string;
-  dateEntree: string;
+  dateEmbauche: string;
   statut: 'ACTIF' | 'EN_PERIODE_ESSAI' | 'SUSPENDU' | 'SORTI';
   superieurHierarchiqueMatricule?: string;
   dureeEssaiMois?: number;
@@ -106,7 +106,7 @@ export const COLONNES_TEMPLATE: readonly string[] = [
   'Poste *',
   'Département *',
   'Site affecté *',
-  "Date d'entrée *",
+  "Date d'embauche *",
   'Statut *',
   'Supérieur hiérarchique',
   "Durée période d'essai (mois)",

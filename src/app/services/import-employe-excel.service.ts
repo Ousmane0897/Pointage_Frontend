@@ -80,6 +80,7 @@ export class ImportEmployeExcelService {
       ['   • Matricule : unique dans le fichier ET en base de données'],
       ['   • agentId : exactement 4 chiffres, unique dans le fichier ET en base (code de pointage)'],
       ["   • Site affecté : un ou plusieurs sites séparés par « / » (ex. « Ouakam / zone A » ou « Keur gorgui / yoff / bgfi tann »)"],
+      ["   • Date d'embauche : entrée dans l'entreprise. La date d'entrée sur chaque site, sa date de sortie et ses jours de travail ne sont pas importables — chaque site reçoit la date d'embauche et la semaine Lundi - Vendredi, à ajuster ensuite depuis la fiche de l'employé."],
       ["   • Supérieur hiérarchique : optionnel, indiquer le matricule du supérieur ; doit exister en base OU être le matricule d'un autre employé du même fichier"],
       ["   • Durée période d'essai : obligatoire uniquement si Statut = En période d'essai"],
       [''],
@@ -265,7 +266,7 @@ export class ImportEmployeExcelService {
     const siteAffecte = this.lireTexte(row, 'Site affecté *');
     if (!siteAffecte) pousser('Site affecté *', row['Site affecté *'], 'Site affecté obligatoire.');
 
-    const dateEntree = this.lireDate(row, "Date d'entrée *", pousser);
+    const dateEmbauche = this.lireDate(row, "Date d'embauche *", pousser);
 
     const statut = this.lireStatut(row, 'Statut *', pousser);
 
@@ -328,7 +329,7 @@ export class ImportEmployeExcelService {
         poste,
         departement,
         siteAffecte,
-        dateEntree: dateEntree!,
+        dateEmbauche: dateEmbauche!,
         statut: statut!,
         superieurHierarchiqueMatricule,
         dureeEssaiMois: statut === 'EN_PERIODE_ESSAI' ? dureeEssaiMois : undefined,

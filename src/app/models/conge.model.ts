@@ -91,10 +91,17 @@ export interface SoldeConge {
   prenom?: string;
   departement?: string;
   anneeReference: number;
-  acquis: number;      // jours acquis
+  /**
+   * Reliquat cumulé des exercices antérieurs. ⚠ Déjà **inclus** dans `solde` :
+   * l'additionner au solde compterait les jours deux fois.
+   */
+  soldeAnterieur: number;
+  /** Mois de service effectif comptés sur l'exercice — explique d'où sort `acquis`. */
+  moisAcquis: number;
+  acquis: number;      // jours acquis (2 j par mois de service effectif)
   pris: number;        // jours pris
   enCours: number;     // jours en demande en attente
-  solde: number;       // jours restants
+  solde: number;       // jours restants, report inclus
 }
 
 export interface DemandeConge {
@@ -191,6 +198,29 @@ export interface MonProfilConge {
   niveauxValidables: NiveauValidation[];
   /** Demandes en attente de son action, tous niveaux confondus. */
   nbDemandesAValider?: number;
+}
+
+/**
+ * Employé au nom duquel l'appelant peut déposer une demande de congé.
+ *
+ * La liste est **entièrement calculée serveur** (`GET /conges/employes-selectionnables`),
+ * jamais filtrée côté client : `RH` / `SUPERADMIN` reçoivent tous les employés,
+ * `EXPLOITATION` lui-même et ses subordonnés directs, tout autre profil lui-même seul.
+ * Un compte non rattaché à un dossier employé reçoit une liste **vide**.
+ *
+ * ⚠ `superieurHierarchique*` est nécessaire au formulaire : il affiche le validateur
+ * de niveau 1 et prévient quand ce niveau sera sauté.
+ */
+export interface EmployeSelectionnable {
+  id: string;
+  matricule?: string;
+  nom: string;
+  prenom: string;
+  departement?: string;
+  superieurHierarchiqueId?: string;
+  superieurHierarchiqueNom?: string;
+  /** true pour l'appelant lui-même — trié en tête de liste. */
+  estMoi?: boolean;
 }
 
 /** Compteurs de la file de validation de l'appelant. */

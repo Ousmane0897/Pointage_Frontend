@@ -37,7 +37,7 @@ import {
 import {
   AffectationSite,
   DossierEmploye,
-  JoursTravail,
+  libelleJoursTravail,
 } from '../../../../../models/dossier-employe.model';
 import {
   COULEURS_STATUT_AFFECTATION,
@@ -91,12 +91,6 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
    * la section « Affectation actuelle » : poste, site(s) et horaires de base.
    */
   agentCourant: DossierEmploye | null = null;
-
-  readonly LIBELLES_JOURS_TRAVAIL: Record<JoursTravail, string> = {
-    LUN_VEN: 'Lundi - Vendredi',
-    LUN_SAM: 'Lundi - Samedi',
-    LUN_DIM: 'Lundi - Dimanche',
-  };
 
   readonly LIBELLES_STATUT = LIBELLES_STATUT_AFFECTATION;
   readonly COULEURS_STATUT = COULEURS_STATUT_AFFECTATION;
@@ -260,9 +254,12 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
     return this.agentCourant?.affectations ?? [];
   }
 
-  /** Libellé des jours travaillés de l'agent courant (défaut : Lundi - Vendredi). */
-  libelleJoursTravail(): string {
-    return this.LIBELLES_JOURS_TRAVAIL[this.agentCourant?.joursTravail ?? 'LUN_VEN'];
+  /**
+   * Libellé des jours travaillés sur un site donné (défaut : Lundi - Vendredi).
+   * La semaine ouvrée est propre à chaque affectation, d'où le paramètre.
+   */
+  libelleJoursTravail(a: AffectationSite): string {
+    return libelleJoursTravail(a.joursTravail);
   }
 
   /**

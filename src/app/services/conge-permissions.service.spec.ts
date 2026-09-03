@@ -63,7 +63,7 @@ describe('CongePermissionsService', () => {
 
   describe('peutValiderParMoi fait autorité', () => {
     it('autorise même si le rôle ne le permettrait pas', () => {
-      connecte('EXPLOITATION');
+      connecte('BACKOFFICE');
       expect(service.peutValiderNiveau(demande('EN_ATTENTE_RH', { peutValiderParMoi: true })))
         .toBeTrue();
     });
@@ -108,8 +108,27 @@ describe('CongePermissionsService', () => {
     });
   });
 
-  describe('supérieur hiérarchique (sans rôle particulier)', () => {
+  describe('EXPLOITATION', () => {
     beforeEach(() => connecte('EXPLOITATION', profil(['SUPERIEUR'])));
+
+    it('peut créer pour autrui — la liste sera bornée serveur à ses subordonnés', () => {
+      expect(service.estExploitation()).toBeTrue();
+      expect(service.peutCreerPourAutrui()).toBeTrue();
+    });
+
+    it('ne voit pas pour autant tous les congés en lecture', () => {
+      expect(service.voitTousLesConges()).toBeFalse();
+    });
+
+    it('ne valide ni le niveau RH ni le niveau Direction', () => {
+      const d = { superieurHierarchiqueId: MOI };
+      expect(service.peutValiderNiveau(demande('EN_ATTENTE_RH', d))).toBeFalse();
+      expect(service.peutValiderNiveau(demande('EN_ATTENTE_DG', d))).toBeFalse();
+    });
+  });
+
+  describe('supérieur hiérarchique (sans rôle particulier)', () => {
+    beforeEach(() => connecte('BACKOFFICE', profil(['SUPERIEUR'])));
 
     it('valide le niveau 1 de ses subordonnés seulement', () => {
       const mien = demande('EN_ATTENTE_SUPERIEUR', { superieurHierarchiqueId: MOI });
@@ -124,7 +143,7 @@ describe('CongePermissionsService', () => {
       expect(service.peutValiderNiveau(demande('EN_ATTENTE_DG', d))).toBeFalse();
     });
 
-    it('ne peut pas créer pour autrui', () => {
+    it('ne peut pas créer pour autrui — être manager ne suffit pas, seul le rôle ouvre le droit', () => {
       expect(service.peutCreerPourAutrui()).toBeFalse();
     });
 
@@ -134,7 +153,7 @@ describe('CongePermissionsService', () => {
   });
 
   describe('employé sans habilitation', () => {
-    beforeEach(() => connecte('EXPLOITATION', profil([])));
+    beforeEach(() => connecte('BACKOFFICE', profil([])));
 
     it('ne valide aucun niveau', () => {
       expect(service.peutValiderNiveau(demande('EN_ATTENTE_SUPERIEUR'))).toBeFalse();
@@ -165,7 +184,7 @@ describe('CongePermissionsService', () => {
 
   describe('legacy EN_ATTENTE', () => {
     it('est traité comme le niveau supérieur', () => {
-      connecte('EXPLOITATION', profil(['SUPERIEUR']));
+      connecte('BACKOFFICE', profil(['SUPERIEUR']));
       expect(service.peutValiderNiveau(demande('EN_ATTENTE', { superieurHierarchiqueId: MOI })))
         .toBeTrue();
       expect(service.peutValiderNiveau(demande('EN_ATTENTE', { superieurHierarchiqueId: 'x' })))
@@ -174,7 +193,7 @@ describe('CongePermissionsService', () => {
   });
 
   describe('profil non résolu (backend indisponible)', () => {
-    beforeEach(() => connecte('EXPLOITATION', null));
+    beforeEach(() => connecte('BACKOFFICE', null));
 
     it('reste permissif sur le niveau 1 — le serveur tranchera', () => {
       expect(service.profilResolu()).toBeFalse();
@@ -203,19 +222,19 @@ describe('CongePermissionsService', () => {
     });
 
     it('un agent sans subordonné ne voit que les siens', () => {
-      connecte('EXPLOITATION', profil([]));
+      connecte('BACKOFFICE', profil([]));
       expect(service.voitTousLesConges()).toBeFalse();
       expect(service.voitPlusieursEmployes()).toBeFalse();
     });
 
     it('un supérieur hiérarchique voit plusieurs employés sans tout voir', () => {
-      connecte('EXPLOITATION', profil(['SUPERIEUR']));
+      connecte('BACKOFFICE', profil(['SUPERIEUR']));
       expect(service.voitTousLesConges()).toBeFalse();
       expect(service.voitPlusieursEmployes()).toBeTrue();
     });
 
     it('profil non résolu ⇒ restrictif (parti pris inverse du reste du service)', () => {
-      connecte('EXPLOITATION', null);
+      connecte('BACKOFFICE', null);
       expect(service.voitPlusieursEmployes()).toBeFalse();
     });
   });

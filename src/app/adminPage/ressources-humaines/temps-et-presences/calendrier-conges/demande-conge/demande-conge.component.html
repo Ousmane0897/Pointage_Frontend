@@ -27,19 +27,32 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
 
-      <!-- Sélecteur employé : RH / SUPERADMIN uniquement. Pour les autres, le
-           contrôle n'existe pas et le demandeur est déduit du JWT. -->
-      <div *ngIf="pourAutrui" class="sm:col-span-2">
+      <!-- Employé : toujours affiché, mais borné serveur. Un seul choix (cas de
+           tout collaborateur) ⇒ champ figé sur son propre nom plutôt qu'un
+           `<select>` qui inviterait au clic pour rien. -->
+      <div class="sm:col-span-2">
         <label class="block text-xs font-medium text-gray-600 uppercase mb-1">
           Employé <span class="text-red-500">*</span>
         </label>
-        <select formControlName="employeId"
+
+        <input *ngIf="choixUnique" type="text" readonly
+          [value]="employeSelectionne
+            ? (employeSelectionne.matricule ? employeSelectionne.matricule + ' — ' : '')
+              + employeSelectionne.prenom + ' ' + employeSelectionne.nom
+            : (employesCharges ? 'Aucun employé sélectionnable' : 'Chargement…')"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-700 cursor-not-allowed">
+
+        <select *ngIf="!choixUnique" formControlName="employeId"
           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white">
           <option value="">-- Sélectionner --</option>
           <option *ngFor="let e of employes" [value]="e.id">
-            {{ e.matricule }} — {{ e.prenom }} {{ e.nom }}
+            {{ e.matricule ? e.matricule + ' — ' : '' }}{{ e.prenom }} {{ e.nom }}
           </option>
         </select>
+
+        <p *ngIf="libelleListeRestreinte" class="mt-1 text-xs text-gray-500">
+          {{ libelleListeRestreinte }}
+        </p>
       </div>
 
       <div *ngIf="soldeEmployeSelectionne" class="sm:col-span-2 bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex flex-wrap gap-6 text-sm">
@@ -49,6 +62,10 @@
             [ngClass]="soldeEmployeSelectionne.solde > 0 ? 'text-green-700' : 'text-red-700'">
             {{ soldeEmployeSelectionne.solde }} j
           </div>
+        </div>
+        <div title="Reliquat des exercices précédents, déjà inclus dans le solde disponible">
+          <div class="text-xs text-gray-500 uppercase">Antérieur</div>
+          <div class="font-medium">{{ soldeEmployeSelectionne.soldeAnterieur }} j</div>
         </div>
         <div>
           <div class="text-xs text-gray-500 uppercase">Acquis</div>
@@ -62,6 +79,12 @@
           <div class="text-xs text-gray-500 uppercase">En cours</div>
           <div class="font-medium text-amber-700">{{ soldeEmployeSelectionne.enCours }} j</div>
         </div>
+        <p class="basis-full text-xs text-gray-500">
+          Acquis = {{ joursAcquisParMois }} jours ouvrables par mois de service effectif
+          ({{ soldeEmployeSelectionne.moisAcquis }} mois en
+          {{ soldeEmployeSelectionne.anneeReference }}). « Antérieur » est le reliquat des
+          exercices précédents, déjà inclus dans le solde disponible.
+        </p>
       </div>
 
       <div>

@@ -24,27 +24,70 @@
   </nav>
 
   <!-- RÉSUMÉ JOURNÉE -->
-  <div *ngIf="resume" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <p class="text-xs text-gray-500 uppercase tracking-wide">Total</p>
-      <p class="text-2xl font-bold text-gray-800 mt-1">{{ resume.totalEmployes }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4">
+  <!-- ⚠ Deux unités : « Créneaux » et les statuts comptent des lignes (un agent sur
+       2 sites pèse 2), « Employés » et « En congé » comptent des personnes. -->
+  <div *ngIf="resume" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+    <button type="button" (click)="filtrerParStatut()" [attr.aria-pressed]="!filtres.statut"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+      [ngClass]="!filtres.statut ? 'ring-2 ring-gray-400 bg-gray-50' : ''"
+      title="Créneaux attendus aujourd'hui (un par site prévu). Un agent affecté à 2 sites compte pour 2.">
+      <p class="text-xs text-gray-500 uppercase tracking-wide">Créneaux</p>
+      <p class="text-2xl font-bold text-gray-800 mt-1">{{ resume.creneauxPrevus }}</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">{{ resume.totalEmployes }} employé(s)</p>
+    </button>
+    <button type="button" (click)="filtrerParStatut('PRESENT')" [attr.aria-pressed]="filtres.statut === 'PRESENT'"
+      class="bg-white rounded-xl shadow-sm border border-green-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-400"
+      [ngClass]="filtres.statut === 'PRESENT' ? 'ring-2 ring-green-400 bg-green-50' : ''">
       <p class="text-xs text-green-700 uppercase tracking-wide">Présents</p>
       <p class="text-2xl font-bold text-green-700 mt-1">{{ resume.presents }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
+    </button>
+    <button type="button" (click)="filtrerParStatut('ABSENT')" [attr.aria-pressed]="filtres.statut === 'ABSENT'"
+      class="bg-white rounded-xl shadow-sm border border-red-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400"
+      [ngClass]="filtres.statut === 'ABSENT' ? 'ring-2 ring-red-400 bg-red-50' : ''">
       <p class="text-xs text-red-700 uppercase tracking-wide">Absents</p>
       <p class="text-2xl font-bold text-red-700 mt-1">{{ resume.absents }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-amber-100 p-4">
+    </button>
+    <button type="button" (click)="filtrerParStatut('RETARD')" [attr.aria-pressed]="filtres.statut === 'RETARD'"
+      class="bg-white rounded-xl shadow-sm border border-amber-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-400"
+      [ngClass]="filtres.statut === 'RETARD' ? 'ring-2 ring-amber-400 bg-amber-50' : ''">
       <p class="text-xs text-amber-700 uppercase tracking-wide">Retards</p>
       <p class="text-2xl font-bold text-amber-700 mt-1">{{ resume.retards }}</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-4">
+    </button>
+    <button type="button" (click)="filtrerParStatut('EN_ATTENTE')" [attr.aria-pressed]="filtres.statut === 'EN_ATTENTE'"
+      class="bg-white rounded-xl shadow-sm border border-sky-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400"
+      [ngClass]="filtres.statut === 'EN_ATTENTE' ? 'ring-2 ring-sky-400 bg-sky-50' : ''"
+      title="Créneau commencé, pointage encore attendu.">
+      <p class="text-xs text-sky-700 uppercase tracking-wide">En attente</p>
+      <p class="text-2xl font-bold text-sky-700 mt-1">{{ resume.enAttente }}</p>
+    </button>
+    <button type="button" (click)="filtrerParStatut('NEUTRE')" [attr.aria-pressed]="filtres.statut === 'NEUTRE'"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+      [ngClass]="filtres.statut === 'NEUTRE' ? 'ring-2 ring-gray-400 bg-gray-50' : ''"
+      title="L'heure de début de ce site n'est pas encore arrivée.">
+      <p class="text-xs text-gray-500 uppercase tracking-wide">À venir</p>
+      <p class="text-2xl font-bold text-gray-500 mt-1">{{ resume.neutres }}</p>
+    </button>
+    <button type="button" (click)="filtrerParStatut('CONGE')" [attr.aria-pressed]="filtres.statut === 'CONGE'"
+      class="bg-white rounded-xl shadow-sm border border-blue-100 p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+      [ngClass]="filtres.statut === 'CONGE' ? 'ring-2 ring-blue-400 bg-blue-50' : ''"
+      title="Employés en congé approuvé (personnes, pas créneaux).">
       <p class="text-xs text-blue-700 uppercase tracking-wide">En congé</p>
       <p class="text-2xl font-bold text-blue-700 mt-1">{{ resume.enConge }}</p>
-    </div>
+    </button>
+    <!-- Hors planning : symptôme d'affectations non tenues à jour. Mis en avant plutôt
+         que fondu dans « Absents », où il passait inaperçu. -->
+    <button type="button" (click)="filtrerParStatut('HORS_PLAN')" [attr.aria-pressed]="filtres.statut === 'HORS_PLAN'"
+      class="bg-white rounded-xl shadow-sm border p-4 text-left transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+      [ngClass]="[
+        filtres.statut === 'HORS_PLAN' ? 'ring-2 ring-purple-400 bg-purple-50' : '',
+        resume.horsPlan > 0 ? 'border-purple-200' : 'border-gray-100'
+      ]"
+      title="Pointages sans créneau prévu : vérifier les affectations de ces agents.">
+      <p class="text-xs uppercase tracking-wide"
+        [ngClass]="resume.horsPlan > 0 ? 'text-purple-700' : 'text-gray-400'">Hors planning</p>
+      <p class="text-2xl font-bold mt-1"
+        [ngClass]="resume.horsPlan > 0 ? 'text-purple-700' : 'text-gray-300'">{{ resume.horsPlan }}</p>
+    </button>
   </div>
 
   <!-- FILTRES -->
@@ -73,7 +116,10 @@
           <option value="PRESENT">Présent</option>
           <option value="ABSENT">Absent</option>
           <option value="RETARD">Retard</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="NEUTRE">À venir</option>
           <option value="CONGE">En congé</option>
+          <option value="HORS_PLAN">Hors planning</option>
         </select>
       </div>
       <div>
@@ -114,6 +160,7 @@
             <th class="px-4 py-3">Employé</th>
             <th class="px-4 py-3">Département</th>
             <th class="px-4 py-3">Site</th>
+            <th class="px-4 py-3">Horaire prévu</th>
             <th class="px-4 py-3">Arrivée</th>
             <th class="px-4 py-3">Départ</th>
             <th class="px-4 py-3">Retard</th>
@@ -121,13 +168,28 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let p of pointages; trackBy: trackById" class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ p.matricule }}</td>
-            <td class="px-4 py-3 font-medium text-gray-800">{{ p.prenom }} {{ p.nom }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ p.departement }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ p.site }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ p.heureArrivee || '—' }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ p.heureDepart || '—' }}</td>
+          <!-- Ligne grisée tant que le créneau n'a pas commencé : ni présent, ni absent. -->
+          <tr *ngFor="let p of pointages; trackBy: trackById"
+            [ngClass]="estNeutre(p) ? 'bg-gray-50/60 text-gray-400' : 'hover:bg-gray-50'">
+            <td class="px-4 py-3 font-mono text-xs"
+              [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">{{ p.matricule }}</td>
+            <td class="px-4 py-3 font-medium"
+              [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-800'">{{ p.prenom }} {{ p.nom }}</td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-600'">
+              {{ p.departement }}
+            </td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-600'">
+              {{ p.site }}
+              <span *ngIf="p.planifie === false"
+                class="ml-1 text-[11px] text-purple-600">(hors planning)</span>
+            </td>
+            <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ horairePrevu(p) || '—' }}</td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">
+              {{ p.heureArrivee || '—' }}
+            </td>
+            <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">
+              {{ p.heureDepart || '—' }}
+            </td>
             <td class="px-4 py-3">
               <span *ngIf="estEnRetard(p)"
                 class="inline-flex items-center gap-1 text-amber-700 font-medium">
@@ -138,7 +200,8 @@
             </td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                [ngClass]="getStatutClasses(statutAffiche(p))">
+                [ngClass]="getStatutClasses(statutAffiche(p))"
+                [title]="getStatutDescription(statutAffiche(p))">
                 <lucide-icon [name]="getStatutIcon(statutAffiche(p))" class="w-3.5 h-3.5"></lucide-icon>
                 {{ getStatutLabel(statutAffiche(p)) }}
               </span>
@@ -150,7 +213,7 @@
 
     <!-- PAGINATION -->
     <div *ngIf="!loading && total > size" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-      <p class="text-xs text-gray-500">{{ total }} pointage(s) — page {{ page + 1 }} / {{ totalPages }}</p>
+      <p class="text-xs text-gray-500">{{ total }} créneau(x) — page {{ page + 1 }} / {{ totalPages }}</p>
       <div class="flex gap-1">
         <button (click)="prevPage()" [disabled]="page === 0"
           class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-40">

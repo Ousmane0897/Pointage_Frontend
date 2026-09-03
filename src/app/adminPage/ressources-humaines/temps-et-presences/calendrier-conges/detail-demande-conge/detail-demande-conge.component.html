@@ -107,7 +107,13 @@
             <span class="text-gray-500">Année de référence</span>
             <span class="font-medium text-gray-800">{{ solde.anneeReference }}</span>
           </div>
-          <div class="flex justify-between">
+          <div class="flex justify-between"
+            title="Reliquat des exercices précédents, déjà inclus dans le restant">
+            <span class="text-gray-500">Antérieur</span>
+            <span class="font-medium text-gray-800">{{ solde.soldeAnterieur }} j</span>
+          </div>
+          <div class="flex justify-between"
+            [title]="solde.moisAcquis + ' mois de service effectif en ' + solde.anneeReference">
             <span class="text-gray-500">Acquis</span>
             <span class="font-medium text-gray-800">{{ solde.acquis }} j</span>
           </div>
@@ -123,6 +129,11 @@
             <span class="font-medium text-gray-700">Restant</span>
             <span class="font-semibold text-indigo-600">{{ solde.solde }} j</span>
           </div>
+          <p class="pt-1 text-xs text-gray-500">
+            Acquis = {{ joursAcquisParMois }} jours ouvrables par mois de service effectif
+            ({{ solde.moisAcquis }} mois en {{ solde.anneeReference }}). « Antérieur » est le
+            reliquat des exercices précédents, déjà inclus dans le restant.
+          </p>
         </div>
         <ng-template #pasDeSolde>
           <p class="text-sm text-gray-500">Solde indisponible.</p>

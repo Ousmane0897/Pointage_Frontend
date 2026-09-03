@@ -106,13 +106,7 @@ export class SidebarComponent implements OnInit {
    * claim `rh: true` (booléen) accorde l'accès à toutes les fonctionnalités.
    */
   accessRh(feature: string): boolean {
-    if (this.role === 'SUPERADMIN' || this.role === 'RH') return true;
-    const m: ModulesAutorises = this.modulesAutorises;
-    if (!m) return false;
-    const rh: any = m.rh;
-    if (rh === true) return true;          // legacy booléen
-    if (!rh) return false;
-    return !!rh[feature];
+    return this.loginService.accesRh(feature);
   }
 
   /** Accès au sous-module 6.1 Gestion du Personnel (au moins une fonctionnalité). */
@@ -123,13 +117,17 @@ export class SidebarComponent implements OnInit {
       || this.accessRh('documents');
   }
 
-  /** Accès au sous-module 6.2 Temps & Présences (au moins une fonctionnalité). */
+  /**
+   * Accès au sous-module 6.2 Temps & Présences (au moins une fonctionnalité).
+   *
+   * ⚠ `conges`, `absences` et `congesMesDemandes` n'y figurent PAS : la rubrique
+   * « Congés » a quitté ce sous-menu pour devenir une entrée de premier niveau
+   * visible par tous. Les y laisser afficherait un sous-menu « Présences » vide
+   * pour un profil ne portant que ces flags.
+   */
   accessTempsPresences(): boolean {
     return this.accessRh('pointageCentralise')
-      || this.accessRh('absences')
-      || this.accessRh('conges')
       || this.accessCongesValidation()
-      || this.accessRh('congesMesDemandes')
       || this.accessRh('heuresSupplementaires')
       || this.accessRh('recapitulatif');
   }
@@ -377,24 +375,31 @@ export class SidebarComponent implements OnInit {
   }
 
   /**
-   * Rubrique « Congés » — onglets Calendrier (`/conges`) et Déclarations (`/absences`).
+   * Rubrique « Congés » — onglets Calendrier (`/conges`), Déclarations (`/absences`)
+   * et Mes demandes (`/conges/mes-demandes`).
    *
-   * ⚠ Un simple `isActivePrefix('/conges')` capterait aussi `/conges/validation` et
-   * `/conges/mes-demandes`, qui restent des entrées de menu distinctes. On énumère donc
-   * les seules sous-routes sans entrée propre : le formulaire (`/conges/demande`) et la
-   * fiche (`/conges/demandes/:id`, ciblée par les liens des e-mails) — le préfixe
+   * ⚠ Un simple `isActivePrefix('/conges')` capterait aussi `/conges/validation`, qui
+   * reste une entrée de menu distincte. On énumère donc les routes de la rubrique, plus
+   * les sous-routes sans entrée propre : le formulaire (`/conges/demande`) et la fiche
+   * (`/conges/demandes/:id`, ciblée par les liens des e-mails) — le préfixe
    * `/conges/demande` couvre volontairement les deux.
    */
   estRubriqueConges(): boolean {
     const url = this.router.url.split(/[?#]/)[0];
     return url === this.RACINE_CONGES
       || url.startsWith(this.RACINE_ABSENCES)
+      || url.startsWith(`${this.RACINE_CONGES}/mes-demandes`)
       || url.startsWith(`${this.RACINE_CONGES}/demande`);
   }
 
-  /** Onglet d'atterrissage de la rubrique : le calendrier, ou les déclarations si c'est le seul droit. */
+  /**
+   * Onglet d'atterrissage de la rubrique, selon les droits : le calendrier, à défaut les
+   * déclarations, à défaut l'auto-service — seul écran ouvert à tout compte connecté.
+   */
   lienRubriqueConges(): string {
-    return this.accessRh('conges') ? this.RACINE_CONGES : this.RACINE_ABSENCES;
+    if (this.accessRh('conges')) return this.RACINE_CONGES;
+    if (this.accessRh('absences')) return this.RACINE_ABSENCES;
+    return `${this.RACINE_CONGES}/mes-demandes`;
   }
 
   /**

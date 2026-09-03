@@ -15,21 +15,29 @@
   </div>
 
   <!--
-    ONGLETS — les deux routes sont SŒURS (/conges et /absences), pas parent/enfant :
+    ONGLETS — Calendrier (/conges), Déclarations (/absences) et Mes demandes
+    (/conges/mes-demandes), trois routes SŒURS, pas parent/enfant :
     `exact: true` va donc sur Calendrier (sinon il resterait actif sur /conges/demande),
     et Déclarations ne l'a pas (pour rester actif sur /absences/nouvelle et /absences/:id/modifier).
+    ⚠ Les deux premiers onglets sont réservés aux profils RH ; « Mes demandes » est
+    l'auto-service, ouvert à tout compte connecté — il n'est jamais masqué.
   -->
   <nav class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6">
-    <a routerLink="/admin/rh/temps-et-presences/conges"
+    <a *ngIf="accesCalendrier" routerLink="/admin/rh/temps-et-presences/conges"
       [routerLinkActiveOptions]="{ exact: true }"
       routerLinkActive="bg-indigo-600 !text-white shadow-sm"
       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
       <lucide-icon name="CalendarDays" class="w-4 h-4"></lucide-icon> Calendrier
     </a>
-    <a routerLink="/admin/rh/temps-et-presences/absences"
+    <a *ngIf="accesDeclarations" routerLink="/admin/rh/temps-et-presences/absences"
       routerLinkActive="bg-indigo-600 !text-white shadow-sm"
       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
       <lucide-icon name="UserMinus" class="w-4 h-4"></lucide-icon> Déclarations
+    </a>
+    <a routerLink="/admin/rh/temps-et-presences/conges/mes-demandes"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="Plane" class="w-4 h-4"></lucide-icon> Mes demandes
     </a>
   </nav>
 
@@ -67,6 +75,9 @@
             <th *ngIf="permissions.voitPlusieursEmployes()" class="px-4 py-3">Employé</th>
             <th *ngIf="permissions.voitPlusieursEmployes()" class="px-4 py-3">Département</th>
             <th class="px-4 py-3">Année</th>
+            <th class="px-4 py-3" title="Reliquat des exercices précédents, inclus dans le solde">
+              Antérieur
+            </th>
             <th class="px-4 py-3">Acquis</th>
             <th class="px-4 py-3">Pris</th>
             <th class="px-4 py-3">En cours</th>
@@ -81,7 +92,11 @@
             </td>
             <td *ngIf="permissions.voitPlusieursEmployes()" class="px-4 py-3 text-gray-600">{{ s.departement }}</td>
             <td class="px-4 py-3 text-gray-700">{{ s.anneeReference }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ s.acquis }} j</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.soldeAnterieur }} j</td>
+            <td class="px-4 py-3 text-gray-700"
+              [title]="s.moisAcquis + ' mois de service effectif en ' + s.anneeReference">
+              {{ s.acquis }} j
+            </td>
             <td class="px-4 py-3 text-gray-700">{{ s.pris }} j</td>
             <td class="px-4 py-3 text-amber-700">{{ s.enCours }} j</td>
             <td class="px-4 py-3 font-semibold"
@@ -93,6 +108,8 @@
       </table>
 
       <p class="mt-3 text-xs text-gray-500">
+        Acquis = {{ joursAcquisParMois }} jours ouvrables par mois de service effectif.
+        « Antérieur » est le reliquat des exercices précédents, déjà inclus dans le solde.
         Seuls les congés annuels sont décomptés du solde.
       </p>
     </div>

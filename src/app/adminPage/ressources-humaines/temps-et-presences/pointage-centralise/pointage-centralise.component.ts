@@ -16,7 +16,13 @@ import {
 import { PageResponse } from '../../../../models/pageResponse.model';
 import {
   TOLERANCE_RETARD_MINUTES,
+  CLASSES_STATUT,
+  LIBELLES_STATUT,
+  ICONES_STATUT,
+  DESCRIPTIONS_STATUT,
   estEnRetard,
+  estNeutre,
+  horairePrevu,
   statutAffiche,
 } from '../pointage-retard.util';
 
@@ -52,9 +58,11 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
   loading = false;
   loadingResume = false;
 
-  // ─── Retard : tolérance appliquée à l'affichage ──────────────────────────
+  // ─── Statuts : le serveur fait autorité, le front ne dérive rien ─────────
   protected readonly TOLERANCE_RETARD_MINUTES = TOLERANCE_RETARD_MINUTES;
   protected readonly estEnRetard = estEnRetard;
+  protected readonly estNeutre = estNeutre;
+  protected readonly horairePrevu = horairePrevu;
   protected readonly statutAffiche = statutAffiche;
 
   private destroy$ = new Subject<void>();
@@ -117,6 +125,13 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
     this.loadResume();
   }
 
+  /** Filtrage au clic sur une tuile du résumé. Re-cliquer sur la tuile active revient à « Tous ». */
+  filtrerParStatut(statut?: StatutPresence): void {
+    this.filtres.statut = this.filtres.statut === statut ? undefined : statut;
+    this.page = 0;
+    this.loadPointages();
+  }
+
   resetFilters(): void {
     this.filtres = {
       date: this.today(),
@@ -130,35 +145,21 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
     this.loadResume();
   }
 
-  // ─── Helpers badges ──────────────────────────────────────────────────────
+  // ─── Helpers badges (maps partagées avec l'historique) ───────────────────
   getStatutClasses(s: StatutPresence): string {
-    const map: Record<StatutPresence, string> = {
-      PRESENT: 'bg-green-100 text-green-700 border border-green-200',
-      ABSENT: 'bg-red-100 text-red-700 border border-red-200',
-      RETARD: 'bg-amber-100 text-amber-700 border border-amber-200',
-      CONGE: 'bg-blue-100 text-blue-700 border border-blue-200',
-    };
-    return map[s];
+    return CLASSES_STATUT[s];
   }
 
   getStatutLabel(s: StatutPresence): string {
-    const map: Record<StatutPresence, string> = {
-      PRESENT: 'Présent',
-      ABSENT: 'Absent',
-      RETARD: 'Retard',
-      CONGE: 'En congé',
-    };
-    return map[s];
+    return LIBELLES_STATUT[s];
   }
 
   getStatutIcon(s: StatutPresence): string {
-    const map: Record<StatutPresence, string> = {
-      PRESENT: 'CheckCircle2',
-      ABSENT: 'XCircle',
-      RETARD: 'AlertTriangle',
-      CONGE: 'Plane',
-    };
-    return map[s];
+    return ICONES_STATUT[s];
+  }
+
+  getStatutDescription(s: StatutPresence): string {
+    return DESCRIPTIONS_STATUT[s];
   }
 
   // ─── Pagination ──────────────────────────────────────────────────────────
@@ -180,8 +181,13 @@ export class PointageCentraliseComponent implements OnInit, OnDestroy {
     return new Date().toISOString().slice(0, 10);
   }
 
+  /**
+   * `p.id` identifie le créneau et reste stable quand l'agent pointe. Le repli inclut
+   * le site : un employé multi-sites produit plusieurs lignes le même jour, que
+   * `employeId-date` seul ne distinguerait pas.
+   */
   trackById(_: number, p: PointageCentralise): string {
-    return p.id ?? `${p.employeId}-${p.date}`;
+    return p.id ?? `${p.employeId}-${p.date}-${p.site}`;
   }
 
   private handleError(err: any): void {

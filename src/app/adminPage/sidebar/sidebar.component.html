@@ -68,6 +68,28 @@
           </a>
         </li>
 
+        <!--
+          Congés — SANS *ngIf : déposer une demande, consulter son solde et suivre
+          l'historique de ses congés est un droit de tout collaborateur, quel que soit
+          son rôle. La destination et les onglets de la page s'adaptent aux droits
+          (cf. lienRubriqueConges()) ; les écrans RH restent bornés côté serveur.
+        -->
+        <li>
+          <a [routerLink]="lienRubriqueConges()"
+            class="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300
+                   hover:bg-indigo-500/10 hover:text-white transition-all duration-200"
+            [ngClass]="{
+              'bg-gradient-to-r from-indigo-500/25 to-indigo-500/5 text-white font-semibold ring-1 ring-indigo-400/25': estRubriqueConges(),
+              'justify-center px-0': !isOpen
+            }">
+            <span *ngIf="estRubriqueConges()"
+              class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-[3px] h-[60%] rounded-full bg-gradient-to-b from-indigo-300 to-indigo-500 shadow-[0_0_12px_rgba(129,140,248,0.7)]"></span>
+            <lucide-icon name="CalendarDays" class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-indigo-200"
+              [ngClass]="{ 'text-indigo-300': estRubriqueConges() }"></lucide-icon>
+            <span *ngIf="isOpen" class="flex-1 truncate">Congés</span>
+          </a>
+        </li>
+
         <!-- Gestion des utilisateurs -->
         <li *ngIf="hasAccess('admin')">
           <a routerLink="/admin/gestion-privilege"
@@ -191,20 +213,10 @@
                   </a>
                 </li>
                 <!--
-                  Rubrique unique « Congés » : onglets Calendrier (/conges) et Déclarations
-                  (/absences) portés par les écrans eux-mêmes. Le surlignage passe par
-                  estRubriqueConges() car routerLinkActive ne sait pas exprimer « /conges exact
-                  OU /absences*, mais ni /conges/validation ni /conges/mes-demandes ».
+                  La rubrique « Congés » (Calendrier / Déclarations / Mes demandes) est
+                  remontée en entrée de premier niveau, visible par tous. Seule la file de
+                  validation reste ici : elle relève bien du travail RH / hiérarchique.
                 -->
-                <li *ngIf="accessRh('conges') || accessRh('absences')">
-                  <a [routerLink]="lienRubriqueConges()"
-                    [ngClass]="{ '!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold': estRubriqueConges() }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="CalendarDays" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Congés</span>
-                  </a>
-                </li>
                 <li *ngIf="accessCongesValidation()">
                   <a routerLink="/admin/rh/temps-et-presences/conges/validation"
                     routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
@@ -218,16 +230,6 @@
                              bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
                       {{ nbCongesAValider }}
                     </span>
-                  </a>
-                </li>
-                <li *ngIf="accessRh('congesMesDemandes')">
-                  <a routerLink="/admin/rh/temps-et-presences/conges/mes-demandes"
-                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
-                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
-                    <lucide-icon name="Plane" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
-                    <span class="flex-1 truncate">Mes demandes de congé</span>
                   </a>
                 </li>
                 <li *ngIf="accessRh('heuresSupplementaires')">
