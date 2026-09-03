@@ -1,14 +1,9 @@
 <div class="min-h-screen bg-gray-50 p-6">
 
   <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <div class="flex items-center gap-3">
-      <button (click)="retour()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
-        <lucide-icon name="ArrowLeft" class="w-5 h-5"></lucide-icon>
-      </button>
-      <div>
-        <h1 class="text-2xl font-bold text-gray-800">Mes demandes de congé</h1>
-        <p class="text-sm text-gray-500 mt-1">Suivi de l'avancement dans le circuit de validation</p>
-      </div>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Mes demandes de congé</h1>
+      <p class="text-sm text-gray-500 mt-1">Suivi de l'avancement dans le circuit de validation</p>
     </div>
     <button (click)="nouvelleDemande()"
       class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
@@ -17,9 +12,42 @@
     </button>
   </div>
 
+  <!--
+    ONGLETS — Calendrier (/conges), Déclarations (/absences) et Mes demandes
+    (/conges/mes-demandes), trois routes SŒURS, pas parent/enfant :
+    `exact: true` va donc sur Calendrier (sinon il resterait actif sur /conges/demande),
+    et Déclarations ne l'a pas (pour rester actif sur /absences/nouvelle et /absences/:id/modifier).
+    ⚠ Les deux premiers onglets sont réservés aux profils RH ; « Mes demandes » est
+    l'auto-service, ouvert à tout compte connecté — il n'est jamais masqué.
+  -->
+  <nav class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6">
+    <a *ngIf="accesCalendrier" routerLink="/admin/rh/temps-et-presences/conges"
+      [routerLinkActiveOptions]="{ exact: true }"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="CalendarDays" class="w-4 h-4"></lucide-icon> Calendrier
+    </a>
+    <a *ngIf="accesDeclarations" routerLink="/admin/rh/temps-et-presences/absences"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="UserMinus" class="w-4 h-4"></lucide-icon> Déclarations
+    </a>
+    <a routerLink="/admin/rh/temps-et-presences/conges/mes-demandes"
+      routerLinkActive="bg-indigo-600 !text-white shadow-sm"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+      <lucide-icon name="Plane" class="w-4 h-4"></lucide-icon> Mes demandes
+    </a>
+  </nav>
+
   <!-- Solde personnel -->
-  <div *ngIf="solde" class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+  <div *ngIf="solde" class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+      title="Reliquat des exercices précédents, déjà inclus dans le restant">
+      <p class="text-xs uppercase tracking-wide text-gray-500">Antérieur</p>
+      <p class="mt-1 text-xl font-semibold text-gray-800">{{ solde.soldeAnterieur }} j</p>
+    </div>
+    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+      [title]="solde.moisAcquis + ' mois de service effectif en ' + solde.anneeReference">
       <p class="text-xs uppercase tracking-wide text-gray-500">Acquis</p>
       <p class="mt-1 text-xl font-semibold text-gray-800">{{ solde.acquis }} j</p>
     </div>
@@ -35,7 +63,10 @@
       <p class="text-xs uppercase tracking-wide text-indigo-500">Restant</p>
       <p class="mt-1 text-xl font-semibold text-indigo-700">{{ solde.solde }} j</p>
     </div>
-    <p class="col-span-2 sm:col-span-4 text-xs text-gray-500">
+    <p class="col-span-2 sm:col-span-5 text-xs text-gray-500">
+      Acquis = {{ joursAcquisParMois }} jours ouvrables par mois de service effectif
+      ({{ solde.moisAcquis }} mois en {{ solde.anneeReference }}). « Antérieur » est le reliquat
+      des exercices précédents, déjà inclus dans le restant.
       Seuls les congés annuels sont décomptés du solde.
     </p>
   </div>

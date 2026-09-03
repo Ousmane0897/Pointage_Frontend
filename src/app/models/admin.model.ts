@@ -38,11 +38,17 @@ export interface ModulesAutorises {
 
     // 6.2 Temps & Présences
     pointageCentralise?: boolean;
+    /** Onglet « Déclarations » de la rubrique Congés (vue RH). */
     absences?: boolean;
+    /** Onglet « Calendrier » de la rubrique Congés (vue RH, tous employés). */
     conges?: boolean;
     /** File de validation des congés (circuit à 3 niveaux). */
     congesValidation?: boolean;
-    /** Écran « Mes demandes » (auto-service du collaborateur). */
+    /**
+     * @deprecated Ne gate plus rien : l'auto-service « Mes demandes » est ouvert à tout
+     * compte connecté (onglet toujours visible de la rubrique Congés). Conservé tant que
+     * le backend émet le claim.
+     */
     congesMesDemandes?: boolean;
     heuresSupplementaires?: boolean;
     recapitulatif?: boolean;

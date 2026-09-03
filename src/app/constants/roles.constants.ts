@@ -18,6 +18,14 @@ export const ROLE_CONTROLEUR_STOCK = 'CONTROLEUR_STOCK';
 export const ROLE_RH = 'RH';
 
 /**
+ * Rôle Exploitation — responsable d'équipe terrain. Seul rôle, hors `RH` et
+ * `SUPERADMIN`, autorisé à déposer une demande de congé au nom d'un tiers : la
+ * liste des employés sélectionnables lui est restreinte serveur à lui-même et à
+ * ses subordonnés directs.
+ */
+export const ROLE_EXPLOITATION = 'EXPLOITATION';
+
+/**
  * Niveau 3 du circuit de validation des congés : la **Direction générale est
  * le super-admin**. Aucun rôle `DIRECTION_GENERALE` n'existe ni ne doit être
  * créé — l'alias ci-dessous n'est là que pour rendre les appels lisibles.

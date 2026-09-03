@@ -8,6 +8,7 @@ import { Subject, of, catchError, filter, finalize, takeUntil } from 'rxjs';
 
 import { CongeService } from '../../../../../services/conge.service';
 import { CongePermissionsService } from '../../../../../services/conge-permissions.service';
+import { LoginService } from '../../../../../services/login.service';
 import { WebsocketService } from '../../../../../services/websocket.service';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import { DemandeConge, SoldeConge } from '../../../../../models/conge.model';
@@ -43,6 +44,14 @@ export class MesDemandesCongeComponent implements OnInit, OnDestroy {
   loading = false;
 
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
+  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
+
+  /**
+   * Onglets RH de la rubrique. Mémorisés (et non exposés par un getter) : lus depuis
+   * le template, un getter relirait `localStorage` à chaque cycle de détection.
+   */
+  readonly accesCalendrier: boolean;
+  readonly accesDeclarations: boolean;
 
   private destroy$ = new Subject<void>();
 
@@ -53,7 +62,11 @@ export class MesDemandesCongeComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
-  ) {}
+    loginService: LoginService,
+  ) {
+    this.accesCalendrier = loginService.accesRh('conges');
+    this.accesDeclarations = loginService.accesRh('absences');
+  }
 
   ngOnInit(): void {
     this.permissions.charger().pipe(takeUntil(this.destroy$)).subscribe(profil => {
@@ -127,8 +140,6 @@ export class MesDemandesCongeComponent implements OnInit, OnDestroy {
       });
     });
   }
-
-  retour(): void { this.router.navigate(['/admin/rh/temps-et-presences/conges']); }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 

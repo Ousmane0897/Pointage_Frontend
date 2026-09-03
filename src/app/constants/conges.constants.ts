@@ -160,4 +160,14 @@ export const PARAMETRES_CONGES = {
    */
   motifRefusMinLength: 10,
   commentaireMaxLength: 500,
+  /**
+   * Jours ouvrables acquis par mois de service effectif (droit sénégalais : 2 j/mois,
+   * soit 24 j pour une année pleine).
+   *
+   * ⚠ **Miroir d'affichage** de `app.conges.jours-acquis-par-mois` côté serveur, qui reste
+   * l'autorité et renvoie déjà `acquis` et `moisAcquis` calculés — comme
+   * {@link TYPES_DECOMPTES_DU_SOLDE}. Ne sert qu'à composer un libellé explicatif : le front
+   * ne recalcule jamais de droits.
+   */
+  joursAcquisParMois: 2,
 };

@@ -10,6 +10,7 @@ import { Subject, of, catchError, finalize, takeUntil } from 'rxjs';
 import { AbsenceService } from '../../../../../services/absence.service';
 import { CongePermissionsService } from '../../../../../services/conge-permissions.service';
 import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
+import { LoginService } from '../../../../../services/login.service';
 import {
   Absence,
   FiltreAbsence,
@@ -48,6 +49,13 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
 
   loading = false;
 
+  /**
+   * Onglets RH de la rubrique. Mémorisés (et non exposés par un getter) : lus depuis
+   * le template, un getter relirait `localStorage` à chaque cycle de détection.
+   */
+  readonly accesCalendrier: boolean;
+  readonly accesDeclarations: boolean;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -57,7 +65,11 @@ export class ListeAbsencesComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
-  ) {}
+    loginService: LoginService,
+  ) {
+    this.accesCalendrier = loginService.accesRh('conges');
+    this.accesDeclarations = loginService.accesRh('absences');
+  }
 
   ngOnInit(): void {
     // Le profil conditionne l'affichage du filtre « Employé » : on le charge d'abord,

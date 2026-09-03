@@ -37,6 +37,22 @@ export class LoginService {
   }
 
   /**
+   * Accès à une fonctionnalité RH précise. Point unique de vérité : la sidebar
+   * y délègue, et les barres d'onglets du module congés s'en servent pour
+   * masquer les onglets réservés aux profils RH.
+   *
+   * Rétrocompatible : un ancien claim `rh: true` (booléen) accorde l'accès à
+   * toutes les fonctionnalités.
+   */
+  accesRh(feature: string): boolean {
+    const role = this.getUserRole();
+    if (role === 'SUPERADMIN' || role === 'RH') return true;
+    const rh: any = (this.getUserPermissions() as any)?.rh;
+    if (rh === true) return true;          // legacy booléen
+    return !!rh && !!rh[feature];
+  }
+
+  /**
    * Relit les permissions depuis le claim `modules` du JWT courant et les
    * propage (stockage local + `permissions$`). À appeler après un login réussi.
    */

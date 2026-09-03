@@ -6,6 +6,7 @@ import {
   CompteursAValider,
   CreationDemandePayload,
   DemandeConge,
+  EmployeSelectionnable,
   FiltreConge,
   MonProfilConge,
   NiveauValidation,
@@ -32,6 +33,9 @@ export class CongeService {
   /** Cache du profil métier de l'appelant (une seule résolution par session). */
   private monProfil$?: Observable<MonProfilConge>;
 
+  /** Cache des employés sélectionnables — ne change pas pendant la session. */
+  private employesSelectionnables$?: Observable<EmployeSelectionnable[]>;
+
   constructor(private http: HttpClient) {}
 
   // ─── Identité ─────────────────────────────────────────────────────────────
@@ -50,10 +54,37 @@ export class CongeService {
     return this.monProfil$;
   }
 
-  /** Invalide le cache puis recharge (changement de compte, droits modifiés). */
+  /**
+   * Invalide le cache puis recharge (changement de compte, droits modifiés).
+   *
+   * ⚠ Vide aussi la liste des employés sélectionnables — c'est le **seul** point
+   * qui la périme : elle dépend de l'identité et de la hiérarchie, pas des
+   * demandes, donc `invaliderProfil()` (appelé après chaque écriture) la laisse
+   * intacte.
+   */
   rafraichirMonProfil(): Observable<MonProfilConge> {
     this.monProfil$ = undefined;
+    this.employesSelectionnables$ = undefined;
     return this.getMonProfil();
+  }
+
+  /**
+   * Employés au nom desquels l'appelant peut déposer une demande.
+   *
+   * Le périmètre est **entièrement calculé serveur** (soi seul / soi + subordonnés
+   * directs pour `EXPLOITATION` / tous pour `RH` et `SUPERADMIN`) : le front ne
+   * filtre rien et n'a donc jamais à deviner la hiérarchie.
+   *
+   * ⚠ Route volontairement sous `/conges/` et non sous `/gestion-personnel/` : un
+   * compte `EXPLOITATION` n'a pas le droit de lecture du référentiel employés.
+   */
+  getEmployesSelectionnables(): Observable<EmployeSelectionnable[]> {
+    if (!this.employesSelectionnables$) {
+      this.employesSelectionnables$ = this.http.get<EmployeSelectionnable[]>(
+        `${this.baseUrl}/temps-presences/conges/employes-selectionnables`,
+      ).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    }
+    return this.employesSelectionnables$;
   }
 
   // ─── Soldes ───────────────────────────────────────────────────────────────
@@ -142,8 +173,9 @@ export class CongeService {
 
   /**
    * Crée une demande. `employeId` omis ⇒ le serveur prend le demandeur du JWT ;
-   * fourni ⇒ réservé aux profils RH / SUPERADMIN (403 sinon). Le statut initial
-   * est posé par le serveur, jamais par le client.
+   * fourni et différent de soi ⇒ accepté des profils RH / SUPERADMIN, ou de
+   * l'appelant qui est le supérieur hiérarchique de la cible (403 sinon). Le
+   * statut initial est posé par le serveur, jamais par le client.
    */
   creerDemande(payload: CreationDemandePayload): Observable<DemandeConge> {
     return this.http.post<DemandeConge>(
