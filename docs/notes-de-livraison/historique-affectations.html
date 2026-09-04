@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Historique des affectations</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:      #F4F7F5;
+    --surface:     #FFFFFF;
+    --surface-alt: #EAF0EC;
+    --ink:         #12241F;
+    --ink-soft:    #4A5C56;
+    --ink-faint:   #7A8A84;
+    --rule:        #D6E0DA;
+    --accent:      #0E6E5E;
+    --accent-soft: #E0EFEA;
+    --warn:        #A0522B;
+    --warn-soft:   #F7ECE4;
+    --done:        #6B7A75;
+    --done-soft:   #E6EAE8;
+
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans:  "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono:  "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0D1917;
+      --surface:     #14221F;
+      --surface-alt: #1B2C28;
+      --ink:         #E7EFEB;
+      --ink-soft:    #AFC0B9;
+      --ink-faint:   #7E918B;
+      --rule:        #2A3B36;
+      --accent:      #55BFA8;
+      --accent-soft: #17322C;
+      --warn:        #D9925F;
+      --warn-soft:   #30231A;
+      --done:        #93A39D;
+      --done-soft:   #23302C;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1917;
+    --surface:     #14221F;
+    --surface-alt: #1B2C28;
+    --ink:         #E7EFEB;
+    --ink-soft:    #AFC0B9;
+    --ink-faint:   #7E918B;
+    --rule:        #2A3B36;
+    --accent:      #55BFA8;
+    --accent-soft: #17322C;
+    --warn:        #D9925F;
+    --warn-soft:   #30231A;
+    --done:        #93A39D;
+    --done-soft:   #23302C;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 45rem;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ── En-tête ─────────────────────────────────────────── */
+  .masthead { display: flex; flex-direction: column; gap: 1rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2.3rem, 6vw, 3.1rem);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .standfirst {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 34rem;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta span strong { color: var(--ink-soft); font-weight: 600; }
+
+  /* ── Sections ────────────────────────────────────────── */
+  section { display: flex; flex-direction: column; gap: 1.1rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.6rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  p { margin: 0; max-width: 40rem; }
+  p + p { margin-top: -0.2rem; }
+
+  strong { font-weight: 600; }
+
+  .lead { font-size: 1.05rem; }
+
+  /* ── La demande, point par point ─────────────────────── */
+  .demandes { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .demande {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.25rem 1rem;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.1rem 1.25rem;
+  }
+
+  .demande .num {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    padding-top: 0.15rem;
+  }
+  .demande .texte { font-weight: 500; }
+  .demande .verdict {
+    grid-column: 2;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+    vertical-align: 0.08em;
+  }
+  .tag.existant { background: var(--done-soft); color: var(--done); }
+  .tag.nouveau  { background: var(--accent-soft); color: var(--accent); }
+
+  /* ── Avant / après ───────────────────────────────────── */
+  .comparaison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .volet {
+    background: var(--surface);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .volet .titre {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .volet.apres { background: var(--surface-alt); }
+  .volet.apres .titre { color: var(--accent); }
+  .volet ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .volet li { font-size: 0.94rem; line-height: 1.55; }
+
+  /* ── Statuts ─────────────────────────────────────────── */
+  .statuts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.25rem;
+  }
+  .statut { display: flex; gap: 0.85rem; align-items: baseline; flex-wrap: wrap; }
+  .pastille {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 5.5rem;
+    text-align: center;
+  }
+  .pastille.encours  { background: var(--accent-soft); color: var(--accent); }
+  .pastille.avenir   { background: var(--warn-soft);  color: var(--warn); }
+  .pastille.terminee { background: var(--done-soft);  color: var(--done); }
+  .statut .desc { font-size: 0.94rem; color: var(--ink-soft); flex: 1 1 14rem; }
+
+  /* ── Encadré d'avertissement ─────────────────────────── */
+  .encadre {
+    background: var(--warn-soft);
+    border-left: 3px solid var(--warn);
+    border-radius: 0 3px 3px 0;
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .encadre h3 { color: var(--warn); }
+  .encadre p { font-size: 0.95rem; }
+
+  /* ── Liste de changements ────────────────────────────── */
+  .changements { display: flex; flex-direction: column; gap: 1.5rem; }
+  .changement {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--rule);
+  }
+  .changement:hover { border-left-color: var(--accent); }
+  .changement p { font-size: 0.96rem; color: var(--ink-soft); }
+
+  /* ── Chemin de navigation ────────────────────────────── */
+  .chemin {
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.9rem 1.1rem;
+    color: var(--ink-soft);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .chemin b { color: var(--accent); font-weight: 500; }
+
+  /* ── Hors périmètre ──────────────────────────────────── */
+  .hors { display: flex; flex-direction: column; gap: 0.9rem; }
+  .hors div { display: flex; flex-direction: column; gap: 0.2rem; }
+  .hors .quoi { font-weight: 600; font-size: 0.95rem; }
+  .hors .pourquoi { font-size: 0.92rem; color: var(--ink-soft); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.5rem;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Note de livraison — Module Ressources Humaines</p>
+    <h1>Historique des affectations</h1>
+    <p class="standfirst">
+      Un agent peut travailler sur plusieurs sites, avec des horaires propres à chacun.
+      On peut désormais savoir où il a été affecté, et depuis quand — sans risque
+      d'effacer son passé.
+    </p>
+    <div class="meta">
+      <span><strong>Date</strong> 4 septembre 2026</span>
+      <span><strong>Concerne</strong> Fiche employé, Liste des employés, Effectifs par site</span>
+      <span><strong>État</strong> Prêt à mettre en ligne</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>En bref</h2>
+    <p class="lead">
+      Trois besoins avaient été exprimés. Les deux premiers — affecter un agent à
+      plusieurs sites, et associer des horaires à chaque affectation — étaient
+      <strong>déjà couverts</strong> par l'application. Le troisième, consulter
+      l'historique des affectations d'un agent, <strong>n'existait pas</strong>.
+    </p>
+    <p>
+      Il ne suffisait pas de l'afficher : deux défauts rendaient cet historique
+      impossible à tenir. L'application permettait de supprimer une affectation
+      passée, et elle interdisait de réaffecter un agent à un site qu'il avait
+      quitté. Les deux sont corrigés.
+    </p>
+  </section>
+
+  <section>
+    <h2>La demande, point par point</h2>
+    <div class="demandes">
+
+      <div class="demande">
+        <span class="num">1</span>
+        <span class="texte">Affecter un même agent à deux, trois ou plusieurs sites.</span>
+        <span class="verdict">
+          <span class="tag existant">Existait déjà</span>
+          La fiche de l'employé permet d'ajouter autant de sites que nécessaire, et refuse
+          d'en affecter deux fois le même. Elle vérifie aussi que le site n'a pas atteint
+          son nombre maximum d'agents.
+        </span>
+      </div>
+
+      <div class="demande">
+        <span class="num">2</span>
+        <span class="texte">Associer à chaque affectation les horaires correspondants.</span>
+        <span class="verdict">
+          <span class="tag existant">Existait déjà</span>
+          Chaque site porte son heure de début, son heure de fin et ses jours travaillés.
+          C'est sur l'horaire de <em>son</em> site que le pointage juge un agent en retard.
+        </span>
+      </div>
+
+      <div class="demande">
+        <span class="num">3</span>
+        <span class="texte">Consulter clairement l'historique des affectations de chaque agent.</span>
+        <span class="verdict">
+          <span class="tag nouveau">Ajouté</span>
+          C'est l'objet de cette livraison.
+        </span>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Ce qui a changé</h2>
+    <div class="changements">
+
+      <article class="changement">
+        <h3>Un onglet « Affectations » sur la fiche de l'agent</h3>
+        <p>
+          Il liste les sites où l'agent est affecté et ceux qu'il a quittés, dans deux
+          tableaux distincts : site, horaire, jours travaillés, date d'arrivée, date de
+          départ. La rubrique se place entre « Informations personnelles » et « Contrats ».
+        </p>
+      </article>
+
+      <article class="changement">
+        <h3>Une affectation terminée ne peut plus être supprimée</h3>
+        <p>
+          Dès que la date de départ d'un site est passée, la ligne se verrouille : elle
+          reste visible, grisée, avec la mention « Affectation terminée ». Elle appartient
+          à l'histoire de l'agent. Cette protection est portée par le serveur, pas
+          seulement par l'écran — elle vaut donc quoi qu'il arrive.
+        </p>
+      </article>
+
+      <article class="changement">
+        <h3>Un agent peut revenir sur un site qu'il a quitté</h3>
+        <p>
+          C'était impossible : l'application refusait le doublon, et la seule façon de
+          remettre l'agent sur ce site était de modifier son ancien passage — donc de
+          l'effacer. On ajoute désormais une nouvelle ligne, et les deux périodes
+          coexistent.
+        </p>
+      </article>
+
+      <article class="changement">
+        <h3>Les sites quittés ne sont plus affichés comme actifs</h3>
+        <p>
+          Dans la liste des employés et sur la fiche, la colonne « Site » mélangeait les
+          sites actuels et les anciens. Elle ne montre plus que les affectations en cours ;
+          le passé se consulte dans le nouvel onglet.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Comment lire les statuts</h2>
+    <p>Chaque ligne d'affectation porte l'un de ces trois états.</p>
+    <div class="statuts">
+      <div class="statut">
+        <span class="pastille encours">En poste</span>
+        <span class="desc">L'agent travaille actuellement sur ce site.</span>
+      </div>
+      <div class="statut">
+        <span class="pastille avenir">À venir</span>
+        <span class="desc">L'affectation est enregistrée, mais la date d'arrivée n'est pas encore atteinte.</span>
+      </div>
+      <div class="statut">
+        <span class="pastille terminee">Terminée</span>
+        <span class="desc">L'agent a quitté ce site. La ligne est conservée et verrouillée.</span>
+      </div>
+    </div>
+    <p>
+      Un départ enregistré pour <em>aujourd'hui</em> ne clôt pas l'affectation :
+      l'agent y travaille encore ce jour-là, et ses pointages du jour doivent rester
+      rattachés au site.
+    </p>
+  </section>
+
+  <section>
+    <h2>Ce que cela change au quotidien</h2>
+    <div class="comparaison">
+      <div class="volet">
+        <span class="titre">Avant</span>
+        <ul>
+          <li>Quand un agent quittait un site, on retirait la ligne : la période disparaissait sans trace.</li>
+          <li>Impossible de dire depuis quand un agent était sur son site, ni où il était l'an dernier.</li>
+          <li>Le remettre sur un ancien site imposait d'écraser son passage précédent.</li>
+          <li>La colonne « Site » affichait aussi des sites où l'agent ne travaillait plus.</li>
+        </ul>
+      </div>
+      <div class="volet apres">
+        <span class="titre">Après</span>
+        <ul>
+          <li>On renseigne une date de départ ; la ligne bascule dans l'historique et s'y verrouille.</li>
+          <li>Le parcours de l'agent site par site se lit dans son onglet « Affectations ».</li>
+          <li>Un retour sur un ancien site s'ajoute comme une nouvelle période.</li>
+          <li>La colonne « Site » ne montre que les affectations réellement en cours.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Où cela se trouve</h2>
+    <div class="chemin">
+      Ressources Humaines &rsaquo; Gestion du personnel &rsaquo; Dossiers employés
+      &rsaquo; <em>ouvrir une fiche</em> &rsaquo; <b>Affectations</b>
+    </div>
+    <p>
+      Les dates de départ se renseignent, elles, en modifiant la fiche de l'employé,
+      à l'étape « Poste &amp; Affectation » : une case « Sortie du site » à cocher, puis
+      la date.
+    </p>
+  </section>
+
+  <section>
+    <h2>À savoir avant la mise en ligne</h2>
+    <div class="encadre">
+      <h3>Deux chiffres vont changer, pour tout le monde</h3>
+      <p>
+        <strong>Les effectifs affichés par site vont baisser.</strong> Jusqu'ici, un agent
+        parti continuait d'occuper une place dans le nombre maximum d'agents du site.
+        Il en sort. Un site que vous croyiez complet peut donc redevenir disponible —
+        c'est le chiffre juste.
+      </p>
+      <p>
+        <strong>Le filtre « Site » de la liste des employés remontera moins de monde.</strong>
+        Il ne renvoie plus que les agents réellement affectés au site aujourd'hui, et non
+        plus ceux qui y sont passés par le passé.
+      </p>
+      <p>
+        Aucun dossier n'est modifié : seuls ces deux calculs sont refaits. Il n'y a rien à
+        ressaisir.
+      </p>
+    </div>
+    <p>
+      Les affectations déjà enregistrées sont reprises automatiquement au premier
+      démarrage, sans intervention.
+    </p>
+  </section>
+
+  <section>
+    <h2>Ce qui n'a pas été fait</h2>
+    <p>Trois points ont été volontairement laissés de côté, pour rester dans le cadre demandé.</p>
+    <div class="hors">
+      <div>
+        <span class="quoi">Le journal des modifications</span>
+        <span class="pourquoi">
+          L'historique retient les <em>périodes</em> d'affectation, pas qui a créé ou modifié
+          une ligne, ni quand. Savoir « qui a changé quoi » est un autre travail, à décider
+          séparément.
+        </span>
+      </div>
+      <div>
+        <span class="quoi">L'import Excel des employés</span>
+        <span class="pourquoi">
+          Il reste limité à un champ « Site affecté » unique : les horaires, dates et jours
+          par site ne s'importent pas et se saisissent ensuite dans la fiche.
+        </span>
+      </div>
+      <div>
+        <span class="quoi">Le planning terrain au jour le jour</span>
+        <span class="pourquoi">
+          Les affectations ponctuelles du planning (une mission, un jour donné) sont une
+          notion distincte et n'ont pas été touchées.
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Vérifié : l'application se construit sans erreur et l'ensemble des tests
+      automatiques passe, côté écran comme côté serveur.</span>
+    <span>Reste à faire : mise en ligne, à programmer. Le serveur doit être mis à jour
+      en même temps que l'application, ou avant elle.</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
