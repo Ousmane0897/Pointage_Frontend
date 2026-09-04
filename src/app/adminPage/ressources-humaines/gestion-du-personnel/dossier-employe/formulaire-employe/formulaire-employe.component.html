@@ -411,8 +411,23 @@
                 <div
                   *ngFor="let a of affectations.controls; let i = index"
                   [formGroupName]="i"
-                  class="p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                  class="p-3 border rounded-lg"
+                  [ngClass]="estCloturee(i)
+                    ? 'bg-gray-100 border-gray-300 border-dashed'
+                    : 'bg-gray-50 border-gray-200'"
                 >
+                  <!-- Affectation close : conservée en lecture seule, elle constitue
+                       l'historique de l'agent et ne peut plus être retirée. -->
+                  <div *ngIf="estCloturee(i)" class="flex items-center gap-2 mb-2">
+                    <span class="inline-flex items-center gap-1 bg-gray-200 text-gray-600 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded">
+                      <lucide-icon name="Lock" [size]="12"></lucide-icon>
+                      Affectation terminée
+                    </span>
+                    <span class="text-xs text-gray-500">
+                      Conservée dans l'historique de l'employé — non modifiable.
+                    </span>
+                  </div>
+
                   <div class="grid grid-cols-12 gap-3 items-end">
                     <!-- Site -->
                     <div class="col-span-12 sm:col-span-5">
@@ -457,6 +472,7 @@
                     <!-- Suppression -->
                     <div class="col-span-2 sm:col-span-1 flex justify-end">
                       <button
+                        *ngIf="!estCloturee(i)"
                         type="button"
                         (click)="retirerAffectation(i)"
                         title="Retirer ce site"
@@ -498,11 +514,14 @@
                     <!-- Sortie du site : désactivée tant qu'elle est inconnue -->
                     <div class="col-span-12 sm:col-span-4">
                       <label class="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <!-- Hors FormControl : la désactivation du groupe ne l'atteint
+                             pas, il faut la porter explicitement. -->
                         <input
                           type="checkbox"
                           [checked]="sortieRenseignee(i)"
+                          [disabled]="estCloturee(i)"
                           (change)="basculerDateSortie(i, $any($event.target).checked)"
-                          class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                          class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400 disabled:cursor-not-allowed"
                         />
                         Sortie du site
                       </label>

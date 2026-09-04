@@ -218,8 +218,8 @@
             <!-- Département -->
             <td class="px-4 py-3 text-gray-700">{{ employe.departement || '—' }}</td>
 
-            <!-- Site -->
-            <td class="px-4 py-3 text-gray-700">{{ employe.siteAffecte || '—' }}</td>
+            <!-- Site(s) : uniquement les affectations en cours -->
+            <td class="px-4 py-3 text-gray-700">{{ sitesEnCours(employe) }}</td>
 
             <!-- Statut – badge coloré -->
             <td class="px-4 py-3">

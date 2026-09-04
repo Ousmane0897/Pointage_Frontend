@@ -12,7 +12,15 @@ import { ContratService } from '../../../../../services/contrat.service';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
 import { CongeService } from '../../../../../services/conge.service';
 import { AbsenceService } from '../../../../../services/absence.service';
-import { DossierEmploye, libelleJoursTravail } from '../../../../../models/dossier-employe.model';
+import {
+  AffectationSite,
+  DossierEmploye,
+  affectationAVenir,
+  affectationsEnCours as calculerAffectationsEnCours,
+  affectationsTerminees as calculerAffectationsTerminees,
+  libelleJoursTravail,
+  splitSites,
+} from '../../../../../models/dossier-employe.model';
 import { Contrat, AlerteContrat } from '../../../../../models/contrat.model';
 import { DocumentEmploye } from '../../../../../models/document-employe.model';
 import { DemandeConge, SoldeConge } from '../../../../../models/conge.model';
@@ -23,7 +31,10 @@ import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialo
 import { BadgeStatutCongeComponent }
   from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/badge-statut-conge.component';
 
-export type ActiveTab = 'infos' | 'contrats' | 'documents' | 'conges';
+export type ActiveTab = 'infos' | 'affectations' | 'contrats' | 'documents' | 'conges';
+
+/** Onglets acceptés dans `?tab=` — un onglet absent d'ici serait ignoré au retour. */
+const ONGLETS: readonly ActiveTab[] = ['infos', 'affectations', 'contrats', 'documents', 'conges'];
 
 /** Plafond de déclarations remontées dans l'onglet — au-delà, on renvoie vers l'écran dédié. */
 const MAX_DECLARATIONS = 100;
@@ -50,6 +61,20 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   /** Alertes d'échéance de contrat, filtrées sur cet employé. */
   alertesContrats: AlerteContrat[] = [];
   alertesDismissed = false;
+
+  // ─── Onglet Affectations ──────────────────────────────────────────────────
+  // Matérialisées au chargement de l'employé — jamais recalculées par un getter
+  // appelé depuis le template, qui les retrierait à chaque cycle de détection.
+  /** Sites où l'agent est actuellement en poste (ou le sera), du plus récent au plus ancien. */
+  affectationsEnCours: AffectationSite[] = [];
+  /** Sites que l'agent a quittés — l'historique proprement dit. */
+  affectationsTerminees: AffectationSite[] = [];
+  /**
+   * Dossier antérieur au rattachement des horaires/périodes au site : on ne dispose
+   * que des noms de sites, éclatés depuis la chaîne legacy `siteAffecte`. On n'invente
+   * ni date d'entrée ni horaire.
+   */
+  sitesLegacy: string[] = [];
 
   // ─── Onglet Congés (chargé à la demande, cf. setActiveTab) ────────────────
   soldeConge: SoldeConge | null = null;
@@ -97,8 +122,8 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
     this.route.queryParamMap
       .pipe(takeUntil(this.destroy$))
       .subscribe(qp => {
-        const tab = qp.get('tab');
-        if (tab === 'infos' || tab === 'contrats' || tab === 'documents' || tab === 'conges') {
+        const tab = qp.get('tab') as ActiveTab | null;
+        if (tab && ONGLETS.includes(tab)) {
           this.setActiveTab(tab);
         }
       });
@@ -152,8 +177,39 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
         this.contrats = contrats;
         this.documents = documents;
         this.alertesContrats = alertes.filter(a => a.employeId === this.employeId);
+        this.repartirAffectations();
         this.chargerPhoto();
       });
+  }
+
+  /**
+   * Range les affectations du dossier en « en cours » / « terminées ».
+   *
+   * Aucun appel HTTP : `affectations` arrive déjà avec le dossier — contrairement à
+   * l'onglet Congés, il n'y a donc ni chargement paresseux ni 403 de périmètre ici.
+   */
+  private repartirAffectations(): void {
+    this.affectationsEnCours = calculerAffectationsEnCours(this.employe);
+    this.affectationsTerminees = calculerAffectationsTerminees(this.employe);
+    this.sitesLegacy = this.employe?.affectations?.length
+      ? []
+      : splitSites(this.employe?.siteAffecte);
+  }
+
+  /** True si l'agent n'a pas encore pris son poste sur ce site. */
+  estAVenir(a: AffectationSite): boolean {
+    return affectationAVenir(a);
+  }
+
+  /** Tranche horaire d'une affectation, ou « — » si aucune n'est renseignée. */
+  horaireAffectation(a: AffectationSite): string {
+    if (!a.horaireDebut && !a.horaireFin) return '—';
+    return `${a.horaireDebut ?? '—'} - ${a.horaireFin ?? '—'}`;
+  }
+
+  /** Bascule sur l'onglet Affectations depuis la carte « Poste & Affectation ». */
+  navigateToAffectations(): void {
+    this.activeTab = 'affectations';
   }
 
   /**

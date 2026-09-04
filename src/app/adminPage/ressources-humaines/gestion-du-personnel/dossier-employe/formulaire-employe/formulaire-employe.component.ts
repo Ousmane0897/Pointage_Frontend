@@ -13,7 +13,10 @@ import {
   DossierEmploye,
   AffectationSite,
   OPTIONS_JOURS_TRAVAIL,
+  SEPARATEUR_SITES,
+  affectationTerminee,
   libelleJoursTravail,
+  splitSites,
 } from '../../../../../models/dossier-employe.model';
 import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
 import { SiteClient, EffectifSite } from '../../../../../models/terrain-site-client.model';
@@ -90,10 +93,6 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   superieursHierarchiques: DossierEmploye[] = [];
 
   // ─── Sites (affectations multiples avec tranche horaire) ──────────────────
-  /** Séparateur d'affichage/stockage quand plusieurs sites sont dérivés dans `siteAffecte`. */
-  readonly SEPARATEUR_SITES = ' - ';
-  /** Découpe tolérante : « / », « , » (espaces optionnels) OU espace-tiret-espace. */
-  private readonly SPLIT_SITES = /\s*[/,]\s*|\s+-\s+/;
   /** Options proposées dans le `<select>` de chaque ligne (référentiel + sites déjà affectés). */
   sitesDisponibles: string[] = [];
   /** Noms des sites actifs du référentiel « Sites clients » (source unique). */
@@ -270,6 +269,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     const dateSortie = this.toDateInput(a?.dateSortie);
     const groupe = this.fb.group(
       {
+        id: [a?.id ?? null],
         site: [a?.site ?? '', Validators.required],
         horaireDebut: [a?.horaireDebut ?? ''],
         horaireFin: [a?.horaireFin ?? ''],
@@ -279,13 +279,32 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       },
       { validators: this.coherenceLigneValidator },
     );
+
+    // Affectation close : elle appartient à l'historique de l'agent et n'est plus
+    // modifiable. ⚠ Un groupe désactivé reste dans `getRawValue()`, donc dans le
+    // payload — c'est ce qui garantit qu'un enregistrement ne l'efface pas. Inutile
+    // aussi de brancher le contrôle de capacité : la ligne n'occupe plus de poste.
+    if (a && affectationTerminee(a)) {
+      groupe.disable();
+      return groupe;
+    }
+
     this.brancherControleCapacite(groupe);
     return groupe;
   }
 
+  /** True si l'affectation `i` est close : lecture seule, non supprimable. */
+  estCloturee(i: number): boolean {
+    return this.affectations.at(i).disabled;
+  }
+
   /** True si la date de sortie de la ligne `i` est renseignée (case cochée). */
   sortieRenseignee(i: number): boolean {
-    return this.affectations.at(i).get('dateSortie')!.enabled;
+    const ligne = this.affectations.at(i);
+    // Sur une ligne close, tout est désactivé : c'est la valeur qui fait foi.
+    return ligne.disabled
+      ? !!ligne.get('dateSortie')!.value
+      : ligne.get('dateSortie')!.enabled;
   }
 
   /**
@@ -355,10 +374,18 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** True si `nom` est déjà présent dans une autre ligne du FormArray. */
+  /**
+   * True si `nom` est déjà présent dans une autre ligne **en cours** du FormArray.
+   *
+   * ⚠ Les lignes closes sont volontairement exclues : un agent peut revenir sur un
+   * site qu'il a quitté, et l'interdire obligerait à écraser le passage précédent —
+   * c'est-à-dire à détruire l'historique qu'on cherche justement à conserver.
+   */
   private siteEnDoublon(nom: string, groupeCourant: FormGroup): boolean {
     return this.affectations.controls.some(
-      c => c !== groupeCourant && (c.get('site')?.value ?? '').trim() === nom,
+      c => c !== groupeCourant
+        && c.enabled
+        && (c.get('site')?.value ?? '').trim() === nom,
     );
   }
 
@@ -368,8 +395,13 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     this.affectations.markAsTouched();
   }
 
-  /** Retire la ligne d'affectation à l'index donné et recompose les options. */
+  /**
+   * Retire la ligne d'affectation à l'index donné et recompose les options.
+   * Garde explicite : une affectation close fait partie de l'historique de l'agent,
+   * le masquage du bouton dans le template ne doit pas être la seule barrière.
+   */
   retirerAffectation(i: number): void {
+    if (this.estCloturee(i)) return;
     this.affectations.removeAt(i);
     this.affectations.markAsTouched();
     this.recomposerSitesDisponibles();
@@ -498,12 +530,6 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  // ─── Sites (affectations) ─────────────────────────────────────────────────
-  /** Éclate une string multi-sites en sites individuels (séparateurs tolérés). */
-  private splitSites(v: string | null | undefined): string[] {
-    return (v ?? '').split(this.SPLIT_SITES).map(s => s.trim()).filter(Boolean);
-  }
-
   private chargerEmploye(id: string): void {
     this.loading = true;
     this.dossierEmployeService.getEmployeById(id)
@@ -555,14 +581,19 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
           this.affectations.clear();
           const affectations: AffectationSite[] = employe.affectations?.length
             ? employe.affectations
-            : this.splitSites(employe.siteAffecte).map(site => ({
+            : splitSites(employe.siteAffecte).map(site => ({
                 site,
                 dateEntree: this.toDateInput(employe.dateEmbauche),
                 joursTravail: 'LUN_VEN' as const,
               }));
           // Mémorise les sites déjà rattachés pour ne pas les bloquer contre eux-mêmes.
+          // ⚠ Les affectations closes en sont exclues : l'agent n'y occupe plus de poste,
+          // et l'y réaffecter doit repasser par le contrôle de plafond du site.
           this.sitesInitiaux = new Set(
-            affectations.map(a => (a.site ?? '').trim()).filter(Boolean),
+            affectations
+              .filter(a => !affectationTerminee(a))
+              .map(a => (a.site ?? '').trim())
+              .filter(Boolean),
           );
           affectations.forEach(a => this.affectations.push(this.creerLigneAffectation(a)));
           this.recomposerSitesDisponibles();
@@ -969,6 +1000,9 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     const affectations: AffectationSite[] = (this.affectations.getRawValue() ?? [])
       .filter((a: AffectationSite) => (a.site ?? '').trim())
       .map((a: AffectationSite) => ({
+        // Renvoyé tel quel : c'est lui qui permet au serveur de reconnaître une
+        // affectation déjà persistée (et de refuser la disparition d'une ligne close).
+        id: a.id ?? undefined,
         site: a.site.trim(),
         horaireDebut: a.horaireDebut || undefined,
         horaireFin: a.horaireFin || undefined,
@@ -977,7 +1011,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         joursTravail: a.joursTravail,
       }));
     employePayload.affectations = affectations;
-    employePayload.siteAffecte = affectations.map(a => a.site).join(this.SEPARATEUR_SITES);
+    employePayload.siteAffecte = affectations.map(a => a.site).join(SEPARATEUR_SITES);
 
     const formData = new FormData();
     const employeJson = JSON.stringify(employePayload);
