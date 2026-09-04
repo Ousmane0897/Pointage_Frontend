@@ -153,6 +153,21 @@
           Informations personnelles
         </button>
 
+        <!-- Onglet Affectations (données déjà présentes dans le dossier) -->
+        <button
+          (click)="setActiveTab('affectations')"
+          [ngClass]="activeTab === 'affectations'
+            ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50/50'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+          class="flex items-center gap-2 px-5 py-4 text-sm font-medium transition-colors duration-150 whitespace-nowrap">
+          <lucide-icon name="MapPin" class="w-4 h-4"></lucide-icon>
+          Affectations
+          <span *ngIf="affectationsEnCours.length > 0"
+            class="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+            {{ affectationsEnCours.length }}
+          </span>
+        </button>
+
         <!-- Onglet Contrats -->
         <button
           (click)="setActiveTab('contrats')"
@@ -301,29 +316,36 @@
                 <dt class="text-sm text-gray-500 shrink-0">Département</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.departement || '—' }}</dd>
               </div>
-              <!-- Sites : période de présence et semaine ouvrée sont propres à chaque
-                   site. Repli sur la string `siteAffecte` pour les dossiers antérieurs. -->
+              <!-- Sites : uniquement les affectations EN COURS. Les sites quittés
+                   relèvent de l'onglet Affectations, les afficher ici les ferait
+                   passer pour actifs. Repli sur `siteAffecte` (dossiers antérieurs). -->
               <div class="flex justify-between items-start gap-3">
                 <dt class="text-sm text-gray-500 shrink-0">Site(s) affecté(s)</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">
-                  <ng-container *ngIf="employe.affectations?.length; else siteAffecteBrut">
-                    <div *ngFor="let a of employe.affectations" class="mb-1.5 last:mb-0">
+                  <ng-container *ngIf="affectationsEnCours.length; else siteAffecteBrut">
+                    <div *ngFor="let a of affectationsEnCours" class="mb-1.5 last:mb-0">
                       {{ a.site }}
                       <span *ngIf="a.horaireDebut && a.horaireFin" class="text-gray-500">
                         ({{ a.horaireDebut }} - {{ a.horaireFin }})
                       </span>
                       <span class="block text-xs font-normal text-gray-500">
                         {{ libelleJoursTravail(a.joursTravail) }}
-                        · {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
-                        →
-                        <ng-container *ngIf="a.dateSortie; else enPosteSite">
-                          {{ a.dateSortie | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
-                        </ng-container>
-                        <ng-template #enPosteSite>en poste</ng-template>
+                        · depuis {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
+                        <span *ngIf="estAVenir(a)" class="text-blue-600">(à venir)</span>
                       </span>
                     </div>
                   </ng-container>
-                  <ng-template #siteAffecteBrut>{{ employe.siteAffecte || '—' }}</ng-template>
+                  <ng-template #siteAffecteBrut>
+                    {{ (employe.affectations?.length ? '—' : employe.siteAffecte) || '—' }}
+                  </ng-template>
+                  <button
+                    type="button"
+                    (click)="navigateToAffectations()"
+                    class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                  >
+                    <lucide-icon name="History" class="w-3.5 h-3.5"></lucide-icon>
+                    Voir l'historique
+                  </button>
                 </dd>
               </div>
               <div class="flex justify-between items-start gap-3">
@@ -401,6 +423,150 @@
         </div>
       </div>
       <!-- fin onglet infos -->
+
+      <!-- ════════════════════════════════════════
+           ONGLET : AFFECTATIONS
+           Historique des sites de l'agent. Les données proviennent du dossier
+           déjà chargé : aucun appel HTTP supplémentaire.
+      ════════════════════════════════════════ -->
+      <div *ngIf="activeTab === 'affectations'" class="p-6">
+
+        <!-- En-tête d'onglet -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div>
+            <h3 class="text-base font-semibold text-gray-800">Affectations par site</h3>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Sites où l'agent est ou a été affecté, avec les horaires et jours de travail propres à chaque site.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-lg">
+              {{ affectationsEnCours.length }} en cours
+            </span>
+            <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 font-medium px-2.5 py-1 rounded-lg">
+              {{ affectationsTerminees.length }} terminée(s)
+            </span>
+          </div>
+        </div>
+
+        <!-- Dossier antérieur : seuls les noms de sites sont connus -->
+        <div *ngIf="sitesLegacy.length" class="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div class="flex items-start gap-2">
+            <lucide-icon name="Info" class="w-4 h-4 text-amber-600 mt-0.5 shrink-0"></lucide-icon>
+            <div>
+              <p class="text-sm font-medium text-amber-800">
+                Dossier antérieur — le détail par site n'a pas été renseigné
+              </p>
+              <p class="text-xs text-amber-700 mt-0.5">
+                Ni les horaires, ni la période de présence, ni les jours de travail ne sont connus pour ces sites.
+                Ils se renseignent en modifiant la fiche de l'employé.
+              </p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span *ngFor="let s of sitesLegacy"
+                  class="bg-white border border-amber-200 text-amber-800 text-xs font-medium px-2 py-0.5 rounded">
+                  {{ s }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aucune affectation du tout -->
+        <div *ngIf="!affectationsEnCours.length && !affectationsTerminees.length && !sitesLegacy.length"
+          class="text-center py-12">
+          <lucide-icon name="MapPin" class="w-10 h-10 text-gray-300 mx-auto mb-3"></lucide-icon>
+          <p class="text-sm text-gray-500">Aucun site affecté à cet employé.</p>
+        </div>
+
+        <!-- ─── Affectations en cours ─── -->
+        <div *ngIf="affectationsEnCours.length" class="mb-8">
+          <h4 class="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            En cours
+          </h4>
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Site</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Horaire</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Jours</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Du</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Au</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Statut</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let a of affectationsEnCours" class="hover:bg-gray-50">
+                  <td class="px-4 py-3 font-medium text-gray-800">{{ a.site }}</td>
+                  <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ horaireAffectation(a) }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ libelleJoursTravail(a.joursTravail) }}</td>
+                  <td class="px-4 py-3 text-gray-700 whitespace-nowrap">
+                    {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                    <!-- Une sortie renseignée mais future : l'agent est encore en poste. -->
+                    {{ a.dateSortie ? (a.dateSortie | date:'dd/MM/yyyy' : '' : 'fr-FR') : '—' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span *ngIf="estAVenir(a); else enPoste"
+                      class="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                      À venir
+                    </span>
+                    <ng-template #enPoste>
+                      <span class="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                        En poste
+                      </span>
+                    </ng-template>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ─── Affectations terminées ─── -->
+        <div *ngIf="affectationsTerminees.length">
+          <h4 class="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            <lucide-icon name="History" class="w-4 h-4 text-gray-400"></lucide-icon>
+            Terminées
+          </h4>
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Site</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Horaire</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Jours</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Du</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Au</th>
+                  <th class="text-left px-4 py-3 font-semibold text-gray-600">Statut</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let a of affectationsTerminees" class="hover:bg-gray-50 text-gray-500">
+                  <td class="px-4 py-3 font-medium text-gray-700">{{ a.site }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ horaireAffectation(a) }}</td>
+                  <td class="px-4 py-3">{{ libelleJoursTravail(a.joursTravail) }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    {{ a.dateSortie | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="bg-gray-200 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                      Terminée
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <!-- fin onglet affectations -->
 
       <!-- ════════════════════════════════════════
            ONGLET : CONTRATS
