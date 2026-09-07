@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { DossierEmploye, FiltreEmploye } from '../models/dossier-employe.model';
+import { DossierEmploye, FiltreEmploye, splitSites } from '../models/dossier-employe.model';
 import { PageResponse } from '../models/pageResponse.model';
 import {
   BackendBulkImportResponse,
@@ -113,15 +113,10 @@ export class DossierEmployeService {
         const distinctTrie = (vs: (string | undefined | null)[]) =>
           [...new Set(vs.filter((v): v is string => !!v && v.trim() !== ''))]
             .sort((a, b) => a.localeCompare(b, 'fr'));
-        // `siteAffecte` peut contenir plusieurs sites combinés dans une seule chaîne,
-        // séparés par « / », « , » (données historiques) ou «  -  » (nouveau séparateur).
-        // On éclate chaque valeur pour lister les sites individuels (cases à cocher du
-        // formulaire + dropdown de filtre). Le tiret n'est découpé que s'il est entouré
-        // d'espaces, pour préserver les noms de site à tiret interne (ex. « Sacré-Coeur »).
-        const SPLIT_SITES = /\s*[/,]\s*|\s+-\s+/;
-        const sitesEclates = employes
-          .flatMap(e => (e.siteAffecte ?? '').split(SPLIT_SITES))
-          .map(s => s.trim());
+        // `siteAffecte` peut contenir plusieurs sites combinés dans une seule chaîne :
+        // on éclate chaque valeur pour lister les sites individuels (dropdown de filtre).
+        // Le découpage est porté par `splitSites` (modèle), point unique de vérité.
+        const sitesEclates = employes.flatMap(e => splitSites(e.siteAffecte));
         return {
           departements: distinctTrie(employes.map(e => e.departement)),
           sites: distinctTrie(sitesEclates),

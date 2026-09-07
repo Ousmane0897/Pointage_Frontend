@@ -19,7 +19,11 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { DossierEmployeService } from '../../../../../services/dossier-employe.service';
 import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
-import { DossierEmploye, FiltreEmploye } from '../../../../../models/dossier-employe.model';
+import {
+  DossierEmploye,
+  FiltreEmploye,
+  affectationsEnCours,
+} from '../../../../../models/dossier-employe.model';
 import { PageResponse } from '../../../../../models/pageResponse.model';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import { ImportExcelModalComponent } from '../import-excel-modal/import-excel-modal.component';
@@ -319,6 +323,19 @@ export class ListeEmployesComponent implements OnInit, OnDestroy {
   // ─── Utilitaires ──────────────────────────────────────────────────────────
   trackById(_: number, item: DossierEmploye): string {
     return item.id ?? item.matricule;
+  }
+
+  /**
+   * Sites où l'employé est actuellement affecté.
+   *
+   * On n'affiche pas `siteAffecte` tel quel : cette chaîne dérivée agrège **tous**
+   * les sites, y compris ceux que l'agent a quittés, qui apparaîtraient donc comme
+   * actifs. Repli sur la chaîne pour les dossiers antérieurs, sans détail par site.
+   */
+  sitesEnCours(employe: DossierEmploye): string {
+    if (!employe.affectations?.length) return employe.siteAffecte || '—';
+    const sites = affectationsEnCours(employe).map(a => a.site);
+    return sites.length ? sites.join(' · ') : '—';
   }
 
   // ─── Nettoyage ────────────────────────────────────────────────────────────

@@ -14,10 +14,16 @@ import { CongeService } from '../../../../../services/conge.service';
 import { AbsenceService } from '../../../../../services/absence.service';
 import { ParametresCongesService } from '../../../../../services/parametres-conges.service';
 import {
+  AffectationSite,
   DossierEmploye,
   EnfantEmploye,
+  affectationAVenir,
+  affectationsEnCours as calculerAffectationsEnCours,
+  affectationsTerminees as calculerAffectationsTerminees,
   ageAu,
+  aujourdHuiIso,
   libelleJoursTravail,
+  splitSites,
 } from '../../../../../models/dossier-employe.model';
 import { ParametresConges } from '../../../../../models/parametres-conges.model';
 import { Contrat, AlerteContrat } from '../../../../../models/contrat.model';
@@ -34,7 +40,10 @@ import { DetailAcquisCongeComponent }
 import { NoteBaremeCongesComponent }
   from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/note-bareme-conges.component';
 
-export type ActiveTab = 'infos' | 'contrats' | 'documents' | 'conges';
+export type ActiveTab = 'infos' | 'affectations' | 'contrats' | 'documents' | 'conges';
+
+/** Onglets acceptés dans `?tab=` — un onglet absent d'ici serait ignoré au retour. */
+const ONGLETS: readonly ActiveTab[] = ['infos', 'affectations', 'contrats', 'documents', 'conges'];
 
 /** Plafond de déclarations remontées dans l'onglet — au-delà, on renvoie vers l'écran dédié. */
 const MAX_DECLARATIONS = 100;
@@ -66,6 +75,20 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
 
   /** Enfants prêts à l'affichage — matérialisés, cf. `construireEnfantsAffichage()`. */
   enfantsAffichage: { prenom: string; dateNaissance: string; age: number | null }[] = [];
+
+  // ─── Onglet Affectations ──────────────────────────────────────────────────
+  // Matérialisées au chargement de l'employé — jamais recalculées par un getter
+  // appelé depuis le template, qui les retrierait à chaque cycle de détection.
+  /** Sites où l'agent est actuellement en poste (ou le sera), du plus récent au plus ancien. */
+  affectationsEnCours: AffectationSite[] = [];
+  /** Sites que l'agent a quittés — l'historique proprement dit. */
+  affectationsTerminees: AffectationSite[] = [];
+  /**
+   * Dossier antérieur au rattachement des horaires/périodes au site : on ne dispose
+   * que des noms de sites, éclatés depuis la chaîne legacy `siteAffecte`. On n'invente
+   * ni date d'entrée ni horaire.
+   */
+  sitesLegacy: string[] = [];
 
   // ─── Onglet Congés (chargé à la demande, cf. setActiveTab) ────────────────
   soldeConge: SoldeConge | null = null;
@@ -116,8 +139,8 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
     this.route.queryParamMap
       .pipe(takeUntil(this.destroy$))
       .subscribe(qp => {
-        const tab = qp.get('tab');
-        if (tab === 'infos' || tab === 'contrats' || tab === 'documents' || tab === 'conges') {
+        const tab = qp.get('tab') as ActiveTab | null;
+        if (tab && ONGLETS.includes(tab)) {
           this.setActiveTab(tab);
         }
       });
@@ -172,6 +195,7 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
         this.documents = documents;
         this.alertesContrats = alertes.filter(a => a.employeId === this.employeId);
         this.construireEnfantsAffichage();
+        this.repartirAffectations();
         this.chargerPhoto();
       });
   }
@@ -183,7 +207,9 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
    * getter recalculerait la liste à chaque cycle de détection de changement.
    */
   private construireEnfantsAffichage(): void {
-    const aujourdhui = this.dateDuJourLocale();
+    // `aujourdHuiIso` vient du modèle : la date du jour y est construite en local
+    // (`toISOString()` décalerait d'un jour) et n'a pas à être recopiée ici.
+    const aujourdhui = aujourdHuiIso();
     this.enfantsAffichage = (this.employe?.enfants ?? []).map((e: EnfantEmploye) => ({
       prenom: e.prenom,
       dateNaissance: this.formaterDateIso(e.dateNaissance),
@@ -191,22 +217,41 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
     }));
   }
 
-  /**
-   * Date du jour en `yyyy-MM-dd`, construite **en local**.
-   * ⚠ `toISOString()` décalerait d'un jour selon le fuseau.
-   */
-  private dateDuJourLocale(): string {
-    const d = new Date();
-    const mois = `${d.getMonth() + 1}`.padStart(2, '0');
-    const jour = `${d.getDate()}`.padStart(2, '0');
-    return `${d.getFullYear()}-${mois}-${jour}`;
-  }
-
   /** `yyyy-MM-dd` → `dd/MM/yyyy`, sans passer par `Date` (aucun risque de décalage). */
   private formaterDateIso(iso: string | null | undefined): string {
     if (!iso) return '—';
     const [a, m, j] = iso.slice(0, 10).split('-');
     return `${j}/${m}/${a}`;
+  }
+
+  /**
+   * Range les affectations du dossier en « en cours » / « terminées ».
+   *
+   * Aucun appel HTTP : `affectations` arrive déjà avec le dossier — contrairement à
+   * l'onglet Congés, il n'y a donc ni chargement paresseux ni 403 de périmètre ici.
+   */
+  private repartirAffectations(): void {
+    this.affectationsEnCours = calculerAffectationsEnCours(this.employe);
+    this.affectationsTerminees = calculerAffectationsTerminees(this.employe);
+    this.sitesLegacy = this.employe?.affectations?.length
+      ? []
+      : splitSites(this.employe?.siteAffecte);
+  }
+
+  /** True si l'agent n'a pas encore pris son poste sur ce site. */
+  estAVenir(a: AffectationSite): boolean {
+    return affectationAVenir(a);
+  }
+
+  /** Tranche horaire d'une affectation, ou « — » si aucune n'est renseignée. */
+  horaireAffectation(a: AffectationSite): string {
+    if (!a.horaireDebut && !a.horaireFin) return '—';
+    return `${a.horaireDebut ?? '—'} - ${a.horaireFin ?? '—'}`;
+  }
+
+  /** Bascule sur l'onglet Affectations depuis la carte « Poste & Affectation ». */
+  navigateToAffectations(): void {
+    this.activeTab = 'affectations';
   }
 
   /**
