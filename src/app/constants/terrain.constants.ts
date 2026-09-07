@@ -70,6 +70,26 @@ export const LIBELLES_FREQUENCE_PASSAGE: Record<FrequencePassage, string> = {
   PERSONNALISE: 'Personnalisé',
 };
 
+/**
+ * Message affiché quand le plafond `nombreMaxEmployes` d'un site est atteint.
+ *
+ * Point unique de vérité : il était recopié verbatim dans le formulaire employé et
+ * aux deux endroits du formulaire d'affectation — même parti pris que
+ * `ORDRE_STATUTS_AFFECTATION`, qui a déjà remplacé trois copies d'un même tableau.
+ *
+ * ⚠ Le décompte affiché est celui du **périmètre demandé** : côté RH il ne compte que
+ * les employés occupant un poste (les statuts `SORTI` et `SUSPENDU` en sont exclus
+ * côté serveur), ce qui explique qu'il puisse être inférieur au nombre d'agents
+ * rattachés au site.
+ */
+export function messageSiteComplet(
+  nom: string,
+  effectif: { nombreActuel: number; nombreMax: number | null },
+): string {
+  return `Le nombre maximum d'employés pour ${nom} est atteint `
+    + `(${effectif.nombreActuel}/${effectif.nombreMax}).`;
+}
+
 // ─── Planning : statut d'affectation ───────────────────────────────────────
 export const LIBELLES_STATUT_AFFECTATION: Record<StatutAffectation, string> = {
   PLANIFIEE: 'Planifiée',

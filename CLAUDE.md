@@ -134,6 +134,52 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
     - Tests : `AffectationSiteUtilsTest` (util pur, date figée), 9 cas ajoutés à `DossierEmployeAffectationServiceTest`, 3 à `EffectifSiteServiceIT`, 3 à `AffectationSiteBackfillRunnerIT`, 1 `@WebMvcTest` de **PUT multipart → 422** (aucun test de PUT multipart n'existait). ⚠ Le stub de `toAffectationEntities` de `DossierEmployeAffectationServiceTest` ne recopiait que `site`/`horaireDebut`/`horaireFin` : il **doit** recopier tous les champs, sinon les tests d'identité et de période seraient verts pour de mauvaises raisons.
   - **Hors périmètre, arbitré** : pas de journal d'audit (qui a modifié quoi, quand, valeur précédente) — l'historique porte les **périodes**, pas les modifications ; l'écran RH > Affectations (`AffectationAgent`, planning terrain ponctuel) n'est pas touché, et son filtre `employeId` reste supporté par le service sans être exposé dans l'UI.
 
+#### Capacité d'un site — le statut de l'employé libère la place
+
+Le décompte d'effectif RH d'un site ne lisait **jamais** `DossierEmploye.statut`. Un agent
+placé en congé long (`SUSPENDU`) ou parti (`SORTI`) continuait donc d'occuper sa place, et
+son site refusait tout remplaçant (« Le nombre maximum d'employés pour … est atteint ») —
+la seule échappatoire étant de clore sa ligne d'affectation par une `dateSortie`, ce qui
+aurait faussement acté un **départ définitif du site** dans l'historique qu'on venait
+justement de rendre increvable.
+
+- `EffectifSiteService` compte désormais **deux conditions**, portées par **deux prédicats
+  distincts** : `occupeUnPoste` (statut) **et** `estRattacheAuSite` (site + période).
+  ⚠ Les fusionner rendrait le repli `siteAffecte` insensible au statut — un agent sorti
+  d'un **dossier antérieur**, sans affectations structurées, serait recompté par ce repli,
+  exactement comme le piège déjà documenté entre les deux règles d'`estRattacheAuSite`.
+- **`STATUTS_OCCUPANTS` = `ACTIF`, `EN_PERIODE_ESSAI`** — même liste que
+  `OrganigrammeService.STATUTS_ACTIFS`, et volontairement **plus étroite** que celle de
+  `DemandeCongeService` (qui garde `SUSPENDU` : un agent suspendu conserve ses droits à
+  congés, mais pas son poste). Ne pas confondre les deux.
+- ⚠ **`statut` nul ⇒ le dossier est COMPTÉ.** Le champ n'a jamais été `@NotNull` : libérer
+  une place sur la foi d'une donnée absente ferait dépasser le plafond en silence, alors
+  que le sur-compter ne fait qu'appeler une correction du dossier. Même arbitrage prudent
+  que le `type` nul de `TypeConge.decompteSoldeAnnuel`. C'est aussi ce qui laisse verts les
+  IT antérieurs, dont les helpers construisent les dossiers sans statut.
+- ⚠ **Le retour d'un agent suspendu n'est jamais bloqué** : le contrôle de capacité n'est
+  branché que sur le choix d'un site dans une ligne d'affectation, **pas** sur le changement
+  de statut. Si le remplaçant est resté, le site repasse **au-dessus de son plafond**, sans
+  message ; le plafond redevient bloquant à l'affectation suivante. Contrepartie assumée du
+  choix « `SUSPENDU` libère la place ».
+- ⚠ **Le périmètre `TERRAIN` n'est pas concerné** : il compte les affectations de planning
+  non `ANNULEE` sans jamais ouvrir le dossier employé — un agent suspendu y occupe toujours
+  sa place. Non traité (le remplacement se fait depuis la fiche employé).
+- Rappel : **le plafond n'est appliqué que côté front**. `EffectifSiteService` reste
+  consultatif, aucun POST/PUT ne le consulte — un appel API direct le contourne. Inchangé.
+- Le message « site complet », **dupliqué verbatim en 3 endroits** (formulaire employé,
+  formulaire d'affectation ×2) et fautif d'accord, est centralisé en
+  `messageSiteComplet(nom, effectif)` dans [terrain.constants.ts](src/app/constants/terrain.constants.ts)
+  et affiche désormais le décompte `actuel/max`. Aucune autre modification front : la
+  logique de blocage est inchangée, elle suit mécaniquement le compteur serveur.
+- ⚠ **Au déploiement, les effectifs par site baissent une seconde fois** (après la baisse
+  due à l'exclusion des affectations closes) : tous les agents sortis ou suspendus quittent
+  le décompte. À annoncer, comme les bascules de soldes de congés. **Aucune migration
+  Mongo** — le champ existe, seul le calcul change.
+- Backend : branche `feature/effectif-site-statut-employe` (depuis `main`). Tests : 5 cas
+  ajoutés à `EffectifSiteServiceIT`, dont le cas réel (affectation **ouverte** + `SORTI`)
+  et le repli `siteAffecte`.
+
 ### 6.2 Temps & Présences (`ressources-humaines/temps-et-presences/`)
 
 - **Pointage centralisé** — vue globale tous départements confondus, données de pointage terrain remontées automatiquement depuis le module Exploitation, alertes absences et retards pour tout le personnel (terrain, siège, production, commercial)
