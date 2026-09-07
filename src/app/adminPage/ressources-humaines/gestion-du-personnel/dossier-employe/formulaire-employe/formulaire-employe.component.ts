@@ -21,6 +21,7 @@ import {
 } from '../../../../../models/dossier-employe.model';
 import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
 import { SiteClient, EffectifSite } from '../../../../../models/terrain-site-client.model';
+import { messageSiteComplet } from '../../../../../constants/terrain.constants';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
 import { CategorieDocument } from '../../../../../models/document-employe.model';
 import { ContratService } from '../../../../../services/contrat.service';
@@ -368,7 +369,7 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         // `nombreActuel` exclut déjà l'employé courant (excludeEmployeId).
         const dejaRattache = this.sitesInitiaux.has(nom);
         if (!dejaRattache && eff.nombreActuel >= eff.nombreMax) {
-          this.toastr.error(`Le nombre maximum d'employé pour ${nom} est atteint`);
+          this.toastr.error(messageSiteComplet(nom, eff));
           groupe.get('site')!.setValue('', { emitEvent: false });
           return;
         }

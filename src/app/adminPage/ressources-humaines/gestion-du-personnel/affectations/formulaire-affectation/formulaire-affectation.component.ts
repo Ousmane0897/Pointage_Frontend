@@ -44,6 +44,7 @@ import {
   LIBELLES_STATUT_AFFECTATION,
   ORDRE_STATUTS_AFFECTATION,
   STATUTS_AFFECTATION_MODIFIABLES,
+  messageSiteComplet,
 } from '../../../../../constants/terrain.constants';
 import { SelecteurAgentComponent } from '../../../../exploitation-v2/terrain/shared/selecteur-agent/selecteur-agent.component';
 import { SelecteurSiteComponent } from '../../../../exploitation-v2/terrain/shared/selecteur-site/selecteur-site.component';
@@ -286,7 +287,7 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
         if (!eff || eff.nombreMax == null) return;
         const nom = this.siteCourant?.nom ?? 'ce site';
         if (eff.nombreActuel >= eff.nombreMax) {
-          this.toastr.error(`Le nombre maximum d'employé pour ${nom} est atteint`);
+          this.toastr.error(messageSiteComplet(nom, eff));
           return;
         }
         this.toastr.info(`Le site possède actuellement ${eff.nombreActuel + 1} / ${eff.nombreMax}.`);
@@ -382,7 +383,7 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
         switchMap((eff) => {
           if (eff && eff.nombreMax != null && eff.nombreActuel >= eff.nombreMax) {
             const nom = this.siteCourant?.nom ?? 'ce site';
-            this.toastr.error(`Le nombre maximum d'employé pour ${nom} est atteint`);
+            this.toastr.error(messageSiteComplet(nom, eff));
             return of(null);
           }
           return this.affectationId
