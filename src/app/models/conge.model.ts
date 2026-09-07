@@ -96,9 +96,31 @@ export interface SoldeConge {
    * l'additionner au solde compterait les jours deux fois.
    */
   soldeAnterieur: number;
-  /** Mois de service effectif comptés sur l'exercice — explique d'où sort `acquis`. */
+  /** Mois de service effectif comptés sur l'exercice — explique d'où sort `acquisBase`. */
   moisAcquis: number;
-  acquis: number;      // jours acquis (2 j par mois de service effectif)
+  /**
+   * Droits acquis sur l'exercice, **toutes majorations comprises** :
+   * `acquis === acquisBase + supplementEnfants + supplementAnciennete`.
+   * C'est ce champ que les écrans affichent sous le libellé « Acquis ».
+   */
+  acquis: number;
+
+  // ─── Ventilation de `acquis` — champs OPTIONNELS ─────────────────────────
+  // Ils n'existent que depuis le lot « droits supplémentaires » : le front doit
+  // dégrader proprement face à un backend qui ne les renvoie pas encore (la
+  // ventilation ne s'affiche simplement pas).
+
+  /** `moisAcquis × jours par mois` — l'acquis avant toute majoration. */
+  acquisBase?: number;
+  /** Majoration pour enfants de moins de N ans à charge (mères de famille). */
+  supplementEnfants?: number;
+  /** Majoration du palier d'ancienneté atteint (paliers non cumulatifs). */
+  supplementAnciennete?: number;
+  /** Ancienneté retenue au 31/12 de l'exercice — explique `supplementAnciennete`. */
+  anneesAnciennete?: number;
+  /** Nombre d'enfants ayant ouvert le droit — explique `supplementEnfants`. */
+  enfantsBeneficiaires?: number;
+
   pris: number;        // jours pris
   enCours: number;     // jours en demande en attente
   solde: number;       // jours restants, report inclus

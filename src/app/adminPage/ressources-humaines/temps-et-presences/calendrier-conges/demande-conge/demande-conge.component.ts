@@ -19,9 +19,12 @@ import {
 import {
   ORDRE_TYPES_CONGE,
   LIBELLES_TYPE_CONGE,
-  PARAMETRES_CONGES,
   decompteLeSolde,
 } from '../../../../../constants/conges.constants';
+import { ParametresConges } from '../../../../../models/parametres-conges.model';
+import { ParametresCongesService } from '../../../../../services/parametres-conges.service';
+import { DetailAcquisCongeComponent } from '../shared/detail-acquis-conge.component';
+import { NoteBaremeCongesComponent } from '../shared/note-bareme-conges.component';
 
 /**
  * Dépôt d'une demande de congé.
@@ -38,7 +41,14 @@ import {
 @Component({
   selector: 'app-demande-conge',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    LucideAngularModule,
+    DetailAcquisCongeComponent,
+    NoteBaremeCongesComponent,
+  ],
   templateUrl: './demande-conge.component.html',
   styleUrl: './demande-conge.component.scss',
 })
@@ -76,7 +86,8 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
 
   readonly ORDRE_TYPES_CONGE = ORDRE_TYPES_CONGE;
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
-  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
+  /** Barème des droits, pour la note explicative. Null tant que l'appel est en vol. */
+  bareme: ParametresConges | null = null;
 
   /**
    * Le type sélectionné ampute-t-il le solde annuel ? Sert uniquement à prévenir avant
@@ -94,9 +105,14 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
     private permissions: CongePermissionsService,
     private router: Router,
     private toastr: ToastrService,
+    private parametresConges: ParametresCongesService,
   ) {}
 
   ngOnInit(): void {
+    // Barème caché pour la session : la note de pied explique d'où sortent les jours.
+    this.parametresConges.getParametres()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(b => (this.bareme = b));
     this.form = this.fb.group({
       type: ['ANNUEL', Validators.required],
       dateDebut: ['', Validators.required],

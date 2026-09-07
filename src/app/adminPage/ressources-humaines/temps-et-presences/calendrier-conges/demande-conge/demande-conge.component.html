@@ -70,6 +70,7 @@
         <div>
           <div class="text-xs text-gray-500 uppercase">Acquis</div>
           <div class="font-medium">{{ soldeEmployeSelectionne.acquis }} j</div>
+          <app-detail-acquis-conge [solde]="soldeEmployeSelectionne"></app-detail-acquis-conge>
         </div>
         <div>
           <div class="text-xs text-gray-500 uppercase">Pris</div>
@@ -79,12 +80,9 @@
           <div class="text-xs text-gray-500 uppercase">En cours</div>
           <div class="font-medium text-amber-700">{{ soldeEmployeSelectionne.enCours }} j</div>
         </div>
-        <p class="basis-full text-xs text-gray-500">
-          Acquis = {{ joursAcquisParMois }} jours ouvrables par mois de service effectif
-          ({{ soldeEmployeSelectionne.moisAcquis }} mois en
-          {{ soldeEmployeSelectionne.anneeReference }}). « Antérieur » est le reliquat des
-          exercices précédents, déjà inclus dans le solde disponible.
-        </p>
+        <div class="basis-full">
+          <app-note-bareme-conges [bareme]="bareme"></app-note-bareme-conges>
+        </div>
       </div>
 
       <div>

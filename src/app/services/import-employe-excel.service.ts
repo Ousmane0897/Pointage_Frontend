@@ -86,6 +86,8 @@ export class ImportEmployeExcelService {
       [''],
       ['6. Champ photo non importable via Excel. À éditer ensuite depuis la fiche de l\'employé.'],
       [''],
+      ["   Il en va de même des enfants à charge : seul le nombre est importable. Leurs prénoms et dates de naissance se saisissent depuis la fiche de l'employé, et sont indispensables au calcul du congé supplémentaire par enfant de moins de 14 ans (mères de famille)."],
+      [''],
       ["7. L'import est transactionnel : si une seule ligne échoue côté serveur, aucun employé n'est créé (tout est annulé). Corrigez les erreurs et relancez."],
     ];
     const feuilleConsignes = XLSX.utils.aoa_to_sheet(lignesConsignes);

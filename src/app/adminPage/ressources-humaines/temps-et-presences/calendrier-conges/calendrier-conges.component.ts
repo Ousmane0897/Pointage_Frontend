@@ -24,10 +24,13 @@ import {
   NIVEAU_PAR_STATUT,
   ORDRE_STATUTS_DEMANDE,
   ORDRE_TYPES_CONGE,
-  PARAMETRES_CONGES,
 } from '../../../../constants/conges.constants';
 import { PageResponse } from '../../../../models/pageResponse.model';
+import { ParametresConges } from '../../../../models/parametres-conges.model';
+import { ParametresCongesService } from '../../../../services/parametres-conges.service';
 import { BadgeStatutCongeComponent } from './shared/badge-statut-conge.component';
+import { DetailAcquisCongeComponent } from './shared/detail-acquis-conge.component';
+import { NoteBaremeCongesComponent } from './shared/note-bareme-conges.component';
 
 @Component({
   selector: 'app-calendrier-conges',
@@ -38,6 +41,8 @@ import { BadgeStatutCongeComponent } from './shared/badge-statut-conge.component
     RouterModule,
     LucideAngularModule,
     BadgeStatutCongeComponent,
+    DetailAcquisCongeComponent,
+    NoteBaremeCongesComponent,
   ],
   templateUrl: './calendrier-conges.component.html',
   styleUrl: './calendrier-conges.component.scss',
@@ -68,7 +73,9 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
   readonly LIBELLES_STATUT_DEMANDE = LIBELLES_STATUT_DEMANDE;
   readonly ORDRE_TYPES_CONGE = ORDRE_TYPES_CONGE;
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
-  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
+
+  /** Barème des droits, pour la note explicative. Null tant que l'appel est en vol. */
+  bareme: ParametresConges | null = null;
 
   /**
    * Onglets RH de la rubrique. Mémorisés (et non exposés par un getter) : lus depuis
@@ -86,6 +93,7 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
+    private parametresConges: ParametresCongesService,
     loginService: LoginService,
   ) {
     this.accesCalendrier = loginService.accesRh('conges');
@@ -94,6 +102,10 @@ export class CalendrierCongesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.permissions.charger().pipe(takeUntil(this.destroy$)).subscribe();
+    // Barème caché pour la session : la note de pied explique d'où sortent les jours.
+    this.parametresConges.getParametres()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(b => (this.bareme = b));
     this.loadSoldes();
     this.loadDemandes();
 

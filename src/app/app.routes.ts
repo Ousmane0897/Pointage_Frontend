@@ -60,6 +60,7 @@ export const routes: Routes = [
             { path: 'rh/temps-et-presences/conges/demande', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/demande-conge/demande-conge.component').then(m => m.DemandeCongeComponent) },
             { path: 'rh/temps-et-presences/conges/validation', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/validation-conges/validation-conges.component').then(m => m.ValidationCongesComponent) },
             { path: 'rh/temps-et-presences/conges/mes-demandes', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/mes-demandes/mes-demandes.component').then(m => m.MesDemandesCongeComponent) },
+            { path: 'rh/temps-et-presences/conges/parametres', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/calendrier-conges/parametres-conges/parametres-conges.component').then(m => m.ParametresCongesComponent) },
             // ⚠ Route ciblée par les liens des e-mails de notification du circuit
             // de validation (construits serveur depuis `app.frontend.base-url`) :
             // la modifier casse les liens des mails déjà envoyés.

@@ -19,7 +19,11 @@ import {
   PARAMETRES_CONGES,
 } from '../../../../../constants/conges.constants';
 import { PageResponse } from '../../../../../models/pageResponse.model';
+import { ParametresConges } from '../../../../../models/parametres-conges.model';
+import { ParametresCongesService } from '../../../../../services/parametres-conges.service';
 import { BadgeStatutCongeComponent } from '../shared/badge-statut-conge.component';
+import { DetailAcquisCongeComponent } from '../shared/detail-acquis-conge.component';
+import { NoteBaremeCongesComponent } from '../shared/note-bareme-conges.component';
 
 /**
  * Auto-service du collaborateur : ses propres demandes de congé et leur
@@ -29,7 +33,14 @@ import { BadgeStatutCongeComponent } from '../shared/badge-statut-conge.componen
 @Component({
   selector: 'app-mes-demandes-conge',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, BadgeStatutCongeComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    LucideAngularModule,
+    BadgeStatutCongeComponent,
+    DetailAcquisCongeComponent,
+    NoteBaremeCongesComponent,
+  ],
   templateUrl: './mes-demandes.component.html',
   styleUrl: './mes-demandes.component.scss',
 })
@@ -44,7 +55,8 @@ export class MesDemandesCongeComponent implements OnInit, OnDestroy {
   loading = false;
 
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
-  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
+  /** Barème des droits, pour la note explicative. Null tant que l'appel est en vol. */
+  bareme: ParametresConges | null = null;
 
   /**
    * Onglets RH de la rubrique. Mémorisés (et non exposés par un getter) : lus depuis
@@ -62,6 +74,7 @@ export class MesDemandesCongeComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private dialog: MatDialog,
+    private parametresConges: ParametresCongesService,
     loginService: LoginService,
   ) {
     this.accesCalendrier = loginService.accesRh('conges');
@@ -69,6 +82,10 @@ export class MesDemandesCongeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Barème caché pour la session : la note de pied explique d'où sortent les jours.
+    this.parametresConges.getParametres()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(b => (this.bareme = b));
     this.permissions.charger().pipe(takeUntil(this.destroy$)).subscribe(profil => {
       if (profil?.employeId) this.chargerSolde(profil.employeId);
     });

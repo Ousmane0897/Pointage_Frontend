@@ -298,16 +298,86 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">
                 Nombre d'enfants
               </label>
+              <!-- ⚠ readonly, jamais disabled : un contrôle désactivé sort de
+                   `form.value` et le compteur disparaîtrait du payload. -->
               <input
                 type="number"
                 formControlName="nombreEnfants"
                 min="0"
                 placeholder="Ex. 2"
+                [readonly]="nombreEnfantsDerive"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                [ngClass]="{ 'border-red-400 bg-red-50': identiteGroup.get('nombreEnfants')?.invalid && identiteGroup.get('nombreEnfants')?.touched }"
+                [ngClass]="{
+                  'border-red-400 bg-red-50': identiteGroup.get('nombreEnfants')?.invalid && identiteGroup.get('nombreEnfants')?.touched,
+                  'bg-gray-50 text-gray-500': nombreEnfantsDerive
+                }"
               />
+              <p *ngIf="nombreEnfantsDerive" class="text-xs text-gray-500 mt-1">
+                Déduit de la liste ci-dessous.
+              </p>
               <p *ngIf="identiteGroup.get('nombreEnfants')?.invalid && identiteGroup.get('nombreEnfants')?.touched" class="text-xs text-red-500 mt-1">
                 Le nombre d'enfants doit être positif.
+              </p>
+            </div>
+
+            <!-- ══ Enfants à charge (prénom + date de naissance) ══
+                 La date de naissance, et non le compteur, ouvre le droit à congé
+                 supplémentaire par enfant : elle seule permet de trancher la condition
+                 d'âge et de recalculer un exercice clos à l'identique. -->
+            <div class="sm:col-span-2">
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-gray-700">
+                  Enfants à charge
+                </label>
+                <button
+                  type="button"
+                  (click)="ajouterEnfant()"
+                  class="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                  <lucide-icon name="Plus" class="w-4 h-4"></lucide-icon>
+                  Ajouter un enfant
+                </button>
+              </div>
+
+              <p *ngIf="enfantsSansDates > 0" class="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-2">
+                {{ enfantsSansDates }} enfant(s) déclaré(s) sans date de naissance.
+                Renseignez-les pour ouvrir le droit à congé supplémentaire par enfant.
+              </p>
+
+              <div formArrayName="enfants" class="space-y-2">
+                <div *ngFor="let e of enfants.controls; let i = index" [formGroupName]="i"
+                     class="flex flex-wrap items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
+                  <div class="flex-1 min-w-[10rem]">
+                    <input
+                      type="text"
+                      formControlName="prenom"
+                      placeholder="Prénom"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      [ngClass]="{ 'border-red-400 bg-red-50': e.get('prenom')?.invalid && e.get('prenom')?.touched }"
+                    />
+                  </div>
+                  <div class="flex-1 min-w-[10rem]">
+                    <input
+                      type="date"
+                      formControlName="dateNaissance"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      [ngClass]="{ 'border-red-400 bg-red-50': e.get('dateNaissance')?.invalid && e.get('dateNaissance')?.touched }"
+                    />
+                    <p *ngIf="e.get('dateNaissance')?.hasError('naissanceFuture')" class="text-xs text-red-500 mt-1">
+                      La date de naissance ne peut pas être dans le futur.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="retirerEnfant(i)"
+                    title="Retirer cet enfant"
+                    class="p-2 text-gray-400 hover:text-red-600 transition">
+                    <lucide-icon name="Trash2" class="w-4 h-4"></lucide-icon>
+                  </button>
+                </div>
+              </div>
+
+              <p *ngIf="enfants.length === 0 && enfantsSansDates === 0" class="text-xs text-gray-500">
+                Aucun enfant déclaré.
               </p>
             </div>
 
@@ -1110,6 +1180,16 @@
                 <div class="flex justify-between">
                   <span class="text-gray-500">Nombre d'enfants</span>
                   <span class="font-medium text-gray-700">{{ identiteGroup.get('nombreEnfants')?.value ?? 0 }}</span>
+                </div>
+                <div *ngIf="enfants.length > 0" class="pt-1">
+                  <span class="text-gray-500 block mb-1">Enfants</span>
+                  <ul class="space-y-0.5">
+                    <li *ngFor="let e of enfants.controls"
+                        class="flex justify-between gap-3 text-gray-700">
+                      <span class="font-medium">{{ e.get('prenom')?.value || '—' }}</span>
+                      <span class="text-gray-500">{{ e.get('dateNaissance')?.value || '—' }}</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
