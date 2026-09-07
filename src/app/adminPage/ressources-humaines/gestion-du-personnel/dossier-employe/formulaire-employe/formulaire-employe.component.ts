@@ -12,6 +12,7 @@ import { DossierEmployeService } from '../../../../../services/dossier-employe.s
 import {
   DossierEmploye,
   AffectationSite,
+  EnfantEmploye,
   OPTIONS_JOURS_TRAVAIL,
   libelleJoursTravail,
 } from '../../../../../models/dossier-employe.model';
@@ -207,6 +208,9 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         nationalite: ['', Validators.required],
         situationMatrimoniale: ['', Validators.required],
         nombreEnfants: [null, Validators.min(0)],
+        // Enfants datés — c'est la date de naissance, et non le compteur, qui ouvre le
+        // droit à congé supplémentaire par enfant.
+        enfants: this.fb.array([]),
       }),
       // Étape 2
       poste: this.fb.group({
@@ -360,6 +364,85 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return this.affectations.controls.some(
       c => c !== groupeCourant && (c.get('site')?.value ?? '').trim() === nom,
     );
+  }
+
+  // ─── Enfants à charge ─────────────────────────────────────────────────────
+
+  /** FormArray des enfants (prénom + date de naissance). */
+  get enfants(): FormArray { return this.identiteGroup.get('enfants') as FormArray; }
+
+  /**
+   * Fabrique une ligne d'enfant. `id` est un contrôle **caché** : sans lui,
+   * `getRawValue()` le perdrait et le serveur ne reconnaîtrait plus la ligne
+   * persistée — même raison que l'`id` des affectations.
+   */
+  private creerLigneEnfant(e?: EnfantEmploye): FormGroup {
+    return this.fb.group({
+      id: [e?.id ?? null],
+      prenom: [e?.prenom ?? '', Validators.required],
+      dateNaissance: [
+        this.toDateInput(e?.dateNaissance) ?? '',
+        [Validators.required, this.naissancePasDansLeFuturValidator],
+      ],
+    });
+  }
+
+  /** Une date de naissance ne peut pas être postérieure à aujourd'hui. */
+  private naissancePasDansLeFuturValidator = (control: AbstractControl): ValidationErrors | null => {
+    const valeur = (control.value ?? '') as string;
+    if (!valeur) return null;
+    // Comparaison lexicale sur `yyyy-MM-dd` : l'ordre ISO est exact, et la date du jour
+    // est construite en local — `toISOString()` décalerait d'un jour selon le fuseau.
+    return valeur.slice(0, 10) > this.dateDuJourLocale() ? { naissanceFuture: true } : null;
+  };
+
+  private dateDuJourLocale(): string {
+    const d = new Date();
+    const mois = `${d.getMonth() + 1}`.padStart(2, '0');
+    const jour = `${d.getDate()}`.padStart(2, '0');
+    return `${d.getFullYear()}-${mois}-${jour}`;
+  }
+
+  ajouterEnfant(): void {
+    this.enfants.push(this.creerLigneEnfant());
+    this.enfants.markAsTouched();
+    this.synchroniserNombreEnfants();
+  }
+
+  retirerEnfant(i: number): void {
+    this.enfants.removeAt(i);
+    this.enfants.markAsTouched();
+    this.synchroniserNombreEnfants();
+  }
+
+  /**
+   * Aligne `nombreEnfants` sur la longueur de la liste dès qu'elle est renseignée.
+   *
+   * ⚠ Le contrôle n'est **jamais `disable()`** pour le rendre dérivé : un contrôle
+   * désactivé sort de `form.value` et le compteur disparaîtrait du payload (même piège
+   * que `dateSortie`). Il est seulement rendu `readonly` côté template. Liste vide ⇒ on
+   * laisse la saisie manuelle, seul moyen pour un dossier antérieur de conserver son
+   * compteur sans dates.
+   */
+  private synchroniserNombreEnfants(): void {
+    if (this.enfants.length === 0) return;
+    this.identiteGroup.get('nombreEnfants')!
+      .setValue(this.enfants.length, { emitEvent: false });
+  }
+
+  /** True quand le compteur est piloté par la liste (champ en lecture seule). */
+  get nombreEnfantsDerive(): boolean {
+    return this.enfants.length > 0;
+  }
+
+  /**
+   * Dossier antérieur : un compteur d'enfants mais aucune date de naissance. On invite
+   * à les saisir — c'est le point d'entrée de la migration, le droit à congé
+   * supplémentaire ne pouvant pas se calculer sans elles.
+   */
+  get enfantsSansDates(): number {
+    const compteur = this.identiteGroup?.get('nombreEnfants')?.value ?? 0;
+    return this.enfants.length === 0 && compteur > 0 ? compteur : 0;
   }
 
   /** Ajoute une ligne d'affectation vide et rafraîchit les options de sites. */
@@ -545,6 +628,14 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
               contactUrgence: employe.contactUrgence ?? { nom: '', lienParente: '', telephone: '' },
             },
           });
+
+          // Hydrate le FormArray des enfants. ⚠ Une liste vide avec un `nombreEnfants`
+          // non nul (dossier antérieur à la saisie datée) ne fabrique **aucune ligne
+          // vide** : le formulaire serait invalide d'emblée sur une fiche que
+          // l'utilisateur n'ouvre peut-être que pour corriger un téléphone. Un encart
+          // l'invite à les saisir (cf. `enfantsSansDates`).
+          this.enfants.clear();
+          (employe.enfants ?? []).forEach(e => this.enfants.push(this.creerLigneEnfant(e)));
 
           // Hydrate le FormArray des affectations. Priorité au champ structuré
           // `affectations` ; sinon fallback rétro-compat sur la string `siteAffecte`
@@ -978,6 +1069,17 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
       }));
     employePayload.affectations = affectations;
     employePayload.siteAffecte = affectations.map(a => a.site).join(this.SEPARATEUR_SITES);
+
+    // Enfants : lignes incomplètes écartées, dates forcées en "yyyy-MM-dd".
+    // ⚠ `getRawValue()` là aussi — et l'`id` doit faire le voyage, c'est lui qui permet
+    // au serveur de reconnaître une ligne déjà persistée.
+    employePayload.enfants = (this.enfants.getRawValue() ?? [])
+      .filter((e: EnfantEmploye) => (e.prenom ?? '').trim() && e.dateNaissance)
+      .map((e: EnfantEmploye) => ({
+        id: e.id ?? undefined,
+        prenom: e.prenom.trim(),
+        dateNaissance: this.toDateInput(e.dateNaissance),
+      }));
 
     const formData = new FormData();
     const employeJson = JSON.stringify(employePayload);

@@ -257,6 +257,30 @@
                 <dt class="text-sm text-gray-500 shrink-0">Nombre d'enfants</dt>
                 <dd class="text-sm font-medium text-gray-800 text-right">{{ employe.nombreEnfants ?? 0 }}</dd>
               </div>
+
+              <!-- Enfants datés. Absents des dossiers antérieurs : on invite alors à les
+                   saisir, puisque c'est la date de naissance — pas le compteur — qui ouvre
+                   le droit à congé supplémentaire. -->
+              <div *ngIf="enfantsAffichage.length > 0" class="pt-1">
+                <dt class="text-sm text-gray-500 mb-1">Enfants</dt>
+                <dd>
+                  <ul class="space-y-1">
+                    <li *ngFor="let e of enfantsAffichage"
+                        class="flex justify-between items-baseline gap-3 text-sm">
+                      <span class="font-medium text-gray-800">{{ e.prenom }}</span>
+                      <span class="text-gray-500 text-xs whitespace-nowrap">
+                        {{ e.dateNaissance }}
+                        <span *ngIf="e.age !== null"> · {{ e.age }} an{{ e.age > 1 ? 's' : '' }}</span>
+                      </span>
+                    </li>
+                  </ul>
+                </dd>
+              </div>
+              <p *ngIf="enfantsAffichage.length === 0 && (employe.nombreEnfants ?? 0) > 0"
+                 class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2">
+                Dates de naissance non renseignées : le droit à congé supplémentaire par enfant
+                ne peut pas être calculé. Modifiez la fiche pour les saisir.
+              </p>
             </dl>
           </div>
 
@@ -686,6 +710,7 @@
                 [title]="soldeConge.moisAcquis + ' mois de service effectif en ' + soldeConge.anneeReference">
                 <p class="text-xs uppercase tracking-wide text-gray-500">Acquis</p>
                 <p class="mt-1 text-xl font-semibold text-gray-800">{{ soldeConge.acquis }} j</p>
+                <app-detail-acquis-conge [solde]="soldeConge"></app-detail-acquis-conge>
               </div>
               <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-gray-500">Pris</p>
@@ -701,11 +726,10 @@
               </div>
             </div>
             <p class="mt-2 text-xs text-gray-500">
-              Exercice {{ soldeConge.anneeReference }} — acquis = {{ joursAcquisParMois }} jours
-              ouvrables par mois de service effectif ({{ soldeConge.moisAcquis }} mois).
-              « Antérieur » est le reliquat des exercices précédents, déjà inclus dans le restant.
-              Seuls les congés annuels sont décomptés du solde.
+              Exercice {{ soldeConge.anneeReference }} — {{ soldeConge.moisAcquis }} mois de
+              service effectif.
             </p>
+            <app-note-bareme-conges [bareme]="bareme"></app-note-bareme-conges>
           </div>
 
           <!-- DEMANDES DE CONGÉ -->

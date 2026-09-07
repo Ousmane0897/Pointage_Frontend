@@ -50,6 +50,12 @@ export interface ModulesAutorises {
      * le backend émet le claim.
      */
     congesMesDemandes?: boolean;
+    /**
+     * Barème des droits à congés (RH > Congés > Paramètres) — acquis de base, majoration
+     * pour enfants, paliers d'ancienneté. À réserver aux profils RH : le serveur refuse
+     * l'écriture en 403 hors `RH` / `SUPERADMIN`, ce flag ne fait que masquer l'entrée.
+     */
+    congesParametres?: boolean;
     heuresSupplementaires?: boolean;
     recapitulatif?: boolean;
 

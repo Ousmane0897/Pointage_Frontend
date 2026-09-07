@@ -12,16 +12,27 @@ import { ContratService } from '../../../../../services/contrat.service';
 import { DocumentEmployeService } from '../../../../../services/document-employe.service';
 import { CongeService } from '../../../../../services/conge.service';
 import { AbsenceService } from '../../../../../services/absence.service';
-import { DossierEmploye, libelleJoursTravail } from '../../../../../models/dossier-employe.model';
+import { ParametresCongesService } from '../../../../../services/parametres-conges.service';
+import {
+  DossierEmploye,
+  EnfantEmploye,
+  ageAu,
+  libelleJoursTravail,
+} from '../../../../../models/dossier-employe.model';
+import { ParametresConges } from '../../../../../models/parametres-conges.model';
 import { Contrat, AlerteContrat } from '../../../../../models/contrat.model';
 import { DocumentEmploye } from '../../../../../models/document-employe.model';
 import { DemandeConge, SoldeConge } from '../../../../../models/conge.model';
 import { Absence } from '../../../../../models/absence.model';
 import { PageResponse } from '../../../../../models/pageResponse.model';
-import { LIBELLES_TYPE_CONGE, PARAMETRES_CONGES } from '../../../../../constants/conges.constants';
+import { LIBELLES_TYPE_CONGE } from '../../../../../constants/conges.constants';
 import { ConfirmDialogComponent } from '../../../../confirm-dialog/confirm-dialog.component';
 import { BadgeStatutCongeComponent }
   from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/badge-statut-conge.component';
+import { DetailAcquisCongeComponent }
+  from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/detail-acquis-conge.component';
+import { NoteBaremeCongesComponent }
+  from '../../../../ressources-humaines/temps-et-presences/calendrier-conges/shared/note-bareme-conges.component';
 
 export type ActiveTab = 'infos' | 'contrats' | 'documents' | 'conges';
 
@@ -36,6 +47,8 @@ const MAX_DECLARATIONS = 100;
     RouterModule,
     LucideAngularModule,
     BadgeStatutCongeComponent,
+    DetailAcquisCongeComponent,
+    NoteBaremeCongesComponent,
   ],
   templateUrl: './fiche-employe.component.html',
   styleUrl: './fiche-employe.component.scss',
@@ -51,6 +64,9 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   alertesContrats: AlerteContrat[] = [];
   alertesDismissed = false;
 
+  /** Enfants prêts à l'affichage — matérialisés, cf. `construireEnfantsAffichage()`. */
+  enfantsAffichage: { prenom: string; dateNaissance: string; age: number | null }[] = [];
+
   // ─── Onglet Congés (chargé à la demande, cf. setActiveTab) ────────────────
   soldeConge: SoldeConge | null = null;
   demandesConge: DemandeConge[] = [];
@@ -60,8 +76,10 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   /** Message affiché *dans l'onglet* — un 403 de périmètre n'est pas une panne. */
   congesMessage = '';
 
+  /** Barème des droits, pour la note explicative de l'onglet Congés. */
+  bareme: ParametresConges | null = null;
+
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
-  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
   /** Semaine ouvrée d'une affectation — propre au site, rendue par ligne. */
   readonly libelleJoursTravail = libelleJoursTravail;
 
@@ -90,6 +108,7 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
     private absenceService: AbsenceService,
     private dialog: MatDialog,
     private toastr: ToastrService,
+    private parametresConges: ParametresCongesService,
   ) {}
 
   ngOnInit(): void {
@@ -152,8 +171,42 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
         this.contrats = contrats;
         this.documents = documents;
         this.alertesContrats = alertes.filter(a => a.employeId === this.employeId);
+        this.construireEnfantsAffichage();
         this.chargerPhoto();
       });
+  }
+
+  /**
+   * Enfants prêts à l'affichage (date formatée + âge).
+   *
+   * ⚠ **Matérialisé ici, jamais exposé par un getter** appelé depuis le template : un
+   * getter recalculerait la liste à chaque cycle de détection de changement.
+   */
+  private construireEnfantsAffichage(): void {
+    const aujourdhui = this.dateDuJourLocale();
+    this.enfantsAffichage = (this.employe?.enfants ?? []).map((e: EnfantEmploye) => ({
+      prenom: e.prenom,
+      dateNaissance: this.formaterDateIso(e.dateNaissance),
+      age: ageAu(e.dateNaissance, aujourdhui),
+    }));
+  }
+
+  /**
+   * Date du jour en `yyyy-MM-dd`, construite **en local**.
+   * ⚠ `toISOString()` décalerait d'un jour selon le fuseau.
+   */
+  private dateDuJourLocale(): string {
+    const d = new Date();
+    const mois = `${d.getMonth() + 1}`.padStart(2, '0');
+    const jour = `${d.getDate()}`.padStart(2, '0');
+    return `${d.getFullYear()}-${mois}-${jour}`;
+  }
+
+  /** `yyyy-MM-dd` → `dd/MM/yyyy`, sans passer par `Date` (aucun risque de décalage). */
+  private formaterDateIso(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const [a, m, j] = iso.slice(0, 10).split('-');
+    return `${j}/${m}/${a}`;
   }
 
   /**
@@ -249,6 +302,9 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
           noter(err);
           return of({ content: [], totalElements: 0 } as PageResponse<Absence>);
         })),
+      // Barème caché pour la session, et infaillible (repli sur le barème légal) :
+      // il ne participe donc ni au 403 de périmètre, ni au drapeau d'erreur.
+      bareme: this.parametresConges.getParametres(),
     })
       .pipe(
         finalize(() => {
@@ -257,10 +313,11 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
         }),
         takeUntil(this.destroy$),
       )
-      .subscribe(({ solde, demandes, declarations }) => {
+      .subscribe(({ solde, demandes, declarations, bareme }) => {
         this.soldeConge = solde;
         this.demandesConge = demandes;
         this.declarations = declarations.content;
+        this.bareme = bareme;
 
         // Message dans l'onglet, jamais de toast : la fiche reste utilisable et
         // l'utilisateur n'a rien fait de mal en ouvrant l'onglet.

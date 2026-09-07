@@ -58,6 +58,66 @@ export interface AffectationSite {
   joursTravail: JoursTravail;
 }
 
+/**
+ * Enfant à charge d'un employé.
+ *
+ * ⚠ `dateNaissance` est une chaîne **`yyyy-MM-dd`** et non une `Date` : elle ne transite
+ * que par des `<input type="date">`, et passer par `toISOString()` décalerait d'un jour
+ * selon le fuseau.
+ *
+ * C'est cette date, et non le compteur `nombreEnfants`, qui ouvre le droit à congé
+ * supplémentaire par enfant : elle seule permet de trancher la condition d'âge, et de
+ * recalculer un exercice clos à l'identique.
+ */
+export interface EnfantEmploye {
+  /** Posé serveur. Le renvoyer conserve l'identité de la ligne. */
+  id?: string;
+  prenom: string;
+  dateNaissance: string | null;
+}
+
+/**
+ * Âge en années révolues à une date de référence (`yyyy-MM-dd` des deux côtés).
+ *
+ * ⚠ **Affichage uniquement.** Le droit est calculé serveur ; ce helper ne sert qu'à
+ * montrer à la RH ce que sa saisie produira. Renvoie `null` si la date manque ou est
+ * postérieure à la référence.
+ */
+export function ageAu(dateNaissance: string | null | undefined, reference: string): number | null {
+  if (!dateNaissance) return null;
+  const naissance = dateNaissance.slice(0, 10);
+  const ref = reference.slice(0, 10);
+  if (naissance > ref) return null;
+
+  const [an, am, aj] = naissance.split('-').map(Number);
+  const [rn, rm, rj] = ref.split('-').map(Number);
+  let age = rn - an;
+  // L'anniversaire n'est pas encore passé cette année-là.
+  if (rm < am || (rm === am && rj < aj)) age -= 1;
+  return Math.max(0, age);
+}
+
+/** 31 décembre de l'exercice — la date à laquelle le serveur apprécie âge et ancienneté. */
+export function referenceExercice(annee: number): string {
+  return `${annee}-12-31`;
+}
+
+/**
+ * Enfants ayant strictement moins de `ageMax` ans au 31/12 de l'exercice.
+ * ⚠ Miroir d'affichage du calcul serveur — jamais une source de droit.
+ */
+export function enfantsBeneficiairesAu(
+  enfants: EnfantEmploye[] | null | undefined,
+  annee: number,
+  ageMax: number,
+): EnfantEmploye[] {
+  const ref = referenceExercice(annee);
+  return (enfants ?? []).filter(e => {
+    const age = ageAu(e.dateNaissance, ref);
+    return age !== null && age < ageMax;
+  });
+}
+
 export interface DossierEmploye {
   id?: string;
   agentId: string;   // code 4 chiffres pour le pointage (= codeSecret côté backend)
@@ -72,7 +132,14 @@ export interface DossierEmploye {
   photoUrl?: string;
   numeroIdentification?: string;
   situationMatrimoniale?: SituationMatrimoniale;
+  /**
+   * Compteur historique. **Dérivé serveur** de `enfants` dès que cette liste est
+   * renseignée, et jamais effacé quand elle est vide — les dossiers antérieurs à la
+   * saisie datée ne portent que lui.
+   */
   nombreEnfants?: number;
+  /** Enfants à charge datés — alimente le droit à congé supplémentaire par enfant. */
+  enfants?: EnfantEmploye[];
 
   // Poste
   poste: string;

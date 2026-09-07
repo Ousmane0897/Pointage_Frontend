@@ -17,7 +17,11 @@ import {
   NIVEAU_PAR_STATUT,
   PARAMETRES_CONGES,
 } from '../../../../../constants/conges.constants';
+import { ParametresConges } from '../../../../../models/parametres-conges.model';
+import { ParametresCongesService } from '../../../../../services/parametres-conges.service';
 import { BadgeStatutCongeComponent } from '../shared/badge-statut-conge.component';
+import { DetailAcquisCongeComponent } from '../shared/detail-acquis-conge.component';
+import { NoteBaremeCongesComponent } from '../shared/note-bareme-conges.component';
 import { TimelineValidationCongeComponent } from '../shared/timeline-validation-conge.component';
 import {
   RefusCongeDialogComponent,
@@ -45,6 +49,8 @@ import {
     LucideAngularModule,
     BadgeStatutCongeComponent,
     TimelineValidationCongeComponent,
+    DetailAcquisCongeComponent,
+    NoteBaremeCongesComponent,
   ],
   templateUrl: './detail-demande-conge.component.html',
   styleUrl: './detail-demande-conge.component.scss',
@@ -57,7 +63,8 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
   introuvable = false;
 
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
-  readonly joursAcquisParMois = PARAMETRES_CONGES.joursAcquisParMois;
+  /** Barème des droits, pour la note explicative. Null tant que l'appel est en vol. */
+  bareme: ParametresConges | null = null;
 
   private id!: string;
   private returnUrl: string | null = null;
@@ -72,9 +79,14 @@ export class DetailDemandeCongeComponent implements OnInit, OnDestroy {
     private websocket: WebsocketService,
     private toastr: ToastrService,
     private dialog: MatDialog,
+    private parametresConges: ParametresCongesService,
   ) {}
 
   ngOnInit(): void {
+    // Barème caché pour la session : la note de pied explique d'où sortent les jours.
+    this.parametresConges.getParametres()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(b => (this.bareme = b));
     this.id = this.route.snapshot.paramMap.get('id') ?? '';
     // Écran atteignable depuis l'onglet Congés de la fiche employé : on revient d'où l'on
     // vient (même pattern que `formulaire-contrat` / `avenants`), sinon retour au calendrier.

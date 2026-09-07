@@ -462,6 +462,107 @@ rendu** (il ne l'était que pour `RH`/`SUPERADMIN`), et son contenu vient d'un e
   d'année. Le rétroactif est néanmoins fidèle : 2 j × mois de service est déterministe année par
   année, là où l'ancien forfait annuel configurable aurait recalculé 2024 avec les paramètres
   d'aujourd'hui.
+
+#### Congés — droits supplémentaires paramétrables (enfants + ancienneté)
+
+L'acquis ne se réduit plus aux 2 j/mois : il vaut **base + majoration enfants + majoration
+ancienneté**, les deux majorations étant déduites **automatiquement de la fiche salarié** et
+gouvernées par un **barème modifiable par la RH**.
+
+| Règle | Défaut (droit sénégalais) |
+|---|---|
+| Acquis de base | 2 j ouvrables / mois de service effectif |
+| Enfants | +1 j par enfant de **moins de 14 ans**, **mères de famille** |
+| Ancienneté | +1 j à 10 ans, +2 à 15, +3 à 20, +6 à 25 — **paliers NON cumulatifs** |
+
+- **Liste d'enfants datés sur le dossier employé.** `DossierEmploye.enfants[]`
+  (`id?`, `prenom`, `dateNaissance` en **`yyyy-MM-dd`**, jamais `Date` — `toISOString()`
+  décalerait d'un jour). ⚠ **Aucun repli sur `nombreEnfants`** : sans date, supplément 0. Un
+  compteur scalaire ne permet ni de trancher la condition d'âge, ni de recalculer un exercice
+  clos à l'identique — il ferait bouger le passé à chaque anniversaire, donc le reliquat reporté.
+  Le compteur devient **dérivé** (`enfants.size()`) dès que la liste est non vide, et n'est
+  **jamais effacé** quand elle est vide (les dossiers antérieurs ne portent que lui). ⚠ Côté
+  serveur, `enfants == null` (import bulk, clients antérieurs) ⇒ **on ne touche à rien** ; liste
+  **vide** ⇒ la liste est vidée mais le compteur reste celui du payload — sans cette distinction,
+  soit tout ancien client effacerait les enfants, soit on ne pourrait jamais retirer le dernier.
+- ⚠ **Âge et ancienneté s'apprécient au 31 décembre de l'exercice**, jamais « aujourd'hui » :
+  un exercice clos rend le même résultat dans cinq ans, ce qui rend le reliquat stable. ⚠ **Ne
+  pas confondre avec la borne de `moisAcquis`**, qui reste le **1er janvier suivant, exclu**
+  (avec le 31/12, `MONTHS.between` rend 11 et ampute d'un mois toute année pleine — déjà pinné).
+  L'âge se calcule par `Period.between(...).getYears()`, **pas** une division de jours : c'est ce
+  qui rend « moins de 14 ans » exact les années bissextiles.
+- ⚠ **Garde commune** : aucun mois de service sur l'exercice ⇒ les deux majorations valent 0.
+  Sans elle, un exercice antérieur à l'embauche serait crédité, et ces jours remonteraient dans
+  le reliquat.
+- **Barème = singleton `parametres_conges`**, patron `ParametresProductionChimieService`
+  (get-or-create paresseux) et **non** `ParametresPaieService` (dont l'`orElseThrow` dépend d'un
+  DataLoader et casserait le calcul du solde sur une base neuve). `GET/PUT
+  /temps-presences/conges/parametres` — **GET ouvert à tout compte** (les 5 écrans de solde en ont
+  besoin pour leur note), **PUT restreint RH/SUPERADMIN**. ⚠ La garde est **dans le service**, pas
+  en `@PreAuthorize` : le projet n'active pas `@EnableMethodSecurity` et `SecurityConfig` se limite
+  à `.anyRequest().authenticated()` — une annotation serait ignorée en silence. ⚠ Le PUT est un
+  **patch** (`null` = inchangé), sinon un client partiel effacerait les paliers ; le plafond enfants
+  fait exception et s'efface par une **sentinelle négative** (`null` ne pourrait pas le retirer, et
+  `0` voudrait dire « aucun jour »).
+- ⚠ **`CongeAcquisCalculator` reste pur** : son `@Value` disparaît, le barème est **passé en
+  argument** (`BaremeConges`, record immuable) avec un `DroitsEmployeSnapshot` qui ne porte que des
+  **dates immuables** — jamais une entité Mongo, jamais un scalaire dérivé. `DemandeCongeService`
+  lit le barème **une seule fois par méthode publique** et le fait circuler (même discipline que
+  `PerimetreConges`) : dans `getSoldes()`, une lecture par employé serait N requêtes Mongo et des
+  soldes incohérents entre eux si l'appel chevauchait minuit. Un `verify(times(1))` protège la règle.
+  Le service reçoit aussi le bean **`Clock`**, ce qui supprime le `LocalDate.now()` en dur.
+- **`SoldeCongeDto`** gagne `acquisBase`, `supplementEnfants`, `supplementAnciennete`,
+  `anneesAnciennete`, `enfantsBeneficiaires`. ⚠ **`acquis` reste le TOTAL** : cinq écrans
+  l'affichent depuis toujours sous « Acquis », en faire la base seule changerait silencieusement
+  leur sens. Côté front ces champs sont **optionnels** — un front en avance sur le backend dégrade
+  proprement.
+- **Front — deux composants partagés, pas un.** La note de pied et les libellés étaient recopiés
+  dans **5 templates** ; la note dépend désormais du barème, une 6ᵉ copie divergerait au premier
+  changement RH. Mais un composant unique serait pire : `calendrier-conges` est un **tableau
+  multi-employés**, les quatre autres des **cartes** aux mises en page divergentes. D'où
+  [note-bareme-conges](src/app/adminPage/ressources-humaines/temps-et-presences/calendrier-conges/shared/note-bareme-conges.component.ts)
+  (la phrase, point unique de vérité) et
+  [detail-acquis-conge](src/app/adminPage/ressources-humaines/temps-et-presences/calendrier-conges/shared/detail-acquis-conge.component.ts)
+  (les 3 puces de ventilation, rendues **seulement** s'il y a une majoration). La **carte** de solde
+  n'est volontairement pas unifiée — un `carte-solde-conge` mal découpé se paierait en `@Input` de
+  classes CSS.
+- [ParametresCongesService](src/app/services/parametres-conges.service.ts) : cache
+  `shareReplay` (patron `monProfil$`), **GET infaillible** (repli sur `PARAMETRES_CONGES_DEFAUT`),
+  plus une méthode `charger()` **non protégée** pour l'écran de paramétrage — y masquer une erreur
+  laisserait croire que le barème légal affiché est celui en base. `PARAMETRES_CONGES.joursAcquisParMois`
+  passe **`@deprecated`** : ce n'est plus le miroir d'une propriété yaml mais d'un document modifiable.
+- **Écran** `rh/temps-et-presences/conges/parametres` (patron `parametres-escalade` : standalone,
+  `OnPush` + `ChangeDetectorRef`, **404 toléré ⇒ défauts conservés**, `FormArray` de paliers avec
+  validateur anti-doublon d'ancienneté, bouton « Rétablir le barème légal » qui **repatche sans
+  enregistrer**). Nouveau sous-flag **`rh.congesParametres`** — ⚠ **agrégé dans
+  `accessTempsPresences()`**, sans quoi un profil ne portant que ce droit perdrait tout le sous-menu.
+  Le backend doit l'émettre dans le claim JWT.
+- **Saisie** dans l'étape 1 de `formulaire-employe` (`FormArray` calqué sur `affectations`).
+  ⚠ `nombreEnfants` est rendu dérivé par **`[readonly]`, jamais `disable()`** : un contrôle
+  désactivé sort de `form.value` et le compteur disparaîtrait du payload (même piège que
+  `dateSortie`). ⚠ Un dossier avec compteur mais **sans dates** ne fabrique **aucune ligne vide** —
+  le formulaire s'ouvrirait invalide sur une fiche ouverte pour tout autre motif ; un encart invite
+  à les saisir. La **fiche employé** liste les enfants avec leur âge, matérialisés dans le
+  `subscribe` (`enfantsAffichage`) et **jamais dans un getter** appelé depuis le template.
+- **Import Excel inchangé** : seul le *nombre* d'enfants est importable (une liste ne se met pas en
+  colonnes fixes, et le backend n'importe pas `enfants` en bulk). Une consigne le dit dans le template.
+- ⚠ **Limite assumée : le barème n'est pas versionné par date d'effet.** Le modifier recalcule aussi
+  les exercices clos, donc le reliquat. L'écran l'annonce dans un encart avant l'enregistrement.
+- ⚠ **Au déploiement** : les soldes **montent immédiatement et rétroactivement** pour tout employé
+  de 10 ans et plus d'ancienneté (entrée en 2005 ⇒ ~10 j de reliquat d'un coup) — c'est le droit réel
+  des salariés, à annoncer comme les bascules précédentes ; **exporter `GET /soldes` juste avant**
+  pour disposer du delta. Côté enfants **rien ne bouge** tant que les dates ne sont pas saisies.
+  Aucune migration Mongo.
+- Backend : branche `feature/conges-droits-supplementaires` (depuis `main`). Tests :
+  `CongeAcquisCalculatorSupplementsTest` (dates figées ; le cas décisif calcule **la même fratrie sur
+  2024 et 2026** pour prouver le recalcul rétroactif), `ParametresCongesServiceTest`, 6 cas d'enfants
+  sur `DossierEmployeServiceTest`, 4 sur `DemandeCongeServiceSoldeTest`, 3 sur
+  `TempsPresencesCongeControllerTest`. Front : `dossier-employe.model.spec.ts` (bornes d'âge),
+  `parametres-conges.service.spec.ts`, `note-bareme-conges.component.spec.ts`.
+- **Hors périmètre, arbitré** : la proratisation des majorations sur une année partielle (le texte
+  énonce des jours entiers) — l'interrupteur `proratiserSupplements` existe côté barème, désactivé,
+  pour ne pas avoir à migrer si l'arbitrage change.
+
 - ⚠ **Écart connu : le 422 « solde insuffisant » n'est pas implémenté.** `CongeWorkflowService` ne
   lit jamais le solde et le formulaire ne pose aucun validateur — le solde est **indicatif**, et
   rendre le report consommable ne change donc rien au comportement de dépôt. À trancher dans un

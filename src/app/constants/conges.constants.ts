@@ -164,10 +164,13 @@ export const PARAMETRES_CONGES = {
    * Jours ouvrables acquis par mois de service effectif (droit sénégalais : 2 j/mois,
    * soit 24 j pour une année pleine).
    *
-   * ⚠ **Miroir d'affichage** de `app.conges.jours-acquis-par-mois` côté serveur, qui reste
-   * l'autorité et renvoie déjà `acquis` et `moisAcquis` calculés — comme
-   * {@link TYPES_DECOMPTES_DU_SOLDE}. Ne sert qu'à composer un libellé explicatif : le front
-   * ne recalcule jamais de droits.
+   * @deprecated Le taux n'est plus une propriété serveur figée mais un champ du **barème
+   * modifiable** (`GET /temps-presences/conges/parametres`, `ParametresCongesService`).
+   * Recopier cette constante dans un nouvel écran y figerait une valeur que la RH peut
+   * changer : lire le barème, et composer la note de pied avec `<app-note-bareme-conges>`.
+   * Conservée comme valeur de repli le temps que tous les écrans soient basculés — la
+   * valeur de référence vit désormais dans `PARAMETRES_CONGES_DEFAUT`
+   * ({@link ../models/parametres-conges.model}).
    */
   joursAcquisParMois: 2,
 };

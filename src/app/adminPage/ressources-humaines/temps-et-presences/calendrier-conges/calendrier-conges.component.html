@@ -96,6 +96,7 @@
             <td class="px-4 py-3 text-gray-700"
               [title]="s.moisAcquis + ' mois de service effectif en ' + s.anneeReference">
               {{ s.acquis }} j
+              <app-detail-acquis-conge [solde]="s"></app-detail-acquis-conge>
             </td>
             <td class="px-4 py-3 text-gray-700">{{ s.pris }} j</td>
             <td class="px-4 py-3 text-amber-700">{{ s.enCours }} j</td>
@@ -107,11 +108,7 @@
         </tbody>
       </table>
 
-      <p class="mt-3 text-xs text-gray-500">
-        Acquis = {{ joursAcquisParMois }} jours ouvrables par mois de service effectif.
-        « Antérieur » est le reliquat des exercices précédents, déjà inclus dans le solde.
-        Seuls les congés annuels sont décomptés du solde.
-      </p>
+      <app-note-bareme-conges [bareme]="bareme"></app-note-bareme-conges>
     </div>
   </div>
 

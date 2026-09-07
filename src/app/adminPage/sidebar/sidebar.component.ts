@@ -126,8 +126,11 @@ export class SidebarComponent implements OnInit {
    * pour un profil ne portant que ces flags.
    */
   accessTempsPresences(): boolean {
+    // ⚠ `congesParametres` doit être agrégé ici : sans quoi un profil ne portant que ce
+    // droit perdrait TOUT le sous-menu Présences (même piège que `rh.contrats`).
     return this.accessRh('pointageCentralise')
       || this.accessCongesValidation()
+      || this.accessRh('congesParametres')
       || this.accessRh('heuresSupplementaires')
       || this.accessRh('recapitulatif');
   }
