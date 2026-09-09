@@ -129,7 +129,10 @@ export class SidebarComponent implements OnInit {
     return this.accessRh('pointageCentralise')
       || this.accessCongesValidation()
       || this.accessRh('heuresSupplementaires')
-      || this.accessRh('recapitulatif');
+      || this.accessRh('recapitulatif')
+      // ⚠ `joursFeries` doit figurer ici : sans lui, un profil ne portant que ce droit
+      // perdrait tout le sous-menu (même piège que `rh.contrats`).
+      || this.accessRh('joursFeries');
   }
 
   /**

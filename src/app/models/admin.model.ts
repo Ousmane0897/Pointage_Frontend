@@ -52,6 +52,14 @@ export interface ModulesAutorises {
     congesMesDemandes?: boolean;
     heuresSupplementaires?: boolean;
     recapitulatif?: boolean;
+    /**
+     * Calendrier des jours fériés (saisie RH annuelle).
+     *
+     * ⚠ Ne gate que l'écran de **saisie**. La *lecture* du référentiel est ouverte à tout
+     * compte authentifié côté serveur : le récapitulatif mensuel, le décompte des congés et
+     * le pointage centralisé en dépendent, y compris pour un agent consultant son solde.
+     */
+    joursFeries?: boolean;
 
     // 6.3 Paie
     grilleSalariale?: boolean;

@@ -63,6 +63,7 @@ export class GestionPrivilegeComponent implements OnInit {
         congesMesDemandes: false,
         heuresSupplementaires: false,
         recapitulatif: false,
+        joursFeries: false,
         // 6.3 Paie
         grilleSalariale: false,
         calculBulletin: false,
@@ -177,6 +178,7 @@ export class GestionPrivilegeComponent implements OnInit {
           congesMesDemandes: false,
           heuresSupplementaires: false,
           recapitulatif: false,
+          joursFeries: false,
           // 6.3 Paie
           grilleSalariale: false,
           calculBulletin: false,
@@ -275,6 +277,7 @@ export class GestionPrivilegeComponent implements OnInit {
           congesMesDemandes: rhLegacyFull || !!rhSrc?.congesMesDemandes,
           heuresSupplementaires: rhLegacyFull || !!rhSrc?.heuresSupplementaires,
           recapitulatif: rhLegacyFull || !!rhSrc?.recapitulatif,
+          joursFeries: rhLegacyFull || !!rhSrc?.joursFeries,
           // 6.3 Paie
           grilleSalariale: rhLegacyFull || !!rhSrc?.grilleSalariale,
           calculBulletin: rhLegacyFull || !!rhSrc?.calculBulletin,

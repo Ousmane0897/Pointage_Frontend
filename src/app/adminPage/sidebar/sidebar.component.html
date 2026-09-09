@@ -252,6 +252,16 @@
                     <span class="flex-1 truncate">Récapitulatif mensuel</span>
                   </a>
                 </li>
+                <li *ngIf="accessRh('joursFeries')">
+                  <a routerLink="/admin/rh/temps-et-presences/jours-feries"
+                    routerLinkActive="!bg-gradient-to-r !from-indigo-500/25 !to-indigo-500/5 !text-white !font-semibold"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.78rem] text-slate-400
+                           hover:bg-indigo-500/10 hover:text-white transition-all duration-200">
+                    <lucide-icon name="CalendarX" class="w-3.5 h-3.5 text-amber-400"></lucide-icon>
+                    <span class="flex-1 truncate">Jours fériés</span>
+                  </a>
+                </li>
               </ul>
             </li>
 
