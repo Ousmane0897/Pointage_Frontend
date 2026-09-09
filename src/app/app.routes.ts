@@ -68,6 +68,7 @@ export const routes: Routes = [
             { path: 'rh/temps-et-presences/heures-supplementaires', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/liste-heures-sup/liste-heures-sup.component').then(m => m.ListeHeuresSupComponent) },
             { path: 'rh/temps-et-presences/heures-supplementaires/declaration', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/heures-supplementaires/declaration-heures-sup/declaration-heures-sup.component').then(m => m.DeclarationHeuresSupComponent) },
             { path: 'rh/temps-et-presences/recapitulatif', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/recapitulatif-mensuel/recapitulatif-mensuel.component').then(m => m.RecapitulatifMensuelComponent) },
+            { path: 'rh/temps-et-presences/jours-feries', loadComponent: () => import('./adminPage/ressources-humaines/temps-et-presences/jours-feries/jours-feries.component').then(m => m.JoursFeriesComponent) },
 
             // ─── Paie ────────────────────────────────────────────────
             { path: 'rh/paie/grille-salariale', loadComponent: () => import('./adminPage/ressources-humaines/paie/grille-salariale/liste-categories/liste-categories.component').then(m => m.ListeCategoriesComponent) },
