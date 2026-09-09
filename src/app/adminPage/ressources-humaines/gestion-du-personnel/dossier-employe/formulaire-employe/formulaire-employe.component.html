@@ -581,6 +581,24 @@
                       </select>
                     </div>
 
+                    <!-- Jour de repos hebdomadaire — seulement pour les rythmes de plus de
+                         cinq jours : en Lundi-Vendredi, la semaine porte déjà ses repos. -->
+                    <div class="col-span-12 sm:col-span-4" *ngIf="jourReposVisible(a)">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Jour de repos
+                      </label>
+                      <select
+                        formControlName="jourRepos"
+                        class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                      >
+                        <option [ngValue]="null">Dimanche (par défaut)</option>
+                        <option *ngFor="let j of jourReposOptions" [ngValue]="j.valeur">{{ j.libelle }}</option>
+                      </select>
+                      <p class="mt-1 text-[11px] text-gray-500">
+                        À renseigner uniquement si l'agent ne se repose pas le dimanche.
+                      </p>
+                    </div>
+
                     <!-- Sortie du site : désactivée tant qu'elle est inconnue -->
                     <div class="col-span-12 sm:col-span-4">
                       <label class="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -1217,7 +1235,9 @@
                           *ngIf="a.get('horaireDebut')?.value && a.get('horaireFin')?.value"
                         > ({{ a.get('horaireDebut')?.value }} - {{ a.get('horaireFin')?.value }})</ng-container>
                         <span class="block text-xs font-normal text-gray-500">
-                          {{ libelleJoursTravail(a.get('joursTravail')?.value) }}
+                          {{ libelleJoursTravail(a.get('joursTravail')?.value) }}<ng-container
+                            *ngIf="libelleReposLigne(a) as repos"
+                          > · repos {{ repos }}</ng-container>
                           · {{ a.get('dateEntree')?.value | date:'dd/MM/yyyy' }}
                           →
                           <ng-container *ngIf="a.get('dateSortie')?.enabled && a.get('dateSortie')?.value; else enPoste">

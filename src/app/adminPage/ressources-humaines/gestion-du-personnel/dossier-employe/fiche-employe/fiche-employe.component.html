@@ -353,7 +353,7 @@
                         ({{ a.horaireDebut }} - {{ a.horaireFin }})
                       </span>
                       <span class="block text-xs font-normal text-gray-500">
-                        {{ libelleJoursTravail(a.joursTravail) }}
+                        {{ libelleRythmeAffectation(a) }}
                         · depuis {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
                         <span *ngIf="estAVenir(a)" class="text-blue-600">(à venir)</span>
                       </span>
@@ -524,7 +524,7 @@
                 <tr *ngFor="let a of affectationsEnCours" class="hover:bg-gray-50">
                   <td class="px-4 py-3 font-medium text-gray-800">{{ a.site }}</td>
                   <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ horaireAffectation(a) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ libelleJoursTravail(a.joursTravail) }}</td>
+                  <td class="px-4 py-3 text-gray-700">{{ libelleRythmeAffectation(a) }}</td>
                   <td class="px-4 py-3 text-gray-700 whitespace-nowrap">
                     {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
                   </td>
@@ -571,7 +571,7 @@
                 <tr *ngFor="let a of affectationsTerminees" class="hover:bg-gray-50 text-gray-500">
                   <td class="px-4 py-3 font-medium text-gray-700">{{ a.site }}</td>
                   <td class="px-4 py-3 whitespace-nowrap">{{ horaireAffectation(a) }}</td>
-                  <td class="px-4 py-3">{{ libelleJoursTravail(a.joursTravail) }}</td>
+                  <td class="px-4 py-3">{{ libelleRythmeAffectation(a) }}</td>
                   <td class="px-4 py-3 whitespace-nowrap">
                     {{ (a.dateEntree | date:'dd/MM/yyyy' : '' : 'fr-FR') || '—' }}
                   </td>

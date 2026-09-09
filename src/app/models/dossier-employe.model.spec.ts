@@ -7,6 +7,10 @@ import {
   affectationsTerminees,
   ageAu,
   enfantsBeneficiairesAu,
+  jourOuvreAffectation,
+  jourReposApplicable,
+  libelleJourRepos,
+  libelleRythmeAffectation,
   referenceExercice,
   splitSites,
 } from './dossier-employe.model';
@@ -177,6 +181,55 @@ describe('helpers enfants — dossier-employe.model', () => {
     it('suit l’âge limite paramétré', () => {
       expect(enfantsBeneficiairesAu(fratrie, 2026, 7).length).toBe(1);
       expect(enfantsBeneficiairesAu(fratrie, 2026, 18).length).toBe(3);
+    });
+  });
+
+  describe('jour de repos hebdomadaire', () => {
+    // Indices getDay() : 0 = dimanche, 1 = lundi … 6 = samedi.
+    const DIMANCHE = 0, LUNDI = 1, MARDI = 2, SAMEDI = 6;
+
+    it('ne s’applique pas au rythme Lundi - Vendredi', () => {
+      // La semaine y porte déjà ses deux jours de repos : en retirer un troisième
+      // donnerait une semaine de quatre jours.
+      expect(jourReposApplicable('LUN_VEN')).toBeFalse();
+      expect(jourReposApplicable('LUN_SAM')).toBeTrue();
+      expect(jourReposApplicable('LUN_DIM')).toBeTrue();
+    });
+
+    it('sans jour de repos, le parc existant est inchangé', () => {
+      const a = affectation({ joursTravail: 'LUN_SAM' });
+      expect(jourOuvreAffectation(a, SAMEDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, DIMANCHE)).toBeFalse();
+      expect(libelleJourRepos(a)).toBeNull();
+    });
+
+    it('retire le jour de repos saisi — le cas Praline', () => {
+      // Restaurant ouvert le dimanche : l'agent travaille ce jour-là et se repose le mardi.
+      const a = affectation({ joursTravail: 'LUN_DIM', jourRepos: MARDI });
+      expect(jourOuvreAffectation(a, MARDI)).toBeFalse();
+      expect(jourOuvreAffectation(a, DIMANCHE)).toBeTrue();
+      expect(jourOuvreAffectation(a, LUNDI)).toBeTrue();
+    });
+
+    it('un jour hors semaine ouvrée reste fermé, jour de repos ou non', () => {
+      const a = affectation({ joursTravail: 'LUN_SAM', jourRepos: MARDI });
+      expect(jourOuvreAffectation(a, DIMANCHE)).toBeFalse();
+      expect(jourOuvreAffectation(a, MARDI)).toBeFalse();
+      expect(jourOuvreAffectation(a, SAMEDI)).toBeTrue();
+    });
+
+    it('ignore un jour de repos resté en base sur un rythme Lundi - Vendredi', () => {
+      // Cas d'un rythme changé après coup : la garde évite une semaine de quatre jours.
+      const a = affectation({ joursTravail: 'LUN_VEN', jourRepos: MARDI });
+      expect(jourOuvreAffectation(a, MARDI)).toBeTrue();
+      expect(libelleJourRepos(a)).toBeNull();
+    });
+
+    it('compose un libellé lisible', () => {
+      expect(libelleRythmeAffectation(affectation({ joursTravail: 'LUN_SAM' })))
+        .toBe('Lundi - Samedi');
+      expect(libelleRythmeAffectation(affectation({ joursTravail: 'LUN_DIM', jourRepos: MARDI })))
+        .toBe('Lundi - Dimanche (repos mardi)');
     });
   });
 });
