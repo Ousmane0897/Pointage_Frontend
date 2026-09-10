@@ -94,6 +94,14 @@ export class RecapitulatifMensuelComponent implements OnInit, OnDestroy {
 
   // ─── Totaux agrégés ──────────────────────────────────────────────────────
   get totalEffectif(): number { return this.recaps.length; }
+  /**
+   * Dénominateur des jours travaillés, qui n'était affiché nulle part en agrégé.
+   * ⚠ Les jours ouvrables **diffèrent d'un employé à l'autre** (rythme du site, jour de
+   * repos, fériés) : c'est une somme, jamais « le nombre de jours ouvrables du mois ».
+   */
+  get totalJoursOuvrables(): number {
+    return this.recaps.reduce((s, r) => s + (r.joursOuvrables || 0), 0);
+  }
   get totalJoursTravailles(): number {
     return this.recaps.reduce((s, r) => s + (r.joursTravailles || 0), 0);
   }

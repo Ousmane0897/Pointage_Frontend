@@ -72,6 +72,10 @@
     <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4">
       <p class="text-xs text-green-700 uppercase">J. travaillés</p>
       <p class="text-2xl font-bold text-green-700 mt-1">{{ totalJoursTravailles }}</p>
+      <!-- Le dénominateur n'était affiché que ligne par ligne : le total des jours
+           travaillés se lisait sans référence. Somme des jours ouvrables de chacun,
+           qui diffèrent selon le rythme du site et les fériés. -->
+      <p class="text-[11px] text-gray-500 mt-0.5">sur {{ totalJoursOuvrables }} dus</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
       <p class="text-xs text-red-700 uppercase">J. absence</p>
@@ -106,6 +110,7 @@
             <th class="px-4 py-3">Employé</th>
             <th class="px-4 py-3">Département</th>
             <th class="px-4 py-3">J. ouvr.</th>
+            <th class="px-4 py-3">Fériés</th>
             <th class="px-4 py-3">J. trav.</th>
             <th class="px-4 py-3">Absences</th>
             <th class="px-4 py-3">Congés</th>
@@ -123,7 +128,14 @@
             </td>
             <td class="px-4 py-3 text-gray-600">{{ r.departement }}</td>
             <td class="px-4 py-3 text-gray-700">{{ r.joursOuvrables }}</td>
-            <td class="px-4 py-3 text-green-700 font-medium">{{ r.joursTravailles }}</td>
+            <td class="px-4 py-3 text-gray-500">{{ r.joursFeries ?? 0 }}</td>
+            <td class="px-4 py-3 text-green-700 font-medium">
+              {{ r.joursTravailles }}
+              <span *ngIf="r.joursTravaillesFeries" class="block text-[11px] font-normal text-gray-500"
+                    title="Jours fériés travaillés, compris dans le total">
+                dont {{ r.joursTravaillesFeries }} férié(s)
+              </span>
+            </td>
             <td class="px-4 py-3 text-red-700">{{ r.joursAbsence }}</td>
             <td class="px-4 py-3 text-blue-700">{{ r.joursConge }}</td>
             <td class="px-4 py-3 text-amber-700">{{ r.nombreRetards }}</td>
