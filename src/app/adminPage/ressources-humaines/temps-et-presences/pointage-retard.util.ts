@@ -51,6 +51,7 @@ export const CLASSES_STATUT: Record<StatutPresence, string> = {
   NEUTRE: 'bg-gray-100 text-gray-500 border border-gray-200',
   EN_ATTENTE: 'bg-sky-100 text-sky-700 border border-sky-200',
   HORS_PLAN: 'bg-purple-100 text-purple-700 border border-purple-200',
+  FERIE: 'bg-sky-100 text-sky-700 border border-sky-200',
 };
 
 export const LIBELLES_STATUT: Record<StatutPresence, string> = {
@@ -61,6 +62,7 @@ export const LIBELLES_STATUT: Record<StatutPresence, string> = {
   NEUTRE: 'À venir',
   EN_ATTENTE: 'En attente',
   HORS_PLAN: 'Hors planning',
+  FERIE: 'Férié',
 };
 
 export const ICONES_STATUT: Record<StatutPresence, string> = {
@@ -71,6 +73,7 @@ export const ICONES_STATUT: Record<StatutPresence, string> = {
   NEUTRE: 'Minus',
   EN_ATTENTE: 'Clock',
   HORS_PLAN: 'HelpCircle',
+  FERIE: 'CalendarX',
 };
 
 /** Infobulle expliquant un statut qui ne se devine pas depuis la seule colonne Statut. */
@@ -82,6 +85,7 @@ export const DESCRIPTIONS_STATUT: Record<StatutPresence, string> = {
   NEUTRE: "L'heure de début de ce site n'est pas encore arrivée.",
   EN_ATTENTE: 'Le créneau a commencé, le pointage est encore attendu.',
   HORS_PLAN: "Pointage sans créneau prévu : vérifier les affectations de l'agent.",
+  FERIE: "Jour férié : le créneau n'est pas dû. Ce n'est pas une absence.",
 };
 
 /** Horaire attendu du site, « 08:00 - 17:00 », ou null si le site n'en porte pas. */
