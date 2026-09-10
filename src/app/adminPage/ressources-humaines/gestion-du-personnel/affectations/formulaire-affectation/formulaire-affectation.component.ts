@@ -37,7 +37,7 @@ import {
 import {
   AffectationSite,
   DossierEmploye,
-  libelleJoursTravail,
+  libelleRythmeAffectation,
 } from '../../../../../models/dossier-employe.model';
 import {
   COULEURS_STATUT_AFFECTATION,
@@ -256,11 +256,12 @@ export class FormulaireAffectationComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Libellé des jours travaillés sur un site donné (défaut : Lundi - Vendredi).
-   * La semaine ouvrée est propre à chaque affectation, d'où le paramètre.
+   * Libellé des jours travaillés sur un site donné (défaut : Lundi - Vendredi), jour de
+   * repos hebdomadaire compris. La semaine ouvrée est propre à chaque affectation, d'où
+   * le paramètre.
    */
   libelleJoursTravail(a: AffectationSite): string {
-    return libelleJoursTravail(a.joursTravail);
+    return libelleRythmeAffectation(a);
   }
 
   /**

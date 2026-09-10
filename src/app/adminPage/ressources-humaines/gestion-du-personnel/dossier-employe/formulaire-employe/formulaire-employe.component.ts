@@ -14,8 +14,11 @@ import {
   AffectationSite,
   EnfantEmploye,
   OPTIONS_JOURS_TRAVAIL,
+  OPTIONS_JOUR_REPOS,
   SEPARATEUR_SITES,
   affectationTerminee,
+  jourReposApplicable,
+  libelleJourRepos,
   libelleJoursTravail,
   splitSites,
 } from '../../../../../models/dossier-employe.model';
@@ -112,6 +115,15 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   ];
 
   readonly joursTravailOptions = OPTIONS_JOURS_TRAVAIL;
+  readonly jourReposOptions = OPTIONS_JOUR_REPOS;
+
+  /**
+   * Le champ « Jour de repos » n'est rendu que pour les rythmes de plus de cinq jours :
+   * en `LUN_VEN`, la semaine ouvrée porte déjà ses deux jours de repos.
+   */
+  jourReposVisible(ligne: AbstractControl): boolean {
+    return jourReposApplicable(ligne.get('joursTravail')?.value);
+  }
 
   // ─── Documents (étape 4 — collecte en mémoire, upload après création) ────────
   /** Formulaire de saisie d'un document à ajouter à la liste. */
@@ -281,6 +293,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         dateEntree: [this.toDateInput(a?.dateEntree) ?? '', Validators.required],
         dateSortie: [{ value: dateSortie ?? '', disabled: !dateSortie }],
         joursTravail: [a?.joursTravail ?? 'LUN_VEN', Validators.required],
+        // ⚠ Pas de `Validators.required` : le jour de repos est **optionnel**, et son
+        // absence porte un sens — « repos le dimanche », le cas de tout le parc. L'exiger
+        // rendrait invalide chaque fiche ouverte pour un tout autre motif.
+        jourRepos: [a?.jourRepos ?? null],
       },
       { validators: this.coherenceLigneValidator },
     );
@@ -1101,6 +1117,11 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         dateEntree: this.toDateInput(a.dateEntree),
         dateSortie: this.toDateInput(a.dateSortie) ?? undefined,
         joursTravail: a.joursTravail,
+        // ⚠ `null` explicite et non `undefined` : c'est ce qui permet de **retirer** un
+        // jour de repos saisi par erreur. Avec `undefined`, le champ disparaîtrait du
+        // payload et le serveur conserverait l'ancienne valeur — même piège que
+        // `dateFin` d'une affectation de planning, réaffectée explicitement côté serveur.
+        jourRepos: jourReposApplicable(a.joursTravail) ? (a.jourRepos ?? null) : null,
       }));
     employePayload.affectations = affectations;
     employePayload.siteAffecte = affectations.map(a => a.site).join(SEPARATEUR_SITES);
@@ -1196,6 +1217,14 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
   /** Libellé d'une semaine ouvrée — désormais propre à chaque site, d'où le paramètre. */
   readonly libelleJoursTravail = libelleJoursTravail;
+
+  /** Repos hebdomadaire d'une ligne du récapitulatif — `null` si rien à afficher. */
+  libelleReposLigne(ligne: AbstractControl): string | null {
+    return libelleJourRepos({
+      joursTravail: ligne.get('joursTravail')?.value,
+      jourRepos: ligne.get('jourRepos')?.value,
+    });
+  }
 
   get libelleGenre(): string {
     return this.identiteGroup?.get('genre')?.value === 'HOMME' ? 'Homme' : 'Femme';

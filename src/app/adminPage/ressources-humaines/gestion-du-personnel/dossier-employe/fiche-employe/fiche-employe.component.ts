@@ -23,6 +23,7 @@ import {
   ageAu,
   aujourdHuiIso,
   libelleJoursTravail,
+  libelleRythmeAffectation,
   splitSites,
 } from '../../../../../models/dossier-employe.model';
 import { ParametresConges } from '../../../../../models/parametres-conges.model';
@@ -105,6 +106,8 @@ export class FicheEmployeComponent implements OnInit, OnDestroy {
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
   /** Semaine ouvrée d'une affectation — propre au site, rendue par ligne. */
   readonly libelleJoursTravail = libelleJoursTravail;
+  /** Semaine ouvrée + jour de repos, en un seul libellé. */
+  readonly libelleRythmeAffectation = libelleRythmeAffectation;
 
   // ─── Photo (ObjectURL local, le endpoint est protégé par JWT) ────────────
   photoBlobUrl: string | null = null;
