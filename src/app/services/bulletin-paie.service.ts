@@ -112,11 +112,32 @@ export class BulletinPaieService {
     // professionnelle (grille salariale).
     const salaireBase = categorie?.salaireBase ?? 0;
 
+    // Prorata sur les jours réellement travaillés.
+    //
+    // ⚠ `joursOuvrables <= 0` ⇒ AUCUN prorata. Le récap peut être absent (le composant
+    // de calcul retombe silencieusement sur `null` en cas d'erreur, donc sur 0 jour) : un
+    // prorata aveugle sortirait alors un net à ZÉRO, ce qui est bien pire que de payer un
+    // mois plein.
+    //
+    // ⚠ Ratio PLAFONNÉ à 1 : `joursTravailles` inclut les jours fériés travaillés et peut
+    // donc légitimement dépasser `joursOuvrables`. Sans plafond, un férié travaillé
+    // majorerait le salaire de base — la majoration des heures supplémentaires est le
+    // mécanisme prévu pour cela, pas le prorata.
+    const joursOuvrables = recap?.joursOuvrables ?? 0;
+    const joursTravailles = recap?.joursTravailles ?? 0;
+    const ratioPresence = joursOuvrables > 0
+      ? Math.min(1, joursTravailles / joursOuvrables)
+      : 1;
+    const salaireBaseProratise = Math.round(salaireBase * ratioPresence);
+    const proratise = salaireBaseProratise !== salaireBase;
+
     lignes.push({
       code: 'SAL_BASE',
-      libelle: 'Salaire de base',
+      libelle: proratise
+        ? `Salaire de base (${joursTravailles}/${joursOuvrables} j)`
+        : 'Salaire de base',
       nature: 'GAIN',
-      montantSalarial: salaireBase,
+      montantSalarial: salaireBaseProratise,
     });
 
     // Primes & indemnités provenant de la catégorie
@@ -138,6 +159,11 @@ export class BulletinPaieService {
     });
 
     // Heures supplémentaires (depuis le récap mensuel 6.2)
+    //
+    // ⚠ Le taux horaire se calcule sur le salaire de base CONTRACTUEL, jamais sur le
+    // montant proratisé : le prorata mesure une présence, il ne dévalue pas l'heure de
+    // travail. Le proratiser ferait payer moins cher les heures supplémentaires d'un
+    // agent qui a été absent, ce qui n'a aucun fondement.
     const tauxHoraire = salaireBase / PARAMETRES_PAIE.heuresLegalesMensuelles;
     let montantHS = 0;
     if (recap?.heuresSupParType) {
@@ -298,6 +324,8 @@ export class BulletinPaieService {
       periode,
 
       joursTravailles: recap?.joursTravailles ?? 0,
+      joursOuvrables,
+      salaireBaseProratise,
       joursAbsence: recap?.joursAbsence ?? 0,
       joursConge: recap?.joursConge ?? 0,
       heuresSupTotal: recap?.heuresSupTotal ?? 0,

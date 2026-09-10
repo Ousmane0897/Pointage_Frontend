@@ -49,7 +49,26 @@ export interface BulletinPaie {
   periode: PeriodePaie;
 
   // ─── Temps travaillé (snapshot du récap mensuel 6.2) ──────────────────────
+  /** Jours pointés, **fériés travaillés compris** — peut dépasser `joursOuvrables`. */
   joursTravailles: number;
+  /**
+   * Jours dus **de cet employé** (rythme du site, jour de repos, fériés) — dénominateur
+   * du prorata. `0` quand le récap est absent : dans ce cas **aucun prorata n'est
+   * appliqué**, un net à zéro étant bien pire qu'un mois plein.
+   *
+   * Optionnel : les bulletins déjà enregistrés n'en portent pas.
+   */
+  joursOuvrables?: number;
+  /**
+   * Salaire de base après prorata `joursTravailles / joursOuvrables`, **plafonné à 1**.
+   * Égal au salaire de base contractuel quand le mois est complet.
+   *
+   * ⚠ Le prorata porte **sur le seul salaire de base**. Primes et indemnités sont
+   * versées en entier, et le taux horaire des heures supplémentaires reste calculé sur
+   * le salaire **contractuel** : le prorata mesure une présence, il ne dévalue pas
+   * l'heure de travail.
+   */
+  salaireBaseProratise?: number;
   joursAbsence: number;
   joursConge: number;
   heuresSupTotal: number;

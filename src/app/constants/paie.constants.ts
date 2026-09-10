@@ -118,6 +118,8 @@ export const PARAMETRES_PAIE = {
   heuresLegalesMensuelles: 173.33,
   /** Plafond d'exonération de la prime de transport (FCFA/mois). */
   exonerationPrimeTransport: 26_000,
-  /** Nombre de jours ouvrables standard par mois. */
-  joursOuvrablesStandard: 26,
+  // ⚠ `joursOuvrablesStandard: 26` a été SUPPRIMÉ. Cette constante n'a jamais eu d'appelant,
+  // et depuis que le prorata existe elle serait une seconde source de vérité concurrente du
+  // `joursOuvrables` calculé par employé (rythme du site, jour de repos, fériés) — lequel
+  // n'est justement pas le même pour tout le monde. Ne pas la rétablir.
 };
