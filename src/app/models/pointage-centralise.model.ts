@@ -13,13 +13,18 @@
  * - `HORS_PLAN` — un pointage qu'aucun créneau attendu n'explique (affectations non
  *   tenues à jour, pointage un jour non travaillé). Signalé plutôt que fondu dans
  *   « présent » ou « absent ».
+ * - `FERIE` — créneau d'un jour férié resté non pointé. Ni une absence (le jour n'est
+ *   pas dû), ni un « à venir » (le créneau ne sera pas honoré, et n'a pas à l'être).
+ *   ⚠ Les créneaux d'un férié sont bien **générés** : les supprimer ferait retomber tout
+ *   pointage de ce jour en `HORS_PLAN`, c'est-à-dire dans la tuile d'alerte, alors qu'un
+ *   férié travaillé est légitime — il ressort alors en `PRESENT` / `RETARD`.
  *
  * Le serveur est **autorité** sur ce statut : il connaît l'horaire du site et l'heure
  * courante. Le front ne le recalcule pas.
  */
 export type StatutPresence =
   | 'PRESENT' | 'ABSENT' | 'RETARD' | 'CONGE'
-  | 'NEUTRE' | 'EN_ATTENTE' | 'HORS_PLAN';
+  | 'NEUTRE' | 'EN_ATTENTE' | 'HORS_PLAN' | 'FERIE';
 
 export interface PointageCentralise {
   /**
@@ -75,7 +80,8 @@ export interface FiltrePointage {
  * ⚠ **Deux unités cohabitent, ne pas les additionner.** `totalEmployes` et `enConge`
  * comptent des *personnes* ; tous les autres comptent des *créneaux*. Un agent en retard
  * sur deux sites pèse deux fois dans `retards` et une seule dans `totalEmployes`.
- * L'invariant est `presents + retards + absents + enAttente + neutres === creneauxPrevus`.
+ * L'invariant est
+ * `presents + retards + absents + enAttente + neutres + feries === creneauxPrevus`.
  */
 export interface ResumeJournee {
   date: string;
@@ -92,6 +98,11 @@ export interface ResumeJournee {
   neutres: number;
   /** Pointages sans créneau attendu — compteur d'alerte. */
   horsPlan: number;
+  /**
+   * Créneaux d'un jour férié restés non pointés. Comptés dans `creneauxPrevus` — un
+   * férié produit des créneaux comme les autres, simplement non dus.
+   */
+  feries: number;
   /** Employés en congé approuvé (personnes). */
   enConge: number;
 }
