@@ -64,6 +64,19 @@ export interface ModulesAutorises {
      * ⚠ Ne gate que l'écran de **saisie**. La *lecture* du référentiel est ouverte à tout
      * compte authentifié côté serveur : le récapitulatif mensuel, le décompte des congés et
      * le pointage centralisé en dépendent, y compris pour un agent consultant son solde.
+     *
+     * ⚠ **Non assignable, et volontairement absent de Gestion des privilèges.** La saisie
+     * des fériés est réservée aux rôles `RH` et `SUPERADMIN`, qui y accèdent par le
+     * passe-droit de {@link LoginService.accesRh} — aucun flag n'a besoin d'être coché.
+     * Le backend ne porte pas ce champ (`Rh` / `RhDeserializer` sont écrits champ par
+     * champ) : il l'écarterait **silencieusement** à l'enregistrement, et ne l'émettrait
+     * jamais dans le claim JWT. Une case à cocher existait et ne fonctionnait pas.
+     *
+     * Le champ est conservé parce que la sidebar l'interroge via `accessRh('joursFeries')`,
+     * ce qui donne exactement le comportement voulu : vrai pour RH/SUPERADMIN, faux
+     * ailleurs. **Ne pas remettre de case sans livrer d'abord le flag serveur** (champ
+     * `Rh.joursFeries`, entrée dans `RhDeserializer.fromNode` et dans
+     * `RhModuleMigrationRunner.SOUS_FLAGS`).
      */
     joursFeries?: boolean;
 

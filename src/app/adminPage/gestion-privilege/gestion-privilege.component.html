@@ -317,11 +317,12 @@
                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                   <span class="text-sm text-gray-700">Récapitulatif mensuel</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="rhJoursFeries" [(ngModel)]="modalData.modulesAutorises.rh!.joursFeries"
-                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                  <span class="text-sm text-gray-700">Jours fériés</span>
-                </label>
+                <!-- ⚠ Pas de case « Jours fériés » : le calendrier des fériés est réservé
+                     aux rôles RH et SUPERADMIN, qui y accèdent par le passe-droit de
+                     `LoginService.accesRh` sans qu'aucun flag soit coché. La case existait
+                     et ne fonctionnait pas — le backend ne porte pas le champ, il l'écartait
+                     silencieusement à l'enregistrement (cf. `Rh` / `RhDeserializer`, écrits
+                     champ par champ). La rétablir suppose de livrer le flag serveur. -->
               </div>
             </div>
 
