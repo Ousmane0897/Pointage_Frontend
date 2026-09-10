@@ -466,9 +466,15 @@ rendu** (il ne l'était que pour `RH`/`SUPERADMIN`), et son contenu vient d'un e
   (`NIVEAU_PAR_STATUT['EN_ATTENTE'] = 'SUPERIEUR'`).
 - **Solde et décompte** — `enCours` compte les **4** statuts d'attente, et `computeNombreJours`
   exclut samedi et dimanche : le décompte était en jours *calendaires* alors que le solde est en
-  jours *ouvrés*, si bien que le solde se vidait trop vite. ⚠ Les **jours fériés restent
-  décomptés** — l'ancien référentiel des fériés a été supprimé et une liste en dur serait pire
-  qu'une limite documentée.
+  jours *ouvrés*, si bien que le solde se vidait trop vite. ✅ Les **jours fériés ne sont plus
+  décomptés** depuis le lot « jours réellement travaillés » : `CongeCalendrier.joursOuvres`
+  prend un `Set<LocalDate>` de fériés, alimenté par le nouveau référentiel RH
+  (`rh/temps-et-presences/jours-feries`). ⚠ La classe **reste pure** — les fériés sont *passés*,
+  jamais lus par elle ; la surcharge à deux arguments est réservée à `CongeStatutMigrationRunner`,
+  qui doit reproduire le décompte tel qu'il était à la saisie. ⚠ Le décompte **reste
+  lundi-vendredi** et ne suit pas le rythme de l'agent : l'acquis étant de 2 j *ouvrables* par
+  mois, basculer le décompte sur `LUN_SAM` sans basculer l'acquis viderait les soldes des agents
+  de terrain 20 % plus vite.
 - **Acquis dynamique — 2 jours ouvrables par mois de service effectif** (droit sénégalais, 24 j
   pour une année pleine), via `app.conges.jours-acquis-par-mois`. Remplace le forfait annuel
   (`jours-acquis-par-an`, 22), qui accordait autant de jours à un employé embauché le 15 novembre
