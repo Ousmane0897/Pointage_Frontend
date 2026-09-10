@@ -50,7 +50,9 @@ export class RecapitulatifMensuelService {
       'Département': r.departement,
       'Poste': r.poste ?? '',
       'Jours ouvrables': r.joursOuvrables,
+      'Jours fériés': r.joursFeries ?? 0,
       'Jours travaillés': r.joursTravailles,
+      'dont fériés travaillés': r.joursTravaillesFeries ?? 0,
       'Jours absence': r.joursAbsence,
       'Jours congé': r.joursConge,
       'Nb retards': r.nombreRetards,
@@ -79,7 +81,7 @@ export class RecapitulatifMensuelService {
       startY: 28,
       head: [[
         'Matricule', 'Nom', 'Prénom', 'Département',
-        'J. ouvr.', 'J. trav.', 'Absences', 'Congés',
+        'J. ouvr.', 'Fériés', 'J. trav.', 'dont fériés', 'Absences', 'Congés',
         'Nb retards', 'Minutes de retard', 'HS (h)', 'HS maj. équiv.',
       ]],
       body: recaps.map(r => [
@@ -88,7 +90,9 @@ export class RecapitulatifMensuelService {
         r.prenom,
         r.departement,
         r.joursOuvrables,
+        r.joursFeries ?? 0,
         r.joursTravailles,
+        r.joursTravaillesFeries ?? 0,
         r.joursAbsence,
         r.joursConge,
         r.nombreRetards,
