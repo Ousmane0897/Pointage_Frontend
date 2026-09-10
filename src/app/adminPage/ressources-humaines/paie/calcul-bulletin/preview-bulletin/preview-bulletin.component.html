@@ -28,7 +28,13 @@
   <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
     <div>
       <div class="text-[0.65rem] uppercase tracking-wide text-gray-500">Jours travaillés</div>
-      <div class="text-base font-semibold text-gray-800">{{ bulletin.joursTravailles }}</div>
+      <div class="text-base font-semibold text-gray-800">
+        {{ bulletin.joursTravailles }}<span *ngIf="bulletin.joursOuvrables"
+          class="text-sm font-normal text-gray-500"> / {{ bulletin.joursOuvrables }}</span>
+      </div>
+      <!-- Le dénominateur est propre à l'employé (rythme du site, jour de repos, fériés) :
+           il justifie le prorata, qui serait sinon incompréhensible sur le bulletin. -->
+      <div *ngIf="bulletin.joursOuvrables" class="text-[0.6rem] text-gray-400">jours dus</div>
     </div>
     <div>
       <div class="text-[0.65rem] uppercase tracking-wide text-gray-500">Jours absence</div>
