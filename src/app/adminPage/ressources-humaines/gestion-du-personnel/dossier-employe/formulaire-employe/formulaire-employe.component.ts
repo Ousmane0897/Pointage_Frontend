@@ -13,13 +13,15 @@ import {
   DossierEmploye,
   AffectationSite,
   EnfantEmploye,
+  JourSemaine,
   OPTIONS_JOURS_TRAVAIL,
   OPTIONS_JOUR_REPOS,
+  OPTIONS_JOUR_SEMAINE,
   SEPARATEUR_SITES,
   affectationTerminee,
   jourReposApplicable,
-  libelleJourRepos,
-  libelleJoursTravail,
+  joursSemaineExplicites,
+  libelleRythmeAffectation,
   splitSites,
 } from '../../../../../models/dossier-employe.model';
 import { TerrainSiteClientService } from '../../../../../services/terrain-site-client.service';
@@ -29,6 +31,28 @@ import { DocumentEmployeService } from '../../../../../services/document-employe
 import { CategorieDocument } from '../../../../../models/document-employe.model';
 import { ContratService } from '../../../../../services/contrat.service';
 import { TypeContrat } from '../../../../../models/contrat.model';
+
+/**
+ * Valeur brute d'une ligne d'affectation telle que la rend `getRawValue()`.
+ *
+ * Le formulaire porte les jours travaillés en **sept cases à cocher** (`joursSemaineFlags`)
+ * là où le modèle attend une liste d'indices : les deux formes ne coïncident donc pas, et le
+ * payload convertit explicitement l'une en l'autre.
+ */
+type LigneAffectationRaw = AffectationSite & { joursSemaineFlags: boolean[] };
+
+/**
+ * Cases cochées → indices `getDay()`. L'index du tableau **est** la valeur métier (0 =
+ * dimanche), aucune table de conversion n'intervient.
+ *
+ * Fonction libre plutôt que méthode : elle est appelée sur un `AbstractControl` (récapitulatif)
+ * comme sur une valeur brute (payload), et une deuxième copie divergerait au premier ajustement.
+ */
+function joursDepuisFlags(flags: readonly boolean[] | null | undefined): JourSemaine[] {
+  return (flags ?? [])
+    .map((coche, i) => (coche ? (i as JourSemaine) : null))
+    .filter((j): j is JourSemaine => j !== null);
+}
 
 /** Document collecté en mémoire pendant l'assistant, uploadé après la création/màj de l'employé. */
 interface DocumentStage {
@@ -116,13 +140,40 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
 
   readonly joursTravailOptions = OPTIONS_JOURS_TRAVAIL;
   readonly jourReposOptions = OPTIONS_JOUR_REPOS;
+  readonly joursSemaineOptions = OPTIONS_JOUR_SEMAINE;
 
   /**
    * Le champ « Jour de repos » n'est rendu que pour les rythmes de plus de cinq jours :
-   * en `LUN_VEN`, la semaine ouvrée porte déjà ses deux jours de repos.
+   * en `LUN_VEN`, la semaine ouvrée porte déjà ses deux jours de repos. Sans objet aussi
+   * en « Jours personnalisés », où les cases cochées disent déjà tout.
    */
   jourReposVisible(ligne: AbstractControl): boolean {
     return jourReposApplicable(ligne.get('joursTravail')?.value);
+  }
+
+  /** Les sept cases « jours travaillés » ne sont rendues que pour un rythme personnalisé. */
+  joursSemaineVisible(ligne: AbstractControl): boolean {
+    return ligne.get('joursTravail')?.value === 'PERSONNALISE';
+  }
+
+  /** `FormArray` des sept cases d'une ligne d'affectation, adressé par le template. */
+  joursSemaineFlags(ligne: AbstractControl): FormArray {
+    return ligne.get('joursSemaineFlags') as FormArray;
+  }
+
+  /**
+   * Jours cochés d'une ligne du formulaire (récapitulatif).
+   *
+   * ⚠ `getRawValue()` : sur une affectation close tout est désactivé, et `value` rendrait
+   * un tableau vide — la ligne d'historique paraîtrait sans jours.
+   */
+  private joursSemaineCoches(ligne: AbstractControl): JourSemaine[] {
+    return joursDepuisFlags(this.joursSemaineFlags(ligne)?.getRawValue() as boolean[]);
+  }
+
+  /** Même conversion, depuis la valeur brute du FormArray (construction du payload). */
+  private joursSemaineDepuisFlags(a: LigneAffectationRaw): JourSemaine[] {
+    return joursDepuisFlags(a.joursSemaineFlags);
   }
 
   // ─── Documents (étape 4 — collecte en mémoire, upload après création) ────────
@@ -284,6 +335,9 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
    */
   private creerLigneAffectation(a?: AffectationSite): FormGroup {
     const dateSortie = this.toDateInput(a?.dateSortie);
+    // Normalisé par le modèle (7 ISO ramené à 0, doublons et valeurs hors bornes écartés) :
+    // une liste venue du serveur ne doit pas cocher une case fantôme.
+    const joursCoches = a ? joursSemaineExplicites(a) : [];
     const groupe = this.fb.group(
       {
         id: [a?.id ?? null],
@@ -297,6 +351,22 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         // absence porte un sens — « repos le dimanche », le cas de tout le parc. L'exiger
         // rendrait invalide chaque fiche ouverte pour un tout autre motif.
         jourRepos: [a?.jourRepos ?? null],
+        // Sept cases à cocher, **indexées par `getDay()`** : index 0 = dimanche … 6 = samedi.
+        // ⚠ L'index EST la valeur métier. Le template itère sur `joursSemaineOptions` (lundi
+        // → dimanche, ordre de lecture) et adresse le contrôle par son indice : découpler
+        // l'ordre d'affichage de l'index de stockage évite la conversion la plus facile à
+        // rater du module.
+        //
+        // ⚠ Un `FormArray` de booléens plutôt qu'un `FormControl<JourSemaine[]>` : `ngModel`
+        // est interdit ici (ReactiveForms exclusivement), et surtout `disable()` d'un groupe
+        // propage à ses descendants — une affectation close devient donc lecture seule sans
+        // aucune garde manuelle, contrairement à la case « sortie renseignée » qui vit hors
+        // du formulaire et doit porter son `[disabled]` à la main.
+        joursSemaineFlags: this.fb.array(
+          [0, 1, 2, 3, 4, 5, 6].map(i =>
+            this.fb.control(joursCoches.includes(i as JourSemaine)),
+          ),
+        ),
       },
       { validators: this.coherenceLigneValidator },
     );
@@ -522,6 +592,17 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
    * s'applique que s'il est `enabled`.
    */
   private coherenceLigneValidator(group: AbstractControl): ValidationErrors | null {
+    // « Jours personnalisés » sans aucune case cochée : la ligne ne dit rien du rythme. Le
+    // serveur refuse cette combinaison, car elle retomberait sur son échelon permissif —
+    // donc sur zéro absence, l'inverse de ce que la RH croit avoir saisi.
+    // ⚠ `getRawValue()` et non `value` : sur une ligne close le FormArray est désactivé et
+    // `value` rendrait un tableau vide, faisant échouer une ligne d'historique intouchable.
+    if (group.get('joursTravail')?.value === 'PERSONNALISE') {
+      const flags = group.get('joursSemaineFlags') as FormArray | null;
+      const aucun = !flags || (flags.getRawValue() as boolean[]).every(coche => !coche);
+      if (aucun) return { joursPersonnalisesVides: true };
+    }
+
     const debut = group.get('horaireDebut')?.value;
     const fin = group.get('horaireFin')?.value;
     if (debut && fin && debut >= fin) {
@@ -1106,8 +1187,8 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     // désactivée tant que la sortie est inconnue, et un contrôle désactivé est absent
     // de `form.value` — une sortie renseignée serait silencieusement perdue.
     const affectations: AffectationSite[] = (this.affectations.getRawValue() ?? [])
-      .filter((a: AffectationSite) => (a.site ?? '').trim())
-      .map((a: AffectationSite) => ({
+      .filter((a: LigneAffectationRaw) => (a.site ?? '').trim())
+      .map((a: LigneAffectationRaw) => ({
         // Renvoyé tel quel : c'est lui qui permet au serveur de reconnaître une
         // affectation déjà persistée (et de refuser la disparition d'une ligne close).
         id: a.id ?? undefined,
@@ -1122,6 +1203,12 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         // payload et le serveur conserverait l'ancienne valeur — même piège que
         // `dateFin` d'une affectation de planning, réaffectée explicitement côté serveur.
         jourRepos: jourReposApplicable(a.joursTravail) ? (a.jourRepos ?? null) : null,
+        // ⚠ **`null` dès que le rythme n'est pas personnalisé, et c'est essentiel** : la
+        // liste fait autorité côté serveur dès qu'elle est non vide. Sans cette remise à
+        // zéro, repasser de « Jours personnalisés » à « Lundi - Vendredi » laisserait les
+        // anciens jours en base et le rythme choisi dans le `<select>` resterait ignoré.
+        joursSemaine:
+          a.joursTravail === 'PERSONNALISE' ? this.joursSemaineDepuisFlags(a) : null,
       }));
     employePayload.affectations = affectations;
     employePayload.siteAffecte = affectations.map(a => a.site).join(SEPARATEUR_SITES);
@@ -1215,14 +1302,19 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return this.statutOptions.find((s) => s.valeur === statut)?.libelle ?? '';
   }
 
-  /** Libellé d'une semaine ouvrée — désormais propre à chaque site, d'où le paramètre. */
-  readonly libelleJoursTravail = libelleJoursTravail;
-
-  /** Repos hebdomadaire d'une ligne du récapitulatif — `null` si rien à afficher. */
-  libelleReposLigne(ligne: AbstractControl): string | null {
-    return libelleJourRepos({
+  /**
+   * Rythme d'une ligne du récapitulatif : « Lundi, Mercredi, Vendredi » pour des jours
+   * explicites, sinon « Lundi - Samedi (repos mardi) ».
+   *
+   * ⚠ Un seul helper là où le template composait auparavant `libelleJoursTravail` et
+   * `libelleReposLigne` : les trois cas (jours explicites, rythme + repos, rythme seul)
+   * sont tranchés par `libelleRythmeAffectation`, point unique de vérité du modèle.
+   */
+  libelleRythmeLigne(ligne: AbstractControl): string {
+    return libelleRythmeAffectation({
       joursTravail: ligne.get('joursTravail')?.value,
       jourRepos: ligne.get('jourRepos')?.value,
+      joursSemaine: this.joursSemaineCoches(ligne),
     });
   }
 

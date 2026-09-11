@@ -134,6 +134,100 @@ Module Ressources Humaines complet, découpé en 4 sous-modules — **✅ Termin
     - Tests : `AffectationSiteUtilsTest` (util pur, date figée), 9 cas ajoutés à `DossierEmployeAffectationServiceTest`, 3 à `EffectifSiteServiceIT`, 3 à `AffectationSiteBackfillRunnerIT`, 1 `@WebMvcTest` de **PUT multipart → 422** (aucun test de PUT multipart n'existait). ⚠ Le stub de `toAffectationEntities` de `DossierEmployeAffectationServiceTest` ne recopiait que `site`/`horaireDebut`/`horaireFin` : il **doit** recopier tous les champs, sinon les tests d'identité et de période seraient verts pour de mauvaises raisons.
   - **Hors périmètre, arbitré** : pas de journal d'audit (qui a modifié quoi, quand, valeur précédente) — l'historique porte les **périodes**, pas les modifications ; l'écran RH > Affectations (`AffectationAgent`, planning terrain ponctuel) n'est pas touché, et son filtre `employeId` reste supporté par le service sans être exposé dans l'UI.
 
+#### Jours de travail explicites — les agents à 2-3 jours par semaine
+
+La semaine ouvrée d'une affectation ne pouvait prendre que `LUN_VEN | LUN_SAM | LUN_DIM`
+plus un **unique** `jourRepos` : « lundi, mercredi, vendredi » était **inexprimable**.
+`PlanningAffectationResolver.jourOuvre` répondait donc « oui » pour les 5 jours,
+`PointageCentraliseService.buildLignes` générait un créneau chaque jour, et
+`buildLigneCreneau` le passait en `ABSENT` faute de pointage. Un agent à 3 j/semaine
+accumulait ~9 absences fausses par mois.
+
+- Nouveau champ **`AffectationSite.joursSemaine`** : liste d'indices `Date.getDay()`
+  (0 = dimanche … 6 = samedi, la convention de `jourRepos`). **Non vide ⇒ fait SEULE
+  autorité** — ni `joursTravail` ni `jourRepos` ne s'y appliquent, la liste *est* la semaine
+  ouvrée. **Nulle ou vide ⇒ chemin de code identique à l'actuel**, donc aucune migration et
+  aucun recalcul pour le parc existant.
+- Nouvelle valeur **`PERSONNALISE`** dans `JoursTravail` : ce n'est **pas un rythme** mais un
+  *marqueur* désignant `joursSemaine`. ⚠ **Valide au niveau site uniquement** — sur
+  `DossierEmploye.joursTravail` il ne désignerait aucune liste, et
+  `AffectationSiteBackfillRunner` le recopierait sur des affectations vides, qui
+  basculeraient toutes en échelon permissif silencieux ; `validerJoursTravail` et l'import
+  bulk le refusent à ce niveau.
+- ⚠ **Un seul point de décision serveur, d'où un seul correctif.** Pointage centralisé,
+  historique, récapitulatif mensuel (via `CalendrierTravailService.joursOuvrables`) et taux
+  d'absentéisme (`TableauBordRhService`) convergent tous vers `jourOuvre` : **aucun de ces
+  fichiers n'est touché**. L'échelle de replis gagne un **échelon 0** —
+  *jours explicites du site → rythme du site → rythme de l'employé → aucun filtrage*.
+- ⚠ **`PERSONNALISE` sans jours : strict à l'écriture, permissif à la lecture.** L'API refuse
+  (front `joursPersonnalisesVides`, serveur 400), mais une donnée déjà en base tombe en
+  échelon permissif — **jamais « aucun jour ouvré »**, qui mettrait les jours ouvrables *et
+  donc les absences* à zéro. Même arbitrage que le repli qui interdit `LUN_VEN` par défaut :
+  le faux négatif reste le pire mode de défaillance.
+- ⚠ **Une liste illisible est réputée absente**, pas fermante : `aDesJoursExplicites` exige au
+  moins une valeur dans 0..7, si bien qu'un `[9]` retombe sur le rythme au lieu de supprimer
+  la semaine entière. 7 ISO toléré en lecture, entrées nulles ignorées.
+- ⚠ **Canonicalisation à l'écriture** (`DossierEmployeService.canonicaliserJoursSemaine`,
+  appelée depuis `appliquerAffectations`) : liste non vide ⇒ normalisée (7→0, dédoublonnée,
+  triée), `joursTravail` forcé à `PERSONNALISE`, `jourRepos` **effacé**. Sans elle une
+  affectation porterait « LUN_VEN » **et** « [0,6] » — deux vérités contradictoires dont seule
+  la seconde compte, et un relecteur de la collection Mongo croirait la première. Liste vide ⇒
+  remise à `null`, pour que `null` reste le seul état « pas de jours explicites ».
+- ⚠ Côté front, le payload envoie **`joursSemaine: null` dès que le rythme n'est pas
+  `PERSONNALISE`** — c'est la ligne critique : sans elle, repasser à « Lundi - Vendredi »
+  laisserait la liste en base, qui continuerait de faire autorité et rendrait le `<select>`
+  inopérant. Même raisonnement que le `jourRepos: null` explicite déjà en place.
+- **Saisie** : 4ᵉ option « Jours personnalisés » du `<select>` *Jours de travail*, qui révèle
+  **7 cases à cocher** sur la ligne du site (création **et** modification, même composant).
+  ⚠ Un **`FormArray` de booléens indexé par `getDay()`** et non un `FormControl<number[]>` :
+  `ngModel` est interdit, et surtout `disable()` d'un groupe propage à ses descendants — une
+  **affectation close devient lecture seule sans garde manuelle**, contrairement à la case
+  « Sortie du site » qui vit hors du formulaire. L'**ordre d'affichage** (lundi → dimanche,
+  via `OPTIONS_JOUR_SEMAINE`) est **découplé de l'index de stockage**, adressé par
+  `[formControlName]="j.valeur"`. `jourRepos` est masqué dans ce mode.
+- **Helpers centralisés à côté du type** ([dossier-employe.model.ts](src/app/models/dossier-employe.model.ts)),
+  même parti pris que `LIBELLES_JOURS_TRAVAIL` : `joursSemaineExplicites()` (normalisation),
+  `libelleJoursSemaine()` (« Lundi, Mercredi, Vendredi », **dans l'ordre de la semaine et non
+  de la saisie**), `OPTIONS_JOUR_SEMAINE` (dont `OPTIONS_JOUR_REPOS` devient l'alias).
+  `jourOuvreAffectation`, `libelleJourRepos`, `libelleRythmeAffectation` et
+  `jourReposApplicable` sont branchés dessus ⇒ **`fiche-employe`, `formulaire-affectation` et
+  `calendrier-planning` sont corrigés sans une ligne de changement**.
+  ⚠ `joursSemaineExplicites` lit délibérément en `number` : le type annonce 0..6, mais s'y
+  fier laisserait passer le 7 ISO du serveur, donc un dimanche jamais reconnu.
+- ⚠ **`AffectationSiteUtils.signature` n'inclut PAS `joursSemaine`** (comme les horaires et le
+  rythme) : `null` et `[]` disent la même chose et l'ordre n'est pas garanti d'un aller-retour
+  à l'autre — l'inclure rendrait la garde anti-perte sensible à un écart sans signification et
+  **bloquerait l'enregistrement du dossier entier**.
+- ⚠ **Le backfill ne dérive JAMAIS `joursSemaine`** et ne propage plus le rythme de l'employé
+  sur une affectation qui en porte une : personne ne connaît les jours réels d'un agent
+  legacy, et les inventer recréerait les fausses absences que ce champ supprime.
+- **Import Excel inchangé** : il ne construit que des affectations dérivées de `siteAffecte`,
+  donc sans jours explicites — les jours se cochent ensuite dans la fiche.
+- ⚠ **Hors périmètre, assumé** : `CongeCalendrier.joursOuvres` reste **lundi-vendredi en
+  dur**. Une semaine de congé décomptera donc toujours 5 jours ouvrés à un agent qui n'en
+  travaille que 3 — décompte de congés et décompte d'absences divergent désormais
+  **visiblement** pour ces agents. Aligner le décompte sans aligner l'acquis (2 j ouvrables /
+  mois, droit sénégalais) viderait leurs soldes ; lot dédié.
+- ⚠ **Ne pas s'en servir pour un roulement** (une semaine sur deux) : la liste serait fausse
+  une semaine sur deux, pire que le rythme trop large actuel. Jours **fixes** uniquement, même
+  avertissement que `jourRepos` ; le texte d'aide du formulaire le dit.
+- ⚠ **Au déploiement** : **backend d'abord, front ensuite** (un front en cache recevant
+  `PERSONNALISE` afficherait un libellé vide et un `<select>` sans option — prévoir un
+  rechargement forcé chez les RH). Les chiffres RH d'un mois **déjà communiqué changeront**
+  dès qu'une affectation passe en jours explicites : le récapitulatif est recalculé **à la
+  lecture**, il n'est pas figé. Effet voulu (les absences étaient fausses), mais à ne pas faire
+  découvrir par la paie — préférer un début de mois, et vérifier si des retenues ont été
+  calculées sur ces absences. **Aucune migration Mongo.**
+- Backend : branche `feature/affectation-jours-travail-explicites` (depuis `main`).
+  Tests : 12 cas ajoutés à `PlanningAffectationResolverTest` (dont `prevuesPourJour` rendant
+  une **liste vide le mardi** — c'est lui qui prouve la disparition du `ABSENT`), 6 à
+  `DossierEmployeAffectationServiceTest`, 7 à `CalendrierTravailServiceTest` (13 jours dus au
+  lieu de 22 en septembre 2026), 2 à `AffectationSiteBackfillRunnerIT`, 1 à
+  `AffectationSiteUtilsTest` ; 10 au front dans `dossier-employe.model.spec.ts`.
+  ⚠ Le stub de `toAffectationEntities` de `DossierEmployeAffectationServiceTest` ne recopiait
+  **ni `jourRepos` ni `joursSemaine`** malgré son propre avertissement : corrigé, sinon les
+  tests de canonicalisation auraient été verts pour de mauvaises raisons.
+
 #### Capacité d'un site — le statut de l'employé libère la place
 
 Le décompte d'effectif RH d'un site ne lisait **jamais** `DossierEmploye.statut`. Un agent

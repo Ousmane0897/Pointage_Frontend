@@ -599,6 +599,43 @@
                       </p>
                     </div>
 
+                    <!-- Jours travaillés explicites — pour l'agent qui ne vient que certains
+                         jours fixes, rythme qu'aucun des trois préréglages n'exprime.
+                         ⚠ Cases liées par formControlName : la désactivation du groupe (affectation
+                         close) les atteint donc sans garde manuelle, contrairement à la case
+                         « Sortie du site » ci-dessous qui vit hors du formulaire. -->
+                    <div class="col-span-12" *ngIf="joursSemaineVisible(a)" formArrayName="joursSemaineFlags">
+                      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Jours travaillés <span class="text-red-500">*</span>
+                      </label>
+                      <div class="mt-1 flex flex-wrap gap-x-5 gap-y-2">
+                        <label
+                          *ngFor="let j of joursSemaineOptions"
+                          class="flex items-center gap-2 text-sm text-gray-700"
+                        >
+                          <!-- L'ordre d'affichage est lundi → dimanche, mais l'index du
+                               contrôle reste celui de getDay() : c'est `j.valeur` qui l'adresse. -->
+                          <input
+                            type="checkbox"
+                            [formControlName]="j.valeur"
+                            class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400 disabled:cursor-not-allowed"
+                          />
+                          {{ j.libelle }}
+                        </label>
+                      </div>
+                      <p class="mt-1 text-[11px] text-gray-500">
+                        Jours <strong>fixes</strong> (ex. lundi, mercredi, vendredi). L'agent n'est
+                        pas compté absent les autres jours. Pour un roulement d'une semaine sur
+                        l'autre, passez par le planning.
+                      </p>
+                      <p
+                        *ngIf="a.errors?.['joursPersonnalisesVides'] && a.touched"
+                        class="mt-1 text-[11px] text-red-600"
+                      >
+                        Cochez au moins un jour travaillé.
+                      </p>
+                    </div>
+
                     <!-- Sortie du site : désactivée tant qu'elle est inconnue -->
                     <div class="col-span-12 sm:col-span-4">
                       <label class="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -1235,9 +1272,9 @@
                           *ngIf="a.get('horaireDebut')?.value && a.get('horaireFin')?.value"
                         > ({{ a.get('horaireDebut')?.value }} - {{ a.get('horaireFin')?.value }})</ng-container>
                         <span class="block text-xs font-normal text-gray-500">
-                          {{ libelleJoursTravail(a.get('joursTravail')?.value) }}<ng-container
-                            *ngIf="libelleReposLigne(a) as repos"
-                          > · repos {{ repos }}</ng-container>
+                          <!-- Un seul helper : il rend « Lundi, Mercredi, Vendredi » pour des
+                               jours explicites, sinon « Lundi - Samedi (repos mardi) ». -->
+                          {{ libelleRythmeLigne(a) }}
                           · {{ a.get('dateEntree')?.value | date:'dd/MM/yyyy' }}
                           →
                           <ng-container *ngIf="a.get('dateSortie')?.enabled && a.get('dateSortie')?.value; else enPoste">
