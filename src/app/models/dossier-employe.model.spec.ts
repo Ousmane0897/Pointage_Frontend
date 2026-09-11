@@ -1,6 +1,7 @@
 import {
   AffectationSite,
   EnfantEmploye,
+  JourSemaine,
   affectationAVenir,
   affectationTerminee,
   affectationsEnCours,
@@ -9,7 +10,9 @@ import {
   enfantsBeneficiairesAu,
   jourOuvreAffectation,
   jourReposApplicable,
+  joursSemaineExplicites,
   libelleJourRepos,
+  libelleJoursTravail,
   libelleRythmeAffectation,
   referenceExercice,
   splitSites,
@@ -230,6 +233,99 @@ describe('helpers enfants — dossier-employe.model', () => {
         .toBe('Lundi - Samedi');
       expect(libelleRythmeAffectation(affectation({ joursTravail: 'LUN_DIM', jourRepos: MARDI })))
         .toBe('Lundi - Dimanche (repos mardi)');
+    });
+  });
+
+  describe('jours de travail explicites (rythme personnalisé)', () => {
+    // Indices getDay() : 0 = dimanche, 1 = lundi … 6 = samedi.
+    const DIMANCHE = 0, LUNDI = 1, MARDI = 2, MERCREDI = 3, JEUDI = 4, VENDREDI = 5, SAMEDI = 6;
+
+    /** Affectation à jours explicites, marqueur compris. */
+    function perso(joursSemaine: JourSemaine[] | null): AffectationSite {
+      return affectation({ joursTravail: 'PERSONNALISE', joursSemaine });
+    }
+
+    it('le cas de l’agent trois jours par semaine', () => {
+      // LE besoin : un rythme qu'aucun des trois préréglages n'exprime, et qui faisait
+      // compter l'agent absent les quatre autres jours.
+      const a = perso([LUNDI, MERCREDI, VENDREDI]);
+      expect(jourOuvreAffectation(a, LUNDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, MERCREDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, VENDREDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, MARDI)).toBeFalse();
+      expect(jourOuvreAffectation(a, JEUDI)).toBeFalse();
+      expect(jourOuvreAffectation(a, SAMEDI)).toBeFalse();
+      expect(jourOuvreAffectation(a, DIMANCHE)).toBeFalse();
+    });
+
+    it('les jours explicites priment sur le rythme préréglé', () => {
+      const a = affectation({ joursTravail: 'LUN_VEN', joursSemaine: [DIMANCHE, SAMEDI] });
+      expect(jourOuvreAffectation(a, SAMEDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, DIMANCHE)).toBeTrue();
+      expect(jourOuvreAffectation(a, MARDI)).toBeFalse();
+    });
+
+    it('les jours explicites ignorent le jour de repos', () => {
+      // La liste EST la semaine ouvrée : un repos retirerait un jour explicitement coché.
+      const a = affectation({
+        joursTravail: 'PERSONNALISE',
+        jourRepos: MARDI,
+        joursSemaine: [LUNDI, MARDI, MERCREDI],
+      });
+      expect(jourOuvreAffectation(a, MARDI)).toBeTrue();
+      expect(libelleJourRepos(a)).toBeNull();
+    });
+
+    it('une liste vide ou absente laisse le comportement antérieur', () => {
+      // ⚠ Vide ⇒ on retombe sur le rythme, jamais « aucun jour ouvré » : mettre les jours
+      // ouvrables à zéro mettrait aussi les absences à zéro.
+      const vide = affectation({ joursTravail: 'LUN_VEN', joursSemaine: [] });
+      expect(jourOuvreAffectation(vide, VENDREDI)).toBeTrue();
+      expect(jourOuvreAffectation(vide, SAMEDI)).toBeFalse();
+
+      const absente = affectation({ joursTravail: 'LUN_SAM' });
+      expect(jourOuvreAffectation(absente, SAMEDI)).toBeTrue();
+      expect(jourOuvreAffectation(absente, DIMANCHE)).toBeFalse();
+    });
+
+    it('un rythme personnalisé sans jours ne filtre rien', () => {
+      // Miroir de l'échelon permissif serveur : ne rien savoir du rythme ne doit pas faire
+      // disparaître les créneaux, ce qui masquerait une absence réelle.
+      const a = perso(null);
+      expect(jourOuvreAffectation(a, SAMEDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, DIMANCHE)).toBeTrue();
+    });
+
+    it('tolère le 7 ISO et les doublons', () => {
+      // Le type annonce 0..6, mais le serveur tolère le 7 : s'y fier laisserait passer un
+      // dimanche jamais reconnu.
+      expect(joursSemaineExplicites({ joursSemaine: [7, 1, 1] as unknown as JourSemaine[] }).sort())
+        .toEqual([DIMANCHE, LUNDI]);
+      expect(jourOuvreAffectation(perso([7] as unknown as JourSemaine[]), DIMANCHE)).toBeTrue();
+    });
+
+    it('écarte les valeurs hors intervalle et retombe sur le rythme', () => {
+      // Une liste illisible est réputée absente : on ne ferme pas la semaine entière.
+      expect(joursSemaineExplicites({ joursSemaine: [9] as unknown as JourSemaine[] })).toEqual([]);
+      const a = affectation({ joursTravail: 'LUN_VEN', joursSemaine: [9] as unknown as JourSemaine[] });
+      expect(jourOuvreAffectation(a, VENDREDI)).toBeTrue();
+      expect(jourOuvreAffectation(a, SAMEDI)).toBeFalse();
+    });
+
+    it('le jour de repos ne s’applique pas au rythme personnalisé', () => {
+      expect(jourReposApplicable('PERSONNALISE')).toBeFalse();
+      expect(jourReposApplicable('LUN_SAM')).toBeTrue();
+    });
+
+    it('compose un libellé dans l’ordre de la semaine, pas de la saisie', () => {
+      expect(libelleRythmeAffectation(perso([VENDREDI, LUNDI, MERCREDI])))
+        .toBe('Lundi, Mercredi, Vendredi');
+    });
+
+    it('nomme le rythme personnalisé quand aucune liste n’est exploitable', () => {
+      // Le repli `?? 'LUN_VEN'` de libelleJoursTravail ne doit pas avaler la valeur.
+      expect(libelleJoursTravail('PERSONNALISE')).toBe('Jours personnalisés');
+      expect(libelleRythmeAffectation(perso(null))).toBe('Jours personnalisés');
     });
   });
 });

@@ -10,18 +10,29 @@ export interface ContactUrgence {
 
 export type SituationMatrimoniale = 'CELIBATAIRE' | 'MARIE' | 'DIVORCE' | 'VEUF';
 
-/** Semaine ouvrée sur un site. */
-export type JoursTravail = 'LUN_VEN' | 'LUN_SAM' | 'LUN_DIM';
+/**
+ * Semaine ouvrée sur un site.
+ *
+ * ⚠ `PERSONNALISE` n'est **pas un rythme** mais un *marqueur* : il indique que la semaine
+ * ouvrée est portée en clair par `AffectationSite.joursSemaine`. C'est le seul moyen
+ * d'exprimer « lundi, mercredi, vendredi » — un rythme que les trois valeurs préréglées ne
+ * savent pas décrire, et qui faisait compter l'agent ABSENT les quatre autres jours.
+ */
+export type JoursTravail = 'LUN_VEN' | 'LUN_SAM' | 'LUN_DIM' | 'PERSONNALISE';
 
 /**
  * Libellés des semaines ouvrées — point unique de vérité, à côté du type.
  * Le module RH duplique déjà ses libellés de mois dans six fichiers : ne pas
  * recopier cette map dans les composants qui l'affichent.
+ *
+ * ⚠ L'ordre des clés est celui du `<select>` (`OPTIONS_JOURS_TRAVAIL` dérive de
+ * `Object.keys`) : `PERSONNALISE` reste **en dernier**, après les trois préréglages.
  */
 export const LIBELLES_JOURS_TRAVAIL: Record<JoursTravail, string> = {
   LUN_VEN: 'Lundi - Vendredi',
   LUN_SAM: 'Lundi - Samedi',
   LUN_DIM: 'Lundi - Dimanche',
+  PERSONNALISE: 'Jours personnalisés',
 };
 
 /** Même map, sous la forme de liste attendue par les `<select>`. */
@@ -52,12 +63,21 @@ export const LIBELLES_JOUR_SEMAINE: Record<JourSemaine, string> = {
   6: 'Samedi',
 };
 
-/** Options du `<select>` « Jour de repos », de lundi à dimanche (ordre de lecture usuel). */
-export const OPTIONS_JOUR_REPOS: ReadonlyArray<{ valeur: JourSemaine; libelle: string }> =
+/**
+ * Jours de la semaine dans l'ordre de lecture usuel (lundi → dimanche).
+ *
+ * ⚠ L'**ordre d'affichage** est découplé de la **valeur métier** : `valeur` reste l'indice
+ * `getDay()` (0 = dimanche), quelle que soit la position dans la liste. C'est ce qui permet
+ * de présenter la semaine à l'endroit tout en stockant l'indice comparable à une date.
+ */
+export const OPTIONS_JOUR_SEMAINE: ReadonlyArray<{ valeur: JourSemaine; libelle: string }> =
   ([1, 2, 3, 4, 5, 6, 0] as JourSemaine[]).map(valeur => ({
     valeur,
     libelle: LIBELLES_JOUR_SEMAINE[valeur],
   }));
+
+/** Même liste, nommée par son usage historique — options du `<select>` « Jour de repos ». */
+export const OPTIONS_JOUR_REPOS = OPTIONS_JOUR_SEMAINE;
 
 /**
  * Semaine ouvrée → indices `getDay()`.
@@ -71,6 +91,10 @@ const JOURS_PAR_SEMAINE: Record<JoursTravail, readonly JourSemaine[]> = {
   LUN_VEN: [1, 2, 3, 4, 5],
   LUN_SAM: [1, 2, 3, 4, 5, 6],
   LUN_DIM: [0, 1, 2, 3, 4, 5, 6],
+  // ⚠ `PERSONNALISE` sans liste renseignée ⇒ **aucun filtrage**, et non « aucun jour ».
+  // Miroir de l'échelon permissif du serveur : ne rien savoir du rythme ne doit pas faire
+  // disparaître les créneaux, ce qui masquerait une absence réelle.
+  PERSONNALISE: [0, 1, 2, 3, 4, 5, 6],
 };
 
 /**
@@ -80,28 +104,77 @@ const JOURS_PAR_SEMAINE: Record<JoursTravail, readonly JourSemaine[]> = {
  * plus donnerait une semaine de quatre jours, ce que personne n'a demandé. Le formulaire
  * masque donc le champ dans ce cas, et cette garde le rend inopérant même si une valeur
  * traîne en base sur un dossier dont le rythme a changé après coup.
+ *
+ * ⚠ Sans objet également en `PERSONNALISE` : la liste des jours cochés est déjà la vérité
+ * complète, et un jour de repos permettrait d'en retirer un qu'on vient de cocher.
  */
 export function jourReposApplicable(joursTravail: JoursTravail | null | undefined): boolean {
-  return (joursTravail ?? 'LUN_VEN') !== 'LUN_VEN';
+  const rythme = joursTravail ?? 'LUN_VEN';
+  return rythme !== 'LUN_VEN' && rythme !== 'PERSONNALISE';
+}
+
+/**
+ * Jours travaillés explicites exploitables d'une affectation, normalisés.
+ *
+ * Le 7 ISO est ramené à 0 (dimanche) et les doublons sont retirés, comme le fait le serveur ;
+ * les valeurs hors 0..6 sont **écartées** plutôt que refusées — le modèle est un lecteur, la
+ * validation vit dans le formulaire et le service.
+ *
+ * ⚠ Une liste ne contenant **que** des valeurs inexploitables rend un tableau vide, donc
+ * « pas de jours explicites » : `jourOuvreAffectation` retombe alors sur le rythme au lieu de
+ * fermer la semaine entière. Même prudence que le rythme corrompu côté serveur.
+ */
+export function joursSemaineExplicites(
+  a: Pick<AffectationSite, 'joursSemaine'>,
+): JourSemaine[] {
+  const vus = new Set<JourSemaine>();
+  // ⚠ Lecture délibérément en `number` : le type annonce 0..6, mais le serveur tolère le 7
+  // ISO pour dimanche et rien n'interdit une écriture directe en base. Se fier au type ici
+  // laisserait passer la valeur telle quelle, donc un dimanche jamais reconnu.
+  for (const brut of (a.joursSemaine ?? []) as readonly number[]) {
+    if (brut == null) continue;
+    const jour = (brut === 7 ? 0 : brut) as JourSemaine;
+    if (jour >= 0 && jour <= 6) vus.add(jour);
+  }
+  return [...vus];
+}
+
+/**
+ * « Lundi, Mercredi, Vendredi » — toujours dans l'ordre de la semaine, jamais dans celui de
+ * la saisie, pour que deux affectations aux mêmes jours se lisent à l'identique.
+ */
+export function libelleJoursSemaine(jours: readonly JourSemaine[]): string {
+  return OPTIONS_JOUR_SEMAINE
+    .filter(o => jours.includes(o.valeur))
+    .map(o => o.libelle)
+    .join(', ');
 }
 
 /**
  * Cette affectation est-elle travaillée ce jour de la semaine ?
  *
- * Combine la semaine ouvrée du site et son éventuel jour de repos hebdomadaire.
+ * Trois échelons, dans cet ordre : les **jours explicites** du site, puis sa semaine ouvrée,
+ * puis son éventuel jour de repos hebdomadaire.
+ *
+ * ⚠ **Les jours explicites font seuls autorité** quand ils sont renseignés : ni le rythme,
+ * ni le jour de repos ne s'y ajoutent. Miroir de l'échelon 0 de
+ * `PlanningAffectationResolver.jourOuvre`.
  *
  * ⚠ **`jourRepos` absent ⇒ rien n'est retiré** : `LUN_SAM` conserve donc son repos
  * implicite du dimanche, et tout le parc existant garde exactement le comportement qu'il
  * avait avant l'introduction du champ.
  *
  * ⚠ **Miroir d'affichage.** L'autorité reste `PlanningAffectationResolver` côté serveur, y
- * compris son échelle de replis (site → employé → aucun filtrage) : ce helper ne sert qu'à
- * dessiner un calendrier, jamais à décider qu'un agent est absent.
+ * compris son échelle de replis (jours explicites → site → employé → aucun filtrage) : ce
+ * helper ne sert qu'à dessiner un calendrier, jamais à décider qu'un agent est absent.
  */
 export function jourOuvreAffectation(
-  a: Pick<AffectationSite, 'joursTravail' | 'jourRepos'>,
+  a: Pick<AffectationSite, 'joursTravail' | 'jourRepos' | 'joursSemaine'>,
   jourSemaine: JourSemaine,
 ): boolean {
+  const explicites = joursSemaineExplicites(a);
+  if (explicites.length > 0) return explicites.includes(jourSemaine);
+
   const rythme = a.joursTravail ?? 'LUN_VEN';
   if (!JOURS_PAR_SEMAINE[rythme].includes(jourSemaine)) return false;
   if (!jourReposApplicable(rythme)) return true;
@@ -114,8 +187,10 @@ export function jourOuvreAffectation(
  * n'affiche alors rien plutôt qu'un « Dimanche » deviné, qui serait faux pour Praline.
  */
 export function libelleJourRepos(
-  a: Pick<AffectationSite, 'joursTravail' | 'jourRepos'>,
+  a: Pick<AffectationSite, 'joursTravail' | 'jourRepos' | 'joursSemaine'>,
 ): string | null {
+  // Des jours explicites rendent le repos inopérant : l'annoncer serait faux.
+  if (joursSemaineExplicites(a).length > 0) return null;
   if (!jourReposApplicable(a.joursTravail) || a.jourRepos == null) return null;
   return LIBELLES_JOUR_SEMAINE[a.jourRepos];
 }
@@ -123,12 +198,17 @@ export function libelleJourRepos(
 /**
  * Semaine ouvrée d'une affectation, jour de repos compris : « Lundi - Samedi (repos mardi) ».
  *
+ * Avec des jours explicites, rend la liste elle-même : « Lundi, Mercredi, Vendredi ».
  * Sans jour de repos saisi, rend le libellé seul — c'est le cas de tout le parc, et
  * afficher « (repos dimanche) » partout serait un bruit inutile.
  */
 export function libelleRythmeAffectation(
-  a: Pick<AffectationSite, 'joursTravail' | 'jourRepos'>,
+  a: Pick<AffectationSite, 'joursTravail' | 'jourRepos' | 'joursSemaine'>,
 ): string {
+  const explicites = joursSemaineExplicites(a);
+  if (explicites.length > 0) return libelleJoursSemaine(explicites);
+  // `PERSONNALISE` sans liste exploitable : dire « Jours personnalisés » plutôt que
+  // d'inventer une semaine dont on ne sait rien.
   const base = libelleJoursTravail(a.joursTravail);
   const repos = libelleJourRepos(a);
   return repos ? `${base} (repos ${repos.toLowerCase()})` : base;
@@ -172,6 +252,22 @@ export interface AffectationSite {
    * champ caduc plutôt que faux.
    */
   jourRepos?: JourSemaine | null;
+  /**
+   * Jours travaillés explicites sur ce site, en indices `getDay()` (0 = dimanche).
+   *
+   * ⚠ **Non vide ⇒ fait SEULE autorité** : ni `joursTravail` ni `jourRepos` ne s'y
+   * appliquent, la liste EST la semaine ouvrée. C'est le cas de l'agent qui ne vient que le
+   * lundi, le mercredi et le vendredi — rythme inexprimable par les trois préréglages, et
+   * qui le faisait compter absent les quatre autres jours.
+   *
+   * ⚠ **Absent ou vide ⇒ comportement antérieur strictement inchangé** (semaine ouvrée puis
+   * jour de repos) : tout le parc existant est donc neutre, sans migration.
+   *
+   * ⚠ Jours **fixes**, comme `jourRepos` : aucune rotation d'une semaine à l'autre. Un
+   * roulement demanderait un planning hebdomadaire, qui rendrait ce champ caduc plutôt que
+   * faux — ne pas s'en servir pour un agent en alternance.
+   */
+  joursSemaine?: JourSemaine[] | null;
 }
 
 /**
