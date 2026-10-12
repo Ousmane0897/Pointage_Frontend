@@ -25,6 +25,11 @@ export const CLE_QR_POINTAGE = 'pointic.qrAgence';
 /** Libellé d'un pointage sans agence (antérieur au QR d'agence, ou pointé sans QR). */
 export const AGENCE_NON_RENSEIGNEE = 'Agence non renseignée';
 
+/** Nom d'agence à afficher : le nom résolu, ou « Agence non renseignée ». */
+export function libelleAgence(nom: string | null | undefined): string {
+  return nom && nom.trim() ? nom : AGENCE_NON_RENSEIGNEE;
+}
+
 /** Valeur du filtre « agence » désignant les pointages sans agence (contrat serveur). */
 export const FILTRE_AGENCE_AUCUNE = 'AUCUNE';
 

@@ -62,6 +62,18 @@ export interface PointageCentralise {
 
   /** `false` sur une ligne hors planning. */
   planifie?: boolean;
+
+  /**
+   * Agences du pointage rattaché (QR code d'agence) — arrivée et départ peuvent
+   * différer. Purement informatif : le rattachement au créneau se fait par plage horaire.
+   * Nom nul sur un pointage antérieur au QR (« Agence non renseignée »).
+   */
+  agenceArriveeId?: string | null;
+  agenceDepartId?: string | null;
+  agenceArriveeNom?: string | null;
+  agenceDepartNom?: string | null;
+  /** Codes `AnomaliePointage` du pointage rattaché. */
+  anomalies?: string[] | null;
 }
 
 export interface FiltrePointage {

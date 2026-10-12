@@ -174,6 +174,8 @@ export const routes: Routes = [
 
             // Pointage terrain (les pointages sont créés via le code-PIN de la page d'accueil)
             { path: 'exploitation-v2/terrain/pointage/aujourd-hui', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/suivi-pointages/suivi-pointages.component').then(m => m.SuiviPointagesComponent) },
+            // Historique des pointages kiosque (PIN + QR d'agence) — onglet de « Vue du jour ».
+            { path: 'exploitation-v2/terrain/pointage/historique-pin', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/historique-pointages-pin/historique-pointages-pin.component').then(m => m.HistoriquePointagesPinComponent) },
             { path: 'exploitation-v2/terrain/pointage/historique', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/historique-pointages/historique-pointages.component').then(m => m.HistoriquePointagesComponent) },
             { path: 'exploitation-v2/terrain/pointage/historique/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/pointage/fiche-pointage/fiche-pointage.component').then(m => m.FichePointageComponent) },
 

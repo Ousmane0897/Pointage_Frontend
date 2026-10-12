@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
-import { Pointage, PointagePayload, PointageResultat } from '../models/pointage.model';
+import { FiltreHistoriquePointage, Pointage, PointagePayload, PointageResultat } from '../models/pointage.model';
 import { PageResponse } from '../models/pageResponse.model';
 
 @Injectable({
@@ -89,23 +89,24 @@ export class PointageService {
     );
   }
 
-  searchHistorique(
-    search: string = '', // 🔎 Terme de recherche (nom, prénom, code employé). La valeur par défaut est une chaîne vide.
-    dateDebut: string,
-    dateFin: string,
-    page: number,
-    size: number
-  ): Observable<any> {
+  /**
+   * Historique des pointages (hors jour courant), noms d'agence résolus par le serveur.
+   * Le filtre de période ne s'applique que si **les deux** dates sont fournies.
+   * `agenceId` vise l'agence d'arrivée **ou** de départ ; `FILTRE_AGENCE_AUCUNE` ⇒
+   * pointages sans agence.
+   */
+  searchHistorique(filtre: FiltreHistoriquePointage, page: number, size: number): Observable<PageResponse<Pointage>> {
 
     let params = new HttpParams()
       .set('page', page)
       .set('size', size);
 
-    if (search) params = params.set('search', search);
-    if (dateDebut) params = params.set('dateDebut', dateDebut);
-    if (dateFin) params = params.set('dateFin', dateFin);
+    if (filtre.search) params = params.set('search', filtre.search);
+    if (filtre.dateDebut) params = params.set('dateDebut', filtre.dateDebut);
+    if (filtre.dateFin) params = params.set('dateFin', filtre.dateFin);
+    if (filtre.agenceId) params = params.set('agenceId', filtre.agenceId);
 
-    return this.http.get<any>(
+    return this.http.get<PageResponse<Pointage>>(
       `${this.baseUrl}/pointages/historique/search`,
       { params }
     );

@@ -25,6 +25,7 @@ import {
   horairePrevu,
   statutAffiche,
 } from '../pointage-retard.util';
+import { libelleAgence, libelleAnomaliePointage } from '../../../../constants/pointage.constants';
 
 @Component({
   selector: 'app-pointage-centralise',
@@ -34,6 +35,13 @@ import {
   styleUrl: './pointage-centralise.component.scss',
 })
 export class PointageCentraliseComponent implements OnInit, OnDestroy {
+
+  readonly libelleAgence = libelleAgence;
+
+  /** Anomalies du pointage rattaché, en clair (infobulle). */
+  anomaliesTexte(p: PointageCentralise): string {
+    return (p.anomalies ?? []).map(libelleAnomaliePointage).join(', ');
+  }
 
   // ─── Données ─────────────────────────────────────────────────────────────
   pointages: PointageCentralise[] = [];

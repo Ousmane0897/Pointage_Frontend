@@ -62,3 +62,12 @@ export interface ConfirmationPointage {
     agenceNom?: string | null;
     avertissement?: string | null;
 }
+
+/** Filtres de `GET /pointages/historique/search`. */
+export interface FiltreHistoriquePointage {
+    search?: string;
+    dateDebut?: string;   // yyyy-MM-dd
+    dateFin?: string;     // yyyy-MM-dd
+    /** Agence d'arrivée OU de départ ; `AUCUNE` = sans agence. */
+    agenceId?: string | null;
+}

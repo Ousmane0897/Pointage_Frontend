@@ -102,6 +102,8 @@
             <th class="px-4 py-3">Horaire prévu</th>
             <th class="px-4 py-3">Arrivée</th>
             <th class="px-4 py-3">Départ</th>
+            <th class="px-4 py-3">Agence (arrivée)</th>
+            <th class="px-4 py-3">Agence (départ)</th>
             <th class="px-4 py-3">Retard</th>
             <th class="px-4 py-3">Statut</th>
           </tr>
@@ -132,6 +134,17 @@
             </td>
             <td class="px-4 py-3" [ngClass]="estNeutre(p) ? 'text-gray-400' : 'text-gray-700'">
               {{ p.heureDepart || '—' }}
+            </td>
+            <!-- Agences : seulement s'il y a un pointage ; sinon rien à attribuer. -->
+            <td class="px-4 py-3 whitespace-nowrap" [ngClass]="p.agenceArriveeNom ? 'text-gray-700' : 'italic text-gray-400'">
+              <ng-container *ngIf="p.pointageId; else sansPointageArrivee">{{ libelleAgence(p.agenceArriveeNom) }}</ng-container>
+              <ng-template #sansPointageArrivee><span class="not-italic">—</span></ng-template>
+              <lucide-icon *ngIf="p.anomalies?.length" name="AlertTriangle"
+                class="ml-1 inline w-3.5 h-3.5 text-amber-500" [attr.title]="anomaliesTexte(p)"></lucide-icon>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap" [ngClass]="p.agenceDepartNom ? 'text-gray-700' : 'italic text-gray-400'">
+              <ng-container *ngIf="p.pointageId && p.heureDepart; else sansDepart">{{ libelleAgence(p.agenceDepartNom) }}</ng-container>
+              <ng-template #sansDepart><span class="not-italic">—</span></ng-template>
             </td>
             <td class="px-4 py-3">
               <span *ngIf="estEnRetard(p)"
