@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { PointageService } from './pointage.service';
 import { environment } from '../../environments/environment';
-import { Pointage } from '../models/pointage.model';
+import { Pointage, PointageResultat } from '../models/pointage.model';
 
 describe('PointageService', () => {
   let service: PointageService;
@@ -43,7 +43,7 @@ describe('PointageService', () => {
   });
 
   it('should send pointer data with POST', () => {
-    const mockPointage: Pointage = {
+    const mockPointage: PointageResultat = {
       id: '1',
       codeSecret: 'ABC123',
       prenom: 'John',
@@ -54,7 +54,8 @@ describe('PointageService', () => {
       adresse: 'Dakar',
       duree: '9h',
       status: 'Présent',
-      site: ['Agence A']
+      site: ['Agence A'],
+      type: 'SORTIE'
     };
 
     service.pointer({ codeSecret: 'ABC123' }).subscribe((res) => {
@@ -67,10 +68,33 @@ describe('PointageService', () => {
       codeSecret: 'ABC123',
       deviceId: '123e4567-e89b-12d3-a456-426614174000',
       latitude: undefined,
-      longitude: undefined
+      longitude: undefined,
+      precisionMetres: undefined,
+      qrPayload: null
     });
 
     req.flush(mockPointage);
+  });
+
+  it('should relay the QR payload and the GPS precision', () => {
+    service.pointer({
+      codeSecret: '1234', deviceId: 'DEV', latitude: 14.7, longitude: -17.4,
+      precisionMetres: 12, qrPayload: 'POINTIC:AG:abc'
+    }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/pointages`);
+    expect(req.request.body.qrPayload).toBe('POINTIC:AG:abc');
+    expect(req.request.body.precisionMetres).toBe(12);
+    req.flush({});
+  });
+
+  it('should resolve the agency name of a QR', () => {
+    service.nomAgenceQr('POINTIC:AG:abc').subscribe((r) => expect(r.nom).toBe('SGS Mermoz'));
+
+    const req = httpMock.expectOne(
+      (r) => r.url === `${environment.apiUrl}/pointages/agence-qr` && r.params.get('payload') === 'POINTIC:AG:abc');
+    expect(req.request.method).toBe('GET');
+    req.flush({ nom: 'SGS Mermoz' });
   });
 
   it('should get pointages with GET', () => {

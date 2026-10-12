@@ -5,6 +5,9 @@ import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { PointageService } from '../services/pointage.service';
+import { PointageQrContexteService } from '../services/pointage-qr-contexte.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -35,7 +38,8 @@ describe('HomePageComponent', () => {
       ],
       providers: [
         { provide: LoginService, useValue: loginService },
-        { provide: ToastrService, useValue: toastr }
+        { provide: ToastrService, useValue: toastr },
+        { provide: PointageService, useValue: jasmine.createSpyObj('PointageService', ['nomAgenceQr']) }
       ]
     }).compileComponents();
 
@@ -172,5 +176,68 @@ describe('HomePageComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/code-pin');
 
 
+  });
+});
+
+// ===============================
+// 🔹 QR CODE D'AGENCE
+// ===============================
+
+describe("HomePageComponent — QR code d'agence", () => {
+  let pointageService: jasmine.SpyObj<PointageService>;
+  let qrContexte: PointageQrContexteService;
+
+  async function creer(queryParams: Record<string, string>) {
+    pointageService = jasmine.createSpyObj('PointageService', ['nomAgenceQr']);
+
+    await TestBed.configureTestingModule({
+      imports: [HomePageComponent, NoopAnimationsModule],
+      providers: [
+        { provide: LoginService, useValue: jasmine.createSpyObj('LoginService', ['login']) },
+        { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'info']) },
+        { provide: PointageService, useValue: pointageService },
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } } },
+      ],
+    }).compileComponents();
+
+    qrContexte = TestBed.inject(PointageQrContexteService);
+    const routerSpy = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    const fixture = TestBed.createComponent(HomePageComponent);
+    return { fixture, component: fixture.componentInstance, routerSpy };
+  }
+
+  beforeEach(() => sessionStorage.clear());
+  afterEach(() => sessionStorage.clear());
+
+  it("mémorise le QR de l'URL, le retire de l'URL et affiche l'agence", async () => {
+    const { fixture, component, routerSpy } = await creer({ qr: 'POINTIC:AG:abc' });
+    pointageService.nomAgenceQr.and.returnValue(of({ nom: 'SGS Mermoz' }));
+
+    fixture.detectChanges();
+
+    expect(qrContexte.payloadValide()).toBe('POINTIC:AG:abc');
+    expect(routerSpy).toHaveBeenCalledWith([], jasmine.objectContaining({ replaceUrl: true }));
+    expect(component.agenceQr).toBe('SGS Mermoz');
+    expect(component.qrInvalide).toBeFalse();
+  });
+
+  it('signale un QR non reconnu par le serveur', async () => {
+    const { fixture, component } = await creer({ qr: 'POINTIC:AG:inconnu' });
+    pointageService.nomAgenceQr.and.returnValue(throwError(() => ({ status: 404 })));
+
+    fixture.detectChanges();
+
+    expect(component.agenceQr).toBeNull();
+    expect(component.qrInvalide).toBeTrue();
+  });
+
+  it("sans QR, n'interroge pas le serveur", async () => {
+    const { fixture, component } = await creer({});
+
+    fixture.detectChanges();
+
+    expect(pointageService.nomAgenceQr).not.toHaveBeenCalled();
+    expect(component.agenceQr).toBeNull();
   });
 });

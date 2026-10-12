@@ -25,6 +25,22 @@
     </h2>
   </div>
 
+  <!-- AGENCE DU QR SCANNÉ -->
+  <div *ngIf="agenceQr" class="flex justify-center px-4 mt-6">
+    <p class="inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-800
+              border border-emerald-200 px-4 py-2 text-base sm:text-lg font-medium text-center">
+      <mat-icon class="!w-5 !h-5 !text-[20px]">place</mat-icon>
+      Pointage à <span class="font-bold">{{ agenceQr }}</span>
+    </p>
+  </div>
+  <div *ngIf="qrInvalide" class="flex justify-center px-4 mt-6">
+    <p class="inline-flex items-center gap-2 rounded-xl bg-red-50 text-red-800
+              border border-red-200 px-4 py-2 text-sm sm:text-base text-center max-w-md">
+      <mat-icon class="!w-5 !h-5 !text-[20px] shrink-0">error_outline</mat-icon>
+      QR code non reconnu ou expiré. Scannez le QR code affiché dans votre agence.
+    </p>
+  </div>
+
   <!-- ACTION BUTTONS -->
   <div
     *ngIf="logoMoved"

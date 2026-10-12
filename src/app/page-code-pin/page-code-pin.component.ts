@@ -8,7 +8,8 @@ import { CommonModule } from '@angular/common';
 import { PointageService } from '../services/pointage.service';
 import { Router } from '@angular/router';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
-import { Pointage } from '../models/pointage.model';
+import { ConfirmationPointage, Pointage, PointageResultat } from '../models/pointage.model';
+import { PointageQrContexteService } from '../services/pointage-qr-contexte.service';
 import { PageCodeService } from '../services/page-code.service';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
@@ -59,7 +60,8 @@ export class PageCodePinComponent implements OnInit {
 
   constructor(private fb: FormBuilder,
     private pointageService: PointageService, private router: Router, private spinner: NgxSpinnerService,
-    private pagecodeService: PageCodeService, private toastr: ToastrService) {
+    private pagecodeService: PageCodeService, private toastr: ToastrService,
+    private qrContexte: PointageQrContexteService) {
     this.form = this.fb.group({
       number: ['', [Validators.required, Validators.pattern(/^\d+$/)]]
     });
@@ -83,7 +85,7 @@ export class PageCodePinComponent implements OnInit {
    * qui n’est pas encore terminée, mais qui le sera dans le futur. C’est un moyen de gérer des opérations qui prennent du temps, 
    * comme des appels API, des lectures de fichiers, ou des timers, sans bloquer le reste du code.
    */
-  getLocation(): Promise<{ lat: number; lng: number }> {
+  getLocation(): Promise<{ lat: number; lng: number; precision?: number }> {
     return new Promise((resolve, reject) => {
 
       if (!navigator.geolocation) {
@@ -95,12 +97,16 @@ export class PageCodePinComponent implements OnInit {
         pos => {
           resolve({
             lat: pos.coords.latitude,
-            lng: pos.coords.longitude
+            lng: pos.coords.longitude,
+            // Précision annoncée par l'appareil : informative côté serveur (anomalie
+            // au-delà de 100 m), elle n'élargit jamais la tolérance de l'agence.
+            precision: pos.coords.accuracy
           });
         },
         err => reject(err),
         {
-          enableHighAccuracy: false,
+          // Haute précision : la position est comparée au rayon de l'agence scannée.
+          enableHighAccuracy: true,
           timeout: 20000,
           maximumAge: 0
         }
@@ -165,24 +171,33 @@ export class PageCodePinComponent implements OnInit {
     // ✅ 2️⃣ SPINNER APRÈS GPS
     this.spinner.show();
 
-    // ✅ 3️⃣ APPEL API
+    // ✅ 3️⃣ APPEL API — avec le QR d'agence s'il a été scanné il y a moins de 10 min.
     this.pointageService.pointer({
       codeSecret,
       deviceId: this.pointageService.getDeviceId(),
       latitude: location.lat,
-      longitude: location.lng
+      longitude: location.lng,
+      precisionMetres: location.precision,
+      qrPayload: this.qrContexte.payloadValide()
     }).subscribe({
       next: (data) => {
         this.pointage = data;
+        // ⚠ Consommé : le prochain pointage (souvent le départ, parfois dans une autre
+        // agence) doit repartir d'un nouveau scan, jamais de celui-ci.
+        this.qrContexte.effacer();
+
+        const confirmation = this.confirmation(data);
+        this.toastr.success(this.messageConfirmation(confirmation), 'Pointage enregistré');
+        if (confirmation.avertissement) {
+          this.toastr.warning(confirmation.avertissement, 'Pointage signalé',
+            { disableTimeOut: true, closeButton: true });
+        }
 
         setTimeout(() => {
           this.spinner.hide();
 
-          if (this.pointage.heureArrive && !this.pointage.heureDepart) {
-            this.router.navigateByUrl('/pagefinal1/' + this.pointage.codeSecret);
-          } else {
-            this.router.navigateByUrl('/pagefinal2/' + this.pointage.codeSecret);
-          }
+          const page = confirmation.type === 'ENTREE' ? '/pagefinal1/' : '/pagefinal2/';
+          this.router.navigateByUrl(page + this.pointage.codeSecret, { state: { confirmation } });
         }, 4000);
       },
       error: (err) => {
@@ -206,6 +221,16 @@ export class PageCodePinComponent implements OnInit {
             'Pointage refusé'
           );
 
+        } else if (err.status === 422) {
+
+          // Refus du scan (QR non reconnu, hors zone de l'agence, hors affectation…) :
+          // le message serveur est rédigé pour l'agent et nomme l'agence.
+          this.toastr.error(
+            err.error?.message || 'Pointage refusé.',
+            'Pointage refusé',
+            { timeOut: 10000, closeButton: true }
+          );
+
         } else {
 
           this.toastr.error(
@@ -220,6 +245,27 @@ export class PageCodePinComponent implements OnInit {
   }
 
 
+
+  /**
+   * Type et heure du pointage. `type` vient du serveur ; à défaut (serveur antérieur),
+   * on retombe sur la règle historique « pas de départ ⇒ arrivée ».
+   */
+  private confirmation(data: PointageResultat | Pointage): ConfirmationPointage {
+    const r = data as Partial<PointageResultat>;
+    const type = r.type ?? (data.heureArrive && !data.heureDepart ? 'ENTREE' : 'SORTIE');
+    return {
+      type,
+      heure: (type === 'ENTREE' ? data.heureArrive : data.heureDepart) ?? '',
+      agenceNom: r.agenceNom ?? null,
+      avertissement: r.avertissement ?? null,
+    };
+  }
+
+  /** « Entrée enregistrée à 08:05 — SGS Mermoz » */
+  private messageConfirmation(c: ConfirmationPointage): string {
+    const libelle = c.type === 'ENTREE' ? 'Entrée' : 'Sortie';
+    return `${libelle} enregistrée à ${c.heure}` + (c.agenceNom ? ` — ${c.agenceNom}` : '');
+  }
 
   async testGPSMobile() {
     try {

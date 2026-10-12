@@ -16,6 +16,18 @@
         Votre pointage a été enregistré avec succès.
     </h2>
 
+    @if (confirmation?.heure) {
+        <p class="text-lg sm:text-xl font-semibold max-w-md">
+            Entrée enregistrée à {{ confirmation!.heure }}
+            @if (confirmation!.agenceNom) { — <span class="text-emerald-700">{{ confirmation!.agenceNom }}</span> }
+        </p>
+    }
+    @if (confirmation?.avertissement) {
+        <p class="max-w-md rounded-xl bg-amber-50 border border-amber-200 text-amber-900 px-4 py-2 text-sm sm:text-base">
+            {{ confirmation!.avertissement }}
+        </p>
+    }
+
     <!-- MESSAGE -->
     <p class="text-base sm:text-lg max-w-lg">
         Bonjour

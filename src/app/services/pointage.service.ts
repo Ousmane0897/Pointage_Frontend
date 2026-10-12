@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
-import { Pointage } from '../models/pointage.model';
+import { Pointage, PointagePayload, PointageResultat } from '../models/pointage.model';
 import { PageResponse } from '../models/pageResponse.model';
 
 @Injectable({
@@ -42,26 +42,34 @@ export class PointageService {
 
 
 
-  pointer(payload: {
-    codeSecret: string;
-    deviceId?: string;
-    latitude?: number;
-    longitude?: number;
-  }): Observable<Pointage> {
+  /**
+   * Pointage kiosque. Refus métier (QR non reconnu, hors zone de l'agence…) : **422**
+   * avec `{ message }` destiné à l'agent.
+   */
+  pointer(payload: PointagePayload): Observable<PointageResultat> {
 
-    const body = {
+    const body: PointagePayload = {
       codeSecret: payload.codeSecret,
       deviceId: payload.deviceId ?? this.getDeviceId(),
       latitude: payload.latitude,
-      longitude: payload.longitude
+      longitude: payload.longitude,
+      precisionMetres: payload.precisionMetres,
+      qrPayload: payload.qrPayload || null
     };
 
-    console.log('Données envoyées :', body);
-
-    return this.http.post<Pointage>(
+    return this.http.post<PointageResultat>(
       `${this.baseUrl}/pointages`,
       body
     );
+  }
+
+  /**
+   * Nom de l'agence désignée par un QR (endpoint public), affiché avant la saisie du
+   * PIN. 404 si le QR est inconnu, révoqué ou l'agence inactive.
+   */
+  nomAgenceQr(payload: string): Observable<{ nom: string }> {
+    const params = new HttpParams().set('payload', payload);
+    return this.http.get<{ nom: string }>(`${this.baseUrl}/pointages/agence-qr`, { params });
   }
 
 
