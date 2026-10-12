@@ -163,6 +163,8 @@ export const routes: Routes = [
             // ─── Exploitation Terrain (5.2) ──────────────────────────────────────
             // Sites clients
             { path: 'exploitation-v2/terrain/sites-clients', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/liste-sites/liste-sites.component').then(m => m.ListeSitesComponent) },
+            // QR codes de pointage des agences — déclaré AVANT `sites-clients/:id`.
+            { path: 'exploitation-v2/terrain/sites-clients/qr-codes', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/qr-codes-agences/qr-codes-agences.component').then(m => m.QrCodesAgencesComponent) },
             { path: 'exploitation-v2/terrain/sites-clients/nouveau', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/formulaire-site/formulaire-site.component').then(m => m.FormulaireSiteComponent) },
             { path: 'exploitation-v2/terrain/sites-clients/:id/modifier', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/formulaire-site/formulaire-site.component').then(m => m.FormulaireSiteComponent) },
             { path: 'exploitation-v2/terrain/sites-clients/:id', loadComponent: () => import('./adminPage/exploitation-v2/terrain/sites-clients/fiche-site/fiche-site.component').then(m => m.FicheSiteComponent) },

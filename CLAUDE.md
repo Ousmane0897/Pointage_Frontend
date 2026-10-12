@@ -965,6 +965,64 @@ contrôle qualité terrain → matériel & maintenance → phytosanitaire
   ([terrain.constants.ts](src/app/constants/terrain.constants.ts)) — les tableaux
   `STATUTS` qui étaient dupliqués dans liste / calendrier / formulaire ont été supprimés.
 
+#### Pointage par QR code d'agence
+
+Le QR statique commun à toutes les agences ne disait pas **où** l'agent avait pointé
+(SGS Mermoz, BGFI Tann et SGS Yoff sont dans la même zone). Chaque agence (`SiteClient` —
+il n'existe **pas** d'entité Agence) porte désormais son propre QR : le QR **désigne**
+l'agence, la géolocalisation vérifie la présence dans le rayon de **cette** agence.
+
+- **Le QR imprimé est une URL**, `{app.frontend.base-url}/home?qr=POINTIC%3AAG%3A<token>`,
+  pour que l'appareil photo natif ouvre l'app (aucune lib de scan). L'accueil mémorise
+  le payload ([PointageQrContexteService](src/app/services/pointage-qr-contexte.service.ts)),
+  le retire de l'URL et affiche « Pointage à <agence> » ; `page-code-pin` le joint au
+  `POST /pointages` avec la précision GPS (`enableHighAccuracy: true`). Le serveur valide
+  le payload, jamais le front. Jeton = 24 octets `SecureRandom` Base64 URL-safe — **jamais
+  l'id Mongo**.
+- ⚠ **Le payload est effacé après tout pointage réussi et expire au bout de 10 min**
+  (`TTL_QR_POINTAGE_MS`). Sans cela, un départ pointé dans une autre agence partirait avec
+  le QR d'arrivée et y serait attribué. Un refus 422 le **conserve** (nouvel essai).
+- ⚠ **Arrivée et départ dans deux agences différentes est légitime.** `Pointage.agenceId`
+  (arrivée) et `agenceIdSortie` (départ) sont stockés **par référence** (jamais le nom,
+  résolu à la lecture), chaque scan est géofencé et contrôlé contre l'agence de **son**
+  QR, et il n'existe **aucune** anomalie « agence de sortie différente ». Toutes les vues
+  affichent deux colonnes, « Agence (arrivée) » et « Agence (départ) ».
+- **Tout est validé avant toute écriture** (`PointageScanService`, lecture seule) : une
+  sortie refusée laisse le pointage **ouvert**. Refus = **422** `{ message }` rédigé pour
+  l'agent (« QR code non reconnu », « QR code invalide ou expiré », « Vous êtes hors de la
+  zone de <agence> (240 m, tolérance 100 m) », « <agence> n'est pas géolocalisée »).
+- **Anomalies informatives** (`Pointage.anomalies`, cf. [pointage.constants.ts](src/app/constants/pointage.constants.ts)) :
+  `HORS_AFFECTATION_ENTREE|SORTIE` et `PRECISION_FAIBLE_ENTREE|SORTIE` (précision annoncée
+  > 100 m). ⚠ La précision **n'élargit jamais** la tolérance de distance.
+- **Paramètres** (singleton `parametres_pointage`, `GET/PUT /pointages/parametres`, PUT
+  RH/SUPERADMIN) : `horsAffectation` = `BLOQUER | AVERTIR | AUTORISER` (défaut `AVERTIR`)
+  et `qrObligatoire` (défaut **false** : sans QR, flux historique inchangé — « Agence non
+  renseignée »). ⚠ Le contrôle d'affectation compare le **nom** du site aux affectations
+  actives (`RattachementSiteUtils`, même règle que le décompte d'effectif) : **renommer
+  une agence bloquera ses agents en mode `BLOQUER`** — l'écran l'annonce.
+- **Écran** `terrain/sites-clients/qr-codes` (route déclarée **avant** `sites-clients/:id`,
+  lien depuis la liste des sites, flag `terrain.sitesClients` réutilisé — aucun nouveau
+  claim) : aperçu `<qrcode>`, **Régénérer** (confirmation : l'ancien QR imprimé cesse de
+  fonctionner), impression A4 une page par agence ou toutes en un PDF
+  ([qr-agence-pdf.service.ts](src/app/services/qr-agence-pdf.service.ts)), encart
+  Paramètres. La liste porte les jetons : **403 hors RH/SUPERADMIN**, affiché dans la page.
+- **Formulaire site** : latitude / longitude / rayon (défaut 100 m) réintroduits avec la
+  carte `carte-google` en mode édition. ⚠ Le mapper serveur ignore les nuls en
+  modification : vider les coordonnées ne les efface pas en base.
+- **Historique** : onglet `terrain/pointage/historique-pin` (bascule « Vue du jour /
+  Historique » partagée, `onglets-pointage`), filtre agence (arrivée **ou** départ,
+  `AUCUNE` = sans agence), exports XLSX / jsPDF **client** sur tout le résultat filtré
+  ([pointage-export.service.ts](src/app/services/pointage-export.service.ts)). L'ancien
+  historique GPS terrain (`PointageTerrain`) reste accessible depuis la vue du jour.
+- ⚠ **Hors périmètre définitif** : `PointageCentraliseService.rattacher` n'utilise **pas**
+  `agenceId` — le rattachement au créneau reste par plage horaire ; l'agence n'est
+  qu'affichée.
+- **Déploiement** : backend d'abord (`AgenceQrTokenBackfillRunner` pose un jeton sur
+  chaque agence et crée l'index unique sparse `qrToken` — `auto-index-creation` est
+  inactif) ; saisir les coordonnées des agences ; imprimer et afficher les QR ; **puis**
+  cocher « QR obligatoire ». Pointages historiques : **aucun backfill** d'agence.
+- Backend : branche `feature/pointage-qr-agence` (depuis `main`).
+
 **Services** (dans [src/app/services/](src/app/services/)) :
 `terrain-site-client.service`, `terrain-planning.service`,
 `terrain-pointage.service`, `terrain-alerte.service`,
