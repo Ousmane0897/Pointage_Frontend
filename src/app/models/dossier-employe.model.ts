@@ -422,6 +422,13 @@ export function affectationsTerminees(
 export interface DossierEmploye {
   id?: string;
   agentId: string;   // code 4 chiffres pour le pointage (= codeSecret côté backend)
+  /**
+   * Lecture seule, posée serveur : date d'attribution du code (ISO). Jamais envoyée —
+   * le serveur l'ignore en écriture.
+   */
+  dateCreationAgentId?: string | null;
+  /** Vrai si la date ci-dessus est reconstituée (date de création du dossier). */
+  dateCreationAgentIdEstimee?: boolean | null;
   matricule: string;
 
   // Identité

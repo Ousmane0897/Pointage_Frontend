@@ -9,7 +9,9 @@ import { Subject, of, catchError, finalize, takeUntil } from 'rxjs';
 import { RecapitulatifMensuelService } from '../../../../services/recapitulatif-mensuel.service';
 import {
   RecapitulatifMensuel,
+  RecapSite,
   FiltreRecap,
+  formaterMinutes,
 } from '../../../../models/recapitulatif-mensuel.model';
 
 @Component({
@@ -71,8 +73,44 @@ export class RecapitulatifMensuelComponent implements OnInit, OnDestroy {
       catchError(err => { this.handleError(err); return of([] as RecapitulatifMensuel[]); }),
       finalize(() => { this.loading = false; this.loaded = true; }),
       takeUntil(this.destroy$),
-    ).subscribe(res => (this.recaps = res));
+    ).subscribe(res => {
+      this.recaps = res;
+      this.ouverts.clear();
+      this.calculerTotaux();
+    });
   }
+
+  // ─── Détail par site (lignes dépliables) ─────────────────────────────────
+
+  /** Agents dont le détail par site est déplié. */
+  readonly ouverts = new Set<string>();
+
+  readonly formaterMinutes = formaterMinutes;
+
+  aDesSites(r: RecapitulatifMensuel): boolean {
+    return (r.sites?.length ?? 0) > 0;
+  }
+
+  basculer(r: RecapitulatifMensuel): void {
+    if (!this.aDesSites(r)) return;
+    if (this.ouverts.has(r.employeId)) this.ouverts.delete(r.employeId);
+    else this.ouverts.add(r.employeId);
+  }
+
+  get toutDeplie(): boolean {
+    const avecSites = this.recaps.filter(r => this.aDesSites(r));
+    return avecSites.length > 0 && avecSites.every(r => this.ouverts.has(r.employeId));
+  }
+
+  basculerTout(): void {
+    if (this.toutDeplie) {
+      this.ouverts.clear();
+    } else {
+      this.recaps.filter(r => this.aDesSites(r)).forEach(r => this.ouverts.add(r.employeId));
+    }
+  }
+
+  trackBySite(_: number, s: RecapSite): string { return s.site; }
 
   exporterExcel(): void {
     if (this.recaps.length === 0) {
@@ -93,26 +131,34 @@ export class RecapitulatifMensuelComponent implements OnInit, OnDestroy {
   }
 
   // ─── Totaux agrégés ──────────────────────────────────────────────────────
-  get totalEffectif(): number { return this.recaps.length; }
+  // Matérialisés au chargement plutôt que recalculés par des getters à chaque cycle.
+  totalEffectif = 0;
   /**
    * Dénominateur des jours travaillés, qui n'était affiché nulle part en agrégé.
    * ⚠ Les jours ouvrables **diffèrent d'un employé à l'autre** (rythme du site, jour de
    * repos, fériés) : c'est une somme, jamais « le nombre de jours ouvrables du mois ».
    */
-  get totalJoursOuvrables(): number {
-    return this.recaps.reduce((s, r) => s + (r.joursOuvrables || 0), 0);
-  }
-  get totalJoursTravailles(): number {
-    return this.recaps.reduce((s, r) => s + (r.joursTravailles || 0), 0);
-  }
-  get totalAbsences(): number {
-    return this.recaps.reduce((s, r) => s + (r.joursAbsence || 0), 0);
-  }
-  get totalRetards(): number {
-    return this.recaps.reduce((s, r) => s + (r.nombreRetards || 0), 0);
-  }
-  get totalHS(): number {
-    return this.recaps.reduce((s, r) => s + (r.heuresSupTotal || 0), 0);
+  totalJoursOuvrables = 0;
+  totalJoursTravailles = 0;
+  totalMinutesTravaillees = 0;
+  totalCreneauxSansDepart = 0;
+  totalAbsences = 0;
+  totalReposMedical = 0;
+  totalRetards = 0;
+  totalHS = 0;
+
+  private calculerTotaux(): void {
+    const somme = (f: (r: RecapitulatifMensuel) => number | undefined) =>
+      this.recaps.reduce((s, r) => s + (f(r) || 0), 0);
+    this.totalEffectif = this.recaps.length;
+    this.totalJoursOuvrables = somme(r => r.joursOuvrables);
+    this.totalJoursTravailles = somme(r => r.joursTravailles);
+    this.totalMinutesTravaillees = somme(r => r.minutesTravaillees);
+    this.totalCreneauxSansDepart = somme(r => r.creneauxSansDepart);
+    this.totalAbsences = somme(r => r.joursAbsence);
+    this.totalReposMedical = somme(r => r.joursReposMedical);
+    this.totalRetards = somme(r => r.nombreRetards);
+    this.totalHS = somme(r => r.heuresSupTotal);
   }
 
   trackById(_: number, r: RecapitulatifMensuel): string { return r.employeId; }

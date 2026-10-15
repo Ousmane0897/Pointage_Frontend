@@ -36,7 +36,10 @@ export interface RecapitulatifMensuel {
    */
   joursAbsence: number;
 
-  /** Jours de congé approuvé tombant un jour ouvrable **de ce mois**. */
+  /**
+   * Jours de congé approuvé tombant un jour ouvrable **de ce mois**, hors repos médical
+   * (`joursReposMedical`) et hors absence non justifiée (comptée en absence).
+   */
   joursConge: number;
 
   /**
@@ -61,6 +64,85 @@ export interface RecapitulatifMensuel {
     t60?: number;
     t100?: number;
   };
+
+  // ─── Contrôle du pointage par site — champs OPTIONNELS ───────────────────
+  // Apparus avec le lot « récapitulatif par site » : un front en avance sur le
+  // backend doit dégrader proprement (affichage « — »).
+
+  /**
+   * Jours de repos médical approuvé tombant un jour ouvrable du mois. **Ni absence, ni
+   * congé** : ils sont exclus de `joursAbsence` comme de `joursConge`.
+   */
+  joursReposMedical?: number;
+
+  /**
+   * Minutes réellement travaillées (arrivée → départ), tous sites et hors planning
+   * compris. ⚠ Un créneau sans départ n'y entre pas : voir `creneauxSansDepart`.
+   */
+  minutesTravaillees?: number;
+
+  /** Créneaux pointés sans départ — leurs heures sont inconnues, jamais inventées. */
+  creneauxSansDepart?: number;
+
+  /** Pointages qu'aucun créneau du planning n'explique (ligne « Hors planning »). */
+  horsPlan?: number;
+
+  /** Code de pointage de l'agent (4 chiffres). */
+  agentId?: string;
+
+  /** Date d'attribution du code, ISO `yyyy-MM-ddTHH:mm:ss`. */
+  dateCreationAgentId?: string | null;
+
+  /**
+   * Vrai quand la date ci-dessus est **reconstituée** (date de création du dossier) pour
+   * un code antérieur à son enregistrement : à afficher comme approximative.
+   */
+  dateCreationAgentIdEstimee?: boolean;
+
+  /**
+   * Détail par site. Minutes et retards des sites s'additionnent pour donner ceux de
+   * l'agent ; ⚠ **pas les jours travaillés** — un jour passé sur deux sites ne compte
+   * qu'une fois pour l'agent. Avec le filtre « Site », seules les lignes de ce site sont
+   * renvoyées, les cumuls de l'agent restant tous sites confondus.
+   */
+  sites?: RecapSite[];
+}
+
+/** Ligne « agent × site » du récapitulatif. */
+export interface RecapSite {
+  site: string;
+  /** Ligne regroupant les pointages qu'aucun créneau n'explique. */
+  horsPlanning: boolean;
+  /** Plages horaires rencontrées sur le mois : « 06:00–10:00, 15:00–19:00 ». */
+  horaires?: string | null;
+  creneauxPrevus: number;
+  /** Jours distincts où au moins un créneau de ce site a été pointé. */
+  joursTravailles: number;
+  minutesTravaillees: number;
+  creneauxSansDepart: number;
+  /** Créneaux passés non pointés (hors fériés et congés). */
+  creneauxAbsents: number;
+  /** Jours distincts comptant au moins un créneau absent sur ce site. */
+  joursAbsence: number;
+  /** Créneaux au-delà de la tolérance de retard. */
+  nombreRetards: number;
+  minutesRetardTotal: number;
+}
+
+/**
+ * Durée lisible : `455` → `« 7 h 35 »`, `0` → `« 0 h 00 »`, absent → `« — »`.
+ * Point unique de vérité pour l'écran et les exports.
+ */
+export function formaterMinutes(minutes: number | null | undefined): string {
+  if (minutes == null) return '—';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h} h ${String(m).padStart(2, '0')}`;
+}
+
+/** Heures décimales arrondies au centième — colonne exploitable par la paie dans Excel. */
+export function minutesEnHeures(minutes: number | null | undefined): number {
+  return Math.round(((minutes ?? 0) / 60) * 100) / 100;
 }
 
 export interface FiltreRecap {

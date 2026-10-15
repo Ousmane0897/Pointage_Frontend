@@ -384,6 +384,12 @@
                   <span class="font-mono text-xs bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded">
                     {{ employe.agentId }}
                   </span>
+                  <span *ngIf="employe.dateCreationAgentId" class="mt-1 block text-right text-[11px] text-gray-500"
+                        [title]="employe.dateCreationAgentIdEstimee
+                          ? 'Date approximative : code attribué avant que la date ne soit enregistrée (date de création du dossier).'
+                          : 'Date d\'attribution du code'">
+                    créé le {{ employe.dateCreationAgentIdEstimee ? '≈ ' : '' }}{{ employe.dateCreationAgentId | date:'dd/MM/yyyy' : '' : 'fr-FR' }}
+                  </span>
                 </dd>
               </div>
               <div class="flex justify-between items-start gap-3">
