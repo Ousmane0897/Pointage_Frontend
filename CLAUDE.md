@@ -274,6 +274,39 @@ justement de rendre increvable.
   ajoutés à `EffectifSiteServiceIT`, dont le cas réel (affectation **ouverte** + `SORTI`)
   et le repli `siteAffecte`.
 
+#### Plusieurs créneaux sur un même site
+
+Un agent peut tenir **deux créneaux sur le même site le même jour** (06:00–10:00 puis
+15:00–19:00). Serveur, résolveur de planning, rattachement des pointages et calendrier le
+géraient déjà ; seul le formulaire le refusait (« Ce site est déjà affecté à l'employé »), en
+comparant le **nom du site sans les horaires**.
+
+- `siteEnDoublon` est supprimé. Le FormArray `affectations` porte un validateur
+  `creneauxSansConflitValidator` (erreur `creneauEnConflit` = nom du site), réévalué à chaque
+  modification d'horaire ou de jours, qui délègue au helper pur **`creneauxEnConflit(a, b)`**
+  ([dossier-employe.model.ts](src/app/models/dossier-employe.model.ts)) : conflit seulement si
+  même site (sans casse) **et** périodes qui se recoupent **et** au moins un jour commun
+  (`jourOuvreAffectation`) **et** plages horaires qui se recoupent. ⚠ **Horaire manquant ⇒ réputé
+  toute la journée**, donc en conflit : le rattachement des pointages ne saurait départager deux
+  lignes sans `horaireDebut`. Bornes jointives admises. Deux lignes closes ne sont pas comparées.
+- La conversion ligne → `AffectationSite` est factorisée en `ligneVersAffectation()`, partagée par
+  le payload et le validateur — ils doivent juger exactement la même chose.
+- Le contrôle de capacité est **sauté** pour un site déjà présent sur une autre ligne en cours :
+  `EffectifSiteService` compte des **dossiers**, l'agent n'y prend pas de seconde place.
+- `siteAffecte` est **dédoublonné** (front et `DossierEmployeService.deriverSiteAffecte`).
+- ⚠ **Garde anti-perte en multiset** : `AffectationSiteUtils.signature` exclut les horaires, deux
+  créneaux clos d'un même site sur la même période partagent donc la même signature.
+  `verifierAffectationsClosesConservees` **compte** désormais les signatures entrantes ; avec
+  l'ancien `Set`, le retrait de l'un des deux serait passé inaperçu.
+- **Horaire propre à un jour** (agences qui n'ouvrent qu'à 14:00 le lundi) : pas de nouveau
+  modèle — deux lignes sur le même site, l'une en « Jours personnalisés : lundi » avec l'horaire
+  du lundi, l'autre pour les autres jours. Le texte d'aide du formulaire le dit. ⚠ Une ligne
+  « Lundi - Samedi » laissée telle quelle produirait **deux** créneaux le lundi, dont un compté
+  absent : la ligne des autres jours doit exclure le lundi.
+- Tests : 8 cas `creneauxEnConflit` dans `dossier-employe.model.spec.ts` ; 2 cas dans
+  `DossierEmployeAffectationServiceTest` (deux créneaux acceptés + `siteAffecte` unique ; retrait
+  d'un des deux créneaux clos ⇒ 422).
+
 ### 6.2 Temps & Présences (`ressources-humaines/temps-et-presences/`)
 
 - **Pointage centralisé** — vue globale tous départements confondus, données de pointage terrain remontées automatiquement depuis le module Exploitation, alertes absences et retards pour tout le personnel (terrain, siège, production, commercial)
@@ -730,12 +763,27 @@ gouvernées par un **barème modifiable par la RH**.
   lit jamais le solde et le formulaire ne pose aucun validateur — le solde est **indicatif**, et
   rendre le report consommable ne change donc rien au comportement de dépôt. À trancher dans un
   lot dédié (la table des règles serveur plus bas l'annonce à tort).
-- ⚠ **Bug latent, non traité : l'onglet « Déclarations » est désynchronisé du serveur.**
-  [absence.model.ts](src/app/models/absence.model.ts) propose `ANNUEL` et `SANS_SOLDE`, qui
-  **n'existent pas** dans l'enum serveur `TypeAbsence` (`CONGE_PAYE, MALADIE, PERMISSION,
-  INJUSTIFIEE, AUTRE`), et masque `MALADIE`, `PERMISSION` et `INJUSTIFIEE`. Déclarer un congé
-  « Annuel » échoue donc à la désérialisation. À traiter dans un lot dédié, en décidant du sort des
-  déclarations déjà enregistrées avec les anciennes valeurs.
+- **Onglet « Déclarations » — enregistrement réparé.** Les types sont désormais alignés (l'enum
+  serveur `TypeAbsence` porte `CONGE_PAYE, ANNUEL, SANS_SOLDE, AUTRE` + les valeurs legacy
+  `MALADIE, PERMISSION, INJUSTIFIEE` qui ne sont plus proposées). Le vrai défaut était ailleurs :
+  `formulaire-absence` envoyait des **champs plats** alors que `POST`/`PUT
+  /temps-presences/absences` exigent une **part JSON `absence`** (+ part `fichier`) — chaque
+  création/modification échouait en 400, affiché « Une erreur est survenue ». Le formulaire envoie
+  maintenant un `Blob` `application/json`, même pattern que les contrats, et affiche le message
+  serveur en cas d'erreur. ⚠ Les déclarations (`RhAbsence`) ne sont lues **ni** par le pointage
+  centralisé **ni** par le récapitulatif mensuel : un repos médical se saisit en **demande de
+  congé `REPOS_MEDICAL`** (voir ci-dessous), pas en déclaration.
+- **Repos médical saisi directement par la RH.** Un `REPOS_MEDICAL` déposé par un compte `RH` ou
+  `SUPERADMIN` (`identite.peutCreerPourAutrui()`) naît **`APPROUVE`**, sans circuit
+  (`CongeWorkflowService.enregistrerReposMedicalDirect`) : décision tracée au niveau RH avec un
+  commentaire explicite, historique `CREATION` + `VALIDATION(RH)`, e-mail d'information au
+  demandeur et au supérieur (`notifierReposMedicalDirect`). Sans cela, il restait hors du pointage
+  et du récapitulatif (qui ne lisent que `APPROUVE`) jusqu'à la décision de la DG, et les jours
+  étaient comptés **absents**. Un agent qui dépose **lui-même** son repos médical suit le circuit
+  normal. Côté front, un encart vert remplace le schéma du circuit (`reposMedicalDirect`, miroir
+  d'affichage). ⚠ **`profilNonRattache` ne bloque plus une RH sans dossier employé** : une fois la
+  liste des sélectionnables arrivée, elle seule fait foi — c'était la cause du « je n'arrive pas à
+  renseigner les repos médicaux ». Backend : branche `feature/rh-saisie-repos-medical-et-creneaux`.
 - **Claims JWT** : ajouter `modules.rh.congesValidation` et `modules.rh.congesMesDemandes`.
   `congesValidation` doit être **vrai automatiquement** pour tout compte dont le `DossierEmploye`
   a au moins un subordonné, ainsi que pour les rôles `RH` et `SUPERADMIN` — le calcul se fait à

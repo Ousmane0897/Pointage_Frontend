@@ -7,6 +7,7 @@ import {
   affectationsEnCours,
   affectationsTerminees,
   ageAu,
+  creneauxEnConflit,
   enfantsBeneficiairesAu,
   jourOuvreAffectation,
   jourReposApplicable,
@@ -326,6 +327,50 @@ describe('helpers enfants — dossier-employe.model', () => {
       // Le repli `?? 'LUN_VEN'` de libelleJoursTravail ne doit pas avaler la valeur.
       expect(libelleJoursTravail('PERSONNALISE')).toBe('Jours personnalisés');
       expect(libelleRythmeAffectation(perso(null))).toBe('Jours personnalisés');
+    });
+  });
+  describe('creneauxEnConflit (deux créneaux sur un même site)', () => {
+    const matin = affectation({ horaireDebut: '06:00', horaireFin: '10:00' });
+    const soir = affectation({ horaireDebut: '15:00', horaireFin: '19:00' });
+
+    it('admet deux créneaux disjoints sur le même site le même jour', () => {
+      expect(creneauxEnConflit(matin, soir)).toBeFalse();
+    });
+
+    it('refuse deux plages qui se recoupent', () => {
+      expect(creneauxEnConflit(matin, affectation({ horaireDebut: '09:00', horaireFin: '12:00' }))).toBeTrue();
+    });
+
+    it('admet des bornes jointives', () => {
+      expect(creneauxEnConflit(matin, affectation({ horaireDebut: '10:00', horaireFin: '12:00' }))).toBeFalse();
+    });
+
+    it('ignore la casse et les espaces du nom de site', () => {
+      expect(creneauxEnConflit(matin, affectation({ site: ' yoff ', horaireDebut: '08:00', horaireFin: '09:00' }))).toBeTrue();
+    });
+
+    it("n'oppose jamais deux sites différents", () => {
+      expect(creneauxEnConflit(matin, affectation({ site: 'Ouakam', horaireDebut: '06:00', horaireFin: '10:00' }))).toBeFalse();
+    });
+
+    it('réputé en conflit quand un horaire manque (le rattachement ne pourrait pas départager)', () => {
+      expect(creneauxEnConflit(affectation({}), soir)).toBeTrue();
+    });
+
+    it('admet le cas « lundi 14h » : jours disjoints, horaires qui se recoupent', () => {
+      const lundi = affectation({
+        joursTravail: 'PERSONNALISE', joursSemaine: [1], horaireDebut: '14:00', horaireFin: '18:00',
+      });
+      const autresJours = affectation({
+        joursTravail: 'PERSONNALISE', joursSemaine: [2, 3, 4, 5, 6], horaireDebut: '08:00', horaireFin: '16:00',
+      });
+      expect(creneauxEnConflit(lundi, autresJours)).toBeFalse();
+    });
+
+    it("admet un retour sur le site après la sortie d'une affectation précédente", () => {
+      const close = affectation({ dateSortie: '2026-06-30', horaireDebut: '06:00', horaireFin: '10:00' });
+      const retour = affectation({ dateEntree: '2026-09-01', horaireDebut: '06:00', horaireFin: '10:00' });
+      expect(creneauxEnConflit(close, retour)).toBeFalse();
     });
   });
 });

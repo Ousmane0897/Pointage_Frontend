@@ -466,6 +466,12 @@
                   Ajouter un site
                 </button>
               </div>
+              <p class="mb-2 text-xs text-gray-500">
+                Un même site peut être ajouté plusieurs fois pour des créneaux distincts
+                (ex. 06:00–10:00 puis 15:00–19:00), ou pour un horaire propre à certains jours
+                (ex. le lundi à 14:00 : une ligne « Jours personnalisés : lundi » et une ligne
+                pour les autres jours).
+              </p>
 
               <!-- État vide -->
               <p
@@ -688,6 +694,13 @@
                 class="text-xs text-red-500 mt-1"
               >
                 Au moins un site est obligatoire.
+              </p>
+              <p
+                *ngIf="affectations.errors?.['creneauEnConflit'] as site"
+                class="text-xs text-red-500 mt-1"
+              >
+                Deux créneaux se chevauchent sur le site « {{ site }} » (mêmes jours, horaires qui se
+                recoupent). Ajustez les horaires ou les jours de l'une des lignes.
               </p>
             </div>
 
