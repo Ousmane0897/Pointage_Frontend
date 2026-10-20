@@ -419,6 +419,46 @@ export function affectationsTerminees(
     .sort(parDateEntreeDecroissante);
 }
 
+// ─── Affectations : créneaux concurrents sur un même site ───────────────────
+
+/**
+ * Deux lignes d'affectation se marchent-elles dessus ?
+ *
+ * Un agent peut tenir **deux créneaux sur un même site le même jour** (06:00–10:00 puis
+ * 15:00–19:00) : le serveur, le pointage centralisé et le calendrier de planning le gèrent
+ * déjà. Seul un vrai chevauchement est refusé, c'est-à-dire **à la fois** :
+ * - le même site (nom comparé sans casse ni espaces de bord) ;
+ * - des périodes de présence qui se recoupent (`dateEntree` / `dateSortie`, bornes
+ *   absentes = ouvertes) ;
+ * - au moins un jour de la semaine travaillé par les deux lignes ;
+ * - des plages horaires qui se recoupent.
+ *
+ * ⚠ **Un horaire manquant est réputé couvrir toute la journée** : deux lignes du même site
+ * dont l'une n'a pas d'horaire ne peuvent pas être départagées par le rattachement des
+ * pointages, qui exige un `horaireDebut`.
+ *
+ * Les jours disjoints rendent possible le cas des agences qui n'ouvrent qu'à 14:00 le
+ * lundi : une ligne « mardi-samedi » le matin et une ligne « lundi » l'après-midi.
+ */
+export function creneauxEnConflit(a: AffectationSite, b: AffectationSite): boolean {
+  if ((a.site ?? '').trim().toLowerCase() !== (b.site ?? '').trim().toLowerCase()) return false;
+
+  const debutA = jour(a.dateEntree);
+  const finA = jour(a.dateSortie);
+  const debutB = jour(b.dateEntree);
+  const finB = jour(b.dateSortie);
+  if (finA && debutB && finA < debutB) return false;
+  if (finB && debutA && finB < debutA) return false;
+
+  const jourCommun = ([0, 1, 2, 3, 4, 5, 6] as JourSemaine[])
+    .some(j => jourOuvreAffectation(a, j) && jourOuvreAffectation(b, j));
+  if (!jourCommun) return false;
+
+  if (!a.horaireDebut || !a.horaireFin || !b.horaireDebut || !b.horaireFin) return true;
+  // Comparaison lexicale sur `HH:mm` : exacte. Bornes jointives (10:00 / 10:00) admises.
+  return a.horaireDebut < b.horaireFin && b.horaireDebut < a.horaireFin;
+}
+
 export interface DossierEmploye {
   id?: string;
   agentId: string;   // code 4 chiffres pour le pointage (= codeSecret côté backend)

@@ -137,15 +137,19 @@ export class FormulaireAbsenceComponent implements OnInit, OnDestroy {
     }
 
     const v = this.form.value;
+    // ⚠ Le serveur attend une part JSON nommée `absence` (+ la part `fichier`), comme
+    // pour les contrats. Des champs plats lui valaient un 400 « part manquante » :
+    // aucune déclaration ne pouvait être enregistrée.
+    const absence = {
+      employeId: v.employeId,
+      type: v.type,
+      typeAutrePrecision: v.type === 'AUTRE' && v.typeAutrePrecision ? v.typeAutrePrecision : null,
+      dateDebut: v.dateDebut,
+      dateFin: v.dateFin,
+      motif: v.motif || null,
+    };
     const fd = new FormData();
-    fd.append('employeId', v.employeId);
-    fd.append('type', v.type);
-    if (v.type === 'AUTRE' && v.typeAutrePrecision) {
-      fd.append('typeAutrePrecision', v.typeAutrePrecision);
-    }
-    fd.append('dateDebut', v.dateDebut);
-    fd.append('dateFin', v.dateFin);
-    if (v.motif) fd.append('motif', v.motif);
+    fd.append('absence', new Blob([JSON.stringify(absence)], { type: 'application/json' }));
     if (this.selectedFile) fd.append('fichier', this.selectedFile);
 
     this.submitting = true;
@@ -177,7 +181,7 @@ export class FormulaireAbsenceComponent implements OnInit, OnDestroy {
   private handleError(err: any): void {
     console.error(err);
     if (err?.status === 0) this.toastr.error('Serveur injoignable.', 'Erreur réseau');
-    else this.toastr.error('Une erreur est survenue.', 'Erreur');
+    else this.toastr.error(err?.error?.message || 'Une erreur est survenue.', 'Erreur');
   }
 
   ngOnDestroy(): void {

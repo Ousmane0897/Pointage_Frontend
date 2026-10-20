@@ -183,8 +183,20 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
    * totale — et refuserait la création (422).
    */
   get profilNonRattache(): boolean {
-    if (this.employesCharges && this.employes.length === 0) return true;
-    return !!this.profil && !this.profil.employeId;
+    // ⚠ Une fois la liste arrivée, elle seule fait foi : une RH dont le compte n'a
+    // pas de dossier employé reçoit tous les employés et peut déposer pour eux. Le
+    // repli sur le profil la bloquait à tort (repos médicaux impossibles à saisir).
+    if (this.employesCharges) return this.employes.length === 0;
+    return !!this.profil && !this.profil.employeId && !this.permissions.voitTousLesConges();
+  }
+
+  /**
+   * Repos médical saisi par la RH ou la DG : approuvé d'emblée par le serveur, sans
+   * circuit. Miroir d'affichage de la règle serveur (`CongeWorkflowService.creer`).
+   */
+  get reposMedicalDirect(): boolean {
+    return this.form?.get('type')?.value === 'REPOS_MEDICAL'
+      && this.permissions.voitTousLesConges();
   }
 
   // ─── Soumission ───────────────────────────────────────────────────────────
@@ -229,6 +241,11 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
     ).subscribe(res => {
       if (!res) return;
+      if (res.statut === 'APPROUVE') {
+        this.toastr.success('Repos médical enregistré.', 'Succès');
+        this.router.navigate([this.destinationRetour()]);
+        return;
+      }
       const validateur = res.superieurHierarchiqueNom ?? 'le Responsable RH';
       this.toastr.success(`Demande soumise — en attente de validation par ${validateur}.`, 'Succès');
       this.router.navigate([this.destinationRetour()]);

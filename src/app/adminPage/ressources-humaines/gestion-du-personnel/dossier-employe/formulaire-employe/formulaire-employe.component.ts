@@ -19,6 +19,7 @@ import {
   OPTIONS_JOUR_SEMAINE,
   SEPARATEUR_SITES,
   affectationTerminee,
+  creneauxEnConflit,
   jourReposApplicable,
   joursSemaineExplicites,
   libelleRythmeAffectation,
@@ -176,6 +177,35 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     return joursDepuisFlags(a.joursSemaineFlags);
   }
 
+  /**
+   * Valeur brute d'une ligne (`getRawValue()`) → affectation telle qu'envoyée au serveur.
+   * Partagée par le payload et le contrôle de chevauchement, qui doivent juger la même chose.
+   */
+  private ligneVersAffectation(a: LigneAffectationRaw): AffectationSite {
+    return {
+      // Renvoyé tel quel : c'est lui qui permet au serveur de reconnaître une
+      // affectation déjà persistée (et de refuser la disparition d'une ligne close).
+      id: a.id ?? undefined,
+      site: (a.site ?? '').trim(),
+      horaireDebut: a.horaireDebut || undefined,
+      horaireFin: a.horaireFin || undefined,
+      dateEntree: this.toDateInput(a.dateEntree),
+      dateSortie: this.toDateInput(a.dateSortie) ?? undefined,
+      joursTravail: a.joursTravail,
+      // ⚠ `null` explicite et non `undefined` : c'est ce qui permet de **retirer** un
+      // jour de repos saisi par erreur. Avec `undefined`, le champ disparaîtrait du
+      // payload et le serveur conserverait l'ancienne valeur — même piège que
+      // `dateFin` d'une affectation de planning, réaffectée explicitement côté serveur.
+      jourRepos: jourReposApplicable(a.joursTravail) ? (a.jourRepos ?? null) : null,
+      // ⚠ **`null` dès que le rythme n'est pas personnalisé, et c'est essentiel** : la
+      // liste fait autorité côté serveur dès qu'elle est non vide. Sans cette remise à
+      // zéro, repasser de « Jours personnalisés » à « Lundi - Vendredi » laisserait les
+      // anciens jours en base et le rythme choisi dans le `<select>` resterait ignoré.
+      joursSemaine:
+        a.joursTravail === 'PERSONNALISE' ? this.joursSemaineDepuisFlags(a) : null,
+    };
+  }
+
   // ─── Documents (étape 4 — collecte en mémoire, upload après création) ────────
   /** Formulaire de saisie d'un document à ajouter à la liste. */
   documentForm!: FormGroup;
@@ -281,7 +311,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
         departement: ['', Validators.required],
         // Affectations : sites + tranche horaire optionnelle. `siteAffecte` (rétro-compat)
         // n'est plus un champ de saisie : il est dérivé au moment de la sauvegarde.
-        affectations: this.fb.array([], this.auMoinsUnSiteValidator),
+        affectations: this.fb.array([], [
+          this.auMoinsUnSiteValidator,
+          (c: AbstractControl) => this.creneauxSansConflitValidator(c),
+        ]),
         dateEmbauche: [null, Validators.required],
         statut: ['ACTIF', Validators.required],
         superieurHierarchiqueId: ['', Validators.required],
@@ -427,12 +460,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
           const nom = (valeur ?? '').trim();
           if (!nom) return of(null);
 
-          // Un même site ne peut être affecté deux fois au même employé.
-          if (this.siteEnDoublon(nom, groupe)) {
-            this.toastr.error('Ce site est déjà affecté à l\'employé.');
-            siteCtrl.setValue('', { emitEvent: false });
-            return of(null);
-          }
+          // Second créneau sur un site que l'agent occupe déjà : il n'y prend pas de
+          // place supplémentaire (l'effectif compte des dossiers, pas des lignes). Un
+          // vrai chevauchement est refusé par `creneauxSansConflitValidator`.
+          if (this.siteSurUneAutreLigne(nom, groupe)) return of(null);
 
           const site = this.sitesParNom.get(nom);
           // Pas d'id ou pas de plafond configuré ⇒ aucun contrôle.
@@ -468,11 +499,9 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   /**
    * True si `nom` est déjà présent dans une autre ligne **en cours** du FormArray.
    *
-   * ⚠ Les lignes closes sont volontairement exclues : un agent peut revenir sur un
-   * site qu'il a quitté, et l'interdire obligerait à écraser le passage précédent —
-   * c'est-à-dire à détruire l'historique qu'on cherche justement à conserver.
+   * ⚠ Les lignes closes sont exclues : elles n'occupent plus de poste sur le site.
    */
-  private siteEnDoublon(nom: string, groupeCourant: FormGroup): boolean {
+  private siteSurUneAutreLigne(nom: string, groupeCourant: FormGroup): boolean {
     return this.affectations.controls.some(
       c => c !== groupeCourant
         && c.enabled
@@ -580,6 +609,34 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
   /** Erreur `aucunSite` si le FormArray ne contient aucune affectation. */
   private auMoinsUnSiteValidator(control: AbstractControl): ValidationErrors | null {
     return (control as FormArray).length === 0 ? { aucunSite: true } : null;
+  }
+
+  /**
+   * Erreur `creneauEnConflit` (porte le nom du site) si deux lignes se chevauchent :
+   * même site, même période, au moins un jour commun et plages horaires qui se recoupent
+   * — voir `creneauxEnConflit`. Deux créneaux disjoints sur un même site (06:00–10:00 et
+   * 15:00–19:00) sont admis.
+   *
+   * ⚠ Validateur de **FormArray** et non contrôle au changement de site : il est réévalué
+   * à chaque modification d'horaire ou de jours, et ne vide jamais la saisie. Deux lignes
+   * closes ne sont pas comparées — c'est de l'historique, déjà accepté par le serveur.
+   */
+  private creneauxSansConflitValidator(control: AbstractControl): ValidationErrors | null {
+    const tableau = control as FormArray;
+    const lignes = tableau.controls.map(c => ({
+      actif: c.enabled,
+      affectation: this.ligneVersAffectation(c.getRawValue() as LigneAffectationRaw),
+    }));
+    for (let i = 0; i < lignes.length; i++) {
+      for (let j = i + 1; j < lignes.length; j++) {
+        if (!lignes[i].actif && !lignes[j].actif) continue;
+        if (!lignes[i].affectation.site || !lignes[j].affectation.site) continue;
+        if (creneauxEnConflit(lignes[i].affectation, lignes[j].affectation)) {
+          return { creneauEnConflit: lignes[i].affectation.site.trim() };
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -1188,30 +1245,10 @@ export class FormulaireEmployeComponent implements OnInit, OnDestroy {
     // de `form.value` — une sortie renseignée serait silencieusement perdue.
     const affectations: AffectationSite[] = (this.affectations.getRawValue() ?? [])
       .filter((a: LigneAffectationRaw) => (a.site ?? '').trim())
-      .map((a: LigneAffectationRaw) => ({
-        // Renvoyé tel quel : c'est lui qui permet au serveur de reconnaître une
-        // affectation déjà persistée (et de refuser la disparition d'une ligne close).
-        id: a.id ?? undefined,
-        site: a.site.trim(),
-        horaireDebut: a.horaireDebut || undefined,
-        horaireFin: a.horaireFin || undefined,
-        dateEntree: this.toDateInput(a.dateEntree),
-        dateSortie: this.toDateInput(a.dateSortie) ?? undefined,
-        joursTravail: a.joursTravail,
-        // ⚠ `null` explicite et non `undefined` : c'est ce qui permet de **retirer** un
-        // jour de repos saisi par erreur. Avec `undefined`, le champ disparaîtrait du
-        // payload et le serveur conserverait l'ancienne valeur — même piège que
-        // `dateFin` d'une affectation de planning, réaffectée explicitement côté serveur.
-        jourRepos: jourReposApplicable(a.joursTravail) ? (a.jourRepos ?? null) : null,
-        // ⚠ **`null` dès que le rythme n'est pas personnalisé, et c'est essentiel** : la
-        // liste fait autorité côté serveur dès qu'elle est non vide. Sans cette remise à
-        // zéro, repasser de « Jours personnalisés » à « Lundi - Vendredi » laisserait les
-        // anciens jours en base et le rythme choisi dans le `<select>` resterait ignoré.
-        joursSemaine:
-          a.joursTravail === 'PERSONNALISE' ? this.joursSemaineDepuisFlags(a) : null,
-      }));
+      .map((a: LigneAffectationRaw) => this.ligneVersAffectation(a));
     employePayload.affectations = affectations;
-    employePayload.siteAffecte = affectations.map(a => a.site).join(SEPARATEUR_SITES);
+    // Dédoublonné : deux créneaux sur un même site ne font qu'un site.
+    employePayload.siteAffecte = [...new Set(affectations.map(a => a.site))].join(SEPARATEUR_SITES);
 
     // Enfants : lignes incomplètes écartées, dates forcées en "yyyy-MM-dd".
     // ⚠ `getRawValue()` là aussi — et l'`id` doit faire le voyage, c'est lui qui permet

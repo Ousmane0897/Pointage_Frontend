@@ -125,8 +125,21 @@
       </div>
     </div>
 
+    <!-- Repos médical saisi par la RH : approuvé d'emblée, pas de circuit -->
+    <div *ngIf="reposMedicalDirect"
+      class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+      <p class="flex items-center gap-2 font-medium">
+        <lucide-icon name="CheckCircle" class="w-4 h-4"></lucide-icon>
+        Enregistrement direct
+      </p>
+      <p class="mt-1">
+        Le repos médical est enregistré directement, sans circuit de validation : les jours
+        concernés ne seront pas comptés comme des absences dans le pointage et le récapitulatif.
+      </p>
+    </div>
+
     <!-- Circuit de validation -->
-    <div class="mb-5 rounded-lg border px-4 py-3 text-sm"
+    <div *ngIf="!reposMedicalDirect" class="mb-5 rounded-lg border px-4 py-3 text-sm"
       [ngClass]="sansSuperieur
         ? 'border-amber-200 bg-amber-50 text-amber-800'
         : 'border-indigo-100 bg-indigo-50 text-indigo-900'">
