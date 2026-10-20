@@ -64,7 +64,7 @@
   </div>
 
   <!-- TOTAUX -->
-  <div *ngIf="loaded && recaps.length > 0" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+  <div *ngIf="loaded && recaps.length > 0" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
       <p class="text-xs text-gray-500 uppercase">Effectif</p>
       <p class="text-2xl font-bold text-gray-800 mt-1">{{ totalEffectif }}</p>
@@ -77,9 +77,20 @@
            qui diffèrent selon le rythme du site et les fériés. -->
       <p class="text-[11px] text-gray-500 mt-0.5">sur {{ totalJoursOuvrables }} dus</p>
     </div>
+    <div class="bg-white rounded-xl shadow-sm border border-emerald-100 p-4">
+      <p class="text-xs text-emerald-700 uppercase">Heures travaillées</p>
+      <p class="text-2xl font-bold text-emerald-700 mt-1">{{ formaterMinutes(totalMinutesTravaillees) }}</p>
+      <p *ngIf="totalCreneauxSansDepart" class="text-[11px] text-gray-500 mt-0.5">
+        + {{ totalCreneauxSansDepart }} créneau(x) sans départ
+      </p>
+    </div>
     <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
       <p class="text-xs text-red-700 uppercase">J. absence</p>
       <p class="text-2xl font-bold text-red-700 mt-1">{{ totalAbsences }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-sky-100 p-4">
+      <p class="text-xs text-sky-700 uppercase">Repos médical</p>
+      <p class="text-2xl font-bold text-sky-700 mt-1">{{ totalReposMedical }} j</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-amber-100 p-4">
       <p class="text-xs text-amber-700 uppercase">Retards</p>
@@ -103,16 +114,30 @@
       <p class="mt-2 text-sm">Aucune donnée pour cette période.</p>
     </div>
 
+    <div *ngIf="!loading && recaps.length > 0" class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-2">
+      <p class="text-xs text-gray-500">
+        Cliquez sur un agent pour voir le détail par site. Les heures ne comptent que les créneaux
+        dont le départ a été pointé.
+      </p>
+      <button type="button" (click)="basculerTout()"
+        class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+        {{ toutDeplie ? 'Tout replier' : 'Tout déplier' }}
+      </button>
+    </div>
+
     <div *ngIf="!loading && recaps.length > 0" class="overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr class="text-left text-xs text-gray-600 uppercase tracking-wide">
             <th class="px-4 py-3">Employé</th>
+            <th class="px-4 py-3">Code</th>
             <th class="px-4 py-3">Département</th>
             <th class="px-4 py-3">J. ouvr.</th>
             <th class="px-4 py-3">Fériés</th>
             <th class="px-4 py-3">J. trav.</th>
+            <th class="px-4 py-3">Heures trav.</th>
             <th class="px-4 py-3">Absences</th>
+            <th class="px-4 py-3">Repos méd.</th>
             <th class="px-4 py-3">Congés</th>
             <th class="px-4 py-3">Nb retards</th>
             <th class="px-4 py-3">Minutes de retard</th>
@@ -121,28 +146,94 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let r of recaps; trackBy: trackById" class="hover:bg-gray-50">
-            <td class="px-4 py-3">
-              <div class="font-medium text-gray-800">{{ r.prenom }} {{ r.nom }}</div>
-              <div class="text-xs text-gray-500 font-mono">{{ r.matricule }}</div>
-            </td>
-            <td class="px-4 py-3 text-gray-600">{{ r.departement }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ r.joursOuvrables }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ r.joursFeries ?? 0 }}</td>
-            <td class="px-4 py-3 text-green-700 font-medium">
-              {{ r.joursTravailles }}
-              <span *ngIf="r.joursTravaillesFeries" class="block text-[11px] font-normal text-gray-500"
-                    title="Jours fériés travaillés, compris dans le total">
-                dont {{ r.joursTravaillesFeries }} férié(s)
-              </span>
-            </td>
-            <td class="px-4 py-3 text-red-700">{{ r.joursAbsence }}</td>
-            <td class="px-4 py-3 text-blue-700">{{ r.joursConge }}</td>
-            <td class="px-4 py-3 text-amber-700">{{ r.nombreRetards }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ r.minutesRetardTotal }}</td>
-            <td class="px-4 py-3 text-indigo-700 font-medium">{{ r.heuresSupTotal }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ r.heuresSupMajoreesEquivalent }}</td>
-          </tr>
+          <ng-container *ngFor="let r of recaps; trackBy: trackById">
+            <!-- Ligne agent : cumuls tous sites confondus -->
+            <tr class="hover:bg-gray-50" [class.cursor-pointer]="aDesSites(r)" (click)="basculer(r)">
+              <td class="px-4 py-3">
+                <div class="flex items-start gap-1.5">
+                  <lucide-icon *ngIf="aDesSites(r)"
+                    [name]="ouverts.has(r.employeId) ? 'ChevronDown' : 'ChevronRight'"
+                    class="mt-0.5 h-4 w-4 shrink-0 text-gray-400"></lucide-icon>
+                  <div>
+                    <div class="font-medium text-gray-800">{{ r.prenom }} {{ r.nom }}</div>
+                    <div class="text-xs text-gray-500 font-mono">{{ r.matricule }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="font-mono text-gray-800">{{ r.agentId || '—' }}</div>
+                <div *ngIf="r.dateCreationAgentId" class="text-[11px] text-gray-500"
+                     [title]="r.dateCreationAgentIdEstimee
+                       ? 'Date approximative : code attribué avant que la date ne soit enregistrée (date de création du dossier).'
+                       : 'Date d\'attribution du code'">
+                  créé le {{ r.dateCreationAgentIdEstimee ? '≈ ' : '' }}{{ r.dateCreationAgentId | date:'dd/MM/yyyy' }}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-gray-600">{{ r.departement }}</td>
+              <td class="px-4 py-3 text-gray-700">{{ r.joursOuvrables }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ r.joursFeries ?? 0 }}</td>
+              <td class="px-4 py-3 text-green-700 font-medium">
+                {{ r.joursTravailles }}
+                <span *ngIf="r.joursTravaillesFeries" class="block text-[11px] font-normal text-gray-500"
+                      title="Jours fériés travaillés, compris dans le total">
+                  dont {{ r.joursTravaillesFeries }} férié(s)
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-emerald-700 font-medium">
+                {{ formaterMinutes(r.minutesTravaillees) }}
+                <span *ngIf="r.creneauxSansDepart" class="block text-[11px] font-normal text-amber-600"
+                      title="Créneaux pointés sans départ : leurs heures ne sont pas comptées">
+                  {{ r.creneauxSansDepart }} sans départ
+                </span>
+              </td>
+              <td class="px-4 py-3 text-red-700">{{ r.joursAbsence }}</td>
+              <td class="px-4 py-3 text-sky-700">{{ r.joursReposMedical ?? '—' }}</td>
+              <td class="px-4 py-3 text-blue-700">{{ r.joursConge }}</td>
+              <td class="px-4 py-3 text-amber-700">{{ r.nombreRetards }}</td>
+              <td class="px-4 py-3 text-gray-700">{{ r.minutesRetardTotal }}</td>
+              <td class="px-4 py-3 text-indigo-700 font-medium">{{ r.heuresSupTotal }}</td>
+              <td class="px-4 py-3 text-gray-700">{{ r.heuresSupMajoreesEquivalent }}</td>
+            </tr>
+
+            <!-- Sous-lignes par site. ⚠ Même nombre de cellules que la ligne agent
+                 (3 + 11), sans quoi les colonnes se décalent. -->
+            <ng-container *ngIf="ouverts.has(r.employeId)">
+              <tr *ngFor="let s of r.sites; trackBy: trackBySite"
+                  class="bg-slate-50 text-xs text-gray-600"
+                  [class.italic]="s.horsPlanning">
+                <td class="py-2 pl-10 pr-4" colspan="3">
+                  <div class="font-medium" [ngClass]="s.horsPlanning ? 'text-amber-700' : 'text-gray-700'">
+                    {{ s.site }}
+                  </div>
+                  <div *ngIf="s.horaires" class="text-[11px] text-gray-500">{{ s.horaires }}</div>
+                  <div *ngIf="s.horsPlanning" class="text-[11px] text-gray-500">
+                    Pointages qu'aucun créneau n'explique (jour non prévu, horaires absents…)
+                  </div>
+                </td>
+                <td class="px-4 py-2" [title]="s.creneauxPrevus + ' créneau(x) prévu(s)'">
+                  {{ s.horsPlanning ? '' : s.creneauxPrevus + ' cr.' }}
+                </td>
+                <td class="px-4 py-2"></td>
+                <td class="px-4 py-2 text-green-700">{{ s.joursTravailles }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-emerald-700">
+                  {{ formaterMinutes(s.minutesTravaillees) }}
+                  <span *ngIf="s.creneauxSansDepart" class="block text-[11px] text-amber-600">
+                    {{ s.creneauxSansDepart }} sans départ
+                  </span>
+                </td>
+                <td class="px-4 py-2 text-red-700"
+                    [title]="s.creneauxAbsents + ' créneau(x) non pointé(s)'">
+                  {{ s.horsPlanning ? '' : s.joursAbsence }}
+                </td>
+                <td class="px-4 py-2"></td>
+                <td class="px-4 py-2"></td>
+                <td class="px-4 py-2 text-amber-700">{{ s.horsPlanning ? '' : s.nombreRetards }}</td>
+                <td class="px-4 py-2">{{ s.horsPlanning ? '' : s.minutesRetardTotal }}</td>
+                <td class="px-4 py-2"></td>
+                <td class="px-4 py-2"></td>
+              </tr>
+            </ng-container>
+          </ng-container>
         </tbody>
       </table>
     </div>

@@ -381,10 +381,68 @@ employé : un agent affecté à 2 sites produit **2 lignes par jour**, chacune j
 - ⚠ **Au déploiement les chiffres changent pour tout le monde** : plus de lignes (une par
   site), des retards jusqu'ici faux qui disparaissent, des lignes `HORS_PLAN` qui
   apparaissent. À annoncer, comme les bascules de soldes de congés.
-- **Hors périmètre, connu** : `RecapitulatifMensuelService` fige toujours `nombreRetards` à 0
-  avec un commentaire devenu faux (« DossierEmploye ne porte pas d'heure de début » — les
-  affectations en portent). Lot dédié.
+- ✅ Les retards du récapitulatif mensuel, longtemps figés à 0, sont désormais calculés depuis
+  ces créneaux — voir « Récapitulatif mensuel par agent et par site » ci-dessous.
 - Backend : branche `feature/affectation-dates-et-jours-par-site` (depuis `main`).
+
+#### Récapitulatif mensuel par agent et par site
+
+Demande RH pour contrôler le pointage avant la paie : jours **et heures** travaillés, absences,
+retards **par agent et par site** avec cumuls, repos médicaux, date de création du code.
+
+- **Source unique : les créneaux du pointage centralisé.** Nouvelle méthode
+  `PointageCentraliseService.lignesPlage(debut, fin, employes, feries, pointages, conges)` qui
+  appelle `buildLignes` lui-même (rattachement par plage horaire, tolérance de retard, congé
+  prioritaire) — **rien n'est dupliqué**. ⚠ Elle reçoit les données **déjà chargées** par le
+  récap (une lecture de pointages et une de congés pour tout le mois) au lieu des deux requêtes
+  par jour de la vue jour. `PointageCentraliseDto` gagne `typeConge` (l'enum, sur les lignes
+  `CONGE`) : le libellé `motif` ne doit jamais servir de clé.
+- `RecapitulatifMensuelDto` gagne `joursReposMedical`, `minutesTravaillees`,
+  `creneauxSansDepart`, `horsPlan`, `agentId`, `dateCreationAgentId(+Estimee)` et
+  **`sites: RecapSiteDto[]`** (site, horaires, créneaux prévus, jours travaillés, minutes,
+  sans départ, créneaux/jours absents, retards). Front : champs **optionnels** dans
+  [recapitulatif-mensuel.model.ts](src/app/models/recapitulatif-mensuel.model.ts).
+- ⚠ **Les jours ne s'additionnent pas, les minutes si.** Un jour passé sur deux sites compte
+  **une fois** pour l'agent (`joursTravailles` = dates distinctes pointées, calcul inchangé) ;
+  minutes et retards de l'agent sont la **somme** des sites. Les en-têtes et le PDF le disent.
+- ⚠ **Heures = arrivée → départ des seuls créneaux dont le départ est pointé** ; les autres sont
+  comptés dans `creneauxSansDepart` et **jamais estimés**. Les pointages hors planning comptent
+  dans les heures (travail réel) et forment une ligne « Hors planning » en dernier.
+- ⚠ **Retards** = créneaux `RETARD` (au-delà de `rh.pointage.tolerance-retard-minutes`, 15) ;
+  `minutesRetardTotal` = retard **brut** de ces seuls créneaux — un retard toléré n'y entre pas.
+- ⚠ **Un créneau sans `horaireDebut` ne gagne aucun pointage** (règle du rattachement) : pour
+  un agent dont les affectations n'ont pas d'horaires, tout part en « Hors planning » et ses
+  créneaux paraissent absents **dans le détail par site**, alors que l'absence **agent** (jugée
+  à la journée) reste juste. C'est le signal qu'il faut saisir les horaires.
+- **Absences agent** : toujours à la journée (jours dus − union pointés / congés / repos
+  médical). Deux corrections : ⚠ **un jour à venir n'est plus une absence** (le mois en cours
+  comptait absents tous les jours restants ; `Clock` injecté) et ⚠ une
+  **`ABSENCE_NON_JUSTIFIEE` approuvée reste une absence** (elle était comptée en congé).
+  `REPOS_MEDICAL` sort de `joursConge` vers `joursReposMedical`. Type nul ⇒ congé ordinaire.
+- **Filtre « Site »** : employés retenus si `siteAffecte` **ou** une affectation correspond ;
+  seules les lignes du site sont renvoyées, ⚠ les **cumuls agent restent tous sites**.
+- **Date du code agent** : `DossierEmploye.dateCreationAgentId` + `dateCreationAgentIdEstimee`,
+  posés par `DossierEmployeService.horodaterCode` à la création, à l'import bulk et à chaque
+  **changement** de code ; ignorés en écriture par le mapper (jamais acceptés du client).
+  `AgentIdDateBackfillRunner` (`@Order(960)`, idempotent) reconstitue la date des dossiers
+  existants depuis l'horodatage de leur ObjectId, marquée **estimée** (« ≈ » à l'écran,
+  « env. » dans le PDF, la police jsPDF n'ayant pas « ≈ »). ⚠ Fausse pour un code changé
+  depuis la création du dossier : aucune trace ne permet mieux. Affichée aussi sur la fiche.
+- **Écran** : ligne agent cliquable dépliant une sous-ligne par site (même nombre de cellules,
+  `colspan="3"`), « Tout déplier », tuiles *Heures travaillées* et *Repos médical*, totaux
+  **matérialisés** au chargement. Exports : Excel **deux feuilles** (« Par agent », « Par agent
+  et site » — omise si vide), avec heures décimales pour la paie (`minutesEnHeures`) ; PDF avec
+  sous-lignes indentées. Helpers `formaterMinutes` / `minutesEnHeures` dans le modèle.
+- ⚠ **Hors périmètre : la paie.** `getRecapitulatif` (consommé par `CalculPaieService` et les
+  exports backend inutilisés) garde l'ancien calcul : absences du mois en cours, absence non
+  justifiée et repos médical y diffèrent de l'écran. Alignement = lot dédié.
+- ⚠ **Au déploiement, les chiffres de l'écran changent** : retards non nuls, absences du mois
+  en cours en baisse, repos médical sorti des congés, absences non justifiées passées en
+  absences. Backend d'abord (le runner pose les dates). À annoncer à la RH.
+- Backend : branche `feature/recap-mensuel-par-site` (depuis `main`). Tests : 9 cas ajoutés à
+  `RecapitulatifMensuelServiceTest` (câblé sur le **vrai** `PointageCentraliseService`, horloge
+  figée), 3 à `DossierEmployeServiceTest` (dont le stub du mapper, qui ne recopiait pas
+  `agentId`). Front : `recapitulatif-mensuel.model.spec.ts`.
 
 #### Congés — circuit de validation à 3 niveaux + notifications
 
