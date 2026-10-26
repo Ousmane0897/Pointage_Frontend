@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Admin } from '../models/admin.model';
+import { Admin, RattachementDossier } from '../models/admin.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -25,4 +25,14 @@ export class AdminService {
   deleteAdmin(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/superadmin/${id}`);
   } 
+
+  /** Dossier employé rattaché à chaque compte, par email. */
+  getRattachements(): Observable<RattachementDossier[]> {
+    return this.http.get<RattachementDossier[]>(`${this.baseUrl}/superadmin/rattachements`);
+  }
+
+  /** Dossier employé portant cet email, avant l'enregistrement du compte. */
+  getRattachement(email: string): Observable<RattachementDossier> {
+    return this.http.get<RattachementDossier>(`${this.baseUrl}/superadmin/rattachement`, { params: { email } });
+  }
 }

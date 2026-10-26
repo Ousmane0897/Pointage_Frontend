@@ -19,6 +19,19 @@ export interface Admin {
   active: boolean;
 }
 
+/**
+ * Dossier employé rattaché à un compte de connexion. Le rattachement se fait par
+ * l'**email seul** (le JWT ne porte rien d'autre) : `employeId` absent ⇒ aucun dossier
+ * ne porte cet email, et le compte ne peut pas déposer de demande de congé.
+ */
+export interface RattachementDossier {
+  /** Email normalisé (minuscules, sans espaces). */
+  email: string;
+  employeId?: string | null;
+  matricule?: string | null;
+  nomComplet?: string | null;
+}
+
 export interface ModulesAutorises {
 
   dashboard: boolean;

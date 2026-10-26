@@ -609,6 +609,27 @@ rendu** (il ne l'était que pour `RH`/`SUPERADMIN`), et son contenu vient d'un e
 - Backend : branche `feature/conges-employes-selectionnables`, partant de **`main`** (le module
   congés y est déjà, contrairement à ce que laissait entendre la section précédente).
 
+**Rattachement compte ⇄ dossier employé — par l'email seul.** Aucun rôle ne restreint le dépôt :
+tout compte (EXPLOITATION, BACKOFFICE, SUPERVISEUR, MAGASINIER, RESPONSABLE_IT, Responsable_QHSE,
+CONTROLEUR_STOCK, RESPONSABLE_CHIMIE, RH…) suit le même circuit supérieur → RH → DG, **à condition
+d'être rattaché** à un `DossierEmploye`. Le JWT ne portant que l'email, `CongeIdentiteService.employeCourant()`
+cherche le dossier dont l'email est **celui de connexion** ; sinon « compte non rattaché » (liste de
+sélectionnables vide, 422 au dépôt). **Choix arbitré : pas de champ de lien sur `Utilisateur`, pas de
+dossier créé automatiquement** — la RH saisit le même email dans la fiche.
+- ⚠ L'email du dossier est désormais **normalisé à l'écriture** (`trim` + minuscules, vide ⇒ `null`)
+  comme celui du compte l'était déjà : un espace en fin de saisie rendait le compte non rattaché.
+  `DossierEmailNormalisationRunner` corrige l'existant (idempotent, ne réécrit que le champ `email`).
+- **Visibilité dans Gestion des utilisateurs** : colonne « Dossier RH » (badge vert nom du dossier /
+  orange « Non rattaché ») via `GET /api/superadmin/rattachements`, et encart sous le champ email du
+  formulaire de compte via `GET /api/superadmin/rattachement?email=` (débouncé, **non bloquant** :
+  un compte technique peut légitimement n'avoir aucun dossier). Garde serveur : SUPERADMIN ou module
+  `admin` (même gate que la sidebar), 403 sinon — la colonne affiche alors « — ».
+- ⚠ En cas de doublon d'email entre dossiers, **le plus petit id** est retenu partout
+  (`RattachementEmailUtils.premierDossier` : dépôt, claim JWT, contrôle) — sinon le contrôle
+  annoncerait un autre dossier que celui du dépôt.
+- Le message de refus (bandeau du formulaire et 422 serveur) **cite l'email de connexion** à reporter.
+- Backend : branche `feature/conges-rattachement-email` (depuis `main`).
+
 **Endpoints backend** (base `${environment.apiUrl}/temps-presences/conges`) :
 
 | Méthode | URL | Corps / params | Réponse |

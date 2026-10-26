@@ -46,6 +46,7 @@
               <th class="px-4 py-3 text-left font-semibold">Mot de passe</th>
               <th class="px-4 py-3 text-left font-semibold">Poste</th>
               <th class="px-4 py-3 text-left font-semibold">Rôle</th>
+              <th class="px-4 py-3 text-left font-semibold">Dossier RH</th>
               <th class="px-4 py-3 text-left font-semibold">Motif désactivation</th>
               <th class="px-4 py-3 text-left font-semibold">Statut</th>
               <th class="px-4 py-3 text-right font-semibold">Actions</th>
@@ -63,6 +64,25 @@
                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
                   {{ admin.role }}
                 </span>
+              </td>
+              <!-- Dossier employé rattaché par l'email : sans lui, aucune demande de congé -->
+              <td class="px-4 py-3">
+                <ng-container *ngIf="rattachementDe(admin) as r; else rattachementInconnu">
+                  <span *ngIf="r.employeId; else nonRattache"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
+                    [title]="'Matricule ' + (r.matricule || '—')">
+                    <lucide-icon name="UserCheck" [size]="12"></lucide-icon>
+                    {{ r.nomComplet || r.matricule }}
+                  </span>
+                  <ng-template #nonRattache>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700"
+                      title="Aucun dossier employé ne porte cet email : ce compte ne peut pas déposer de demande de congé.">
+                      <lucide-icon name="TriangleAlert" [size]="12"></lucide-icon>
+                      Non rattaché
+                    </span>
+                  </ng-template>
+                </ng-container>
+                <ng-template #rattachementInconnu><span class="text-gray-400">—</span></ng-template>
               </td>
               <td class="px-4 py-3 text-gray-600">{{ admin.motifDesactivation || '—' }}</td>
 
@@ -168,12 +188,24 @@
               <!-- Email -->
               <div class="sm:col-span-2">
                 <label class="block text-sm font-medium text-gray-600 mb-1">Email <span class="text-red-500">*</span></label>
-                <input type="email" #email="ngModel" name="email" [(ngModel)]="modalData.email" placeholder="exemple@cleanic.com"
+                <input type="email" #email="ngModel" name="email" [(ngModel)]="modalData.email" (ngModelChange)="onEmailSaisi($event)" placeholder="exemple@cleanic.com"
                   pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$" required email
                   class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" />
                 <p class="text-xs text-red-500 mt-1" *ngIf="form.submitted && email.errors">
                   <span *ngIf="email.errors['required']">Email requis.</span>
                   <span *ngIf="email.errors['email'] || email.errors['pattern']">Format d’email invalide.</span>
+                </p>
+                <!-- Rattachement au dossier employé (par l'email) : informatif, jamais bloquant -->
+                <p *ngIf="rattachementSaisi?.employeId"
+                  class="flex items-center gap-1.5 text-xs text-green-700 mt-1.5">
+                  <lucide-icon name="UserCheck" [size]="14"></lucide-icon>
+                  Rattaché au dossier de {{ rattachementSaisi?.nomComplet }}<span *ngIf="rattachementSaisi?.matricule">&nbsp;({{ rattachementSaisi?.matricule }})</span>.
+                </p>
+                <p *ngIf="rattachementSaisi && !rattachementSaisi.employeId"
+                  class="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 mt-1.5">
+                  <lucide-icon name="TriangleAlert" [size]="14" class="flex-shrink-0 mt-px"></lucide-icon>
+                  <span>Aucun dossier employé ne porte cet email : ce compte ne pourra pas déposer de demande de congé.
+                    Renseignez le même email dans la fiche employé.</span>
                 </p>
               </div>
 

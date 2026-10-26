@@ -1,13 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { GestionPrivilegeComponent } from './gestion-privilege.component';
 import { AdminService } from '../../services/admin.service';
 import { LoginService } from '../../services/login.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { NgForm } from '@angular/forms';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { LucideIconsProvider } from '../../lucide-icons';
 
 describe('GestionPrivilegeComponent', () => {
   let component: GestionPrivilegeComponent;
@@ -65,7 +66,9 @@ describe('GestionPrivilegeComponent', () => {
       'getAdmins',
       'createAdmin',
       'updateAdmin',
-      'deleteAdmin'
+      'deleteAdmin',
+      'getRattachements',
+      'getRattachement'
     ]);
 
     loginServiceSpy = jasmine.createSpyObj('LoginService', ['logout']);
@@ -77,6 +80,8 @@ describe('GestionPrivilegeComponent', () => {
     adminServiceSpy.createAdmin.and.returnValue(of(mockAdmins[0]));
     adminServiceSpy.updateAdmin.and.returnValue(of(mockAdmins[0]));
     adminServiceSpy.deleteAdmin.and.returnValue(of(undefined));
+    adminServiceSpy.getRattachements.and.returnValue(of([]));
+    adminServiceSpy.getRattachement.and.returnValue(of({ email: '' }));
 
     dialogSpy.open.and.returnValue({
       afterClosed: () => of(true)
@@ -90,6 +95,8 @@ describe('GestionPrivilegeComponent', () => {
         { provide: MatDialog, useValue: dialogSpy },
         { provide: ToastrService, useValue: toastrSpy },
         { provide: Router, useValue: routerSpy },
+        // Le template rend des <lucide-icon> : sans le registre, chaque rendu lève.
+        LucideIconsProvider,
       ],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
@@ -111,6 +118,41 @@ describe('GestionPrivilegeComponent', () => {
     expect(adminServiceSpy.getAdmins).toHaveBeenCalled();
     expect(component.admins.length).toBe(1);
   });
+
+  // ======================
+  // RATTACHEMENT AU DOSSIER EMPLOYÉ (par email)
+  // ======================
+
+  it('indexe les rattachements par email normalisé', () => {
+    adminServiceSpy.getRattachements.and.returnValue(of([
+      { email: 'awa@cleanic.sn', employeId: 'd1', matricule: 'M001', nomComplet: 'Awa Diop' },
+    ]));
+    component.loadData();
+
+    const r = component.rattachementDe({ ...mockAdmins[0], email: '  Awa@Cleanic.SN ' });
+    expect(r?.employeId).toBe('d1');
+    expect(component.rattachementDe({ ...mockAdmins[0], email: 'autre@cleanic.sn' })).toBeUndefined();
+  });
+
+  it('un échec du contrôle de rattachement ne casse pas la liste', () => {
+    adminServiceSpy.getRattachements.and.returnValue(throwError(() => ({ status: 403 })));
+    component.loadData();
+
+    expect(component.rattachements.size).toBe(0);
+    expect(component.admins.length).toBe(1);
+  });
+
+  it('vérifie le rattachement de l’email saisi, normalisé et débouncé', fakeAsync(() => {
+    adminServiceSpy.getRattachement.and.returnValue(of({ email: 'x@cleanic.sn', employeId: null }));
+
+    component.onEmailSaisi(' X@Cleanic.sn');
+    tick(399);
+    expect(adminServiceSpy.getRattachement).not.toHaveBeenCalled();
+    tick(1);
+
+    expect(adminServiceSpy.getRattachement).toHaveBeenCalledOnceWith('x@cleanic.sn');
+    expect(component.rattachementSaisi).toEqual({ email: 'x@cleanic.sn', employeId: null });
+  }));
 
   // ======================
   // MODAL

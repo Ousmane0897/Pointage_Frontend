@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { Admin } from '../../models/admin.model';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Admin, RattachementDossier } from '../../models/admin.model';
 import { AdminService } from '../../services/admin.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -10,7 +10,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { LoginService } from '../../services/login.service';
 import { Router, RouterOutlet } from '@angular/router';
 import { } from '@angular/common/http';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, catchError, debounceTime, distinctUntilChanged, map, of, switchMap, takeUntil } from 'rxjs';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { LucideAngularModule } from 'lucide-angular';
 import { normaliserTexte } from '../../shared/text-normalize.util';
@@ -30,7 +30,7 @@ import { normaliserTexte } from '../../shared/text-normalize.util';
   templateUrl: './gestion-privilege.component.html',
   styleUrl: './gestion-privilege.component.scss'
 })
-export class GestionPrivilegeComponent implements OnInit {
+export class GestionPrivilegeComponent implements OnInit, OnDestroy {
 
   admins: Admin[] = [];
   selectedAdmin: Admin | null = null;
@@ -138,6 +138,20 @@ export class GestionPrivilegeComponent implements OnInit {
   confirmPassword: string = "";
   private destroy$ = new Subject<void>(); // Pour gérer le cycle de vie des abonnements et éviter les fuites de mémoire
 
+  /**
+   * Dossier employé rattaché à chaque compte, indexé par email normalisé. Le dépôt
+   * d'une demande de congé exige ce rattachement, qui se fait par l'email seul.
+   * Vide si l'appel échoue : la colonne affiche alors « — » plutôt qu'une fausse alerte.
+   */
+  rattachements = new Map<string, RattachementDossier>();
+
+  /**
+   * Rattachement de l'email saisi dans le formulaire. `undefined` = pas encore vérifié
+   * (ou vérification impossible), `null` = email vide.
+   */
+  rattachementSaisi: RattachementDossier | null | undefined = undefined;
+  private emailSaisi$ = new Subject<string>();
+
 
   constructor(private adminService: AdminService,
     private dialog: MatDialog, private toastr: ToastrService,
@@ -146,6 +160,23 @@ export class GestionPrivilegeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+
+    // Vérification du rattachement à la frappe. switchMap : seule la réponse du
+    // dernier email saisi est retenue.
+    this.emailSaisi$.pipe(
+      map(e => normaliserEmail(e)),
+      debounceTime(400),
+      distinctUntilChanged(),
+      switchMap(email => !email
+        ? of(null)
+        : this.adminService.getRattachement(email).pipe(catchError(() => of(undefined)))),
+      takeUntil(this.destroy$),
+    ).subscribe(r => (this.rattachementSaisi = r));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
 
@@ -153,6 +184,21 @@ export class GestionPrivilegeComponent implements OnInit {
     this.adminService.getAdmins().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.admins = data;
     });
+    this.adminService.getRattachements().pipe(
+      catchError(() => of([] as RattachementDossier[])),
+      takeUntil(this.destroy$),
+    ).subscribe(liste => {
+      this.rattachements = new Map(liste.map(r => [r.email, r]));
+    });
+  }
+
+  /** Rattachement d'un compte de la liste, `undefined` s'il est inconnu. */
+  rattachementDe(admin: Admin): RattachementDossier | undefined {
+    return this.rattachements.get(normaliserEmail(admin.email));
+  }
+
+  onEmailSaisi(email: string): void {
+    this.emailSaisi$.next(email ?? '');
   }
 
 
@@ -244,6 +290,8 @@ export class GestionPrivilegeComponent implements OnInit {
     };
     this.confirmPassword = "";
     this.selectedId = null;
+    this.rattachementSaisi = undefined;
+    this.onEmailSaisi('');
     this.showModal = true;
   }
 
@@ -342,6 +390,8 @@ export class GestionPrivilegeComponent implements OnInit {
 
     this.confirmPassword = admin.password;
     this.selectedId = admin.id!;
+    this.rattachementSaisi = this.rattachementDe(admin);
+    this.onEmailSaisi(admin.email);
     this.showModal = true;
   }
 
@@ -504,4 +554,9 @@ export class GestionPrivilegeComponent implements OnInit {
     return item.poste + item.email; // plus sûr si plusieurs pointages par jour
   }
 
+}
+
+/** Même normalisation que le serveur (email du compte et du dossier). */
+function normaliserEmail(email: string | null | undefined): string {
+  return (email ?? '').trim().toLowerCase();
 }

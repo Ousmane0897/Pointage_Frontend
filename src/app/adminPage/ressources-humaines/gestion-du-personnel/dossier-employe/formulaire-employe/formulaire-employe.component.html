@@ -828,6 +828,9 @@
               <p *ngIf="contactsGroup.get('email')?.errors?.['email'] && contactsGroup.get('email')?.touched" class="text-xs text-red-500 mt-1">
                 Veuillez saisir un e-mail valide.
               </p>
+              <p class="text-xs text-gray-500 mt-1">
+                Doit être identique à l'e-mail de connexion du compte de l'employé : c'est ce qui lui permet de déposer ses demandes de congé.
+              </p>
             </div>
 
             <!-- Adresse -->

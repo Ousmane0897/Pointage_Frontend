@@ -10,6 +10,7 @@ import { Subject, of, catchError, finalize, takeUntil } from 'rxjs';
 
 import { CongeService } from '../../../../../services/conge.service';
 import { CongePermissionsService } from '../../../../../services/conge-permissions.service';
+import { LoginService } from '../../../../../services/login.service';
 import {
   CreationDemandePayload,
   EmployeSelectionnable,
@@ -84,6 +85,12 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
     return 'Vous et vos subordonnés directs';
   }
 
+  /**
+   * Adresse de connexion, citée quand le compte n'est pas rattaché : c'est la seule clé
+   * qui relie un compte à son dossier employé, la RH doit la reporter dans la fiche.
+   */
+  emailConnexion: string | null = null;
+
   readonly ORDRE_TYPES_CONGE = ORDRE_TYPES_CONGE;
   readonly LIBELLES_TYPE_CONGE = LIBELLES_TYPE_CONGE;
   /** Barème des droits, pour la note explicative. Null tant que l'appel est en vol. */
@@ -106,9 +113,11 @@ export class DemandeCongeComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private parametresConges: ParametresCongesService,
+    private loginService: LoginService,
   ) {}
 
   ngOnInit(): void {
+    this.emailConnexion = this.loginService.getUserEmail();
     // Barème caché pour la session : la note de pied explique d'où sortent les jours.
     this.parametresConges.getParametres()
       .pipe(takeUntil(this.destroy$))

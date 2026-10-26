@@ -18,7 +18,9 @@
     <lucide-icon name="AlertTriangle" class="w-4 h-4 mt-0.5 shrink-0"></lucide-icon>
     <span>
       Votre compte n'est rattaché à aucun dossier employé : vous ne pouvez pas déposer de demande.
-      Contactez les Ressources humaines.
+      Aucune fiche employé ne porte votre adresse de connexion<ng-container *ngIf="emailConnexion">
+      (<strong>{{ emailConnexion }}</strong>)</ng-container> — demandez aux Ressources humaines de la
+      renseigner dans votre fiche.
     </span>
   </div>
 
