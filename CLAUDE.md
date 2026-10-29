@@ -1550,6 +1550,38 @@ la tendance (85 = 80+3+2 ne se lit pas comme 85 = 28+29+28) — ne pas y revenir
   ajouté au `FormGroup` de ligne : la valeur est dérivée, le payload `{ produitId, quantite }` est
   intact par construction.
 
+**Site source hors référentiel (bons de sortie)** — le « Site source » n'acceptait que les sites
+du référentiel `TerrainSiteClient` (sites sous contrat). Une case **« Site hors référentiel
+(chantier, prestation ponctuelle) »** sous le champ remplace le `selecteur-site` par une saisie
+libre ; le composant partagé `selecteur-site` n'est **pas** modifié.
+
+- **Modèle** : `siteSourceId` **absent** + `siteSourceNom` = nom saisi. Aucun nouveau champ persisté,
+  aucune migration. `BonSortiePayload` gagne `siteSourceNom?`, lu par le serveur **seulement** si
+  `siteSourceId` est vide (un nom envoyé avec un id est ignoré, le nom vient du référentiel).
+  Serveur : `BonSortieService.resoudreSiteSource` (création **et** modification) — nom trimé,
+  espaces réduits, ≤ 120 car. (`LONGUEUR_MAX_SITE_LIBRE`, miroir front), sinon **400**
+  « Site source obligatoire… », affiché tel quel en toast.
+- ⚠ **Le stock n'en dépend pas** : depuis l'entrepôt unique, une sortie débite l'entrepôt
+  (`debiterAvecRepli` accepte `siteId = null`). Le site source n'est qu'une **clé d'imputation
+  analytique**. Côté éditeur de lignes, « Reste » se calcule sur le stock consolidé et les colonnes
+  de sorties mensuelles restent à « — » (pas d'historique pour un site libre) — voulu.
+- ⚠ **Rapports par site : une ligne par nom saisi.** `SiteSourceCle.cle(siteId, siteNom)` = l'id s'il
+  existe, sinon `libre:` + nom en minuscules aux espaces réduits — « Chantier X » et « chantier  x »
+  font une seule ligne. Branché dans `CoutSiteService`, `ConsommationStockService` (`PAR_SITE`),
+  `ComparatifAnalyseService` (axe `SITE`) et `DotationService` ; sans lui, tous les sites libres
+  fusionneraient sous la clé `null`. `FiltreCroiseService` groupait déjà par nom (sensible à la
+  casse). `PlafondService` est inchangé : un site libre n'a pas de plafond.
+- ⚠ **Les filtres « Site » (listes déroulantes) ne peuvent pas cibler un site libre** ; la recherche
+  `q` de la liste des bons couvre désormais `siteSourceNom`.
+- Affichage : badge « Hors réf. » dans la liste et la fiche (`siteSourceHorsReferentiel()` dans
+  [stock-v2-bon-sortie.model.ts](src/app/models/stock-v2-bon-sortie.model.ts)), mention
+  « (hors référentiel) » dans le PDF du bon et le mail de création. **Destinataire non concerné**
+  (le type « Client » libre existe déjà).
+- Déploiement : **backend d'abord** (un front en avance enverrait un `siteSourceId` vide → 400).
+  Backend : branche `feature/stock-site-source-hors-referentiel` (depuis `main`). Tests :
+  `SiteSourceCleTest`, `BonSortieSiteHorsReferentielIT` (7 cas) ; front :
+  `stock-v2-bon-sortie.model.spec.ts`.
+
 **Suppression définitive d'un bon déjà engagé (SUPERADMIN)** — `REFUSE`, `VALIDE` et surtout
 `EFFECTIF` étaient des culs-de-sac : `exigerBrouillon` refusait toute suppression en 409, et un bon
 effectif erroné restait en base avec ses mouvements. Le **super-administrateur** peut désormais

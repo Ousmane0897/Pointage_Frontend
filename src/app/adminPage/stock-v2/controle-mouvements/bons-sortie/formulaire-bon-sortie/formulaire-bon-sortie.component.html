@@ -53,10 +53,24 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">Site source <span class="text-red-500">*</span></label>
-            <app-selecteur-site formControlName="siteSourceId"></app-selecteur-site>
-            @if (f['siteSourceId'].touched && f['siteSourceId'].invalid) {
-              <p class="text-xs text-red-600 mt-1">Site requis.</p>
+            @if (siteHorsReferentiel) {
+              <input type="text" formControlName="siteSourceNom" placeholder="Nom du site ou du chantier"
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400">
+              @if (f['siteSourceNom'].touched && f['siteSourceNom'].invalid) {
+                <p class="text-xs text-red-600 mt-1">
+                  {{ f['siteSourceNom'].errors?.['maxlength'] ? 'Nom trop long (120 caractères maximum).' : 'Nom du site requis.' }}
+                </p>
+              }
+            } @else {
+              <app-selecteur-site formControlName="siteSourceId"></app-selecteur-site>
+              @if (f['siteSourceId'].touched && f['siteSourceId'].invalid) {
+                <p class="text-xs text-red-600 mt-1">Site requis.</p>
+              }
             }
+            <label class="inline-flex items-center gap-2 mt-2 text-xs text-gray-600 cursor-pointer">
+              <input type="checkbox" formControlName="siteHorsReferentiel" class="accent-indigo-600">
+              Site hors référentiel (chantier, prestation ponctuelle)
+            </label>
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">Motif</label>

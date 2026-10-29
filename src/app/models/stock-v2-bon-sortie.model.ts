@@ -57,8 +57,11 @@ export interface BonSortie {
   reference?: string;            // BS-AAAAMMJJ-XXX (auto serveur)
   type: TypeSortie;
   date: string;                  // ISO yyyy-MM-dd
-  siteSourceId: string;          // site d'où sort le stock
-  siteSourceNom?: string;        // dénormalisé
+  // Site d'imputation de la sortie. Absent ⇒ site HORS RÉFÉRENTIEL (chantier, prestation
+  // ponctuelle) dont le nom libre est dans `siteSourceNom`. Le stock sort de l'entrepôt unique
+  // dans les deux cas.
+  siteSourceId?: string;
+  siteSourceNom?: string;        // dénormalisé (référentiel) ou saisi (hors référentiel)
   destinataire: Destinataire;
   motif?: string;                // motif de la sortie (texte libre)
   natureDon?: NatureDon;         // si type === 'DON' — pour l'analyse 7.5
@@ -100,7 +103,8 @@ export interface DestinatairePayload {
 export interface BonSortiePayload {
   type: TypeSortie;
   date: string;
-  siteSourceId: string;
+  siteSourceId?: string;         // site du référentiel…
+  siteSourceNom?: string;        // …ou, à défaut, nom d'un site hors référentiel (≤ 120 car.)
   destinataire: DestinatairePayload;
   motif?: string;
   natureDon?: NatureDon;         // si type === 'DON'
@@ -109,6 +113,14 @@ export interface BonSortiePayload {
   lignes: LigneBonSortiePayload[];
   demandeurId?: string;
   commentaire?: string;
+}
+
+/** Longueur maximale d'un nom de site saisi hors référentiel (miroir de la règle serveur). */
+export const LONGUEUR_MAX_SITE_LIBRE = 120;
+
+/** Vrai si le site source du bon a été saisi en texte libre, hors référentiel. */
+export function siteSourceHorsReferentiel(bon: Pick<BonSortie, 'siteSourceId' | 'siteSourceNom'>): boolean {
+  return !bon.siteSourceId && !!bon.siteSourceNom;
 }
 
 export interface FiltreBonSortie {

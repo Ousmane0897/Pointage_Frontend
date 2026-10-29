@@ -27,6 +27,7 @@ import {
   Destinataire,
   FiltreBonSortie,
   TypeSortie,
+  siteSourceHorsReferentiel,
 } from '../../../../../models/stock-v2-bon-sortie.model';
 import { StatutBon } from '../../../../../models/stock-v2-workflow.model';
 import {
@@ -74,6 +75,7 @@ export class ListeBonsSortieComponent implements OnInit, OnDestroy {
   readonly TYPES = ORDRE_TYPES_SORTIE;
   readonly STATUTS = ORDRE_STATUTS_BON;
   readonly DEVISE = DEVISE;
+  readonly siteSourceHorsReferentiel = siteSourceHorsReferentiel;
 
   private destroy$ = new Subject<void>();
 
