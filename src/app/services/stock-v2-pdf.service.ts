@@ -7,7 +7,7 @@ import { BonCommandePrevisionnel } from '../models/stock-v2-approvisionnement.mo
 import { SyntheseMultiMois, FluxSynthese } from '../models/stock-v2-synthese.model';
 import { RapportTableauBordStock, FiltreTableauBordStock } from '../models/stock-v2-tableau-bord.model';
 import { BonEntree } from '../models/stock-v2-bon-entree.model';
-import { BonSortie } from '../models/stock-v2-bon-sortie.model';
+import { BonSortie, siteSourceHorsReferentiel } from '../models/stock-v2-bon-sortie.model';
 import { ComparatifDotation } from '../models/stock-v2-dotation.model';
 import { ConsommationDestinataire, RapportConsommation } from '../models/stock-v2-consommation.model';
 import { SyntheseConsoMensuelle } from '../models/stock-v2-analyse-mensuelle.model';
@@ -319,7 +319,7 @@ export class StockV2PdfService {
     doc.setFont('helvetica', 'normal');
     doc.text(`Date : ${this.formatDate(bon.date)}`, 14, 36);
     doc.text(`Type : ${LIBELLES_TYPE_SORTIE[bon.type]}`, 14, 42);
-    doc.text(`Site source : ${bon.siteSourceNom ?? '—'}`, 14, 48);
+    doc.text(`Site source : ${bon.siteSourceNom ?? '—'}${siteSourceHorsReferentiel(bon) ? ' (hors référentiel)' : ''}`, 14, 48);
     doc.text(`Statut : ${LIBELLES_STATUT_BON[bon.statut]}`, 120, 36);
     doc.text(`Destinataire : ${this.libelleDestinataire(bon.destinataire)}`, 120, 42);
     doc.text(`Motif : ${bon.motif ?? '—'}`, 120, 48);

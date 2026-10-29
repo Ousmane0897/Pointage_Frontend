@@ -135,7 +135,7 @@
                     {{ LIBELLES_TYPE_SORTIE[b.type] }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-gray-600">{{ b.siteSourceNom ?? '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ b.siteSourceNom ?? '—' }}@if (siteSourceHorsReferentiel(b)) {<span class="ml-1.5 inline-flex px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-semibold align-middle" title="Site saisi hors référentiel">Hors réf.</span>}</td>
                 <td class="px-4 py-3 text-gray-600">{{ libelleDestinataire(b.destinataire) }}</td>
                 <td class="px-4 py-3 text-center text-gray-600">{{ b.lignes.length }}</td>
                 <td class="px-4 py-3 text-right font-medium text-gray-700">{{ (b.montantTotal ?? 0) | number:'1.0-0':'fr' }}</td>

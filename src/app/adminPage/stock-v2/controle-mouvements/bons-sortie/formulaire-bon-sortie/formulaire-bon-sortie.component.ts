@@ -6,6 +6,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -19,6 +20,7 @@ import {
   BonSortie,
   BonSortiePayload,
   DestinatairePayload,
+  LONGUEUR_MAX_SITE_LIBRE,
   NatureDon,
   TypeDestinataire,
   TypeSortie,
@@ -42,7 +44,9 @@ import {
 /**
  * Formulaire de bon de sortie — Module Stock v2 / 7.4 (fonctionnalité 3).
  *
- * Création / édition d'un brouillon. Le destinataire peut être un site (lecture
+ * Création / édition d'un brouillon. Le site source est un site du référentiel ou,
+ * case cochée, un site hors référentiel saisi en texte libre (chantier, prestation
+ * ponctuelle). Le destinataire peut être un site (lecture
  * seule TerrainSiteClient), un agent (lecture seule DossierEmploye) ou un
  * client externe (texte libre).
  */
@@ -95,7 +99,9 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       type: ['DISTRIBUTION_AGENCE_SITE_CLIENT' as TypeSortie, Validators.required],
       date: [this.aujourdhui(), Validators.required],
+      siteHorsReferentiel: [false],
       siteSourceId: ['', Validators.required],
+      siteSourceNom: [''],
       destType: ['SITE' as TypeDestinataire, Validators.required],
       destSiteId: [''],
       destAgentId: [''],
@@ -108,6 +114,10 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
       commentaire: [''],
       lignes: this.fb.array([]),
     });
+
+    this.form.get('siteHorsReferentiel')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((horsRef: boolean) => this.appliquerSiteSource(horsRef));
 
     this.appliquerDestinataire('SITE');
     this.form.get('destType')!.valueChanges
@@ -135,6 +145,7 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
   get lignes(): FormArray { return this.form.get('lignes') as FormArray; }
   /** Site détenteur du stock, transmis à l'éditeur de lignes. ⚠ Pas `destSiteId`, qui est le destinataire. */
   get siteSourceId(): string | null { return this.form.get('siteSourceId')!.value || null; }
+  get siteHorsReferentiel(): boolean { return !!this.form.get('siteHorsReferentiel')!.value; }
   get destType(): TypeDestinataire { return this.form.get('destType')!.value; }
   get typeSortie(): TypeSortie { return this.form.get('type')!.value; }
 
@@ -158,6 +169,26 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
     }
     nature.updateValueAndValidity({ emitEvent: false });
     chantier.updateValueAndValidity({ emitEvent: false });
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Bascule le site source entre le sélecteur du référentiel et la saisie libre : un seul des
+   * deux est requis, l'autre est vidé pour que le payload ne porte jamais les deux.
+   */
+  private appliquerSiteSource(horsRef: boolean): void {
+    const id = this.form.get('siteSourceId')!;
+    const nom = this.form.get('siteSourceNom')!;
+    id.clearValidators(); nom.clearValidators();
+    if (horsRef) {
+      nom.setValidators([Validators.required, Validators.pattern(/\S/), Validators.maxLength(LONGUEUR_MAX_SITE_LIBRE)]);
+      id.setValue('', { emitEvent: false });
+    } else {
+      id.setValidators(Validators.required);
+      nom.setValue('', { emitEvent: false });
+    }
+    id.updateValueAndValidity({ emitEvent: false });
+    nom.updateValueAndValidity({ emitEvent: false });
     this.cdr.markForCheck();
   }
 
@@ -206,10 +237,13 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
 
   private remplir(bon: BonSortie): void {
     const d = bon.destinataire;
+    const horsRef = !bon.siteSourceId && !!bon.siteSourceNom;
     this.form.patchValue({
+      siteHorsReferentiel: horsRef,
       type: bon.type,
       date: (bon.date ?? '').substring(0, 10),
-      siteSourceId: bon.siteSourceId,
+      siteSourceId: bon.siteSourceId ?? '',
+      siteSourceNom: horsRef ? bon.siteSourceNom : '',
       destType: d?.type ?? 'SITE',
       destSiteId: d?.siteId ?? '',
       destAgentId: d?.agentId ?? '',
@@ -221,6 +255,7 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
       demandeurId: bon.demandeurId ?? '',
       commentaire: bon.commentaire ?? '',
     });
+    this.appliquerSiteSource(horsRef);
     this.appliquerDestinataire(d?.type ?? 'SITE');
     this.appliquerType(bon.type);
     this.lignes.clear();
@@ -250,7 +285,8 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
     const payload: BonSortiePayload = {
       type: v.type,
       date: v.date,
-      siteSourceId: v.siteSourceId,
+      siteSourceId: v.siteHorsReferentiel ? undefined : v.siteSourceId,
+      siteSourceNom: v.siteHorsReferentiel ? v.siteSourceNom.trim() : undefined,
       destinataire,
       motif: v.motif || undefined,
       natureDon: v.type === 'DON' ? (v.natureDon || undefined) : undefined,
@@ -273,7 +309,8 @@ export class FormulaireBonSortieComponent implements OnInit, OnDestroy {
           this.toastr.success(this.idEdition ? 'Bon mis à jour.' : 'Bon créé (brouillon).');
           this.router.navigate(['/admin/stock-v2/controle-mouvements/bons-sortie', bon.id]);
         },
-        error: () => this.toastr.error("Erreur lors de l'enregistrement du bon."),
+        error: (err: HttpErrorResponse) =>
+          this.toastr.error(err.error?.message ?? "Erreur lors de l'enregistrement du bon."),
       });
   }
 

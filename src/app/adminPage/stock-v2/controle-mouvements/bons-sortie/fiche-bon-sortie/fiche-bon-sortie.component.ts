@@ -23,7 +23,7 @@ import {
   SuppressionDefinitiveDialogComponent,
   SuppressionDefinitiveDialogResult,
 } from '../../../shared/dialogs/suppression-definitive-dialog.component';
-import { BonSortie, Destinataire } from '../../../../../models/stock-v2-bon-sortie.model';
+import { BonSortie, Destinataire, siteSourceHorsReferentiel } from '../../../../../models/stock-v2-bon-sortie.model';
 import {
   LIBELLES_TYPE_SORTIE,
   COULEURS_TYPE_SORTIE,
@@ -61,6 +61,7 @@ export class FicheBonSortieComponent implements OnInit, OnDestroy {
   readonly LIBELLES_TYPE_DESTINATAIRE = LIBELLES_TYPE_DESTINATAIRE;
   readonly LIBELLES_UNITE = LIBELLES_UNITE;
   readonly DEVISE = DEVISE;
+  readonly siteSourceHorsReferentiel = siteSourceHorsReferentiel;
 
   private destroy$ = new Subject<void>();
 
