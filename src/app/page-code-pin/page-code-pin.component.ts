@@ -139,13 +139,7 @@ export class PageCodePinComponent implements OnInit {
 
       console.error('GPS ERROR', err);
 
-      if (err?.status === 429) {
-        this.toastr.error(
-          '⛔ Vous avez déjà pointé récemment avec ce téléphone.',
-          'Pointage refusé'
-        );
-
-      } else if (err?.message?.includes('GPS')) {
+      if (err?.message?.includes('GPS')) {
         this.toastr.error(
           'Impossible de récupérer votre position',
           'Erreur GPS'
@@ -201,9 +195,12 @@ export class PageCodePinComponent implements OnInit {
 
         } else if (err.status === 429) {
 
+          // Garde anti-triche : téléphone d'un autre agent, ou double envoi. Le message
+          // serveur est rédigé pour l'agent et dit lequel des deux cas s'applique.
           this.toastr.error(
-            '⛔ Vous avez déjà pointé récemment.',
-            'Pointage refusé'
+            err.error?.message || '⛔ Vous avez déjà pointé récemment.',
+            'Pointage refusé',
+            { timeOut: 10000, closeButton: true }
           );
 
         } else {
