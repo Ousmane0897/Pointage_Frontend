@@ -8,7 +8,8 @@ import { NgxSpinnerService } from 'ngx-spinner';
 import { ToastrService } from 'ngx-toastr';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Pointage } from '../models/pointage.model';
 
 describe('PageCodePinComponent', () => {
@@ -22,7 +23,8 @@ describe('PageCodePinComponent', () => {
   let toastrSpy: jasmine.SpyObj<ToastrService>;
 
   beforeEach(async () => {
-    pointageServiceSpy = jasmine.createSpyObj('PointageService', ['pointer']);
+    pointageServiceSpy = jasmine.createSpyObj('PointageService', ['pointer', 'getDeviceId']);
+    pointageServiceSpy.getDeviceId.and.returnValue('DEV-1');
     pageCodeServiceSpy = jasmine.createSpyObj('PageCodeService', ['getPointageById']);
     routerSpy = jasmine.createSpyObj('Router', ['navigateByUrl']);
     spinnerSpy = jasmine.createSpyObj('NgxSpinnerService', ['show', 'hide']);
@@ -69,5 +71,33 @@ describe('PageCodePinComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('refus 429 de la garde anti-triche', () => {
+    beforeEach(() => {
+      spyOn(component, 'getLocation').and.resolveTo({ lat: 14.7, lng: -17.4 });
+      component.form.setValue({ number: '1234' });
+    });
+
+    it('affiche le message rédigé par le serveur', async () => {
+      const message = 'Ce téléphone vient de servir au pointage d\'un autre agent.';
+      pointageServiceSpy.pointer.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 429, error: { error: 'POINTAGE_TROP_FREQUENT', message }
+      })));
+
+      await component.pointer();
+
+      expect(toastrSpy.error).toHaveBeenCalledWith(message, 'Pointage refusé', jasmine.any(Object));
+      expect(component.isSubmitting).toBeFalse();
+    });
+
+    it('retombe sur le texte générique sans message serveur', async () => {
+      pointageServiceSpy.pointer.and.returnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
+
+      await component.pointer();
+
+      expect(toastrSpy.error).toHaveBeenCalledWith(
+        '⛔ Vous avez déjà pointé récemment.', 'Pointage refusé', jasmine.any(Object));
+    });
   });
 });

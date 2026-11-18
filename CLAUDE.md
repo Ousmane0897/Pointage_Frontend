@@ -418,6 +418,37 @@ employé : un agent affecté à 2 sites produit **2 lignes par jour**, chacune j
   ces créneaux — voir « Récapitulatif mensuel par agent et par site » ci-dessous.
 - Backend : branche `feature/affectation-dates-et-jours-par-site` (depuis `main`).
 
+#### Pointage kiosque — garde anti-triche par téléphone
+
+Le verrou anti-triche (empêcher un agent de pointer pour un collègue) bloquait **le
+téléphone 20 min après toute arrivée, quel que soit l'agent** — donc aussi son propriétaire :
+un agent multi-sites sortant d'un site et arrivant sur le suivant quelques minutes plus tard
+était refusé (429). La garde, désormais `PointageServices.verifierTelephone`, évaluée **après**
+la résolution de l'agent et **avant toute écriture** :
+
+- **Téléphone partagé** : refus seulement si ce téléphone a servi à un **autre** agent dans les
+  **20 min** (`DELAI_TELEPHONE_MINUTES`), à l'arrivée **ou à la sortie**. Un agent sur son propre
+  téléphone n'est jamais concerné — l'enchaînement arrivée/sortie est déjà garanti par le
+  pointage ouvert du jour.
+- **Anti-rebond** : deux pointages du **même** agent à moins de **60 s** (tout téléphone) sont
+  refusés, sans quoi un double envoi clôturerait aussitôt l'arrivée qu'il vient d'ouvrir.
+- ⚠ La sortie trace désormais son téléphone (`Pointage.deviceIdSortie` / `timestampSortie`) :
+  avant, une sortie pointée sur le téléphone d'un collègue **n'était pas détectée** (seul
+  `timestamp`, l'instant d'arrivée, était lu). Un pointage antérieur, sans ces champs, ne compte
+  que par son arrivée — aucune migration.
+- Refus en **429 JSON** `{ error: 'POINTAGE_TROP_FREQUENT', message }` ; le kiosque
+  (`page-code-pin`) affiche `err.error.message`. Le nom de l'autre agent n'est **jamais** divulgué.
+- ⚠ `timestamp` est un `@CreatedDate` : l'auditing l'écrase à la création — un test qui amorce un
+  pointage « ancien » doit le reposer par `updateFirst` après le `save`.
+- ⚠ Deux agents qui **partagent volontairement** un téléphone sont bloqués 20 min l'un après
+  l'autre, sortie comprise : c'est l'intention de la règle, à annoncer.
+- Délai fixe pour l'instant ; le rendre paramétrable via `ParametresPointage` (lot QR d'agence)
+  est prévu. ⚠ Conflit attendu au merge avec `feature/pointage-qr-agence`, qui réécrit
+  `pointer()` : reporter l'appel de garde et les deux `set` du `closeUpdate`.
+- Backend : branche `fix/pointage-telephone-autre-agent` (depuis `main`). Tests :
+  `PointageTelephoneIT` (8 cas, dont le scénario multi-sites signalé), 3 cas ajoutés à
+  `PointageServicesTest`, 429 JSON dans `PointagesControllerTest`.
+
 #### Récapitulatif mensuel par agent et par site
 
 Demande RH pour contrôler le pointage avant la paie : jours **et heures** travaillés, absences,
